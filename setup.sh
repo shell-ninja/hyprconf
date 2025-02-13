@@ -99,28 +99,6 @@ fonts_dir="$HOME/.local/share/fonts"
 msg act "Now setting up the pre installed Hyprland configuration..."sleep 1
 
 mkdir -p ~/.config
-
-
-
-# =========  checking the distro  ========= #
-
-check_distro() {
-    if [ -f /etc/os-release ]; then
-        . /etc/os-release
-        case "$ID" in
-            arch)
-                distro="arch"
-                ;;
-            fedora)
-                distro="fedora"
-                ;;
-            opensuse*)
-                distro="opensuse"
-                ;;
-        esac
-    fi
-}
-
 dirs=(
     btop
     dunst
@@ -169,17 +147,17 @@ backup_or_restore() {
             echo
 
             if [[ $? -eq 0 ]]; then
-                action="r"
+                action="y"
             else
-                action="b"
+                action="n"
             fi
 
         else
-            msg ask "Would you Restore it or put it into the Backup? [ r/b ]"
+            msg ask "Would you Restore it or put it into the Backup? [ y/n ]"
             read -r -p "$(echo -e '\e[1;32mSelect: \e[0m')" action
         fi
 
-        if [[ "$action" =~ ^[rR] ]]; then
+        if [[ "$action" =~ ^[Yy]$ ]]; then
             cp -r "$file_path" "$backup_dir/"
         else
             msg att "$file_type will be backed up..."
@@ -358,8 +336,6 @@ fi
 
 # =========  wallpaper section  ========= #
 
-check_distro &> /dev/null
-
 if [[ -d "$HOME/.config/hypr/Wallpaper" ]]; then
     mkdir -p "$HOME/.config/hypr/.cache"
     engine="$HOME/.config/hypr/.cache/.engine"
@@ -370,9 +346,9 @@ if [[ -d "$HOME/.config/hypr/Wallpaper" ]]; then
 
     echo "hyprpaper" > "$engine"
 
-    if [ -f "$HOME/.config/hypr/Wallpaper/${distro}.png" ]; then
-        echo "$distro" > "$wallCache"
-        wallpaper="$HOME/.config/hypr/Wallpaper/${distro}.png"
+    if [ -f "$HOME/.config/hypr/Wallpaper/linux.jpg" ]; then
+        echo "linux" > "$wallCache"
+        wallpaper="$HOME/.config/hypr/Wallpaper/linux.jpg"
     fi
 
     # setting the default wallpaper
@@ -381,8 +357,8 @@ if [[ -d "$HOME/.config/hypr/Wallpaper" ]]; then
 fi
 
 # setting up the waybar
-ln -sf "$HOME/.config/waybar/configs/catppuccin-top" "$HOME/.config/waybar/config"
-ln -sf "$HOME/.config/waybar/style/catppuccin-top.css" "$HOME/.config/waybar/style.css"
+ln -sf "$HOME/.config/waybar/configs/full-top" "$HOME/.config/waybar/config"
+ln -sf "$HOME/.config/waybar/style/full-top.css" "$HOME/.config/waybar/style.css"
 
 msg act "Generating colors and other necessary things..."
 "$HOME/.config/hypr/scripts/wallcache.sh" &> /dev/null

@@ -1,2 +1,2 @@
-require("js-bro.core")
-require("js-bro.lazy")
+require("shell-ninja.core")
+require("shell-ninja.lazy")

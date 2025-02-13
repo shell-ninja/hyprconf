@@ -31,7 +31,7 @@ window {
     spacing:                     0em;
     padding:                     0em;
     border-color:                @foreground;
-    border:                      @border-size;
+    border:                      0px;
     background-color:            transparent;
 }
 mainbox {
