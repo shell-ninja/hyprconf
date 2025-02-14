@@ -27,7 +27,7 @@ window {
     padding:                      0em;
     margin:                       0em; 
     color:                        @foreground;
-    border:                       @borde-size;
+    border:                       @border-size;
     border-color:                 @foreground;
     border-radius:                @radius;
     cursor:                       "default";
