@@ -13,6 +13,7 @@ keymap.set({ "i", "n" }, "<C-y>", "<C-r>", { desc = "redo" })                   
 
 -- Delete a word backwards
 keymap.set("n", "dw", 'vb"_d')
+keymap.set("n", "<C-d>", 'vb"_d')
 
 -- Select all
 keymap.set("n", "<C-a>", "gg<S-v>G")

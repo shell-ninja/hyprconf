@@ -64,7 +64,7 @@ for user_choice in "${primary_choice[@]}"; do
             rounding=$(gum input --placeholder "Type border roundness...")
         done
         sed -i 's/\$rounding = .*/$rounding = '"$rounding"'/g' "$setting"
-        sed -i "s/^[[:space:]]*corner_radius[[:space:]]*= .*/corner_radius = $rounding/g" "$dunst"
+        sed -i "s/^[[:space:]]*corner_radius[[:space:]]*= .*/corner_radius = $((rounding / 2))/g" "$dunst"
         sed -i "s/radius: .*/radius: ${rounding}px;/g" "$rofiVars"
         sed -i "s/radius-second: .*/radius-second: $((rounding / 2))px;/g" "$rofiVars"
         ;;

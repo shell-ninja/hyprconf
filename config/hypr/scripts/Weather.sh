@@ -1,6 +1,6 @@
 #!/bin/bash
 
-city=Munshiganj #Replace 'Munshiganj' with your city name.
+city=$(timedatectl | grep "Time zone" | awk '{split($3, a, "/"); print a[2]}')
 cachedir=~/.cache/rbn
 cachefile=${0##*/}-$1
 
