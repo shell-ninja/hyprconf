@@ -364,6 +364,12 @@ msg act "Generating colors and other necessary things..."
 "$HOME/.config/hypr/scripts/wallcache.sh" &> /dev/null
 "$HOME/.config/hypr/scripts/pywal.sh" &> /dev/null
 
+
+# setting location for the weather
+area=$(timedatectl | grep "Time zone" | awk '{split($3, a, "/"); print a[2]}')
+sed -i "s/city= .*/city=${area}/g" "$HOME/.config/hypr/scripts/Weather.sh"
+
+
 # setting default themes, icon and cursor
 gsettings set org.gnome.desktop.interface gtk-theme "Dracula"
 gsettings set org.gnome.desktop.interface icon-theme "TokyoNight-SE"

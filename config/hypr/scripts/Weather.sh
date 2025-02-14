@@ -1,6 +1,6 @@
 #!/bin/bash
 
-city=Munshiganj #Replace 'Munshiganj' with your city name.
+city=
 cachedir=~/.cache/rbn
 cachefile=${0##*/}-$1
 
