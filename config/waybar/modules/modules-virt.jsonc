@@ -35,7 +35,7 @@
     // network speed
     "network#speed": {
         // "interface": "wlp2*", // (Optional) To force the use of this interface
-        "format": "<span foreground='#99ffdd'> {bandwidthDownBytes}</span> <span foreground='#ffcc66'> {bandwidthUpBytes}</span>",
+        "format": "<span foreground='#99ffdd'> {bandwidthDownBytes}</span> <span foreground='#ffcc66'> \n{bandwidthUpBytes}</span>",
         "format-disconnected": "󰖪 ",
         "tooltip": false,
         "interval": 1,
@@ -94,34 +94,10 @@
         "on-scroll-up": "hyprctl dispatch workspace e-1",
         "on-scroll-down": "hyprctl dispatch workspace e+1",
         "format": "{icon}",
-        // "format-icons": {
-            // "1": "",
-            // "2": "",
-            // "3": "",
-            // "4": "",
-        //     "urgent": "",
-        //     "focused": "",
-        //     "default": ""
-        // },
-        "format-icons": {
-            // for arch
-            // "active": "󰮯",
-            // "default": ""
-
-            // for fedora
-            //  "active": "󰣛",  
-            //  "default": ""
-
-            // for opensuse
-            // "active": "",
-            // "default": ""
-          },
         "persistent-workspaces": {
             "1": [],
             "2": [],
-            "3": [],
-            "4": [],
-            "5": []
+            "3": []
         }
     },
 
@@ -191,10 +167,17 @@
         "spacing": 10
     },
 
+    // date
+    "clock#calender": {
+        "format": "{:%d-%m-%Y}",
+        "tooltip": false,
+        "rotate": 90
+    },
+
     // clock
     "clock": {
-        "format": " {:%I:%M %p}",
-        "format-alt": " {:%R 󰃭 %d·%m·%Y}",
+        "format": "{:%I\n%M\n%p}",
+        "format-alt": "{:%H\n%M}",
         "on-clock-right": "exec gnome-calendar",
         "tooltip": true,
         "tooltip-format": "<span>{calendar}</span>",
@@ -265,7 +248,7 @@
             "headset": "",
             "phone": "",
             "default": ["", "", " "]
-        }
+        },
     },
 
     // pulseautio mic
@@ -282,7 +265,7 @@
 
     // mpris ( media player )
     "mpris": {
-        "interval": 2,
+        "interval": 1,
         "format": "{player_icon}  {status_icon}",
         "format-paused": "{player_icon}  {status_icon}",
         "tooltip": true,
@@ -309,7 +292,8 @@
             "playing": " ",
             "stopped": ""
         },
-        "max-length": 30
+        "max-length": 30,
+        "rotate": 90
     },
 
     // keyboard status
@@ -325,4 +309,23 @@
 	// 	"unlocked": ""
 	//     }
     // },
+
+   "custom/weather": {
+        "format": "  {}",
+        "format-alt": "{alt}: {}",
+        "format-alt-click": "click",
+        "interval": 3600,
+        "return-type": "json",
+        "exec": "~/.config/hypr/scripts/Weather.sh",
+        //"exec": "~/.config/waybar/scripts/Weather.py",
+        "exec-if": "ping wttr.in -c1",
+        "tooltip" : true,
+        "rotate": 90,
+    },
+
+    "custom/dots": {
+      "format": "",
+      "tooltip": false,
+      "rotate": 90,
+    },
 }

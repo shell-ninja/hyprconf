@@ -84,7 +84,6 @@
     },
 
 
-    // weather ( default "Munshiganj" - my area. change it to your area in the ~/.config/hypr/scripts/weather.sh script )
    "custom/weather": {
         "format": "  {}",
         "format-alt": "{alt}: {}",

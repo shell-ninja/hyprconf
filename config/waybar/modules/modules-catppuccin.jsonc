@@ -375,23 +375,6 @@
         "tooltip" : true
     },
 
-    "custom/ai": {
-        "format": "󰚩",
-        "tooltip": false
-    },
-
-    "custom/chatgpt": {
-        "format": " ",
-        "on-click": "~/.config/hypr/scripts/apps.sh ai",
-        "tooltip-format": "Open chatGPT"
-    },
-    
-    "custom/gemini": {
-        "format": " ",
-        "on-click": "~/.config/hypr/scripts/apps.sh gem",
-        "tooltip-format": "Open Gemini"
-    },
-
     "custom/nightlight": {
         "format": "󰖔 ",
         "exec": "~/.config/hypr/scripts/nightlight.sh",

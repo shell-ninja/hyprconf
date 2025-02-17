@@ -1,20 +1,4 @@
 {
-
-    // opening ai
-    "group/ai": {
-        "orientation": "inherit",
-        "drawer": {
-            "transition-duration": 300,
-            "children-class": "not-memory",
-            "transition-left-to-right": false
-       },
-       "modules": [
-            "custom/ai",
-            "custom/gemini",
-            "custom/chatgpt"
-       ]
-    },
-
     // opening power menu
     "group/power": {
         "orientation": "inherit",

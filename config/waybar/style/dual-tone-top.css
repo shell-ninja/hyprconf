@@ -58,13 +58,10 @@ tooltip label {
 
 #custom-launch_rofi,
 #custom-lock_screen,
-#custom-light_dark,
 #custom-power,
 #custom-reboot,
 #custom-lock,
 #custom-logout,
-#custom-power_profile,
-#custom-weather,
 #custom-updater_icon,
 #custom-updater,
 #window,
@@ -75,7 +72,6 @@ tooltip label {
 #idle_inhibitor,
 #custom-clipboard_icon,
 #custom-clipboard,
-#custom-wallpaper-change,
 #custom-system,
 #memory,
 #custom-memory-icon,
@@ -88,12 +84,9 @@ tooltip label {
 #tray,
 #temperature,
 #workspaces,
-#taskbar,
-#custom-notify,
 #battery,
 #mpris,
 #custom-nightlight,
-#hyprland-keyboard,
 #backlight {
   background: @crust;
   opacity: 1;
@@ -177,11 +170,6 @@ tooltip label {
   margin-right: 10px;
 }
 
-#custom-notify {
-  border-radius: 15px;
-  padding: 0 15px;
-}
-
 #custom-nightlight {
   border-radius: 0 5px 5px 0;
   font-size: 15px;
@@ -230,12 +218,6 @@ tooltip label {
   color: @lavender;
   background-color: @mantle;
   padding-right: 15px;
-}
-
-#custom-wallpaper-change {
-  font-size: 16px;
-  padding-right: 20px;
-  border-radius: 0 15px 15px 0;
 }
 
 #custom-reboot,
@@ -320,18 +302,6 @@ tooltip label {
   margin-right: 10px;
 }
 
-#custom-light_dark {
-  border-radius: 15px 0 0 15px;
-  margin-left: 10px;
-  padding: 0 15px;
-}
-
-#custom-weather {
-  border-radius: 15px;
-  margin-left: 10px;
-  background-color: transparent;
-}
-
 #temperature.critical {
   color: #e92d4d;
 }
@@ -339,12 +309,6 @@ tooltip label {
 #workspaces {
   background-color: @mantle;
   border-radius: 5px;
-}
-
-#custom-power_profile {
-  color: #a6e3a1;
-  border-left: 0px;
-  border-right: 0px;
 }
 
 #window {
@@ -405,16 +369,4 @@ tooltip label {
   border-left: 0px;
   border-right: 0px;
   border-radius: 0 5px 5px 0;
-}
-
-#custom-cava {
-  background: #18202a;
-  color: #9db8c1;
-  opacity: 0.8;
-  padding: 0px 10px;
-  margin: 3px 0px;
-  margin-right: 10px;
-  margin-top: 10px;
-  border: 0px;
-  border-radius: 15px;
 }
