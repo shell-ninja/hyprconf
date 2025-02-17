@@ -1,44 +1,43 @@
 {
     "include": [
-        "$HOME/.config/waybar/modules/modules-catppuccin.jsonc",
+        "$HOME/.config/waybar/modules/modules-virt.jsonc",
         "$HOME/.config/waybar/modules/modules-custom.jsonc",
         "$HOME/.config/waybar/modules/modules-groups.jsonc"
     ],
     "layer": "top",
-    "position": "top",
+    "position": "left",
     "mod": "dock",
     "exclusive": true,
     "passthrough": false,
     "gtk-layer-shell": true,
     "reload_style_on_change": true,
-    "height": 20,
-    "margin-top": 5,
-    "margin-left": 10,
-    "margin-right": 10,
+    "margin-top": 20,
+    "margin-bottom": 20,
+    "margin-left": 5,
 
     "modules-left": [
         "custom/launch_rofi",
-        "hyprland/window", 
-        "hyprland/workspaces",
-        "group/sysinfo",
-        "mpris" 
+        "clock#calender",
+        "clock",
+        "custom/weather",
+        "mpris",
+        "custom/dots",
     ],
 
     "modules-center": [
-        "clock"
+        "hyprland/workspaces"
     ],
 
     "modules-right": [ 
+        "custom/dots",
         "tray", 
-        "pulseaudio", 
-        "pulseaudio#microphone", 
-        "custom/updater", 
+        "network", 
         "idle_inhibitor", 
-        "custom/nightlight", 
-        "custom/clipboard", 
+        "custom/nightlight",
         "battery", 
         "backlight",  
-        "group/network", 
+        "pulseaudio/slider",
+        "pulseaudio#audio", 
         "group/power"
     ],
 
@@ -50,12 +49,20 @@
         "on-scroll-down": "hyprctl dispatch workspace e+1",
         "format": "{icon}",
         "format-icons": {
-            "default": ""
+            "default": "",
           },
         "persistent-workspaces": {
             "1": [],
             "2": [],
             "3": []
         }
-    }
+    },
+
+    "custom/launch_rofi": {
+        "format": "",
+        "on-click": "rofi -show drun -theme ~/.config/rofi/menu/menu.rasi",
+        "on-click-right": "kitty --title yazi -e yazi",
+        "tooltip": true,
+        "tooltip-format": "Left Click: Launch Rofi\nRight Click: Launch yazi"
+    },
 }

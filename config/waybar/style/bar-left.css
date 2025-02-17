@@ -3,19 +3,20 @@
   border-radius: 0;
   font-family: "JetBrainsMono Nerd Font", "MesloLGS Nerd Font", "Font Awesome";
   font-weight: bold;
-  font-size: 14px;
+  font-size: 12px;
   min-height: 0;
 }
 
 @import "style/mocha.css";
+@import "style/theme.css";
 
 window#waybar {
-  background-color: shade(@base, 0.9);
-  border-radius: 25px;
+  background-color: @background;
+  border-radius: 5px;
 }
 
 tooltip {
-  background: @crust;
+  background: @base;
   opacity: 1;
   border-radius: 10px;
   border-width: 2px;
@@ -29,10 +30,10 @@ tooltip label {
 }
 
 #workspaces button {
-  padding: 5px;
+  padding: 7px 0;
   color: @surface2;
   margin-right: 5px;
-  background-color: @crust;
+  background-color: transparent;
 }
 
 #workspaces button.active {
@@ -41,18 +42,18 @@ tooltip label {
 
 #workspaces button.focused {
   color: @rosewater;
-  background: @crust;
+  background: transparent;
   border-radius: 15px;
 }
 
 #workspaces button.urgent {
   color: #11111b;
-  background: @crust;
+  background: transparent;
   border-radius: 15px;
 }
 
 #workspaces button:hover {
-  background: @crust;
+  background: transparent;
   color: @flamingo;
   border-radius: 15px;
 }
@@ -63,78 +64,42 @@ tooltip label {
 #custom-reboot,
 #custom-logout,
 #custom-lock,
-#custom-updater,
-#window,
-#cpu,
-#disk,
+#custom-weather,
 #idle_inhibitor,
-#custom-clipboard,
-#memory,
 #clock,
 #pulseaudio,
 #network,
 #tray,
-#temperature,
 #workspaces,
 #battery,
 #mpris,
 #custom-nightlight,
 #backlight {
-  background: @crust;
+  background: transparent;
   opacity: 1;
-  padding: 0px 10px;
-  margin: 3px 0px;
-}
-
-#custom-system {
-  color: @yellow;
-  padding: 0 15px;
-  margin: 3px 0;
-}
-
-#memory,
-#cpu,
-#disk,
-#temperature {
-  background-color: transparent;
-}
-
-#temperature {
-  color: @rosewater;
-}
-
-#memory {
-  color: @teal;
-}
-
-#cpu {
-  color: @flamingo;
-  padding-left: 15px;
-}
-
-#disk {
-  color: @blue;
-  margin-right: -5px;
+  padding: 10px 5px;
 }
 
 #idle_inhibitor {
   font-size: 15px;
-  padding: 0 15px;
-  background: @crust;
+  padding: 5px 0;
+  background: transparent;
   color: @pink;
   border-radius: 15px 0 0 15px;
   margin-right: 0px;
 }
 
-#mpris {
-  background-color: transparent;
-  margin-left: 10px;
-  color: @rosewater;
-}
-
 #custom-nightlight {
   border-radius: 0;
   color: @peach;
+  font-size: 14px;
+  margin-left: 6px;
+}
+
+#mpris {
+  background-color: transparent;
+  font-size: 15;
+  color: @rosewater;
 }
 
 #battery {
@@ -162,37 +127,25 @@ tooltip label {
   animation-direction: alternate;
 }
 
-#custom-clipboard {
-  border-radius: 0 15px 15px 0;
-  font-size: 14px;
-  color: @lavender;
-  padding-right: 10px;
-}
-
 #custom-reboot,
 #custom-logout,
 #custom-lock,
 #custom-power {
   color: @red;
-  padding: 0 15px;
-  padding-right: 20px;
-  margin-right: 10px;
   border-radius: 15px;
   font-size: 15px;
   font-weight: bolder;
+  padding-left: 1px;
+}
+
+#custom-power {
+  padding-bottom: 20px;
 }
 
 #network {
   background-color: transparent;
   font-size: 15px;
   color: @mauve;
-}
-
-#custom-updater {
-  border-radius: 15px;
-  padding: 0 15px;
-  margin-right: 10px;
-  color: @teal;
 }
 
 #backlight {
@@ -209,70 +162,73 @@ tooltip label {
 }
 
 #tray {
-  margin-right: 10px;
+  background-color: transparent;
+  font-size: 12px;
+}
+
+#custom-weather {
+  color: @green;
+  border-radius: 15px;
   background-color: transparent;
 }
 
-#disk {
-  border-radius: 0px 15px 15px 0px;
-  margin-right: 10px;
-}
-
-#temperature.critical {
-  color: #e92d4d;
-}
-
 #workspaces {
-  padding-right: 15px;
-  padding-left: 15px;
   border-radius: 15px;
-}
-
-#custom-power_profile {
-  color: #a6e3a1;
-  border-left: 0px;
-  border-right: 0px;
-}
-
-#window {
-  color: @teal;
-  border-radius: 0 15px 15px 0;
-  margin-left: 0px;
-  margin-right: 10px;
-  padding-right: 15px;
 }
 
 #custom-launch_rofi {
   color: #89b4fa;
-  margin-left: 10px;
-  margin-right: 0px;
-  padding: 0 15px;
+  padding: 15px;
   padding-right: 20px;
   font-size: 15px;
-  border-radius: 15px 0 0 15px;
+  border-radius: 15px;
+}
+
+#pulseaudio-slider {
+  margin-top: 10px;
+}
+
+#pulseaudio-slider slider {
+  min-height: 7px;
+  min-width: 15px;
+  opacity: 0;
+  background-color: @text;
+  border-radius: 3px;
+  box-shadow: 1px 5px 6px 1px #272727;
+}
+
+#pulseaudio-slider trough {
+  min-height: 100px;
+  min-width: 7px;
+  border-radius: 5px;
+  background-color: @surface0;
+}
+
+#pulseaudio-slider highlight {
+  min-width: 5px;
+  border-radius: 5px;
+  background-color: @blue;
 }
 
 #pulseaudio {
-  background-color: @crust;
+  background-color: transparent;
+  margin-top: -5px;
   color: @blue;
-  border-left: 0px;
-  border-right: 0px;
-  border-radius: 15px 0 0 15px;
+}
+
+#clock,
+#clock-calender {
+  color: @sapphire;
+  border-radius: 15px;
+  padding: 15px 0;
+  font-size: 12px;
 }
 
 #clock {
-  color: @sapphire;
-  border-radius: 15px;
-  margin-right: 10px;
-  margin-left: 10px;
-  padding: 0 20px;
-  font-size: 14px;
+  padding-top: 5px;
 }
 
-#pulseaudio.microphone {
-  color: @green;
-  margin-right: 10px;
-  border-left: 0px;
-  border-right: 0px;
-  border-radius: 0 15px 15px 0;
+#custom-dots {
+  color: @sapphire;
+  font-size: 15px;
 }

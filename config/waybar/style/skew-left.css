@@ -1,0 +1,221 @@
+* {
+  border: none;
+  border-radius: 0;
+  font-family: "JetBrainsMono Nerd Font", "MesloLGS Nerd Font", "Font Awesome";
+  font-weight: bold;
+  font-size: 12px;
+  min-height: 0;
+}
+
+@import "style/mocha.css";
+@import "style/theme.css";
+
+window#waybar {
+  background-color: transparent;
+  border-radius: 0;
+}
+
+tooltip {
+  background: @base;
+  opacity: 1;
+  border-radius: 0;
+  border-width: 2px;
+  border-style: solid;
+  border-color: @sapphire;
+}
+
+tooltip label {
+  font-size: 16px;
+  color: @blue;
+}
+
+#workspaces button {
+  padding: 7px 0;
+  color: @surface2;
+  margin-right: 5px;
+  background-color: @background;
+}
+
+#workspaces button.active {
+  color: @maroon;
+}
+
+#workspaces button.focused {
+  color: @rosewater;
+  background: @background;
+  border-radius: 0;
+}
+
+#workspaces button.urgent {
+  color: #11111b;
+  background: @background;
+  border-radius: 0;
+}
+
+#workspaces button:hover {
+  background: @background;
+  color: @flamingo;
+  border-radius: 0;
+}
+
+#custom-launch_rofi,
+#custom-power_btn,
+#idle_inhibitor,
+#custom-nightlight,
+#clock,
+#pulseaudio,
+#network,
+#tray,
+#workspaces,
+#battery,
+#backlight {
+  background: @background;
+  opacity: 1;
+  padding: 10px 5px;
+}
+
+#idle_inhibitor {
+  font-size: 15px;
+  padding: 5px 0;
+  background: @background;
+  color: @pink;
+  border-radius: 0;
+  margin-right: 0px;
+}
+
+#custom-nightlight {
+  border-radius: 0;
+  color: @peach;
+  padding-left: 15px;
+  font-size: 15px;
+}
+
+#hyprland-language {
+  font-size: 15px;
+  margin-right: 20px;
+}
+
+#battery {
+  color: #a6e3a1;
+  background-color: @background;
+  margin-right: 0;
+  font-size: 16px;
+  padding-left: 15px;
+  border-radius: 0;
+}
+
+@keyframes blink {
+  to {
+    background-color: #ffffff;
+    color: #333333;
+  }
+}
+
+#battery.critical:not(.charging) {
+  color: #f53c3c;
+  animation-name: blink;
+  animation-duration: 0.5s;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+}
+
+#custom-power_btn {
+  color: @red;
+  border-radius: 0 0 5px 5px;
+  font-size: 15px;
+  font-weight: bolder;
+  padding-left: 1px;
+  padding-bottom: 15px;
+}
+
+#network {
+  background-color: @background;
+  font-size: 15px;
+  color: @mauve;
+}
+
+#backlight {
+  background-color: @background;
+  color: @flamingo;
+  padding: 0 5px;
+  font-size: 16px;
+  border-radius: 0;
+}
+
+#tray {
+  background-color: @background;
+  font-size: 12px;
+}
+
+#custom-launch_rofi {
+  color: #89b4fa;
+  padding: 15px;
+  padding-left: 10px;
+  font-size: 16px;
+  border-radius: 5px 5px 0 0;
+}
+
+#pulseaudio-slider {
+  padding-top: 10px;
+  background-color: @background;
+}
+
+#pulseaudio-slider slider {
+  min-height: 7px;
+  min-width: 15px;
+  opacity: 0;
+  background-color: @text;
+  border-radius: 3px;
+  box-shadow: 1px 5px 6px 1px #272727;
+}
+
+#pulseaudio-slider trough {
+  min-height: 100px;
+  min-width: 7px;
+  border-radius: 5px;
+  background-color: @surface0;
+}
+
+#pulseaudio-slider highlight {
+  min-width: 5px;
+  border-radius: 5px;
+  background-color: @blue;
+}
+
+#pulseaudio {
+  background-color: @background;
+  margin-top: -5px;
+  color: @blue;
+}
+
+#clock,
+#clock-calender {
+  color: @sapphire;
+  border-radius: 0;
+  padding: 15px 0;
+  padding-bottom: 5px;
+  font-size: 12px;
+}
+
+#clock {
+  padding-top: 5px;
+}
+
+#custom-endt,
+#custom-endb,
+#custom-endn,
+#custom-endm {
+  color: @background;
+  font-size: 33px;
+  padding: 0;
+}
+
+#custom-dot {
+  /* color: @overlay0; */
+  color: @surface0;
+  font-size: 15;
+  padding: 0 15px;
+  padding-left: 10px;
+  background-color: @background;
+}
