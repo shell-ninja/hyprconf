@@ -52,67 +52,17 @@ tooltip label {
   color: @color7;
 }
 
-#taskbar button {
-  box-shadow: none;
-  text-shadow: none;
-  padding: 0px;
-  border-radius: 9px;
-  margin-top: 3px;
-  margin-bottom: 3px;
-  padding-left: 3px;
-  padding-right: 3px;
-  animation: gradient_f 20s ease-in infinite;
-  transition: all 0.5s cubic-bezier(0.55, -0.68, 0.48, 1.682);
-}
-
-#taskbar button.active {
-  background: #324857;
-  margin-left: 3px;
-  padding-left: 15px;
-  padding-right: 15px;
-  margin-right: 3px;
-  animation: gradient_f 20s ease-in infinite;
-  transition: all 0.3s cubic-bezier(0.55, -0.68, 0.48, 1.682);
-}
-
-#taskbar button:hover {
-  background: #304150;
-  padding-left: 3px;
-  padding-right: 3px;
-  animation: gradient_f 20s ease-in infinite;
-  transition: all 0.3s cubic-bezier(0.55, -0.68, 0.48, 1.682);
-}
-
 #custom-launch_rofi,
-#custom-lock_screen,
-#custom-light_dark,
 #custom-power_btn,
-#custom-power_profile,
-#custom-weather,
 #custom-updater,
-#window,
-#cpu,
-#disk,
 #idle_inhibitor,
-#custom-updates,
 #custom-clipboard,
-#custom-wallpaper-change,
-#memory,
 #clock,
 #battery,
 #pulseaudio,
 #network,
 #tray,
-#temperature,
 #workspaces,
-#taskbar,
-#custom-notify,
-#custom-ai,
-#custom-ps,
-#custom-fb,
-#custom-yt,
-#custom-wapp,
-#custom-github,
 #mpris,
 #custom-nightlight,
 #backlight {
@@ -135,29 +85,11 @@ tooltip label {
   padding-right: 15px;
 }
 
-#custom-notify,
 #custom-nightlight {
   margin-right: 3px;
   border-radius: 3px;
   color: @color4;
-}
-
-#custom-nightlight {
   padding-right: 5px;
-}
-
-#cpu {
-  border-right: none;
-  color: @color4;
-}
-
-#memory {
-  border-right: none;
-  color: @color5;
-}
-
-#disk {
-  color: @color8;
 }
 
 #battery {
@@ -196,32 +128,6 @@ tooltip label {
   color: @color3;
 }
 
-#custom-ai {
-  color: @color1;
-  padding-bottom: 3px;
-  border-radius: 3px 0 0 3px;
-  border-right: none;
-}
-
-#custom-github {
-  color: @color3;
-  border-left: none;
-  border-radius: 0 3px 3px 0;
-}
-
-#custom-wallpaper-change {
-  font-size: 16px;
-  padding-right: 20px;
-  margin-right: 3px;
-  border-radius: 0 3px 3px 0;
-  border-left: none;
-  color: @color9;
-}
-
-#taskbar {
-  border-radius: 3px;
-}
-
 #network {
   margin-right: 3px;
   border-radius: 3px;
@@ -240,16 +146,8 @@ tooltip label {
   color: @color2;
 }
 
-#tray,
-#custom-lock_screen,
-#temperature,
-#custom-launch_rofi,
-#cpu {
+#custom-launch_rofi {
   border-radius: 3px 0px 0px 3px;
-}
-
-#temperature {
-  border-radius: 0 10px 10px 0;
 }
 
 #tray {
@@ -257,11 +155,9 @@ tooltip label {
   border-radius: 3px;
 }
 
-#custom-light_dark,
 #custom-power_btn,
 #workspaces,
-#pulseaudio.microphone,
-#disk {
+#pulseaudio.microphone {
   border-radius: 0px 3px 3px 0px;
   margin-right: 3px;
 }
@@ -273,38 +169,9 @@ tooltip label {
   margin-right: 10px;
 }
 
-#custom-light_dark {
-  border-radius: 3px 0 0 3px;
-  margin-right: 0;
-  border-right: none;
-  padding: 0 15px;
-  color: @color6;
-}
-
-#custom-weather {
-  border-radius: 3px;
-  margin-left: 10px;
-}
-
-#temperature.critical {
-  color: #e92d4d;
-}
-
 #workspaces {
   padding-right: 5px;
   padding-left: 5px;
-}
-
-#custom-power_profile {
-  color: #a6e3a1;
-  border-left: 0px;
-  border-right: 0px;
-}
-
-#window {
-  border-radius: 3px;
-  margin-left: 20px;
-  margin-right: 20px;
 }
 
 #custom-launch_rofi {
@@ -335,17 +202,4 @@ tooltip label {
   border-right: 0px;
   border: 1px solid @foreground;
   border-left: none;
-}
-
-#custom-cava {
-  background: #08080a;
-  color: #9db8c1;
-  opacity: 0.8;
-  padding: 0px 10px;
-  margin: 3px 0px;
-  margin-right: 10px;
-  margin-top: 10px;
-  border: 0px;
-  border-radius: 3px;
-  border: 1px solid #9db8c1;
 }

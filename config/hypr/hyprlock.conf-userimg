@@ -1,4 +1,3 @@
-# variables
 source = ~/.config/hypr/configs/configs.conf
 
 background {
@@ -32,7 +31,7 @@ input-field {
     font_color = $inact_border
     fade_on_empty = false
     fade_timeout = 2000 # Milliseconds before fade_on_empty is triggered.
-    placeholder_text = <i> <span foreground="##000000"> Enter Password...</span> </i>
+    placeholder_text = <i> <span foreground="##000000">🔒 Enter Password...</span> </i>
     hide_input = false
     rounding = -1 # -1 means complete rounding (circle/oval)
     check_color = rgba(d3d4e6FF)
@@ -44,8 +43,8 @@ input-field {
     bothlock_color = rgba(d3d4e6FF)
     invert_numlock = false # changecolor = rgba(d3d4e6FF)
     swap_font_color = $act_border
-    position = 0, 100
-    halign = center
+    position = -40, 40
+    halign = right
     valign = bottom
 }
 
@@ -55,9 +54,8 @@ label {
     text = cmd[update:1000] echo "$(date +'%I')"
     color = $act_border
     font_size = 200
-    # font_family = Pacifico Regular
-    font_family = Montserrat Italic Bold
-    position = -50, 200
+    font_family = Pacifico Regular
+    position = -50, 250
     halign = center
     valign = center
     shadow_passes = 5
@@ -70,9 +68,8 @@ label {
     text = cmd[update:1000] echo "$(date +'%M')"
     color = $act_border
     font_size = 200
-    # font_family = Pacifico Regular
-    font_family = Montserrat Italic Bold
-    position = 50, -10
+    font_family = Pacifico Regular
+    position = 50, 70
     halign = center
     valign = center
     shadow_passes = 5
@@ -100,7 +97,7 @@ label {
     color = $act_border
     font_size = 25
     font_family = Pacifico Regular
-    position = 0, -150
+    position = 0, -75
     halign = center
     valign = center
     shadow_passes = 5
@@ -108,41 +105,41 @@ label {
 }
 
 # user
-# label {
-#     monitor =
-#     text = $USER
-#     color = $act_border
-#     font_size = 40
-#     font_family = Fira Bold
-#     position = -50, 120
-#     halign = right
-#     valign = bottom
-#     shadow_passes = 5
-#     shadow_size = 10
-# }
+label {
+    monitor =
+    text = $USER
+    color = $act_border
+    font_size = 40
+    font_family = Fira Bold
+    position = -110, 120
+    halign = right
+    valign = bottom
+    shadow_passes = 5
+    shadow_size = 10
+}
 
 # uptime
-# label {
-#     monitor =
-#     text = cmd[update:60000] echo "<b> "$(uptime -p)" </b>"
-#     color = $act_border
-#     font_size = 18
-#     font_family = Fira Bold
-#     position = 0, 0
-#     halign = left
-#     valign = bottom
-# }
+label {
+    monitor =
+    text = cmd[update:60000] echo "<b> "$(uptime -p)" </b>"
+    color = $act_border
+    font_size = 18
+    font_family = Fira Bold
+    position = 0, 0
+    halign = left
+    valign = bottom
+}
 
-# image {
-#     monitor =
-#     path = $HOME/.config/hypr/.cache/user.png
-#     size = 280 # lesser side if not 1:1 ratio
-#     rounding = -1 # negative values mean circle
-#     border_size = 8
-#     border_color = $act_border
-#     rotate = 0 # degrees, counter-clockwise
-#     reload_time = -1 # seconds between reloading, 0 to reload with SIGUSR2
-#     position = -45, 190
-#     halign = right
-#     valign = bottom
-# }
+image {
+    monitor =
+    path = $HOME/.config/hypr/.cache/user.png
+    size = 280 # lesser side if not 1:1 ratio
+    rounding = -1 # negative values mean circle
+    border_size = 8
+    border_color = $act_border
+    rotate = 0 # degrees, counter-clockwise
+    reload_time = -1 # seconds between reloading, 0 to reload with SIGUSR2
+    position = -45, 190
+    halign = right
+    valign = bottom
+}

@@ -76,12 +76,19 @@ apply_config() {
         sed -i "s/y-offset:.*/y-offset: -15px;/g" "$rofi_clipboard"
 
     elif [[ "$1" == *"reflection-top"* ]]; then
-        echo -e "$1\n\n\n"
         sed -i "s/location:.*/location: northWest;/g" "$rofi_menu"
         sed -i "s/x-offset:.*/x-offset: 15px;/g" "$rofi_menu"
         sed -i "s/y-offset:.*/y-offset: 15px;/g" "$rofi_menu"
 
         sed -i "s/location:.*/location: north;/g" "$rofi_clipboard"
+        sed -i "s/anchor:.*/anchor: center;/g" "$rofi_clipboard"
+
+    elif [[ "$1" == *"-left"* ]]; then
+        sed -i "s/location:.*/location: northWest;/g" "$rofi_menu"
+        sed -i "s/x-offset:.*/x-offset: 15px;/g" "$rofi_menu"
+        sed -i "s/y-offset:.*/y-offset: 20px;/g" "$rofi_menu"
+
+        sed -i "s/location:.*/location: center;/g" "$rofi_clipboard"
         sed -i "s/anchor:.*/anchor: center;/g" "$rofi_clipboard"
     fi
 
