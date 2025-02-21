@@ -165,6 +165,12 @@ bash -c "$(wget -q  https://raw.githubusercontent.com/shell-ninja/hyprconf/main/
 
 After installation, just press the `SUPER + Shift + h`. It will show you all the keybinds.
 
+## Lets discuss on Discord 
+
+- [hyprconf](https://discord.gg/kUjz4td2)
+
+<br>
+
 ## Contribute.
 
 <h4>
