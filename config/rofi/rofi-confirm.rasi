@@ -17,7 +17,7 @@ window {
     anchor:                      center;
     fullscreen:                  false;
     width:                       500px;
-    border:                      2px;
+    border:                      @border-size;
     border-color:                @foreground;
     border-radius:               @radius;
     cursor:                      "default";

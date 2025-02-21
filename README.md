@@ -12,7 +12,7 @@ This is a rolling release configuration. It means, I often make changes, fix bug
 ## Screenshots
 
 <details close>
-<summary>Themes</summary>
+<summary>Overall</summary>
 <p align="center">
    <img aligh="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/theme/1.png?raw=true" />
    <img aligh="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/theme/2.png?raw=true" /> <br>
@@ -59,7 +59,11 @@ This is a rolling release configuration. It means, I often make changes, fix bug
 <details close>
 <summary>Lock Screen</summary>
 <p align="center">
-   <img aligh="center" width="99%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/lock.png?raw=true" />
+   <img aligh="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/lockscreen/lock-1.png?raw=true" />
+   <img aligh="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/lockscreen/lock-2.png?raw=true" />
+        <br>
+   <img aligh="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/lockscreen/lock-3.png?raw=true" />
+   <img aligh="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/lockscreen/selecttheme.png?raw=true" />
 </p>
 </details>
 
@@ -114,7 +118,7 @@ If you have OpenBangla-Keyboard installed, then you need to follow some steps to
 
 ### Rofi
 
-- All the Rofi configs are inside the `~/.config/rofi` dir. Inside this, you will find <i>menu</i> <i>power_option</i> and <i>theme</i> dir. Inside each directory, all the necessary configs are available.
+- All the Rofi configs are inside the `~/.config/rofi` dir. Inside this, you will find <i>menu</i>, <i>power_option</i> and <i>theme</i> dir. Inside each directory, all the necessary configs are available.
 
 ### Waybar
 
