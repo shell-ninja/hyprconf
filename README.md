@@ -165,6 +165,12 @@ bash -c "$(wget -q  https://raw.githubusercontent.com/shell-ninja/hyprconf/main/
 
 After installation, just press the `SUPER + Shift + h`. It will show you all the keybinds.
 
+## Lets discuss on Discord
+
+- Join [hyprconf](https://discord.gg/kUjz4td2) discord server and suggest your valuable opinions/suggestions to update the dotfiles.
+
+<br>
+
 ## Contribute.
 
 <h4>
@@ -175,7 +181,7 @@ If you want to add your ideas in this project, just do some steps.
 2. Now clone the forked repository in you machine. <br> Example command:
 
 ```
-git clone --depth=1 https://github.com/your_user_name/hyprconf.git
+git clone --depth=1 --branch=development https://github.com/your_user_name/hyprconf.git
 ```
 
 3. Create a branch by your user_name. <br> Example command:
@@ -205,8 +211,6 @@ git push origin your_branch_name
 ```
 
 5. Now you can create a pull request in the main repository.<br> But make sure to create the pull request in the `development` branch, no the `main` branch.
-
-### Thats all about contributing.
 
 ## Reference
 
