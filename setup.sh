@@ -360,6 +360,9 @@ fi
 ln -sf "$HOME/.config/waybar/configs/full-top" "$HOME/.config/waybar/config"
 ln -sf "$HOME/.config/waybar/style/full-top.css" "$HOME/.config/waybar/style.css"
 
+# setting up hyprlock theme
+ln -sf "$HOME/.config/hypr/lockscreens/hyprlock-1.conf" "$HOME/.config/hypr/hyprlock.conf"
+
 msg act "Generating colors and other necessary things..."
 "$HOME/.config/hypr/scripts/wallcache.sh" &> /dev/null
 "$HOME/.config/hypr/scripts/pywal.sh" &> /dev/null

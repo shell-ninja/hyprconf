@@ -23,7 +23,8 @@
 ALT + B | reset default browser
 CTRL + ESCAPE | reload Waybar
 CTRL + ALT + ESCAPE | toggle Waybar visibility
- + SHIFT + L | lock screen (hyprlock)
+ + SHIFT + L | lockscreen (hyprlock)
+ + ALT + L | lockscreen theme (hyprlock)
  + CTRL + W | switch Waybar layout
  + CTRL + E | edit dotfiles
  + CTRL + R | reload Hyprland
