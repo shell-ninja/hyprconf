@@ -164,18 +164,27 @@ This Hyprland configuration is kind of minila looking, but also little bit gorge
 
 <h4>To install and setup this hyprland configuration automaticly, just follow these stpes...</h4>
 
-- Clone this repository:
+Clone this Repository
 
-```
+- (Rolling Release):
+
+```shell
    git clone --depth=1 https://github.com/shell-ninja/hyprconf.git
 ```
 
+- Stable Release
+
+```shell
+   git clone --depth=1 --branch=stable https://github.com/shell-ninja/hyprconf.git
+```
+
 - Now run this commands:
-  ```
+
+```shell
   cd ~/hyprconf
   chmod +x setup.sh
   ./setup.sh
-  ```
+```
 
 <br>
 
@@ -234,33 +243,33 @@ bash -c "$(wget -q  https://raw.githubusercontent.com/shell-ninja/hyprconf/main/
 1. Fork this repository. Make sure to uncheck the `Copy the main branch only`. This will also copy other branches ( if available ).
 2. Now clone the forked repository in you machine. <br> Example command:
 
-```
+```shell
 git clone --depth=1 --branch=development https://github.com/your_user_name/hyprconf.git
 ```
 
 3. Create a branch by your user_name. <br> Example command:
 
-```
+```shell
 git checkout -b your_user_name
 ```
 
 4. Now add your ideas and commit to github. <br> Make sure to commit with a detailed test message. For example:
 
-```
+```shell
 git commit -m "fix: Fixed a but in the "example.sh script"
 ```
 
-```
+```shell
 git commit -m "add: Added this feature. This will happen if the user do this."
 ```
 
-```
+```shell
 git commit -m "delete: Deleted this. It was creating this example problem"
 ```
 
 4. While pushing the new commits, make sure to push it to your branch. <br> For example:
 
-```
+```shell
 git push origin your_branch_name
 ```
 
