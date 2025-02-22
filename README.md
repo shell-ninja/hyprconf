@@ -130,13 +130,13 @@ This Hyprland configuration is kind of minila looking, but also little bit gorge
 >
 > To configure hyprland settings, you can visit to `~/.config/hypr` directory. Inside it, you will fine `configs` dir, holding all the configuration files; `scripts` dir for all the scripts.
 > Wallpapers are stored in the `~/.config/hypr/Wallpaper/` directory. Just copy your favourite wallpapers into this directory.
-
+>
 > ### Rofi
-
+>
 > All the Rofi configs are inside the `~/.config/rofi` dir. Inside this, you will find <i>menu</i>, <i>power_option</i> and <i>theme</i> dir. Inside each directory, all the necessary configs are available.
-
+>
 > ### Waybar
-
+>
 > Visit to `~/.config/waybar` directory.
 > You will fine <i>configs</i> dir holding all the configurations.
 > A <i>style</i> dir holding all the <b>css</b> files.
