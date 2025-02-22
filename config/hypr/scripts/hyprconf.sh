@@ -10,17 +10,23 @@ end="\x1b[0m"
 _dir=`pwd`
 _cache="$HOME/.cache"
 _hyprconf="$_cache/hyprconf"
+_version_file="$HOME/.config/hypr/.cache/.version"
+if [[ -f "$_version_file" ]]; then
+    _version=$(cat "$_version_file")
+else
+    echo -e "!! Could not get the version. Please choose one."
+    gum
 
 clear
 
 # fn for git actions
 _git_clone() {
-    git clone --depth=1 https://github.com/me-js-bro/hyprconf.git ~/.cache/hyprconf &> /dev/null
+    git clone --depth=1 --branch="$version" https://github.com/shell-ninja/hyprconf.git ~/.cache/hyprconf &> /dev/null
 }
 
 # fn for the process
 _upd() {
-   if [[ -e "$_hyprconf" ]]; then
+   if [[ -d "$_hyprconf" ]]; then
        echo -e ":: hyrconf dir is available in the cache. Removing it"
        echo
        rm -rf "$_hyprconf" && sleep 1
@@ -29,7 +35,7 @@ _upd() {
    echo -e "${color}=>${end} Now cloning the updated repository..."
    _git_clone
 
-   if [[ -e "$_hyprconf" ]]; then
+   if [[ -d "$_hyprconf" ]]; then
        echo -e ":: Successfully cloned repo."
         gum spin \
             --spinner dot \
@@ -69,7 +75,7 @@ if [[ $? -eq 0 ]]; then
         --title.foreground "#e0ffff" \
         --title "Updating..." -- \
         sleep 2
-        _upd
+    _upd
 else
     gum spin \
         --spinner dot \
