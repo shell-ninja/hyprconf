@@ -14,6 +14,7 @@ This Hyprland configuration is kind of minila looking, but also little bit gorge
 <a href="#screenshots"><kbd> <br> Screenshots <br> </kbd></a>&ensp;&ensp;
 <a href="#setup"><kbd> <br> Setup <br> </kbd></a>&ensp;&ensp;
 <a href="#update"><kbd> <br> Update <br> </kbd></a>&ensp;&ensp;
+<a href="#config"><kbd> <br> Configuration <br> </kbd></a>&ensp;&ensp;
 <a href="#keyboards"><kbd> <br> keyboard Shortcuts <br> </kbd></a>&ensp;&ensp;
 <a href="#contrib"><kbd> <br> Contrubution <br> </kbd></a>&ensp;&ensp;
 <a href="https://discord.gg/kUjz4td2"><kbd> <br> Discord <br> </kbd></a>
@@ -120,6 +121,8 @@ This Hyprland configuration is kind of minila looking, but also little bit gorge
 - Hyprsunset to use nightlight, `SUPER` + F1 to increase, `SUPER` + F2 to decrease and `SUPER` + F3 to set to default
 
 <br>
+
+<a id="config"></a>
 
 > [!TIP]
 >
