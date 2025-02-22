@@ -25,7 +25,8 @@ RANDOM_PIC="${PICS[$((RANDOM % ${#PICS[@]}))]}"
 RANDOM_PIC_NAME="${#PICS[@]}. random"
 
 # Rofi command ( style )
-rofi_command="rofi -show -dmenu -config ~/.config/rofi/themes/rofi-wall.rasi"
+rofi_command1="rofi -show -dmenu -config ~/.config/rofi/themes/rofi-wall.rasi"
+rofi_command2="rofi -show -dmenu -config ~/.config/rofi/themes/rofi-wall-2.rasi"
 
 menu() {
   for i in "${!PICS[@]}"; do
@@ -40,12 +41,20 @@ menu() {
   printf "$RANDOM_PIC_NAME\n"
 }
 
+case $1 in
+    thm1)
+        choice=$(menu | ${rofi_command1})
+        ;;
+    thm2)
+        choice=$(menu | ${rofi_command2})
+        ;;
+esac
+
 if [[ "$engine" == "swww" ]]; then
 
   swww query || swww init
 
   main() {
-    choice=$(menu | ${rofi_command})
 
     # No choice case
     if [[ -z $choice ]]; then
@@ -97,7 +106,6 @@ elif [[ "$engine" == "hyprpaper" ]]; then
       fi
 
   main() {
-    choice=$(menu | ${rofi_command})
 
     # No choice case
     if [[ -z $choice ]]; then
