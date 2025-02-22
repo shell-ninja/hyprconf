@@ -124,6 +124,11 @@ This Hyprland configuration is kind of minila looking, but also little bit gorge
 
 <a id="config"></a>
 
+<div align="right">
+  <br>
+  <a href="#top"><kbd> <br> 🡅 <br> </kbd></a>
+</div>
+
 > [!TIP]
 >
 > ### Hyprland
@@ -141,6 +146,12 @@ This Hyprland configuration is kind of minila looking, but also little bit gorge
 > You will fine <i>configs</i> dir holding all the configurations.
 > A <i>style</i> dir holding all the <b>css</b> files.
 > A <i>moduled</i> dir for all the modules.
+
+> [!IMPORTANT]
+> This repo has 2 versions. `Stable` & `Rolling Release`.
+> [Stable](https://github.com/shell-ninja/hyprconf/tree/stable): It will be updated once in a month and will have multiple releases.
+> [Rolling Release](https://github.com/shell-ninja/hyprconf): It will be updated and fixed frequently.
+> While running the [Installation Script](https://github.com/shell-ninja/hyprconf-install), it will aks you to choose between the `stable` and the `rolling release version`
 
 <br>
 
