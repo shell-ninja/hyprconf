@@ -15,13 +15,13 @@ if [[ -f "$_version_file" ]]; then
     _version=$(cat "$_version_file")
 else
     echo -e "!! Could not get the version. Please choose one."
-    gum
+fi
 
 clear
 
 # fn for git actions
 _git_clone() {
-    git clone --depth=1 --branch="$version" https://github.com/shell-ninja/hyprconf.git ~/.cache/hyprconf &> /dev/null
+    git clone --depth=1 --branch="$_version" https://github.com/shell-ninja/hyprconf.git ~/.cache/hyprconf &> /dev/null
 }
 
 # fn for the process
