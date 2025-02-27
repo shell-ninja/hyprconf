@@ -155,16 +155,6 @@ function md
     mkdir -p $argv && cd $argv
 end
 
-# Random bars
-function random_bars
-    set columns (tput cols)
-    set chars ▁ ▂ ▃ ▄ ▅ ▆ ▇ █
-    for i in (seq 1 $columns)
-        echo -n (random_choice $chars)
-    end
-    echo
-end
-
 # Yazi wrapper
 function y
     set tmp (mktemp -t "yazi-cwd.XXXXXX")

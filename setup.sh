@@ -245,12 +245,16 @@ sleep 1
 
 # cloning the dotfiles repository into ~/.config/hypr
 cp -r "$dir/config"/* "$HOME/.config/"
+if [[ ! -d "$HOME/.local/share/fastfetch/presets" ]]; then
+    mv "$HOME/.config/fastfetch" "$HOME/.local/share/"
+fi
+
 sleep 1
 
 if [[ -d "$scripts_dir" ]]; then
     # make all the scripts executable...
     chmod +x "$scripts_dir"/* 2>&1 | tee -a "$log"
-    chmod +x "$HOME/.config/fish/change_style.sh" 2>&1 | tee -a "$log"
+    chmod +x "$HOME/.config/fish"/* 2>&1 | tee -a "$log"
     msg dn "All the necessary scripts have been executable..."
     sleep 1
 else
