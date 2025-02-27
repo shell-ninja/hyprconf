@@ -156,8 +156,9 @@ This Hyprland configuration is kind of minila looking, but also little bit gorge
 >
 > Fastfetch config files will be stored in your `~/.local/share/fastfetch` directory.
 > Visit there and change the presets according to your need.
-> If you haven't choose from the shells while running the installation script, just add these lines in your <b>`.bashrc, .zshrc or config.fish`</b> configs. <br> `fastfetch --config hypr` <br>
-> Here the <i>hypr</i> is the preset name. You will find the presets inside the `~/.local/share/fastfetch/presets` directory
+> If you haven't choose from the shells while running the installation script, just add these lines in your <b>`.bashrc, .zshrc or config.fish`</b> configs. <br><b> `fastfetch --config hypr` </b><br> <b>hypr</b> is the preset name. You will find presets inside your `~/.local/share/fastfetch/presets` directory
+
+<br>
 
 > [!IMPORTANT]
 > This repo has 2 versions. `Stable` & `Rolling Release`. <br>[Stable](https://github.com/shell-ninja/hyprconf/tree/stable): It will be updated once in a month and will have multiple releases. <br>[Rolling Release](https://github.com/shell-ninja/hyprconf): It will be updated and fixed frequently. <br>
