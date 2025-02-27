@@ -103,3 +103,4 @@ alias ipexternal="wget -qO- ifconfig.me && echo"
 alias exe='chmod +x'
 
 alias style='~/.config/fish/change_style.sh'
+alias ffstyle='~/.config/fish/ffstyle.sh'

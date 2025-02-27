@@ -245,6 +245,10 @@ sleep 1
 
 # cloning the dotfiles repository into ~/.config/hypr
 cp -r "$dir/config"/* "$HOME/.config/"
+if [[ ! -d "$HOME/.local/share/fastfetch/presets" ]]; then
+    mv "$HOME/.config/fastfetch" "$HOME/.local/share/"
+fi
+
 sleep 1
 
 if [[ -d "$scripts_dir" ]]; then
