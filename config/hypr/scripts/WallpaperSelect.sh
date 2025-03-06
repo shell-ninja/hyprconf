@@ -88,7 +88,7 @@ if [[ "$engine" == "swww" ]]; then
 
         if [[ ! -d "${themes_dir}/${wallName}-colors" ]]; then 
             wal -q -i "${wallDIR}/${PICS[$pic_index]}" || printf "\n\nCouls not generate any colors\n"
-            mv "$HOME/.cache/wal" "${themes_dir}/${wallName}-colors"
+            cp -r "$HOME/.cache/wal" "${themes_dir}/${wallName}-colors"
         fi
         # rm -rf "$HOME/.cache/wal"
 
@@ -147,11 +147,11 @@ elif [[ "$engine" == "hyprpaper" ]]; then
         wallName="${basename%.*}"
         echo "$wallName" > "$wallCache"
 
-      ln -sf "${wallDIR}/${PICS[$pic_index]}" "$cache_dir/current_wallpaper.png"
+        ln -sf "${wallDIR}/${PICS[$pic_index]}" "$cache_dir/current_wallpaper.png"
 
         if [[ ! -d "${themes_dir}/${wallName}-colors" ]]; then 
             wal -q -i "${wallDIR}/${PICS[$pic_index]}" || printf "\n\nCouls not generate any colors\n"
-            mv "$HOME/.cache/wal" "${themes_dir}/${wallName}-colors"
+            cp -r "$HOME/.cache/wal" "${themes_dir}/${wallName}-colors"
         fi
         # rm -rf "$HOME/.cache/wal"
     else

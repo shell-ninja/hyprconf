@@ -30,4 +30,14 @@ zoxide init fish | source
 thefuck --alias | source
 
 
-fastfetch
+if command -v fastfetch > /dev/null
+    # Only run fastfetch if we're in an interactive shell
+    if status --is-interactive
+        if test -d "$HOME/.local/share/fastfetch"
+            set ffconfig "hypr"
+            fastfetch --config "$ffconfig"
+        else
+            fastfetch
+        end
+    end
+end
