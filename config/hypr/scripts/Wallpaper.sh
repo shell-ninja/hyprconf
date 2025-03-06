@@ -35,7 +35,7 @@ if [[ "$engine" == "swww" ]]; then
 
         if [[ ! -d "${themes_dir}/${wallName}-colors" ]]; then 
             wal -q -i "$wallpaper"
-            mv "$HOME/.cache/wal" "${themes_dir}/${wallName}-colors"
+            cp -r "$HOME/.cache/wal" "${themes_dir}/${wallName}-colors"
         fi
         # rm -rf "$HOME/.cache/wal"
 

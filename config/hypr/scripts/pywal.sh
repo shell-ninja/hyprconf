@@ -2,75 +2,29 @@
 
 swww_cache="$HOME/.cache/swww"
 scripts_dir="$HOME/.config/hypr/scripts"
-cacheDir="$HOME/.config/hypr/.cache"
 themes_dir="$HOME/.config/hypr/.cache/colors"
-engine_file="$cacheDir/.engine"
-current_wallpaper="$cacheDir/current_wallpaper.png"
+engine_file="$HOME/.config/hypr/.cache/.engine"
+current_wallpaper="$HOME/.config/hypr/.cache/current_wallpaper.png"
 
 [[ ! -d "$themes_dir" ]] && mkdir -p "$themes_dir"
 
-wallName="$(cat "$cacheDir/.wallpaper")"
+wallName="$(cat "$HOME/.config/hypr/.cache/.wallpaper")"
 engine=$(cat "$engine_file")
 
 if [[ ! -d "${themes_dir}/${wallName}-colors" ]]; then
         current_wallpaper="$HOME/.config/hypr/.cache/current_wallpaper.png"
         if [[ -f "$current_wallpaper" ]]; then
-            wal -q -i "$current_wallpaper"
+            wal -e -q -i "$current_wallpaper"
         fi
-    [[ -d "$HOME/.cache/wal" ]] && mv "$HOME/.cache/wal" "${themes_dir}/${wallName}-colors"
+    [[ -d "$HOME/.cache/wal" ]] && cp -r "$HOME/.cache/wal" "${themes_dir}/${wallName}-colors"
 fi
-
-
-# Function to convert hex color code to rgba
-hex_to_rgba() {
-    hex=$1
-    r=$(printf '%s' ${hex:1:2})
-    g=$(printf '%s' ${hex:3:2})
-    b=$(printf '%s' ${hex:5:2})
-    a=$(printf '%s' ${hex:7:2})
-
-    # rgba="rgba($r$g$b$a)"
-    rgba="rgba($r$g$b$a"FF")"
-    echo $rgba
-}
-
-hex_to_rgba_opacity() {
-    hex=$1
-    r=$(printf '%s' ${hex:1:2})
-    g=$(printf '%s' ${hex:3:2})
-    b=$(printf '%s' ${hex:5:2})
-    a=$(printf '%s' ${hex:7:2})
-
-    # rgba="rgba($r$g$b$a)"
-    rgbo="rgba($r$g$b$a"66")"
-    echo $rgbo
-}
 
 # Extract colors from colors.json
 colors_file="${themes_dir}/${wallName}-colors/colors.json"
-if [ -f $colors_file ]; then
-    background_color=$(jq -r '.special.background' "$colors_file")
-    foreground_color=$(jq -r '.special.foreground' "$colors_file")
-    other_color=$(jq -r '.colors.color5' "$colors_file")
 
-  # Usage example
-    hex_color="$foreground_color"
-    hex_color_other="$other_color"
-
-    rgba_color=$(hex_to_rgba $hex_color)
-    rgba_color_other=$(hex_to_rgba $hex_color_other)
-    rgba_color_opacity=$(hex_to_rgba_opacity $hex_color)
-
-    # Set Hyprland active border color based on foreground color
-    hyprland_config=~/.config/hypr/configs/configs.conf
-    sed -i "s/act_border = .*$/act_border = $rgba_color/g" "$hyprland_config"
-    sed -i "s/inact_border = .*$/inact_border = $rgba_color_other/g" "$hyprland_config"
-    
-    # Reload Hyprland configuration (optional)
-    hyprctl reload
-else
-    exit 1
-fi
+# hyprland colors.
+hyprcolor="$HOME/.config/hypr/configs/colors-hyprland.conf"
+ln -sf "${themes_dir}/${wallName}-colors/colors-hyprland.conf" "$HOME/.config/hypr/configs/colors.conf"
 
 # setting kitty colors 
 kitty_colors="${themes_dir}/${wallName}-colors/colors-kitty.conf"
@@ -101,6 +55,10 @@ cp "${themes_dir}/${wallName}-colors/colors-rofi-dark.rasi" "$HOME/.config/rofi/
 # setting waybar colors
 [[ -f "$HOME/.config/waybar/style/theme.css" ]] && rm "$HOME/.config/waybar/style/theme.css"
 cp "${themes_dir}/${wallName}-colors/colors-waybar.css" "$HOME/.config/waybar/style/theme.css"
+
+# setting swaync colors
+[[ -f "$HOME/.config/swaync/colors.css" ]] && rm "$HOME/.config/swaync/colors.css"
+cp "${themes_dir}/${wallName}-colors/colors-waybar.css" "$HOME/.config/swaync/colors.css"
 
 # ----- Dunst
 dunst_file="$HOME/.config/dunst/dunstrc"
