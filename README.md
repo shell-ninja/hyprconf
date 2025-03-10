@@ -159,8 +159,7 @@ This Hyprland configuration is kind of minila looking, but also little bit gorge
 <br>
 
 > [!IMPORTANT]
-> This repo has 2 versions. `Stable` & `Rolling Release`. <br>[Stable](https://github.com/shell-ninja/hyprconf/tree/stable): It will be updated once in a month and will have multiple releases. <br>[Rolling Release](https://github.com/shell-ninja/hyprconf): It will be updated and fixed frequently. <br>
-> While running the [Installation Script](https://github.com/shell-ninja/hyprconf-install), it will aks you to choose between the `stable` and the `rolling release version`
+> This config is a `Rolling Release` version. It will be updated and fixed frequently.
 
 <br>
 
@@ -175,18 +174,10 @@ This Hyprland configuration is kind of minila looking, but also little bit gorge
 
 <h4>To install and setup this hyprland configuration automaticly, just follow these stpes...</h4>
 
-Clone this Repository
-
-- (Rolling Release):
+- Clone this Repository
 
 ```shell
    git clone --depth=1 https://github.com/shell-ninja/hyprconf.git
-```
-
-- Stable Release
-
-```shell
-   git clone --depth=1 --branch=stable https://github.com/shell-ninja/hyprconf.git
 ```
 
 - Now run this commands:
