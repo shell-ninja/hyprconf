@@ -23,8 +23,6 @@ This Hyprland configuration is kind of minila looking, but also little bit gorge
 
 > [!NOTE]
 > This is a rolling release configuration. It means, I often make changes, fix bugs and add features. If you want to update to the latest changes, just use this keyboard shortcut to update: `SUPER Shift + U`
->
-> This config also have a Stable release. You will be asked to choose betweent the `Stable` and the `Rolling Release` config while [installing](https://github.com/shell-ninja/hyprconf-install).
 
 <br>
 
