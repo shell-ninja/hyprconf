@@ -158,11 +158,6 @@ This Hyprland configuration is kind of minila looking, but also little bit gorge
 
 <br>
 
-> [!IMPORTANT]
-> This config is a `Rolling Release` version. It will be updated and fixed frequently.
-
-<br>
-
 <a id="setup"></a>
 
 <div align="right">
