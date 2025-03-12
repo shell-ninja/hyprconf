@@ -19,7 +19,7 @@ This Hyprland configuration is kind of minila looking, but also little bit gorge
 <a href="#contrib"><kbd> <br> Contrubution <br> </kbd></a>&ensp;&ensp;
 <a href="https://github.com/shell-ninja/hyprconf/wiki"><kbd> <br> Wiki <br> </kbd></a>
 
-<br>
+</div>
 
 > [!CAUTION]
 > Currently, taking screenshot of an area is creating a little problem. It suspends the script and I have no idea why it is happening. As soon as I fix it, I'll update it here. For now, only full screen screenshot is available.
