@@ -341,13 +341,9 @@ fi
 
 if [[ -d "$HOME/.config/hypr/Wallpaper" ]]; then
     mkdir -p "$HOME/.config/hypr/.cache"
-    engine="$HOME/.config/hypr/.cache/.engine"
     wallCache="$HOME/.config/hypr/.cache/.wallpaper"
 
-    touch "$engine"
     touch "$wallCache"      
-
-    echo "hyprpaper" > "$engine"
 
     if [ -f "$HOME/.config/hypr/Wallpaper/linux.jpg" ]; then
         echo "linux" > "$wallCache"
@@ -356,7 +352,6 @@ if [[ -d "$HOME/.config/hypr/Wallpaper" ]]; then
 
     # setting the default wallpaper
     ln -sf "$wallpaper" "$HOME/.config/hypr/.cache/current_wallpaper.png"
-    echo "wallpaper = ,~/.config/hypr/.cache/current_wallpaper.png" > "$HOME/.config/hypr/hyprpaper.conf"
 fi
 
 # setting up the waybar
