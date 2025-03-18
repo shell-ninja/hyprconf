@@ -1,33 +1,20 @@
 #!/bin/bash
 
-swww_cache="$HOME/.cache/swww"
 scripts_dir="$HOME/.config/hypr/scripts"
-themes_dir="$HOME/.config/hypr/.cache/colors"
-engine_file="$HOME/.config/hypr/.cache/.engine"
 current_wallpaper="$HOME/.config/hypr/.cache/current_wallpaper.png"
 
-[[ ! -d "$themes_dir" ]] && mkdir -p "$themes_dir"
-
-wallName="$(cat "$HOME/.config/hypr/.cache/.wallpaper")"
-engine=$(cat "$engine_file")
-
-if [[ ! -d "${themes_dir}/${wallName}-colors" ]]; then
-        current_wallpaper="$HOME/.config/hypr/.cache/current_wallpaper.png"
-        if [[ -f "$current_wallpaper" ]]; then
-            wal -e -q -i "$current_wallpaper"
-        fi
-    [[ -d "$HOME/.cache/wal" ]] && cp -r "$HOME/.cache/wal" "${themes_dir}/${wallName}-colors"
+current_wallpaper="$HOME/.config/hypr/.cache/current_wallpaper.png"
+if [[ -f "$current_wallpaper" ]]; then
+    rm -rf "$HOME/.cache/wal/schemes"
+    wal -e -i "$current_wallpaper"
 fi
-
-# Extract colors from colors.json
-colors_file="${themes_dir}/${wallName}-colors/colors.json"
 
 # hyprland colors.
 hyprcolor="$HOME/.config/hypr/configs/colors-hyprland.conf"
-ln -sf "${themes_dir}/${wallName}-colors/colors-hyprland.conf" "$HOME/.config/hypr/configs/colors.conf"
+ln -sf "$HOME/.cache/wal/colors-hyprland.conf" "$HOME/.config/hypr/configs/"
 
 # setting kitty colors 
-kitty_colors="${themes_dir}/${wallName}-colors/colors-kitty.conf"
+kitty_colors="$HOME/.cache/wal/colors-kitty.conf"
 kitty="$HOME/.config/kitty/kitty.conf"
 
 # Define a function to extract a specific color
@@ -44,24 +31,18 @@ inactive_border_color=$(extract_color "color5")
 sed -i "s/active_border_color .*$/active_border_color $active_border_color/g" "$kitty"
 sed -i "s/inactive_border_color .*$/inactive_border_color $inactive_border_color/g" "$kitty"
 
-[[ -f "$HOME/.config/kitty/colors-kitty.conf" ]] && rm "$HOME/.config/kitty/colors-kitty.conf"
-cp "${themes_dir}/${wallName}-colors/colors-kitty.conf" "$HOME/.config/kitty/"
+ln -sf "$HOME/.cache/wal/colors-kitty.conf" "$HOME/.config/kitty/"
 kitty @ set-color -a "$kitty"
 
 # setting rofi theme
-[[ -f "$HOME/.config/rofi/themes/rofi-colors.rasi" ]] && rm "$HOME/.config/rofi/themes/rofi-colors.rasi"
-cp "${themes_dir}/${wallName}-colors/colors-rofi-dark.rasi" "$HOME/.config/rofi/themes/rofi-colors.rasi"
+ln -sf "$HOME/.cache/wal/colors-rofi-dark.rasi" "$HOME/.config/rofi/themes/rofi-colors.rasi"
 
 # setting waybar colors
-[[ -f "$HOME/.config/waybar/style/theme.css" ]] && rm "$HOME/.config/waybar/style/theme.css"
-cp "${themes_dir}/${wallName}-colors/colors-waybar.css" "$HOME/.config/waybar/style/theme.css"
-
-# setting swaync colors
-[[ -f "$HOME/.config/swaync/colors.css" ]] && rm "$HOME/.config/swaync/colors.css"
-cp "${themes_dir}/${wallName}-colors/colors-waybar.css" "$HOME/.config/swaync/colors.css"
+ln -sf "$HOME/.cache/wal/colors-waybar.css" "$HOME/.config/waybar/style/theme.css"
 
 # ----- Dunst
 dunst_file="$HOME/.config/dunst/dunstrc"
+colors_file="$HOME/.cache/wal/colors.json"
 
 # Function to update Dunst colors
 update_dunst_colors() {
