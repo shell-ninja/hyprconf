@@ -10,7 +10,6 @@ end="\x1b[0m"
 _dir=`pwd`
 _cache="$HOME/.cache"
 _hyprconf="$_cache/hyprconf"
-_version_file="$HOME/.config/hypr/.cache/.version"
 
 clear
 

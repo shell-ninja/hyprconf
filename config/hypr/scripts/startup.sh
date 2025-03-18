@@ -1,12 +1,9 @@
 #!/bin/bash
 
 scripts_dir="$HOME/.config/hypr/scripts"
-wallpaper_dir="$HOME/.config/hypr/Wallpaper"
 wallpaper="$HOME/.config/hypr/.cache/current_wallpaper.png"
-engine_path="$HOME/.config/hypr/.cache/.engine"
 monitor_config="$HOME/.config/hypr/configs/monitor.conf"
 
-engine=$(cat $engine_path)
 nightlight_value=$(cat "$HOME/.config/hypr/.cache/.nightlight")
 
 # Transition config
@@ -16,25 +13,8 @@ DURATION=2
 BEZIER=".43,1.19,1,.4"
 SWWW_PARAMS="--transition-fps $FPS --transition-type $TYPE --transition-duration $DURATION --transition-bezier $BEZIER"
 
-if [ -f "$wallpaper" ]; then
-
-    if [[ "$engine" == "swww" ]] then
-
-        swww query || swww init && swww img ${wallpaper} $SWWW_PARAMS
-        
-    elif [[ "$engine" == "hyprpaper" ]]; then
-
-        # Ensure hyprpaper is running
-        if ! pgrep -x hyprpaper > /dev/null; then
-        hyprpaper -c ~/.config/hypr/hyprpaper.conf &
-        sleep 1  # give hyprpaper some time to start
-        fi
-
-        hyprctl hyprpaper preload "$wallpaper"
-        sleep 0.5
-        hyprctl hyprpaper wallpaper " ,$wallpaper"
-        hyprctl reload
-    fi
+if [[ -f "$wallpaper" ]]; then
+    swww query || swww init && swww img ${wallpaper} $SWWW_PARAMS
 else
     "$scripts_dir/Wallpaper.sh"
 fi

@@ -28,6 +28,7 @@ CTRL + ALT + ESCAPE | toggle Waybar visibility
  + CTRL + W | switch Waybar layout
  + CTRL + E | edit dotfiles
  + CTRL + R | reload Hyprland
+ + CTRL + p | re-generate colors
 CTRL + U | system update
  + CTRL + U | updated hyprconf
 PRINT | take screenshot
