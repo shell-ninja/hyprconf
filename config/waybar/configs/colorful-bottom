@@ -72,7 +72,7 @@
             // "format": "",   // for arch
             //  "format": "󰣛",   // for fedora
             // "format": "",  // for opensuse
-            "on-click": "rofi -show drun -theme ~/.config/rofi/menu/menu.rasi",
+            "on-click": "rofi -show drun -theme ~/.config/rofi/menu/menu.rasi || pkill rofi",
             "on-click-right": "kitty --title yazi -e yazi",
             "tooltip": true,
             "tooltip-format": "Left Click: Launch Rofi\nRight Click: Launch yazi"
