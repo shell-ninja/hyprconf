@@ -2,11 +2,20 @@
 
 scripts_dir="$HOME/.config/hypr/scripts"
 current_wallpaper="$HOME/.config/hypr/.cache/current_wallpaper.png"
+current_mode=$(cat "$HOME/.config/hypr/.cache/.current_mode")
 
 current_wallpaper="$HOME/.config/hypr/.cache/current_wallpaper.png"
 if [[ -f "$current_wallpaper" ]]; then
     rm -rf "$HOME/.cache/wal/schemes"
-    wal -e -i "$current_wallpaper"
+    if [[ -f "$HOME/.config/hypr/.cache/.current_mode" ]]; then
+        if [[ "$current_mode" == "dark" ]]; then
+            wal -q -e -i "$current_wallpaper"
+        elif [[ "$current_mode" == "light" ]]; then
+            wal -q -e -l -i "$current_wallpaper"
+        fi
+    else
+        wal -q -e -i "$current_wallpaper"
+    fi
 fi
 
 # hyprland colors.
@@ -86,57 +95,38 @@ sed -i "s/--cursor.foreground .*/--cursor.foreground \"$foreground_color\" \\\/g
 
 
 # remove these part if you don't like the colors according to your wallpaper.
-if [ -f $colors_file ]; then
+if [ -f "$colors_file" ]; then
+    # Extract background and foreground colors using jq
     background_color=$(jq -r '.special.background' "$colors_file")
     foreground_color=$(jq -r '.special.foreground' "$colors_file")
 
-    # Update VS Code settings
+    # Path to VS Code settings.json file
     vscode_settings_file="$HOME/.config/Code/User/settings.json"
-    if [[ -f "$vscode_settings_file" ]]; then
-    cat <<EOF >"$vscode_settings_file"
-{
-    "editor.mouseWheelZoom": true,
-    "workbench.startupEditor": "none",
-    "editor.fontSize": 20,
-    "editor.fontFamily": "'JetBrainsMono Nerd Font', 'Droid Sans Mono', 'monospace', monospace",
-    "editor.fontLigatures": true,
-    "window.menuBarVisibility": "toggle",
-    "editor.smoothScrolling": true,
-    "editor.scrollbar.horizontal": "hidden",
-    "editor.mouseWheelScrollSensitivity": 2,
-    "editor.wordWrap": "on",
-    "editor.cursorBlinking": "expand",
-    "terminal.integrated.fontSize": 18,
-    "workbench.iconTheme": "catppuccin-mocha",
-    "workbench.colorTheme": "Theme Darker",
-    "git.enableSmartCommit": true,
-    "files.autoSave": "afterDelay",
-    // You can remove these part if you don't like the colors according to your wallpaper from the "$HOME/.config/hypr/scripts/pywal.sh" script, from 204-221 lines.
-    // or you can totally remove the vs-code themming part from the script if you want to set and use your custom settings. if you don't do that, then your settings will be replaced/over writen by the default config.
 
-    "workbench.colorCustomizations": {
-        "editor.background": "$background_color",
-        "sideBar.background": "$background_color",
-        "sideBar.border": "$background_color",
-        "sideBar.foreground": "$foreground_color",
-        "editorGroupHeader.tabsBackground": "#191b274b",
-        "activityBar.background": "$background_color",
-        "activityBar.border": "$background_color",
-        "activityBar.foreground": "$foreground_color",
-        "tab.activeBackground": "#13151f",
-        "tab.activeForeground": "#ffffff",
-        "tab.activeBorder": "$background_color",
-        "tab.border": "$background_color",
-        "tab.inactiveBackground": "$background_color",
-        "tab.inactiveForeground": "$foreground_color",
-        "terminal.foreground": "$foreground_color",
-        "terminal.background": "$background_color"
-    },
-}
-EOF
+    # Check if the VS Code settings file exists
+    if [[ -f "$vscode_settings_file" ]]; then
+        sed -i "s/\"editor.background\":\ \".*\"/\"editor.background\": \"$background_color\"/" "$vscode_settings_file"
+        sed -i "s/\"sideBar.background\":\ \".*\"/\"sideBar.background\": \"$background_color\"/" "$vscode_settings_file"
+
+        # Uncomment and update more settings as neede
+        sed -i "s/\"sideBar.border\":\ \".*\"/\"sideBar.border\": \"$background_color\"/" "$vscode_settings_file"
+        sed -i "s/\"sideBar.foreground\":\ \".*\"/\"sideBar.foreground\": \"$foreground_color\"/" "$vscode_settings_file"
+        sed -i "s/\"editorGroupHeader.tabsBackground\":\ \".*\"/\"editorGroupHeader.tabsBackground\": \"$background_color\"/" "$vscode_settings_file"
+        sed -i "s/\"activityBar.background\":\ \".*\"/\"activityBar.background\": \"$background_color\"/" "$vscode_settings_file"
+        sed -i "s/\"activityBar.border\":\ \".*\"/\"activityBar.border\": \"$background_color\"/" "$vscode_settings_file"
+        sed -i "s/\"activityBar.foreground\":\ \".*\"/\"activityBar.foreground\": \"$foreground_color\"/" "$vscode_settings_file"
+        sed -i "s/\"tab.activeBackground\":\ \".*\"/\"tab.activeBackground\": \"$background_color\"/" "$vscode_settings_file"
+        sed -i "s/\"tab.activeForeground\":\ \".*\"/\"tab.activeForeground\": \"$foreground_color\"/" "$vscode_settings_file"
+        sed -i "s/\"tab.activeBorder\":\ \".*\"/\"tab.activeBorder\": \"$background_color\"/" "$vscode_settings_file"
+        sed -i "s/\"tab.border\":\ \".*\"/\"tab.border\": \"$background_color\"/" "$vscode_settings_file"
+        sed -i "s/\"tab.inactiveBackground\":\ \".*\"/\"tab.inactiveBackground\": \"$background_color\"/" "$vscode_settings_file"
+        sed -i "s/\"tab.inactiveForeground\":\ \".*\"/\"tab.inactiveForeground\": \"$foreground_color\"/" "$vscode_settings_file"
+        sed -i "s/\"terminal.foreground\":\ \".*\"/\"terminal.foreground\": \"$foreground_color\"/" "$vscode_settings_file"
+        sed -i "s/\"terminal.background\":\ \".*\"/\"terminal.background\": \"$background_color\"/" "$vscode_settings_file"
     fi
 else
-    exit 0
+    echo "Colors file not found!"
+    exit 1
 fi
 
 # Refresh the scripts

@@ -367,9 +367,9 @@ msg act "Generating colors and other necessary things..."
 
 
 # setting default themes, icon and cursor
-gsettings set org.gnome.desktop.interface gtk-theme "Dracula"
-gsettings set org.gnome.desktop.interface icon-theme "TokyoNight-SE"
-gsettings set org.gnome.desktop.interface cursor-theme "Bibata-Modern-Ice"
+gsettings set org.gnome.desktop.interface gtk-theme 'Dracula'
+gsettings set org.gnome.desktop.interface icon-theme 'TokyoNight-SE'
+gsettings set org.gnome.desktop.interface cursor-theme 'Bibata-Modern-Ice'
 
 msg dn "Script execution was successful! Now logout and log back in and enjoy your customization..." && sleep 1
 
