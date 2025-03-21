@@ -34,7 +34,12 @@ set_wallpaper() {
     swww query || swww init && swww img ${wallpaper} $SWWW_PARAMS
 
     ln -sf "$wallpaper" "$HOME/.config/hypr/.cache/current_wallpaper.png"
+
+    baseName="$(basename $wallpaper)"
+    wallpaperName=${baseName%.*}
+    echo "${next_mode}_$wallpaperName" > "$HOME/.config/hypr/.cache/.wallpaper"
 }
+
 
 if [ "$next_mode" == "light" ]; then
     # Switch to light mode
