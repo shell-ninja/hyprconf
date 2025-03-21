@@ -10,7 +10,7 @@
 @import "style/theme.css";
 
 window#waybar {
-  background: rgba(39, 48, 52, 0.432);
+  background: rgba(0, 0, 0, 0.5);
   color: @foreground;
   border-radius: 20px;
 }
