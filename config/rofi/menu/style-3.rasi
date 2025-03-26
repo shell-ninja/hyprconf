@@ -96,7 +96,7 @@ listbox {
     border-radius:              10px;
     border:                     0;
     border-color:               @active-background;
-	background-color:		    @background;
+	background-color:		    transparent;
     children:                   [ "imagebox", "listview" ];
 }
 

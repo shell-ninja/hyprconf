@@ -44,7 +44,7 @@ mainbox {
     enabled:                      true;
     orientation:                  vertical;
     padding:                      10px;
-    background-color:             @background;
+    background-color:             transparent;
     children:                     [ "inputbar", "listbox"];
 }
 
@@ -53,6 +53,8 @@ mainbox {
 listbox {
     spacing:                     20px;
     background-color:            transparent;
+    border-size:                 0px;
+    border-color:                transparent;
     orientation:                 horizontal;
     children:                    [ "listview" ];
 }
@@ -69,8 +71,8 @@ inputbar {
     spacing:                      10px;
     padding:                      15px;
     border-radius:                0px;
-    border-color:                 @foreground;
-    background-color:             @background;
+    border-color:                 transparent;
+    background-color:             transparent;
     children:                     [ "textbox-prompt-colon", "entry" ];
 }
 

@@ -78,7 +78,7 @@ listview {
     lines:                       1;
     cycle:                       true;
     dynamic:                     true;
-    scrollbar:                   true;
+    scrollbar:                   false;
     layout:                      vertical;
     reverse:                     false;
     fixed-height:                false;
@@ -113,7 +113,7 @@ element {
 }
 
 element normal.normal {
-    background-color:            inherit;
+    background-color:            transparent;
     text-color:                  @foreground;
 }
 
