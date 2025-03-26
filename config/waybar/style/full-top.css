@@ -279,6 +279,7 @@ tooltip label {
 #workspaces {
   padding: 2px 15px;
   border-radius: 15px;
+  margin-left: -5px;
 }
 
 #custom-power_profile {
