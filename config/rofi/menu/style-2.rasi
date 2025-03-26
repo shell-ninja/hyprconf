@@ -22,7 +22,7 @@ configuration {
 
 // Main //
 window {
-    height:                      30em;
+    height:                      28em;
     width:                       58em;
     transparency:                "real";
     fullscreen:                  false;
@@ -37,7 +37,7 @@ window {
 mainbox {
     enabled:                     true;
     spacing:                     0em;
-    padding:                     0.8em;
+    padding:                     0px;
     orientation:                 horizontal;
     children:                    [ "inputbar" , "listbox" , "mode-switcher" ];
     background-color:            #00000003;

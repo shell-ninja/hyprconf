@@ -37,7 +37,7 @@ message {
     margin:                      0px;
     padding:                     20px;
     border-radius:               @radius;
-    background-color:            @alternate-active-background;
+    background-color:            transparent;
     text-color:                  @foreground;
 }
 textbox {
@@ -72,7 +72,7 @@ listview {
 element {
     padding:                     60px 10px;
     border-radius:               @radius;
-    background-color:            @alternate-active-background;
+    background-color:            transparent;
     text-color:                  @foreground;
     cursor:                      pointer;
 }

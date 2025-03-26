@@ -63,7 +63,7 @@ listview {
     fixed-height:                true;
     fixed-columns:               true;
     cursor:                      "default";
-    background-color:            @background;
+    background-color:            transparent;
     text-color:                  @foreground;
 }
 
