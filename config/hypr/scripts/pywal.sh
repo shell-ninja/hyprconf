@@ -41,7 +41,9 @@ sed -i "s/active_border_color .*$/active_border_color $active_border_color/g" "$
 sed -i "s/inactive_border_color .*$/inactive_border_color $inactive_border_color/g" "$kitty"
 
 ln -sf "$HOME/.cache/wal/colors-kitty.conf" "$HOME/.config/kitty/"
-kitty @ set-color -a "$kitty"
+
+# Apply new colors dynamically
+kill -SIGUSR1 $(pidof kitty)
 
 # setting rofi theme
 ln -sf "$HOME/.cache/wal/colors-rofi-dark.rasi" "$HOME/.config/rofi/themes/rofi-colors.rasi"

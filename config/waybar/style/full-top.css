@@ -3,7 +3,7 @@
   border-radius: 0;
   font-family: "JetBrainsMono Nerd Font", "MesloLGS Nerd Font", "Font Awesome";
   font-weight: bold;
-  font-size: 13px;
+  font-size: 12px;
   min-height: 0;
 }
 
@@ -30,7 +30,7 @@ tooltip label {
 }
 
 #workspaces button {
-  padding: 5px;
+  padding: 0 5px;
   color: @foreground;
   margin-right: 5px;
   background-color: rgba(17, 17, 27, 0);

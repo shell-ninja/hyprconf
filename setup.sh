@@ -173,48 +173,52 @@ backup_or_restore "$wallpapers" "wallpaper directory"
 [[ -e "$hypr_cache" ]] && cp -r "$hypr_cache" "$backup_dir/"
 
 # if some main directories exists, backing them up.
-if [[ -d "$HOME/.config/HyprBackup-${USER}" ]]; then
-    msg att "a HyprBackup directory was there. Archiving it..."
+if [[ -d "$HOME/.config/backup_hyprconf-${USER}" ]]; then
+    msg att "a backup_hyprconf-${USER} directory was there. Archiving it..."
     cd "$HOME/.config"
-    mkdir -p "HyprArchive-${USER}"
-    zip -r -1 "HyprArchive-${USER}/HyprBackup-$(date +%d-%m-%Y_%I-%M-%p)-${USER}.zip" "HyprBackup-${USER}" &> /dev/null
+    mkdir -p "archive_hyprconf-${USER}"
+    tar -czf "archive_hyprconf-${USER}/backup_hyprconf-$(date +%d-%m-%Y_%I-%M-%p)-${USER}.tar.gz" "backup_hyprconf-${USER}" &> /dev/null
     # mv "HyprBackup-${USER}.zip" "HyprArchive-${USER}/"
-    rm -rf "HyprBackup-${USER}"
-    msg dn "HyprBackup-${USER} was zipped and backed up inside HyprArchive-${USER} directory..." && sleep 1
+    rm -rf "backup_hyprconf-${USER}"
+    msg dn "backup_hyprconf-${USER} was archived inside archive_hyprconf-${USER} directory..." && sleep 1
 fi
 
 for confs in "${dirs[@]}"; do
-    mkdir -p "$HOME/.config/HyprBackup-${USER}"
+    mkdir -p "$HOME/.config/backup_hyprconf-${USER}"
     dir_path="$HOME/.config/$confs"
     if [[ -d "$dir_path" ]]; then
-        mv "$dir_path" "$HOME/.config/HyprBackup-${USER}/" 2>&1 | tee -a "$log"
+        mv "$dir_path" "$HOME/.config/backup_hyprconf-${USER}/" 2>&1 | tee -a "$log"
     fi
 done
 
-[[ -d "$HOME/.config/HyprBackup-${USER}" ]] && msg dn "Everything has been backuped in $HOME/.config/HyprBackup-${USER}..."
+[[ -d "$HOME/.config/backup_hyprconf-${USER}/hypr" ]] && msg dn "Everything has been backuped in $HOME/.config/backup_hyprconf-${USER}..."
 
 sleep 1
 
+####################################################################
+
 #_____ if OpenBangla Keyboard is installed
-keyboard_path="/usr/share/openbangla-keyboard"
+# keyboard_path="/usr/share/openbangla-keyboard"
+#
+# if [[ -d "$keyboard_path" ]]; then
+#     msg act "Setting up OpenBangla-Keyboard..."
+#
+#     # Add fcitx5 environment variables to /etc/environment if not already present
+#     if ! grep -q "GTK_IM_MODULE=fcitx" /etc/environment; then
+#         printf "\nGTK_IM_MODULE=fcitx\n" | sudo tee -a /etc/environment 2>&1 | tee -a >(sed 's/\x1B\[[0-9;]*[JKmsu]//g' >> "$log") &> /dev/null
+#     fi
+#
+#     if ! grep -q "QT_IM_MODULE=fcitx" /etc/environment; then
+#         printf "QT_IM_MODULE=fcitx\n" | sudo tee -a /etc/environment 2>&1 | tee -a >(sed 's/\x1B\[[0-9;]*[JKmsu]//g' >> "$log") &> /dev/null
+#     fi
+#
+#     if ! grep -q "XMODIFIERS=@im=fcitx" /etc/environment; then
+#         printf "XMODIFIERS=@im=fcitx\n" | sudo tee -a /etc/environment 2>&1 | tee -a >(sed 's/\x1B\[[0-9;]*[JKmsu]//g' >> "$log") &> /dev/null
+#     fi
+#
+# fi
 
-if [[ -d "$keyboard_path" ]]; then
-    msg act "Setting up OpenBangla-Keyboard..."
-
-    # Add fcitx5 environment variables to /etc/environment if not already present
-    if ! grep -q "GTK_IM_MODULE=fcitx" /etc/environment; then
-        printf "\nGTK_IM_MODULE=fcitx\n" | sudo tee -a /etc/environment 2>&1 | tee -a >(sed 's/\x1B\[[0-9;]*[JKmsu]//g' >> "$log") &> /dev/null
-    fi
-
-    if ! grep -q "QT_IM_MODULE=fcitx" /etc/environment; then
-        printf "QT_IM_MODULE=fcitx\n" | sudo tee -a /etc/environment 2>&1 | tee -a >(sed 's/\x1B\[[0-9;]*[JKmsu]//g' >> "$log") &> /dev/null
-    fi
-
-    if ! grep -q "XMODIFIERS=@im=fcitx" /etc/environment; then
-        printf "XMODIFIERS=@im=fcitx\n" | sudo tee -a /etc/environment 2>&1 | tee -a >(sed 's/\x1B\[[0-9;]*[JKmsu]//g' >> "$log") &> /dev/null
-    fi
-
-fi
+####################################################################
 
 #_____ for virtual machine
 # Check if the configuration is in a virtual box
