@@ -19,6 +19,7 @@ This Hyprland configuration is kind of minila looking, but also little bit gorge
 <a href="#last"><kbd> <br> Last Modified <br> </kbd></a>&ensp;&ensp;
 <a href="#contrib"><kbd> <br> Contrubution <br> </kbd></a>&ensp;&ensp;
 <a href="https://github.com/shell-ninja/hyprconf/wiki"><kbd> <br> Wiki <br> </kbd></a>
+<a href="https://t.me/shell_ninja"><kbd> <br> Telegram <br> </kbd></a>
 
 </div>
 
