@@ -16,15 +16,11 @@ This Hyprland configuration is kind of minila looking, but also little bit gorge
 <a href="#update"><kbd> <br> Update <br> </kbd></a>&ensp;&ensp;
 <a href="#config"><kbd> <br> Configuration <br> </kbd></a>&ensp;&ensp;
 <a href="#keyboards"><kbd> <br> keyboard Shortcuts <br> </kbd></a>&ensp;&ensp;
-<a href="#last"><kbd> <br> Last Modified <br> </kbd></a>&ensp;&ensp;
 <a href="#contrib"><kbd> <br> Contrubution <br> </kbd></a>&ensp;&ensp;
-<a href="https://github.com/shell-ninja/hyprconf/wiki"><kbd> <br> Wiki <br> </kbd></a> <br>
+<a href="https://github.com/shell-ninja/hyprconf/wiki"><kbd> <br> Wiki <br> </kbd></a>
 <a href="https://t.me/+YEmEXQ3EOOE3MzBl"><kbd> <br> Telegram <br> </kbd></a>
 
 </div>
-
-> [!CAUTION]
-> Currently, taking screenshot of an area is creating a little problem. It suspends the script and I have no idea why it is happening. As soon as I fix it, I'll update it here. For now, only full screen screenshot is available.
 
 > [!NOTE]
 > This is a rolling release configuration. It means, I often make changes, fix bugs and add features. If you want to update to the latest changes, just use this keyboard shortcut to update: `SUPER Shift + U`
@@ -228,17 +224,6 @@ bash -c "$(wget -q  https://raw.githubusercontent.com/shell-ninja/hyprconf/main/
 > [!IMPORTANT]
 >
 > After installation, just press the `SUPER + Shift + h`. It will show you all the keybinds.
-
-<br>
-
-<a id="last"></a>
-
-<div align="right">
-  <br>
-  <a href="#top"><kbd> <br> 🡅 <br> </kbd></a>
-</div>
-
-## Check the last modifications [here](https://github.com/shell-ninja/hyprconf/blob/main/UPDATES.md)
 
 <br>
 
