@@ -18,7 +18,7 @@ This Hyprland configuration is kind of minila looking, but also little bit gorge
 <a href="#keyboards"><kbd> <br> keyboard Shortcuts <br> </kbd></a>&ensp;&ensp;
 <a href="#contrib"><kbd> <br> Contrubution <br> </kbd></a>&ensp;&ensp;
 <a href="https://github.com/shell-ninja/hyprconf/wiki"><kbd> <br> Wiki <br> </kbd></a>
-<a href="https://t.me/+YEmEXQ3EOOE3MzBl"><kbd> <br> Telegram <br> </kbd></a>
+<a href="https://t.me/+OxKQy7Y6XWxjOTQ9"><kbd> <br> Telegram <br> </kbd></a>
 
 </div>
 
