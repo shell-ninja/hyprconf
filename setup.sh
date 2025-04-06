@@ -249,7 +249,7 @@ sleep 1
 
 # cloning the dotfiles repository into ~/.config/hypr
 cp -r "$dir/config"/* "$HOME/.config/" && sleep 0.5
-mv "$HOME/.config/fastfetch" "$HOME/.local/share/"
+[[ ! -d "$HOME/.local/share/fastfetch/" ]] && mv "$HOME/.config/fastfetch" "$HOME/.local/share/"
 
 sleep 1
 

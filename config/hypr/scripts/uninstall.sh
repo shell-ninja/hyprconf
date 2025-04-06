@@ -11,7 +11,6 @@ orange="\x1b[38;5;214m"
 end="\e[0m"
 
 # Gum banner or fallback ASCII
-if command -v gum &> /dev/null; then
 display_text() {
     gum style \
         --border rounded \
@@ -20,14 +19,13 @@ display_text() {
         --margin "1" \
         --padding "1" \
 '
-   __ __                            ___
-  / // /_ _____  ___________  ___  / _/
- / _  / // / _ \/ __/ __/ _ \/ _ \/ _/ 
-/_//_/\_, / .__/_/  \__/\___/_//_/_/   
-     /___/_/                                
+  __  __     _          __       ____
+ / / / /__  (_)__  ___ / /____ _/ / /
+/ /_/ / _ \/ / _ \(_-</ __/ _ `/ / / 
+\____/_//_/_/_//_/___/\__/\_,_/_/_/  
+                                     
 '
 }
-fi
 
 # Message printing function
 msg() {
