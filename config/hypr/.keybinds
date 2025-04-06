@@ -5,6 +5,7 @@
  + D | launch app menu (rofi)
  + W | change wallpaper (Wallpaper.sh)
  + T | change theme (dark/light)
+ + ALT + U | delete hyprconf (dotfiles)
  + SHIFT + W | select wallpaper (WallpaperSelect.sh)
  + ALT + E | switch wallpaper engine (swww/hyprpaper)
  + E | open file manager (Thunar)
