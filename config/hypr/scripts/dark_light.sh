@@ -71,7 +71,7 @@ elif [[ "$next_mode" == "dark" ]]; then
     sed -i 's/rgba(255, 255, 255, 0.5)/rgba(0, 0, 0, 0.5)/g' "$HOME/.config/waybar/style/full-top.css"
 
     # gtk theme
-    gsettings set org.gnome.desktop.interface gtk-theme "Dracula"
+    gsettings set org.gnome.desktop.interface gtk-theme "TokyoNight"
 
     # switch wallpaper
     set_wallpaper "$walldir"
