@@ -1,5 +1,10 @@
 # Last Modification 👇
 
+## 11 Apr, 2025
+
+- Added uninstallation script
+- Added script to set the current wallpaper as sddm bg
+
 ## 29 March, 2025
 
 - Removed themes and icons from this repo, now these are in another repository and these will be set while installation process.
