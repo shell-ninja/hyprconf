@@ -8,52 +8,60 @@
 
 {
     "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
-    "logo": null,
+    "logo": {
+        "source": "~/.local/share/fastfetch/images/ryuzaki.icon",
+    	"type": "kitty",
+    	"height": 11,
+    	"padding": {
+    		"top": 1,
+            "left": 2
+    	}
+    },
     "display": {
-        "separator": " ›  "
+        "separator": "    "
     },
     "modules": [
-	"break",
-        {
+    "break",
+	{
             "type": "custom",
-            "format": "┌──────────────────────────────────────┐",
-            "outputColor": "90"
+            "format": "\u001b[90m  \u001b[31m  \u001b[32m  \u001b[33m  \u001b[34m  \u001b[35m  \u001b[36m  \u001b[37m "
         },
+    "break",
         {
             "type": "os",
-            "key": "OS  ",
+            "key": " ",
             "keyColor": "31",  // = color1
         },
         {
             "type": "kernel",
-            "key": "KER ",
+            "key": " ",
             "keyColor": "32",
         },
         {
             "type": "packages",
             "format": "{} (pacman)",
-            "key": "PKG ",
+            "key": " ",
             "keyColor": "33",  
         },
         {
             "type": "shell",
-            "key": "SH  ",
+            "key": " ",
             "keyColor": "34", 
         },
         {
             "type": "terminal",
-            "key": "TER ",
+            "key": " ",
             "keyColor": "35", 
         },
         {
             "type": "wm",
-            "key": "WM  ",
+            "key": " ",
             "keyColor": "36", 
         },
+        "break",
         {
             "type": "custom",
-            "format": "└──────────────────────────────────────┘",
-            "outputColor": "90"
+            "format": "\u001b[90m  \u001b[31m  \u001b[32m  \u001b[33m  \u001b[34m  \u001b[35m  \u001b[36m  \u001b[37m "
         },
     "break",
     ]
