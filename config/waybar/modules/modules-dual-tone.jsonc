@@ -15,6 +15,17 @@
 		}
 	},
 
+    "power-profiles-daemon": {
+      "format": "{icon}",
+      "tooltip-format": "Power profile: {profile}\nDriver: {driver}",
+      "tooltip": true,
+      "format-icons": {
+        "default": "",
+        "performance": "",
+        "balanced": "",
+        "power-saver": ""
+      }
+    },
     
     // network
     "network": {
@@ -135,6 +146,50 @@
         "max-length": 10,
         "tooltip": true,
         "tooltip-format": " {used:0.1f}GB/{total:0.1f}GB"
+    },
+
+    "custom/notify_icon": {
+        "tooltip": false,
+        // "tooltip-format": "Left Click: Launch Notification Center\nRight Click: Do not Disturb",
+        "format": "{icon} ",
+        "format-icons": {
+            "notification": "<span foreground='red'><sup></sup></span>",
+            "none": "",
+            "dnd-notification": "<span foreground='red'><sup></sup></span>",
+            "dnd-none": "",
+            "inhibited-notification": "<span foreground='red'><sup></sup></span>",
+            "inhibited-none": "",
+            "dnd-inhibited-notification": "<span foreground='red'><sup></sup></span>",
+            "dnd-inhibited-none": ""
+        },
+        "return-type": "json",
+        "exec-if": "which swaync-client",
+        "exec": "swaync-client -swb",
+        "on-click": "sleep 0.1 && swaync-client -t -sw",
+        "on-click-right": "swaync-client -d -sw",
+        "escape": true,
+    },
+
+    "custom/notify": {
+        "tooltip": true,
+        "tooltip-format": "Left Click: Launch Notification Center\nRight Click: Do not Disturb",
+        "format": "{}",
+        // "format-icons": {
+        //     "notification": "<span foreground='red'><sup></sup></span>",
+        //     "none": "",
+        //     "dnd-notification": "<span foreground='red'><sup></sup></span>",
+        //     "dnd-none": "",
+        //     "inhibited-notification": "<span foreground='red'><sup></sup></span>",
+        //     "inhibited-none": "",
+        //     "dnd-inhibited-notification": "<span foreground='red'><sup></sup></span>",
+        //     "dnd-inhibited-none": ""
+        // },
+        "return-type": "json",
+        "exec-if": "which swaync-client",
+        "exec": "swaync-client -swb",
+        "on-click": "sleep 0.1 && swaync-client -t -sw",
+        "on-click-right": "swaync-client -d -sw",
+        "escape": true,
     },
 
     "backlight": {

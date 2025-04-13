@@ -247,13 +247,16 @@
     "pulseaudio/slider": {
         "min": 0,
         "max": 100,
+        "on-scroll-up": "~/.config/hypr/scripts/volumecontrol.sh --inc",
+        "on-scroll-down": "~/.config/hypr/scripts/volumecontrol.sh --dec",
         "orientation": "vertical"
     },
 
     // pulseaudio
     "pulseaudio": {
         "format": "{icon} {volume}%",
-        "format-muted": "",
+        "format-muted": " ",
+        "tooltip": false,
         "on-click": "~/.config/hypr/scripts/volumecontrol.sh --toggle",
         "on-click-right": "pavucontrol",
         "on-scroll-up": "~/.config/hypr/scripts/volumecontrol.sh --inc",
@@ -311,6 +314,26 @@
         },
         "max-length": 30
     },
+
+    "power-profiles-daemon": {
+      "format": "{icon}",
+      "tooltip-format": "Power profile: {profile}\nDriver: {driver}",
+      "tooltip": true,
+      "format-icons": {
+        "default": "",
+        "performance": "",
+        "balanced": "",
+        "power-saver": ""
+      }
+    },
+
+    // "user": {
+    //     "format": "{user}",
+    //     "interval": 60,
+    //     "height": 30,
+    //     "width": 30,
+    //     "icon": true,
+    // },
 
     // keyboard status
     // "keyboard-state": {

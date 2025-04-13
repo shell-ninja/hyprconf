@@ -83,10 +83,13 @@ tooltip label {
 #network,
 #tray,
 #temperature,
+#power-profiles-daemon,
 #workspaces,
 #battery,
 #mpris,
 #custom-nightlight,
+#custom-notify,
+#custom-notify_icon,
 #backlight {
   background: @crust;
   opacity: 1;
@@ -145,6 +148,24 @@ tooltip label {
   font-size: 16px;
   color: @yellow;
   margin-right: 10px;
+}
+
+#custom-notify {
+  background-color: @mantle;
+  color: @peach;
+  margin-right: 10px;
+  border-radius: 0 5px 5px 0;
+  padding: 0 15px;
+  font-size: 16px;
+}
+
+#custom-notify_icon {
+  background-color: @peach;
+  color: @mantle;
+  margin-right: -5px;
+  margin-left: 5px;
+  font-size: 16px;
+  border-radius: 5px 0 0 5px;
 }
 
 #idle_inhibitor {
@@ -369,4 +390,29 @@ tooltip label {
   border-left: 0px;
   border-right: 0px;
   border-radius: 0 5px 5px 0;
+}
+
+#power-profiles-daemon {
+  background-color: @crust;
+  border-radius: 5px;
+  padding-right: 20px;
+  padding-left: 15px;
+  margin-right: 15px;
+}
+
+#power-profiles-daemon.performance {
+  color: @peach;
+  font-size: 15px;
+  padding-right: 18px;
+}
+
+#power-profiles-daemon.balanced {
+  color: @green;
+  font-size: 15px;
+  padding-right: 23px;
+}
+
+#power-profiles-daemon.power-saver {
+  color: @sky;
+  font-size: 15px;
 }

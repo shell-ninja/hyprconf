@@ -54,6 +54,7 @@ tooltip label {
 
 #custom-launch_rofi,
 #custom-power_btn,
+#custom-notify,
 #custom-updater,
 #idle_inhibitor,
 #custom-clipboard,
@@ -65,6 +66,7 @@ tooltip label {
 #workspaces,
 #mpris,
 #custom-nightlight,
+#power-profiles-daemon,
 #backlight {
   background: @background;
   opacity: 0.8;
@@ -202,4 +204,34 @@ tooltip label {
   border-right: 0px;
   border: 1px solid @foreground;
   border-left: none;
+}
+
+#power-profiles-daemon {
+  background-color: @background;
+  border-radius: 5px;
+  padding-right: 20px;
+  padding-left: 15px;
+  margin-right: 3px;
+}
+
+#power-profiles-daemon.performance {
+  color: #ddff33;
+  font-size: 15px;
+  padding-right: 18px;
+}
+
+#power-profiles-daemon.balanced {
+  color: #89ff89;
+  font-size: 15px;
+  padding-right: 23px;
+}
+
+#power-profiles-daemon.power-saver {
+  color: #33ffcc;
+  font-size: 15px;
+}
+
+#custom-notify {
+  border-radius: 5px;
+  margin-right: 3px;
 }

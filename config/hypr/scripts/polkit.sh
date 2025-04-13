@@ -16,14 +16,8 @@ executed=false  # Flag to track if a file has been executed
 # Loop through the list of files
 for file in "${polkit[@]}"; do
   if [ -e "$file" ]; then
-    echo "File $file found, executing command..."
     exec "$file"  
     executed=true
     break
   fi
 done
-
-# If none of the files were found, you can add a fallback command here
-if [ "$executed" == false ]; then
-  echo "None of the specified files were found. Install a Polkit"
-fi

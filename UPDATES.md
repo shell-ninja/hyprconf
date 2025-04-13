@@ -1,5 +1,11 @@
 # Last Modification 👇
 
+## 13 Apr, 2025
+
+- Switched to **Swaync** from **Dunst**
+- Added **Notification Center** in waybar
+- Added **power-profiles-daemon** in waybar
+
 ## 11 Apr, 2025
 
 - Added uninstallation script

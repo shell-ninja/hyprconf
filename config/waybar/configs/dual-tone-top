@@ -24,6 +24,7 @@
         "custom/clipboard_icon" ,
         "custom/clipboard", 
         "group/system",
+        "power-profiles-daemon",
         "mpris" 
     ],
 
@@ -42,6 +43,8 @@
         "battery", 
         "backlight",  
         "group/network", 
+        "custom/notify_icon",
+        "custom/notify",
         "clock",
         "group/power"
     ],

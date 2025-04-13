@@ -25,7 +25,9 @@
     ],
 
     "modules-center": [
-        "clock"
+        "power-profiles-daemon",
+        "clock",
+        "custom/notify"
     ],
 
     "modules-right": [

@@ -21,6 +21,7 @@
         "clock",
         "custom/weather",
         "mpris",
+        "custom/notify",
         "custom/dots",
     ],
 
