@@ -21,6 +21,7 @@
         "hyprland/window", 
         "hyprland/workspaces",
         "group/sysinfo",
+        "power-profiles-daemon",
         "mpris" 
     ],
 
@@ -30,6 +31,7 @@
 
     "modules-right": [ 
         "tray", 
+        "custom/notify",
         "pulseaudio", 
         "pulseaudio#microphone", 
         "custom/updater", 

@@ -26,6 +26,7 @@
         "modules-right": [
             "tray", 
             "custom/updater",
+            "power-profiles-daemon",
             "pulseaudio",
             "pulseaudio#microphone", 
             "group/network", 
@@ -34,6 +35,7 @@
             "idle_inhibitor", 
             "custom/nightlight", 
             "custom/clipboard", 
+            "custom/notify",
             "clock",
             "custom/power_btn"
         ],

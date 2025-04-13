@@ -22,7 +22,7 @@ This Hyprland configuration is kind of minila looking, but also little bit gorge
 </div>
 
 > [!NOTE]
-> This is a rolling release configuration. It means, I often make changes, fix bugs and add features. If you want to update to the latest changes, just use this keyboard shortcut to update: `SUPER Shift + U`
+> This is a rolling release configuration. It means, I often make changes, fix bugs and add features. If you want to update to the latest changes, just use this keyboard shortcut to update: `SUPER + CTRL + U`
 
 <br>
 

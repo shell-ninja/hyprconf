@@ -44,7 +44,7 @@ set_wallpaper() {
 if [ "$next_mode" == "light" ]; then
     # Switch to light mode
     
-    notify-send "Light" "changing to Light" -t 1500
+    notify-send "Mode" "changing to Light" -t 1500
 
     # setting neovim and waybar colors
     sed -i 's/mocha/latte/g' "$HOME/.config/nvim/lua/shell-ninja/plugins/colorscheme.lua"
@@ -63,7 +63,7 @@ if [ "$next_mode" == "light" ]; then
 elif [[ "$next_mode" == "dark" ]]; then
     # Switch to dark mode
 
-    notify-send "Dark" "changing to Dark" -t 1500
+    notify-send "Mode" "changing to Dark" -t 1500
 
     # setting neovim and waybar colors
     sed -i 's/latte/mocha/g' "$HOME/.config/nvim/lua/shell-ninja/plugins/colorscheme.lua"

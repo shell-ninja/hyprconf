@@ -51,29 +51,8 @@ ln -sf "$HOME/.cache/wal/colors-rofi-dark.rasi" "$HOME/.config/rofi/themes/rofi-
 # setting waybar colors
 ln -sf "$HOME/.cache/wal/colors-waybar.css" "$HOME/.config/waybar/style/theme.css"
 
-# ----- Dunst
-dunst_file="$HOME/.config/dunst/dunstrc"
-colors_file="$HOME/.cache/wal/colors.json"
-
-# Function to update Dunst colors
-update_dunst_colors() {
-    frame=$(jq -r '.special.foreground' "$colors_file")
-    low_bg=$(jq -r '.colors.color0' "$colors_file")
-    low_fg=$(jq -r '.colors.color7' "$colors_file")
-    normal_bg=$(jq -r '.special.background' "$colors_file")
-    normal_fg=$(jq -r '.special.foreground' "$colors_file")
-
-    # Update Dunst configuration
-    sed -i "s/frame_color = .*/frame_color = \"$frame\"/g" "$dunst_file"
-    sed -i "/^\[urgency_low\]/,/^\[/ s/^    background = .*/    background = \"$low_bg\"/g" "$dunst_file"
-    sed -i "/^\[urgency_low\]/,/^\[/ s/^    foreground = .*/    foreground = \"$low_fg\"/g" "$dunst_file"
-    sed -i "/^\[urgency_normal\]/,/^\[/ s/^    background = .*/    background = \"${normal_bg}80\"/g" "$dunst_file"
-    sed -i "/^\[urgency_normal\]/,/^\[/ s/^    foreground = .*/    foreground = \"$normal_fg\"/g" "$dunst_file"
-    sed -i "/^\[urgency_critical\]/,/^\[/ s/^    foreground = .*/    foreground = \"$normal_fg\"/g" "$dunst_file"
-}
-
-update_dunst_colors
-
+# setting swaync colors
+ln -sf "$HOME/.cache/wal/colors-swaync.css" "$HOME/.config/swaync/colors.css"
 
 # updated system update gum colors.
 sysupd_script="$scripts_dir/pkgupdate.sh"

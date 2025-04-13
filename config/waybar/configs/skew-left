@@ -61,11 +61,12 @@
     },
     
     "clock": {
-        "format": "{:%I\n%M\n%p}",
+        "format": "{:%I\n%M\n%S\n%p}",
         "format-alt": "{:%d\n%m\n%y}",
         "on-clock-right": "exec gnome-calendar",
         "tooltip": true,
         "tooltip-format": "<span>{calendar}</span>",
+        "interval": 1,
         "calendar": {
             "mode": "month",
             "mode-mon-col": 3,

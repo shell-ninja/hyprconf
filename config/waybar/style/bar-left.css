@@ -74,6 +74,7 @@ tooltip label {
 #battery,
 #mpris,
 #custom-nightlight,
+#custom-notify,
 #backlight {
   background: transparent;
   opacity: 1;
@@ -94,6 +95,10 @@ tooltip label {
   color: @peach;
   font-size: 14px;
   margin-left: 6px;
+}
+
+#custom-notify {
+  color: @peach;
 }
 
 #mpris {
