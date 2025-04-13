@@ -80,8 +80,7 @@ if [[ $pic_index -ne -1 ]]; then
     basename="$(basename "${wallDIR}/${PICS[$pic_index]}")"
     wallName="${basename%.*}"
     echo "$wallName" > "$wallCache"
-
-    wal -q -e -i "${wallDIR}/${PICS[$pic_index]}" || printf "\n\nCouls not generate any colors\n"
+    # wal -q -e -i "${wallDIR}/${PICS[$pic_index]}" || printf "\n\nCouls not generate any colors\n"
 
 else
     echo "Image not found."

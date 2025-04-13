@@ -15,7 +15,7 @@ file_exists() {
 _ps=(
     swaync
     rofi
-    waybar
+    # waybar
 )
 for _prs in "${_ps[@]}"; do
     if pidof "${_prs}" &> /dev/null; then
@@ -24,7 +24,7 @@ for _prs in "${_ps[@]}"; do
 done
 
 sleep 0.1
-waybar &
+# waybar &
 swaync &
 
 sleep 1
