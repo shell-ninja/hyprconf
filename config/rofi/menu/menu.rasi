@@ -52,6 +52,7 @@ inputbar {
     width:                       1em;
     enabled:                     true;
     children:                    [ "entry" ];
+    background-color:            transparent
 }
 entry {
     enabled:                     false;
@@ -70,7 +71,7 @@ mode-switcher {
 button {
     cursor:                      pointer;
     border-radius:               @radius;
-    background-color:            @background;
+    background-color:            transparent;
     text-color:                  @foreground;
 }
 button selected {
