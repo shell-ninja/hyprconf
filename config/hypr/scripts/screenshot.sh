@@ -34,7 +34,7 @@ send_notification() {
     local msg="$1"
     notify-send -e "Taking Screenshot in" "$msg"
     sleep 1
-    pkill dunst
+    pkill swaync
 }
 
 case $choice in
