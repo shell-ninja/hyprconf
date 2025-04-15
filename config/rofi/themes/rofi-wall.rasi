@@ -53,7 +53,7 @@ mainbox {
 listbox {
     spacing:                     20px;
     background-color:            transparent;
-    border-size:                 0px;
+    border:                      0px;
     border-color:                transparent;
     orientation:                 horizontal;
     children:                    [ "listview" ];
@@ -120,7 +120,7 @@ listview {
 	fixed-height:           true;
 	fixed-columns:          false;
 	background-color:       transparent;
-	border-radius:          @radius;
+    border:                 0px;
 }
 
 /* ---- Element ---- */

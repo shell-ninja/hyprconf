@@ -57,7 +57,7 @@ listbox {
     orientation:                vertical;
     children:                   [ "listview" ];
     border-radius:              @radius;
-	background-color:		    @background;
+	background-color:		    transparent;
 }
 
 /* ---- Inputbar ---- */
@@ -67,7 +67,7 @@ inputbar {
     spacing:                    10px;
     padding:                    6px;
     border-radius:              @radius;
-	background-color:		    @background;
+	background-color:		    transparent;
     children:                   [ "entry" ];
 }
 
@@ -91,8 +91,8 @@ entry {
 /* ---- Listview ---- */
 listview {
 	enabled:					 true;
-	columns:					 1;
-	lines:						 9;
+	columns:					 2;
+	lines:						 10;
 	spacing:                     4px;
 	dynamic:                     true;
 	cycle:                       true;
@@ -102,7 +102,7 @@ listview {
 	fixed-height:                true;
 	fixed-columns:               true;
 	background-color:            transparent;
-	border-radius:             	 10px;
+    border:                      0px;
 }
 
 /* ---- Element ---- */
