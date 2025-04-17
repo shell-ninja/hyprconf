@@ -52,7 +52,7 @@ inputbar {
     width:                       1em;
     enabled:                     true;
     children:                    [ "entry" ];
-    background-color:            transparent
+    background-color:            transparent;
 }
 entry {
     enabled:                     false;
