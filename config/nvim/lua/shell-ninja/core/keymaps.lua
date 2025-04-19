@@ -8,8 +8,10 @@ keymap.set({ "i", "n" }, "<C-x>", "<ESC>:wq<CR>", { desc = "save and exit" })
 
 -- keymaps similar to vs code
 keymap.set({ "i", "n" }, "<C-s>", "<ESC>:w<CR>", { desc = "save with Ctrl + s" }) -- save with ctrl + s
+keymap.set({ "i" }, "js", "<ESC>:wq<CR>", { desc = "save with j+s" })             -- save with j + s
 keymap.set({ "i", "n" }, "<C-z>", "<ESC>u", { desc = "undo" })                    -- undo with ctrl + z
 keymap.set({ "i", "n" }, "<C-y>", "<C-r>", { desc = "redo" })                     -- redo with ctrl + y
+
 
 -- Delete a word backwards
 keymap.set("n", "dw", 'vb"_d')
