@@ -10,9 +10,10 @@ return {
 
         nvimtree.setup({
             view = {
+                side = "right",
                 relativenumber = true,
                 float = {
-                    enable = true,
+                    enable = false,
                     quit_on_focus_loss = true,
                     open_win_config = {
                         relative = "editor",
@@ -26,9 +27,9 @@ return {
             },
             actions = {
                 open_file = {
-                    quit_on_open = false, -- Keep nvim-tree open after selecting a file
+                    quit_on_open = true, -- Keep nvim-tree open after selecting a file
                     window_picker = {
-                        enable = false,   -- Disable window picker to avoid closing current file
+                        enable = false,  -- Disable window picker to avoid closing current file
                     },
                 },
             },

@@ -18,6 +18,8 @@ if [[ -f "$current_wallpaper" ]]; then
     fi
 fi
 
+colors_file="$HOME/.cache/wal/colors.json"
+
 # hyprland colors.
 hyprcolor="$HOME/.config/hypr/configs/colors-hyprland.conf"
 ln -sf "$HOME/.cache/wal/colors-hyprland.conf" "$HOME/.config/hypr/configs/"
