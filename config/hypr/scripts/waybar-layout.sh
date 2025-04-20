@@ -9,11 +9,10 @@ waybar_config="$HOME/.config/waybar/config"
 waybar_styles="$HOME/.config/waybar/style"
 waybar_style="$HOME/.config/waybar/style.css"
 script_dir="$HOME/.config/hypr/scripts"
-window_rules="$HOME/.config/hypr/configs/environment.conf"
+window_rules="$HOME/.config/hypr/configs/wrules.conf"
 rofi_config="$HOME/.config/rofi/themes/rofi-waybar.rasi"
 rofi_menu="$HOME/.config/rofi/menu/menu.rasi"
 rofi_clipboard="$HOME/.config/rofi/themes/rofi-clipboard.rasi"
-environment_config="$HOME/.config/hypr/configs/environment.conf"
 
 # Function to display menu options
 menu() {
@@ -36,7 +35,7 @@ apply_config() {
     ln -sf "$layout_file" "$waybar_config"
     ln -sf "$style_file" "$waybar_style"
 
-    if [[ "$1" == "fancy-top" || "$1" == "colorful-bottom" || "$1" == "full-top" ]]; then
+    if [[ "$1" == "fancy-top" || "$1" == "colorful-bottom" || "$1" == "full-top" || "$1" == "rounded-top" ]]; then
         echo "Enabling blur in $window_rules"
         sed -i "/^#blurls = waybar$/ s/#//" "$window_rules"
         sed -i "/^#blurls = waybar$/d" "$window_rules"
@@ -45,7 +44,7 @@ apply_config() {
         sed -i "/^blurls = waybar$/ s/^/#/" "$window_rules"
     fi
 
-    if [[ "$1" == *"-top"* && ! "$1" == "dual-tone-top" && ! "$1" == "reflection-top" ]]; then
+    if [[ "$1" == *"-top"* && ! "$1" == "dual-tone-top" && ! "$1" == "reflection-top" && ! "$1" == "rounded-top" ]]; then
         sed -i "s/location:.*/location: northWest;/g" "$rofi_menu"
         sed -i "s/x-offset:.*/x-offset: 15px;/g" "$rofi_menu"
         sed -i "s/y-offset:.*/y-offset: 15px;/g" "$rofi_menu"
@@ -82,6 +81,14 @@ apply_config() {
 
         sed -i "s/location:.*/location: north;/g" "$rofi_clipboard"
         sed -i "s/anchor:.*/anchor: center;/g" "$rofi_clipboard"
+
+    elif [[ "$1" == *"rounded-top"* ]]; then
+        sed -i "s/location:.*/location: northWest;/g" "$rofi_menu"
+        sed -i "s/x-offset:.*/x-offset: 15px;/g" "$rofi_menu"
+        sed -i "s/y-offset:.*/y-offset: 15px;/g" "$rofi_menu"
+
+        sed -i "s/location:.*/location: northWest;/g" "$rofi_clipboard"
+        sed -i "s/anchor:.*/anchor: west;/g" "$rofi_clipboard"
 
     elif [[ "$1" == *"-left"* ]]; then
         sed -i "s/location:.*/location: northWest;/g" "$rofi_menu"

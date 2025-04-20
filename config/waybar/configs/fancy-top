@@ -1,0 +1,72 @@
+{
+    "include": [
+        "$HOME/.config/waybar/modules/modules-main.jsonc",
+        "$HOME/.config/waybar/modules/modules-groups.jsonc",
+        "$HOME/.config/waybar/modules/modules-custom.jsonc",
+    ],
+    "layer": "top",
+    "position": "top",
+    "mod": "dock",
+    "exclusive": true,
+    "passthrough": false,
+    "gtk-layer-shell": true,
+    "reload_style_on_change": true,
+    "height": 20,
+    "margin-top": 0,
+
+    "modules-left": [
+        "custom/launch_rofi", 
+        "group/sysinfo",
+        "custom/weather",
+        "mpris"
+    ],
+
+    "modules-center": [
+        "hyprland/workspaces"
+    ],
+
+    "modules-right": [
+        "tray", 
+        "custom/updater", 
+        "pulseaudio", 
+        "pulseaudio#microphone", 
+        "battery", 
+        "backlight", 
+        "idle_inhibitor", 
+        "custom/nightlight", 
+        "custom/clipboard", 
+        "group/network", 
+        "clock"
+    ],
+
+    "hyprland/workspaces": {
+        "disable-scroll": true,
+        "all-outputs": true,
+        "on-click": "activate",
+        "on-scroll-up": "hyprctl dispatch workspace e-1",
+        "on-scroll-down": "hyprctl dispatch workspace e+1",
+        "format": "{icon}",
+        "format-icons": {
+            "1": "",
+            "2": "",
+            "3": "",
+            "4": "",
+            "5": ""
+        },
+        "persistent-workspaces": {
+            "1": [],
+            "2": [],
+            "3": [],
+            "4": [],
+            "5": []
+        }
+    },
+
+    "custom/launch_rofi": {
+        "format": "Apps",
+        "on-click": "rofi -show drun -theme ~/.config/rofi/menu/menu.rasi || pkill rofi",
+        "on-click-right": "kitty --title yazi -e yazi",
+        "tooltip": true,
+        "tooltip-format": "Left Click: Launch Rofi\nRight Click: Launch yazi"
+    }
+}
