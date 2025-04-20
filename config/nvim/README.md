@@ -1,4 +1,4 @@
-# This config is a collection of some youtubers. I am trying to make the keymapings little simila to Vs Code.
+## This is a collection of some configs that I have collected from the internet. Also I have updated it according to my need. I tried to make keybinds almost similar to Vs Code in some cases.
 
 ## Keymaps
 
