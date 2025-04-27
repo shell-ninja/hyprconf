@@ -26,7 +26,7 @@
 
     "modules-center": [
         "power-profiles-daemon",
-        "hyprland/workspaces",
+        "hyprland/workspaces#preview",
         "custom/updater"
     ],
 
@@ -39,23 +39,4 @@
         "clock",
         "custom/power_btn"
     ],
-
-    "hyprland/workspaces": {
-        "disable-scroll": true,
-        "all-outputs": true,
-        "on-click": "activate",
-        "on-scroll-up": "hyprctl dispatch workspace e-1",
-        "on-scroll-down": "hyprctl dispatch workspace e+1",
-        //"format": "{icon}",
-        //"format-icons": {
-        //     "default": ""
-        //  },
-        "persistent-workspaces": {
-            "1": [],
-            "2": [],
-            "3": [],
-            "4": [],
-            "5": []
-        }
-    }
 }
