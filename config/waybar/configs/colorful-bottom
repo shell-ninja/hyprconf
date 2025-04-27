@@ -17,7 +17,7 @@
     
         "modules-left": [
             "custom/launch_rofi",
-            "hyprland/workspaces", 
+            "hyprland/workspaces#preview", 
             "mpris"
         ],
     
@@ -39,35 +39,6 @@
             "clock",
             "custom/power_btn"
         ],
-
-        "hyprland/workspaces": {
-        "disable-scroll": true,
-        "all-outputs": true,
-        "on-click": "activate",
-        "on-scroll-up": "hyprctl dispatch workspace e-1",
-        "on-scroll-down": "hyprctl dispatch workspace e+1",
-        "format": "{icon}",
-        "format-icons": {
-            // for arch
-            "active": "󰮯",
-            "default": ""
-
-            // for fedora
-            //  "active": "󰣛",  
-            //  "default": ""
-
-            // for opensuse
-            // "active": "",
-            // "default": ""
-          },
-        "persistent-workspaces": {
-            "1": [],
-            "2": [],
-            "3": [],
-            "4": [],
-            "5": []
-        }
-    },
 
         "custom/launch_rofi": {
             "format": "",
