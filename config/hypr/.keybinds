@@ -7,7 +7,6 @@
  + T | change theme (dark/light)
  + ALT + U | delete hyprconf (dotfiles)
  + SHIFT + W | select wallpaper (WallpaperSelect.sh)
- + ALT + E | switch wallpaper engine (swww/hyprpaper)
  + E | open file manager (Thunar)
  + SHIFT + E | open terminal file manager (Yazi)
  + V | toggle floating window
@@ -28,7 +27,6 @@ CTRL + ALT + ESCAPE | toggle Waybar visibility
  + SHIFT + L | lockscreen (hyprlock)
  + ALT + L | lockscreen theme (hyprlock)
  + CTRL + W | switch Waybar layout
- + CTRL + E | edit dotfiles
  + CTRL + R | reload Hyprland
  + CTRL + p | re-generate colors
 CTRL + U | system update
