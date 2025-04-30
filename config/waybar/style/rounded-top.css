@@ -10,7 +10,7 @@
 @import "style/theme.css";
 
 window#waybar {
-  background: @foreground;
+  background: transparent;
   color: @foreground;
   /* border-radius: 20px; */
 }
@@ -156,7 +156,7 @@ tooltip label {
 
 #mpris {
   background-color: transparent;
-  color: @background;
+  color: @foreground;
   border-radius: 15px;
   padding-left: 15px;
   margin-left: 10px;
@@ -229,7 +229,7 @@ tooltip label {
 
 #custom-updater {
   background-color: transparent;
-  color: @background;
+  color: @foreground;
   border-radius: 15px;
   padding: 0 25px;
   margin-right: 10px;
@@ -318,22 +318,23 @@ tooltip label {
 }
 
 #power-profiles-daemon.performance {
-  color: @background;
+  color: #fab387;
   font-size: 15px;
 }
 
 #power-profiles-daemon.balanced {
-  color: @background;
+  color: #a6e3a1;
   font-size: 15px;
 }
 
 #power-profiles-daemon.power-saver {
-  color: @background;
+  color: #89dceb;
   font-size: 15px;
 }
 
 #custom-cava {
   background: transparent;
-  color: @background;
+  color: @foreground;
   margin-left: 10px;
+  opacity: 0.9;
 }
