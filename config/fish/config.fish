@@ -19,9 +19,9 @@ end
 #===============================================#
 #           aliases and functions
 #===============================================#
-source ~/.config/fish/aliases.fish
-source ~/.config/fish/functions.fish
-
+source ~/.config/fish/conf.d/aliases.fish
+source ~/.config/fish/functions/functions.fish
+source ~/.config/fish/conf.d/personal.fish
 
 #===============================================#
 #           zoxide and thefuck
