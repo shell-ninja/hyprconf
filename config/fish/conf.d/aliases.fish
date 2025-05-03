@@ -1,4 +1,4 @@
-source ~/.config/fish/functions.fish
+source ~/.config/fish/functions/functions.fish
 
 ## list ##
 alias ls='eza --color=always --icons=always'
@@ -102,5 +102,5 @@ alias ipexternal="curl -s ifconfig.me && echo"
 alias ipexternal="wget -qO- ifconfig.me && echo"
 alias exe='chmod +x'
 
-alias style='~/.config/fish/change_style.sh'
-alias ffstyle='~/.config/fish/ffstyle.sh'
+alias style='~/.config/fish/functions/change_style.sh'
+alias ffstyle='~/.config/fish/functions/ffstyle.sh'
