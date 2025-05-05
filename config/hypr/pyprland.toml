@@ -3,6 +3,7 @@
 plugins = [
   "scratchpads",
   "magnify",
+  "toggle_special",
 ]
 
 [scratchpads.term]
