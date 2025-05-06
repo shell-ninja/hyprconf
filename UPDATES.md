@@ -1,5 +1,11 @@
 # Last Modification 👇
 
+## 6 May, 2025
+
+- Switched to sequoia sddm theme (customized for the config)
+- Updated sddm theme changing script
+- And some major fixes. Thanks to [Dr. Robot](https://github.com/DrRoot85) for the contribution
+
 ## 13 Apr, 2025
 
 - Switched to **Swaync** from **Dunst**
