@@ -36,7 +36,6 @@ PRINT | take screenshot
  + SHIFT + M | exit Hyprland
  + N | toggle special minimized (pyprland)
  + SHIFT + N | toggle minimized (pyprland)
- + SHIFT + O | shift monitor (pyprland)
  + SHIFT + R | run startup script
  + SHIFT + Z | ++ zoom
  + Z | zoom
