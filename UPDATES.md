@@ -1,5 +1,10 @@
 # Last Modification 👇
 
+## 7 May, 2025
+
+- Added sound for screenshot and logout
+- Added some more wallpapers
+
 ## 6 May, 2025
 
 - Switched to sequoia sddm theme (customized for the config)

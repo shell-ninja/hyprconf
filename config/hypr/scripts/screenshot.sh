@@ -4,6 +4,7 @@ if [ -z "$XDG_PICTURES_DIR" ] ; then
     XDG_PICTURES_DIR="$HOME/Pictures"
 fi
 
+sound_file="/usr/share/sounds/freedesktop/stereo/screen-capture.oga"
 swpy_dir="$HOME/.config/swappy"
 save_dir="${2:-$XDG_PICTURES_DIR/Screenshots}"
 save_file=$(date +'screenshot_%y%m%d_%H%M%S.png')
@@ -21,6 +22,10 @@ cat << "EOF"
         p : print all screens
         s : snip current screen
 EOF
+}
+
+ss_sound() {
+    paplay "$sound_file"
 }
 
 option1="Fullscreen (delay 3 sec)"
@@ -43,10 +48,10 @@ case $choice in
             send_notification "$time"
         done
         sleep 1
-        grimblast copysave screen $temp_screenshot && swappy -f $temp_screenshot
+        grimblast copysave screen $temp_screenshot && ss_sound &&  swappy -f $temp_screenshot
         ;;
     $option2)  # drag to manually snip an area / click on a window to print it
-        grimblast --freeze copysave area $temp_screenshot && swappy -f $temp_screenshot 
+        grimblast --freeze copysave area $temp_screenshot && ss_sound &&  swappy -f $temp_screenshot
         sleep 0.5
         ;;
     *)  # invalid option
@@ -58,3 +63,5 @@ rm "$temp_screenshot"
 if [ -f "$save_dir/$save_file" ] ; then
     notify-send "saved in" "$save_dir" -i "$save_dir/$save_file" -r 91190 -t 2200
 fi
+
+swaync &
