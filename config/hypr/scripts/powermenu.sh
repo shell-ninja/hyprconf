@@ -49,18 +49,22 @@ run_cmd() {
     selected="$(confirm_exit)"
     if [[ "$selected" == "$yes" ]]; then
         if [[ $1 == '--shutdown' ]]; then
-            "$HOME/.config/hypr/scripts/uptime.sh" && sleep 3
+            "$HOME/.config/hypr/scripts/uptime.sh"
+            "$HOME/.config/hypr/scripts/notification.sh" logout
             systemctl poweroff --now
         elif [[ $1 == '--reboot' ]]; then
-            "$HOME/.config/hypr/scripts/uptime.sh" && sleep 3
+            "$HOME/.config/hypr/scripts/uptime.sh"
+            "$HOME/.config/hypr/scripts/notification.sh" logout
             systemctl reboot --now
         elif [[ $1 == '--lock' ]]; then
             hyprlock
         elif [[ $1 == '--logout' ]]; then
-            "$HOME/.config/hypr/scripts/uptime.sh" && sleep 3
+            "$HOME/.config/hypr/scripts/uptime.sh"
+            "$HOME/.config/hypr/scripts/notification.sh" logout
             hyprctl dispatch exit 0
         elif [[ $1 == '--suspend' ]]; then
-            "$HOME/.config/hypr/scripts/uptime.sh" && sleep 3
+            "$HOME/.config/hypr/scripts/uptime.sh"
+            "$HOME/.config/hypr/scripts/notification.sh" logout
             systemctl suspend
         fi
     else
