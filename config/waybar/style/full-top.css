@@ -106,7 +106,6 @@ tooltip label {
 #idle_inhibitor,
 #custom-updates,
 #custom-clipboard,
-#custom-wallpaper-change,
 #memory,
 #clock,
 #pulseaudio,
@@ -126,6 +125,17 @@ tooltip label {
   opacity: 0.8;
   padding: 0px 10px;
   margin: 3px 0px;
+}
+
+#custom-theme,
+#custom-wallpaper {
+  background: transparent;
+  margin-right: 10px;
+  font-size: 14px;
+}
+
+#custom-theme {
+  margin-right: 15px;
 }
 
 #custom-system {

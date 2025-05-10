@@ -81,11 +81,25 @@ tooltip label {
 #power-profiles-daemon,
 #mpris,
 #custom-nightlight,
+#custom-theme,
+#custom-wallpaper,
 #backlight {
   background: @crust;
   opacity: 1;
   padding: 0px 10px;
   margin: 3px 0px;
+}
+
+#custom-wallpaper {
+  border-radius: 0 15px 15px 0;
+  padding-right: 15px;
+  color: @blue;
+}
+
+#custom-theme {
+  border-radius: 15px 0 0 15px;
+  padding-left: 15px;
+  color: @peach;
 }
 
 #custom-system {
@@ -126,6 +140,7 @@ tooltip label {
   color: @pink;
   border-radius: 15px 0 0 15px;
   margin-right: 0px;
+  margin-left: 10px;
 }
 
 #mpris {

@@ -15,7 +15,7 @@ window#waybar {
 }
 
 tooltip {
-  background: transparent;
+  background: @background;
   border-radius: 3px;
   border: 1px solid @foreground;
 }
@@ -67,12 +67,25 @@ tooltip label {
 #mpris,
 #custom-nightlight,
 #power-profiles-daemon,
+#custom-theme,
+#custom-wallpaper,
 #backlight {
   background: @background;
   opacity: 0.8;
   padding: 0px 10px;
   margin: 3px 0px;
   border: 1px solid @foreground;
+}
+
+#custom-theme,
+#custom-wallpaper {
+  padding-left: 15px;
+  border-radius: 3px;
+  margin-right: 3px;
+}
+
+#custom-wallpaper {
+  color: @color1;
 }
 
 #mpris {
@@ -208,7 +221,7 @@ tooltip label {
 
 #power-profiles-daemon {
   background-color: @background;
-  border-radius: 5px;
+  border-radius: 3px;
   padding-right: 20px;
   padding-left: 15px;
   margin-right: 3px;

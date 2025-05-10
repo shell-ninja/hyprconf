@@ -162,7 +162,7 @@
             "class<tor browser>": " ",
             "class<firefox-developer-edition>": "󰈹 ",
 
-            "class<kitty|konsole>": "󰄛 ",
+            "class<kitty>": "󰄛 ",
             "class<kitty-dropterm>": " ",
             "class<com.mitchellh.ghostty>": " ",
             "class<org.wezfurlong.wezterm>": " ",
@@ -179,6 +179,7 @@
             "title<.*facebook.*>": " ",
             "title<.*instagram.*>": "󰋾 ",
             "title<.*reddit.*>": " ",
+            "title<.*github.com.*>": " ",
 
 
             "title<.*ChatGPT.*>": "󰚩 ",
@@ -231,8 +232,9 @@
         "class<org.pipewire.Helvum>": "󰓃",
         "class<localsend>":"",
         "class<PrusaSlicer|UltiMaker-Cura|OrcaSlicer>": "󰹛",
+        "class<org.bleachbit.BleachBit>": " "
             }
-    },
+        },
 
     // cpu
     "cpu": {
