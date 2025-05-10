@@ -6,7 +6,7 @@
     ],
     "layer": "top",
     "position": "top",
-    "mod": "dock",
+    "mod": "panel",
     "exclusive": true,
     "passthrough": false,
     "gtk-layer-shell": true,

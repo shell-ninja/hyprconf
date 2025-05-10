@@ -4,7 +4,7 @@
     // rofi app launcher
     "custom/launch_rofi": {
         "format": "",   // for arch
-        //  "format": "󰣛",   // for fedora
+         // "format": "󰣛",   // for fedora
         // "format": "",  // for opensuse
         "on-click": "rofi -show drun -theme ~/.config/rofi/menu/menu.rasi || pkill rofi",
         "on-click-right": "kitty --title yazi -e yazi",
@@ -47,6 +47,7 @@
         "exec": "~/.config/hypr/scripts/systemupdate.sh --check",
         "return-type": "json",
         "format": " {}",
+        // "format": " {}", // for arch linux only
         "on-click": "~/.config/hypr/scripts/systemupdate.sh --update",
         "interval": 86400,
         "tooltip": true
@@ -69,15 +70,6 @@
         "tooltip-format": "You have {} items copied"
     },
 
-
-    // wallpaper changer and selector ( haven't add in the waybar )
-    "custom/wallpaper-change": {
-        "format": "󰸉",
-        "on-click": "exec ~/.config/hypr/scripts/Wallpaper.sh",
-        "on-click-right": "~/.config/hypr/scripts/WallpaperSelect.sh style2"
-    },
-
-
    "custom/weather": {
         "format": "  {}",
         "format-alt": "{alt}: {}",
@@ -87,7 +79,7 @@
         "exec": "~/.config/hypr/scripts/Weather.sh",
         //"exec": "~/.config/waybar/scripts/Weather.py",
         "exec-if": "ping wttr.in -c1",
-        "tooltip" : true
+        "tooltip": true
     },
 
     
@@ -102,6 +94,21 @@
         "tooltip": true,
         "tooltip-format": "Screen temperature is: {}\n\nLeft Click: set temp 5000k\nRight Click: set temp 6500k (default)\n\nScroll Down: increase temp(+100K)\nScroll Up: decrease temp(-100K)",
         "interval": 1
+    },
+
+    // Wallpaper
+    "custom/wallpaper": {
+        "format": "󰸉 ",
+        "tooltip-format": "Left Click: Change wallpaper\nRight Click: Select Wallpaper",
+        "on-click": "~/.config/hypr/scripts/Wallpaper.sh",
+        "on-click-right": "~/.config/hypr/scripts/WallpaperSelect.sh thm2"
+    },
+
+    // Theme (dark light)
+    "custom/theme": {
+        "format": " ",
+        "tooltip-format": "Toggle Dark/Light theme",
+        "on-click": "~/.config/hypr/scripts/dark_light.sh",
     },
 
     // system info expand

@@ -35,6 +35,8 @@
         "pulseaudio", 
         "pulseaudio#microphone", 
         "custom/updater", 
+        "custom/theme",
+        "custom/wallpaper",
         "idle_inhibitor", 
         "custom/nightlight", 
         "custom/clipboard", 
