@@ -6,7 +6,7 @@
         "format": "",   // for arch
          // "format": "󰣛",   // for fedora
         // "format": "",  // for opensuse
-        "on-click": "rofi -show drun -theme ~/.config/rofi/menu/menu.rasi || pkill rofi",
+        "on-click": "rofi -show drun -theme ~/.config/rofi/menu/menu.rasi || killall rofi",
         "on-click-right": "kitty --title yazi -e yazi",
         "tooltip": true,
         "tooltip-format": "Left Click: Launch Rofi\nRight Click: Launch yazi"
@@ -140,5 +140,24 @@
         "format": "󰿅",
         "tooltip-format": "logout" ,
         "on-click": "~/.config/hypr/scripts/power.sh --logout"
-    }
+    },
+
+    // "custom/backlight": {
+    //     "interval": 2,
+    //     "format": "󰃠 ",
+    //     "icon-size": 10,
+    // },
+    //
+    // "custom/battery": {
+    //     "interval": 5,
+    //     "format": "󰁽",
+    // },
+
+    "pulseaudio/slider": {
+        "min": 0,
+        "max": 100,
+        "on-scroll-up": "~/.config/hypr/scripts/volumecontrol.sh --inc",
+        "on-scroll-down": "~/.config/hypr/scripts/volumecontrol.sh --dec",
+        "orientation": "vertical"
+    },
 }
