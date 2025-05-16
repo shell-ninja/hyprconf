@@ -81,6 +81,75 @@ tooltip label {
   padding: 10px 5px;
 }
 
+/*
+########################
+Modules top
+########################
+*/
+
+#custom-launch_rofi {
+  color: #89b4fa;
+  padding: 15px;
+  padding-right: 20px;
+  font-size: 15px;
+  border-radius: 15px;
+}
+
+#clock,
+#clock-calender {
+  color: @sapphire;
+  border-radius: 15px;
+  padding: 15px 0;
+  font-size: 12px;
+}
+
+#clock {
+  padding-top: 5px;
+}
+
+#custom-weather {
+  color: @green;
+  border-radius: 15px;
+  background-color: transparent;
+}
+
+#custom-notify {
+  color: @peach;
+}
+
+/*
+#####################
+Modules Center
+#####################
+*/
+
+#workspaces {
+  border-radius: 15px;
+}
+
+/*
+#####################
+Modules Left
+#####################
+*/
+
+#tray {
+  background-color: transparent;
+  font-size: 12px;
+}
+
+#mpris {
+  background-color: transparent;
+  font-size: 15;
+  color: @rosewater;
+}
+
+#network {
+  background-color: transparent;
+  font-size: 15px;
+  color: @mauve;
+}
+
 #idle_inhibitor {
   font-size: 15px;
   padding: 5px 0;
@@ -95,16 +164,6 @@ tooltip label {
   color: @peach;
   font-size: 14px;
   margin-left: 6px;
-}
-
-#custom-notify {
-  color: @peach;
-}
-
-#mpris {
-  background-color: transparent;
-  font-size: 15;
-  color: @rosewater;
 }
 
 #battery {
@@ -132,61 +191,12 @@ tooltip label {
   animation-direction: alternate;
 }
 
-#custom-reboot,
-#custom-logout,
-#custom-lock,
-#custom-power {
-  color: @red;
-  border-radius: 15px;
-  font-size: 15px;
-  font-weight: bolder;
-  padding-left: 1px;
-}
-
-#custom-power {
-  padding-bottom: 20px;
-}
-
-#network {
-  background-color: transparent;
-  font-size: 15px;
-  color: @mauve;
-}
-
 #backlight {
   background-color: @crust;
   color: @flamingo;
   padding: 0 5px;
   font-size: 16px;
   border-radius: 0 15px 15px 0;
-}
-
-#custom-lock_screen {
-  border-radius: 15px;
-  padding-right: 13px;
-}
-
-#tray {
-  background-color: transparent;
-  font-size: 12px;
-}
-
-#custom-weather {
-  color: @green;
-  border-radius: 15px;
-  background-color: transparent;
-}
-
-#workspaces {
-  border-radius: 15px;
-}
-
-#custom-launch_rofi {
-  color: #89b4fa;
-  padding: 15px;
-  padding-right: 20px;
-  font-size: 15px;
-  border-radius: 15px;
 }
 
 #pulseaudio-slider {
@@ -221,16 +231,24 @@ tooltip label {
   color: @blue;
 }
 
-#clock,
-#clock-calender {
-  color: @sapphire;
+#custom-reboot,
+#custom-logout,
+#custom-lock,
+#custom-power {
+  color: @red;
   border-radius: 15px;
-  padding: 15px 0;
-  font-size: 12px;
+  font-size: 15px;
+  font-weight: bolder;
+  padding-left: 1px;
 }
 
-#clock {
-  padding-top: 5px;
+#custom-lock_screen {
+  border-radius: 15px;
+  padding-right: 13px;
+}
+
+#custom-power {
+  padding-bottom: 20px;
 }
 
 #custom-dots {
