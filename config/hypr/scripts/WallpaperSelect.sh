@@ -49,7 +49,7 @@ case $1 in
         ;;
 esac
 
-swww query || swww init
+swww-daemon &
 
 # No choice case
 if [[ -z $choice ]]; then

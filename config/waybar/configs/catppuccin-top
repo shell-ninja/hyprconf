@@ -31,7 +31,7 @@
 
     "modules-right": [ 
         "tray", 
-        "custom/notify",
+        //"custom/notify",
         "pulseaudio", 
         "pulseaudio#microphone", 
         "custom/updater", 

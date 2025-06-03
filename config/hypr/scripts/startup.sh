@@ -14,7 +14,8 @@ BEZIER=".43,1.19,1,.4"
 SWWW_PARAMS="--transition-fps $FPS --transition-type $TYPE --transition-duration $DURATION --transition-bezier $BEZIER"
 
 if [[ -f "$wallpaper" ]]; then
-    swww query || swww init && swww img ${wallpaper} $SWWW_PARAMS
+    swww-daemon &
+    swww img ${wallpaper} $SWWW_PARAMS
 else
     "$scripts_dir/Wallpaper.sh"
 fi
