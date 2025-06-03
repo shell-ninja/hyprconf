@@ -1,3 +1,10 @@
+/*
+######################################################################################
+    these modules are arranged serially, like in the catppuccin-top config modules
+    starts at line: 143
+######################################################################################
+ */
+
 * {
   border: none;
   border-radius: 0;
@@ -59,7 +66,6 @@ tooltip label {
 }
 
 #custom-launch_rofi,
-#custom-lock_screen,
 #custom-power,
 #custom-reboot,
 #custom-logout,
@@ -90,16 +96,34 @@ tooltip label {
   margin: 3px 0px;
 }
 
-#custom-wallpaper {
-  border-radius: 0 15px 15px 0;
-  padding-right: 15px;
-  color: @blue;
+/*
+################
+Modules Left
+################
+*/
+
+#custom-launch_rofi {
+  color: #89b4fa;
+  margin-left: 10px;
+  margin-right: 0px;
+  padding: 0 15px;
+  padding-right: 20px;
+  font-size: 15px;
+  border-radius: 15px 0 0 15px;
 }
 
-#custom-theme {
-  border-radius: 15px 0 0 15px;
+#window {
+  color: @teal;
+  border-radius: 0 15px 15px 0;
+  margin-left: 0px;
+  margin-right: 10px;
+  padding-right: 15px;
+}
+
+#workspaces {
+  padding-right: 15px;
   padding-left: 15px;
-  color: @peach;
+  border-radius: 15px;
 }
 
 #custom-system {
@@ -133,6 +157,98 @@ tooltip label {
   margin-right: -5px;
 }
 
+#power-profiles-daemon {
+  background-color: @crust;
+  border-radius: 15px;
+  padding-right: 20px;
+  padding-left: 15px;
+  /* margin-right: 15px; */
+}
+
+#power-profiles-daemon.performance {
+  color: @peach;
+  font-size: 15px;
+  padding-right: 18px;
+}
+
+#power-profiles-daemon.balanced {
+  color: @green;
+  font-size: 15px;
+  padding-right: 23px;
+}
+
+#power-profiles-daemon.power-saver {
+  color: @sky;
+  font-size: 15px;
+}
+
+#mpris {
+  background-color: transparent;
+  margin-left: 10px;
+  color: @rosewater;
+}
+
+/*
+#################
+Modules Center
+#################
+*/
+
+#clock {
+  color: @sapphire;
+  border-radius: 15px;
+  margin-right: 10px;
+  margin-left: 10px;
+  padding: 0 20px;
+  font-size: 14px;
+}
+
+/*
+#################
+Modules Right
+#################
+*/
+
+#tray {
+  margin-right: 10px;
+  background-color: transparent;
+}
+
+#pulseaudio {
+  background-color: @crust;
+  color: @blue;
+  border-left: 0px;
+  border-right: 0px;
+  border-radius: 15px 0 0 15px;
+}
+
+#pulseaudio.microphone {
+  color: @green;
+  margin-right: 10px;
+  border-left: 0px;
+  border-right: 0px;
+  border-radius: 0 15px 15px 0;
+}
+
+#custom-updater {
+  border-radius: 15px;
+  padding: 0 15px;
+  margin-right: 10px;
+  color: @teal;
+}
+
+#custom-theme {
+  border-radius: 15px 0 0 15px;
+  padding-left: 15px;
+  color: @peach;
+}
+
+#custom-wallpaper {
+  border-radius: 0 15px 15px 0;
+  padding-right: 15px;
+  color: @blue;
+}
+
 #idle_inhibitor {
   font-size: 15px;
   padding: 0 15px;
@@ -143,15 +259,16 @@ tooltip label {
   margin-left: 10px;
 }
 
-#mpris {
-  background-color: transparent;
-  margin-left: 10px;
-  color: @rosewater;
-}
-
 #custom-nightlight {
   border-radius: 0;
   color: @peach;
+}
+
+#custom-clipboard {
+  border-radius: 0 15px 15px 0;
+  font-size: 14px;
+  color: @lavender;
+  padding-right: 10px;
 }
 
 #battery {
@@ -179,11 +296,27 @@ tooltip label {
   animation-direction: alternate;
 }
 
-#custom-clipboard {
+#backlight {
+  background-color: @crust;
+  color: @flamingo;
+  padding: 0 5px;
+  font-size: 16px;
   border-radius: 0 15px 15px 0;
-  font-size: 14px;
-  color: @lavender;
-  padding-right: 10px;
+}
+
+#network {
+  background-color: transparent;
+  font-size: 15px;
+  color: @mauve;
+}
+
+#disk {
+  border-radius: 0px 15px 15px 0px;
+  margin-right: 10px;
+}
+
+#temperature.critical {
+  color: #e92d4d;
 }
 
 #custom-reboot,
@@ -197,124 +330,4 @@ tooltip label {
   border-radius: 15px;
   font-size: 15px;
   font-weight: bolder;
-}
-
-#network {
-  background-color: transparent;
-  font-size: 15px;
-  color: @mauve;
-}
-
-#custom-updater {
-  border-radius: 15px;
-  padding: 0 15px;
-  margin-right: 10px;
-  color: @teal;
-}
-
-#backlight {
-  background-color: @crust;
-  color: @flamingo;
-  padding: 0 5px;
-  font-size: 16px;
-  border-radius: 0 15px 15px 0;
-}
-
-#custom-lock_screen {
-  border-radius: 15px;
-  padding-right: 13px;
-}
-
-#tray {
-  margin-right: 10px;
-  background-color: transparent;
-}
-
-#disk {
-  border-radius: 0px 15px 15px 0px;
-  margin-right: 10px;
-}
-
-#temperature.critical {
-  color: #e92d4d;
-}
-
-#workspaces {
-  padding-right: 15px;
-  padding-left: 15px;
-  border-radius: 15px;
-}
-
-#custom-power_profile {
-  color: #a6e3a1;
-  border-left: 0px;
-  border-right: 0px;
-}
-
-#window {
-  color: @teal;
-  border-radius: 0 15px 15px 0;
-  margin-left: 0px;
-  margin-right: 10px;
-  padding-right: 15px;
-}
-
-#custom-launch_rofi {
-  color: #89b4fa;
-  margin-left: 10px;
-  margin-right: 0px;
-  padding: 0 15px;
-  padding-right: 20px;
-  font-size: 15px;
-  border-radius: 15px 0 0 15px;
-}
-
-#pulseaudio {
-  background-color: @crust;
-  color: @blue;
-  border-left: 0px;
-  border-right: 0px;
-  border-radius: 15px 0 0 15px;
-}
-
-#clock {
-  color: @sapphire;
-  border-radius: 15px;
-  margin-right: 10px;
-  margin-left: 10px;
-  padding: 0 20px;
-  font-size: 14px;
-}
-
-#power-profiles-daemon {
-  background-color: @crust;
-  border-radius: 15px;
-  padding-right: 20px;
-  padding-left: 15px;
-  /* margin-right: 15px; */
-}
-
-#power-profiles-daemon.performance {
-  color: @peach;
-  font-size: 15px;
-  padding-right: 18px;
-}
-
-#power-profiles-daemon.balanced {
-  color: @green;
-  font-size: 15px;
-  padding-right: 23px;
-}
-
-#power-profiles-daemon.power-saver {
-  color: @sky;
-  font-size: 15px;
-}
-
-#pulseaudio.microphone {
-  color: @green;
-  margin-right: 10px;
-  border-left: 0px;
-  border-right: 0px;
-  border-radius: 0 15px 15px 0;
 }

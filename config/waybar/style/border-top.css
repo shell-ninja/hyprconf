@@ -1,0 +1,423 @@
+/*
+######################################################################################
+    these modules are arranged serially, like in the border-bottom config modules
+    starts at line: 143
+######################################################################################
+ */
+
+* {
+  border: none;
+  border-radius: 0;
+  font-family: "JetBrainsMono Nerd Font", "MesloLGS Nerd Font", "Font Awesome";
+  font-weight: bold;
+  font-size: 12px;
+  min-height: 0;
+}
+
+@import "style/theme.css";
+
+window#waybar {
+  background: transparent;
+  color: @foreground;
+  border-radius: 20px;
+}
+
+tooltip {
+  background: @background;
+  opacity: 0.8;
+  border-radius: 15px;
+  border-width: 1px;
+  border-style: solid;
+  border-color: @foreground;
+}
+
+tooltip label {
+  font-size: 16px;
+  color: @foreground;
+}
+
+#workspaces button {
+  padding: 2px;
+  color: @foreground;
+  margin-right: 5px;
+  background-color: rgba(17, 17, 27, 0);
+}
+
+#workspaces button.active {
+  color: @background;
+  background: @foreground;
+  padding: 0 12px;
+  margin: 3px 0;
+  border-radius: 15px;
+}
+
+#workspaces button.focused {
+  color: @color8;
+  background: transparent;
+  border: none;
+}
+
+#workspaces button.urgent {
+  color: #11111b;
+  background: transparent;
+  border: none;
+}
+
+#workspaces button:hover {
+  background: transparent;
+  color: @color8;
+  border: none;
+}
+
+#taskbar button {
+  box-shadow: none;
+  text-shadow: none;
+  padding: 0px;
+  border-radius: 9px;
+  margin-top: 3px;
+  margin-bottom: 3px;
+  padding-left: 3px;
+  padding-right: 3px;
+  animation: gradient_f 20s ease-in infinite;
+  transition: all 0.5s cubic-bezier(0.55, -0.68, 0.48, 1.682);
+}
+
+#taskbar button.active {
+  background: #324857;
+  margin-left: 3px;
+  padding-left: 12px;
+  padding-right: 12px;
+  margin-right: 3px;
+  animation: gradient_f 20s ease-in infinite;
+  transition: all 0.3s cubic-bezier(0.55, -0.68, 0.48, 1.682);
+}
+
+#taskbar button:hover {
+  background: #304150;
+  padding-left: 3px;
+  padding-right: 3px;
+  animation: gradient_f 20s ease-in infinite;
+  transition: all 0.3s cubic-bezier(0.55, -0.68, 0.48, 1.682);
+}
+
+#custom-launch_rofi,
+#custom-lock_screen,
+#custom-light_dark,
+#custom-power_btn,
+#custom-weather,
+#custom-updater,
+#custom-system,
+#window,
+#cpu,
+#disk,
+#idle_inhibitor,
+#custom-updates,
+#custom-clipboard,
+#memory,
+#clock,
+#pulseaudio,
+#network,
+#tray,
+#temperature,
+#workspaces,
+#taskbar,
+#custom-notify,
+#battery,
+#mpris,
+#custom-nightlight,
+#hyprland-keyboard,
+#power-profiles-daemon,
+#backlight {
+  background: @background;
+  border-color: @foreground;
+  opacity: 0.8;
+  padding: 0px 10px;
+  margin: 3px 0px;
+}
+
+/* 
+##########################
+    Left Modules 
+##########################
+*/
+
+#custom-launch_rofi {
+  padding: 0 15px;
+  padding-right: 20px;
+  font-size: 15px;
+  border-radius: 10px 0 0 10px;
+  border: 2px solid @color2;
+  border-right: none;
+  color: @foreground;
+  margin-left: 10px;
+}
+
+#clock {
+  border: 2px solid @color2;
+  border-left: none;
+  border-right: none;
+  padding-left: 0;
+  padding-right: 15px;
+  margin-left: 0;
+  font-size: 12px;
+}
+
+#power-profiles-daemon {
+  background-color: @background;
+  /* padding-left: 15px; */
+  border: 2px solid @color2;
+  border-right: none;
+  border-left: none;
+}
+
+#power-profiles-daemon.performance {
+  color: #fab387;
+  font-size: 15px;
+  padding-right: 18px;
+}
+
+#power-profiles-daemon.balanced {
+  color: #a6e3a1;
+  font-size: 15px;
+  padding-right: 23px;
+}
+
+#power-profiles-daemon.power-saver {
+  color: #89dceb;
+  font-size: 15px;
+}
+
+#custom-notify {
+  padding-left: 0;
+  border: 2px solid @color2;
+  border-left: none;
+  border-right: none;
+}
+
+#idle_inhibitor {
+  font-size: 15px;
+  padding: 0 15px;
+  padding-left: 10px;
+  background: @background;
+  margin-right: 0px;
+  border: 2px solid @color2;
+  border-right: none;
+  border-left: none;
+}
+
+#custom-nightlight {
+  border-radius: 0;
+  border: 2px solid @color2;
+  border-right: none;
+  border-left: none;
+}
+
+#custom-clipboard {
+  font-size: 14px;
+  border: 2px solid @color2;
+  border-left: none;
+  border-right: none;
+}
+
+#network {
+  background-color: @background;
+  font-size: 15px;
+  padding-right: 20px;
+  border-radius: 0 10px 10px 0;
+  border: 2px solid @color2;
+  border-left: none;
+}
+
+#mpris {
+  background-color: @background;
+  border-radius: 10px;
+  border: 2px solid @color5;
+  padding-left: 15px;
+  margin-left: 10px;
+}
+
+/* 
+##########################
+    Right Modules 
+##########################
+*/
+
+#tray {
+  margin-right: 5px;
+  background-color: @background;
+  border-radius: 10px;
+  border: 2px solid @color1;
+}
+
+#pulseaudio {
+  background-color: @background;
+  border: 2px solid @color8;
+  /* border-left: 0px; */
+  border-right: 0px;
+  border-radius: 10px 0 0 10px;
+}
+
+#pulseaudio.microphone {
+  /* color: #cba6f7; */
+  border: 2px solid @color8;
+  border-left: 0px;
+  border-right: 0px;
+  border-radius: 0;
+  /* margin-right: 5px; */
+}
+
+#custom-updater {
+  border: 2px solid @color8;
+  border-right: none;
+  border-left: none;
+}
+
+#battery {
+  color: #a6e3a1;
+  background-color: @background;
+  /* margin-right: 0; */
+  font-size: 16px;
+  border: 2px solid @color8;
+  border-right: none;
+  border-left: none;
+  /* border-radius: 10px 0 0 10px; */
+  /* margin-left: 5px; */
+}
+
+@keyframes blink {
+  to {
+    background-color: #ffffff;
+    color: #333333;
+  }
+}
+
+#battery.critical:not(.charging) {
+  color: #f53c3c;
+  animation-name: blink;
+  animation-duration: 0.5s;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+}
+
+#backlight {
+  font-size: 16px;
+  background-color: @background;
+  padding: 0 5px;
+  border: 2px solid @color8;
+  border-right: none;
+  border-left: none;
+  /* border-radius: 0 10px 10px 0; */
+}
+
+#workspaces {
+  padding-right: 0;
+  /* border-radius: 10px 0 0 0; */
+  border: 2px solid @color8;
+  border-right: none;
+  border-left: none;
+  /* margin-left: 5px; */
+}
+
+#custom-power_btn {
+  color: red;
+  padding: 0 15px;
+  padding-right: 20px;
+  padding-left: 5px;
+  margin-right: 10px;
+  border-radius: 0 10px 10px 0;
+  border: 2px solid @color8;
+  border-left: none;
+  font-size: 15px;
+  font-weight: bolder;
+}
+
+/* 
+############################
+    Right Modules Ending 
+############################
+*/
+
+#custom-theme,
+#custom-wallpaper {
+  background: transparent;
+  margin-right: 10px;
+  font-size: 14px;
+}
+
+#custom-theme {
+  margin-right: 15px;
+}
+
+#custom-system {
+  margin: 3px 10px;
+  padding: 0 10px;
+  padding-right: 15px;
+  background: transparent;
+}
+
+#memory,
+#cpu,
+#disk,
+#temperature {
+  margin-right: 10px;
+  background-color: transparent;
+}
+
+#hyprland-language {
+  font-size: 15px;
+  margin-right: 20px;
+}
+
+#custom-wallpaper-change {
+  font-size: 16px;
+  padding-right: 20px;
+  border-radius: 0 15px 15px 0;
+}
+
+#taskbar {
+  border-radius: 15px;
+}
+
+#custom-lock_screen {
+  border-radius: 15px;
+  padding-right: 13px;
+}
+
+#temperature {
+  border-radius: 0 10px 10px 0;
+}
+
+#custom-light_dark {
+  border-radius: 15px 0 0 15px;
+  margin-left: 10px;
+  padding: 0 15px;
+}
+
+#custom-weather {
+  border-radius: 15px;
+  margin-left: 10px;
+  background-color: transparent;
+}
+
+#temperature.critical {
+  color: #e92d4d;
+}
+
+#window {
+  border-radius: 15px;
+  margin-left: 20px;
+  margin-right: 20px;
+}
+
+#custom-cava {
+  background: #18202a;
+  color: #9db8c1;
+  opacity: 0.8;
+  padding: 0px 10px;
+  margin: 3px 0px;
+  margin-right: 10px;
+  margin-top: 10px;
+  border: 0px;
+  border-radius: 15px;
+}

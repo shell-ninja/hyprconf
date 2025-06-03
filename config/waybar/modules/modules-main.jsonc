@@ -20,7 +20,7 @@
         // "interface": "wlp2*", // (Optional) To force the use of this interface
         "format-wifi": "{icon}",
         "format-ethernet": "󰌘",
-        "tooltip-format": "Network: <big><b>{essid}</b></big>\nSignal strength: <b>{signaldBm}dBm ({signalStrength}%)</b>\nFrequency: <b>{frequency}MHz</b>\nInterface: <b>{ifname}</b>\nIP: <b>{ipaddr}/{cidr}</b>\nGateway: <b>{gwaddr}</b>\nNetmask: <b>{netmask}</b>",
+        "tooltip-format": "Network: <big><b>{essid}</b></big>\nSignal strength: <b>{signaldBm}dBm ({signalStrength}%)</b>\nFrequency: <b>{frequency}MHz</b>\nInterface: <b>{ifname}</b>\nIP: <b>{ipaddr}/{cidr}</b>\nGateway: <b>{gwaddr}</b>\nNetmask: <b>{netmask}</b>\nDownload: <b><span foreground='#99ffdd'> {bandwidthDownBytes}</span></b>\nUpload: <b><span foreground='#ffcc66'> {bandwidthUpBytes}</span></b>",
         "format-linked": "󰈀 {ifname} (No IP)",
         "format-disconnected": "󰖪 ",
         "tooltip-format-disconnected": "Disconnected",
@@ -207,6 +207,7 @@
         "class<dev.zed.Zed>": "󰵁",
             "class<codeblocks>": "󰅩 ",
             "title<.*github.*>": " ",
+            "title<*[Pp]hotopea.*>": " ",
             "class<mousepad>": " ",
             "class<libreoffice-writer>": " ",
             "class<libreoffice-startcenter>": "󰏆 ",
@@ -225,14 +226,14 @@
             "class<[Pp]avucontrol|org.pulseaudio.pavucontrol>": "󱡫 ",
             "class<steam>": " ",
             "class<thunar|nemo>": "󰝰 ",	
-        "class<Gparted>":"",
+            "class<Gparted>":"",
             "class<gimp>": " ",
             "class<emulator>": "📱 ",
             "class<android-studio>": " ",
-        "class<org.pipewire.Helvum>": "󰓃",
-        "class<localsend>":"",
-        "class<PrusaSlicer|UltiMaker-Cura|OrcaSlicer>": "󰹛",
-        "class<org.bleachbit.BleachBit>": " "
+            "class<org.pipewire.Helvum>": "󰓃",
+            "class<localsend>":"",
+            "class<PrusaSlicer|UltiMaker-Cura|OrcaSlicer>": "󰹛",
+            "class<org.bleachbit.BleachBit>": " "
             }
         },
 
