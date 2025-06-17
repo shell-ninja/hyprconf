@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Path to your theme.conf file
-THEME_CONF="/usr/share/sddm/themes/sequoia-sddm-theme/theme.conf"
+THEME_CONF="/usr/share/sddm/themes/SilentSDDM/configs/default-left.conf"
 
 # Wallpaper settings
 wallDir="$HOME/.config/hypr/Wallpaper"
@@ -17,13 +17,6 @@ if [[ -z "$wallPath" || ! -f "$wallPath" ]]; then
     exit 1
 fi
 
-# Optional: blur logic (disabled)
-# blurredWallName="blurred_$wallName"
-# blurredWallPath="/tmp/$blurredWallName"
-# convert "$wallPath" -blur 0x12 "$blurredWallPath" &>/dev/null || {
-#     notify-send "SDDM" "❌ Failed to blur wallpaper!"
-#     exit 1
-# }
 
 # Extract colors from pywal
 FG=$(jq -r '.special.foreground' < ~/.cache/wal/colors.json)
@@ -33,15 +26,18 @@ BG=$(jq -r '.special.background' < ~/.cache/wal/colors.json)
 sudo cp "$THEME_CONF" "${THEME_CONF}.bak"
 
 # Copy wallpaper to SDDM theme backgrounds
-sudo cp "$wallPath" "/usr/share/sddm/themes/sequoia-sddm-theme/backgrounds/$wallName"
+sudo cp "$wallPath" "/usr/share/sddm/themes/SilentSDDM/backgrounds/$wallName"
 
 # Update theme.conf with new wallpaper and colors
-sudo sed -i "s|^wallpaper=.*|wallpaper=\"backgrounds/$wallName\"|g" "$THEME_CONF"
-sudo sed -i "s|^backgroundColour=.*|backgroundColour=\"$BG\"|g" "$THEME_CONF"
-sudo sed -i "s|^accentColour=.*|accentColour=\"$FG\"|g" "$THEME_CONF"
-sudo sed -i "s|^primaryColour=.*|primaryColour=\"$FG\"|g" "$THEME_CONF"
-sudo sed -i "s|^popupsForegroundColour=.*|popupsForegroundColour=\"$FG\"|g" "$THEME_CONF"
-sudo sed -i "s|^popupsBackgroundColour=.*|popupsBackgroundColour=\"$BG\"|g" "$THEME_CONF"
+sudo sed -i "s|^background =.*|background = \"$wallName\"|g" "$THEME_CONF"
+sudo sed -i "s|^active-background-color =.*|active-background-color = \"$FG\"|g" "$THEME_CONF"
+sudo sed -i "s|^background-color =.*|background-color = \"$BG\"|g" "$THEME_CONF"
+sudo sed -i "s|^color =.*|color = \"$FG\"|g" "$THEME_CONF"
+sudo sed -i "s|^active-border-color =.*|active-border-color = \"$FG\"|g" "$THEME_CONF"
+sudo sed -i "s|^inactive-border-color =.*|inactive-border-color = \"$FG\"|g" "$THEME_CONF"
+sudo sed -i "s|^active-content-color =.*|active-content-color = \"$FG\"|g" "$THEME_CONF"
+sudo sed -i "s|^content-color =.*|content-color = \"$FG\"|g" "$THEME_CONF"
+sudo sed -i "s|^border-color =.*|border-color = \"$FG\"|g" "$THEME_CONF"
 
 notify-send "SDDM" "✅ Wallpaper & colors updated!"
 echo "SDDM theme updated with new wallpaper and pywal colors!"
