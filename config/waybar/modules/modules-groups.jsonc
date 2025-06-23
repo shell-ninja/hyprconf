@@ -83,6 +83,24 @@
             "custom/wallpaper",
             "custom/theme"
         ]
+    },
+
+
+    // others
+    "group/power-profiles-daemon": {
+        "orientation": "inherit",
+        "drawer": {
+            "transition-duration": 300,
+            "children-class": "not-memory",
+            "transition-left-to-right": false
+        },
+
+        "modules": [
+            "power-profiles-daemon",
+            "idle_inhibitor", 
+            "custom/nightlight", 
+            "custom/clipboard", 
+        ]
     }
 
 }
