@@ -1,0 +1,222 @@
+* {
+  border: none;
+  border-radius: 0;
+  font-family: "JetBrainsMono Nerd Font", "MesloLGS Nerd Font", "Font Awesome";
+  font-weight: bold;
+  font-size: 14px;
+  min-height: 0;
+}
+
+@import "style/theme.css";
+
+window#waybar {
+  background: transparent;
+  color: @foreground;
+  border-radius: 20px;
+}
+
+tooltip {
+  background: @foreground;
+  opacity: 1;
+  border-radius: 5px;
+  color: @background;
+}
+
+tooltip label {
+  font-size: 16px;
+  color: @background;
+}
+
+/* #workspaces { */
+/*   margin-left: 30px; */
+/* } */
+
+#workspaces button {
+  padding: 5px 3px;
+  color: @foreground;
+  margin-right: 5px;
+  background-color: transparent;
+}
+
+#workspaces button.active {
+  color: @background;
+  background: @foreground;
+  padding: 0 15px;
+  border-radius: 5px;
+}
+
+#workspaces button.active:hover {
+  color: @foreground;
+  background: @background;
+  padding: 0 15px;
+  border-radius: 5px;
+  transition: linear 0.2s;
+}
+
+#workspaces button.empty {
+  color: @foreground;
+  opacity: 0.4;
+  background: transparent;
+  border: none;
+}
+
+#workspaces button.active.empty {
+  background: @foreground;
+  color: @background;
+  opacity: 1;
+  transition: linear 1s forward;
+}
+
+#workspaces button.urgent {
+  color: @color9;
+  background: transparent;
+  border: none;
+}
+
+#workspaces button:hover {
+  background: transparent;
+  color: @foreground;
+  opacity: 1;
+}
+
+/* #custom-updater, */
+/* #idle_inhibitor, */
+/* #custom-clipboard, */
+/* #clock, */
+/* #pulseaudio, */
+/* #network, */
+/* #workspaces, */
+/* #custom-notify, */
+/* #battery, */
+/* #custom-nightlight, */
+/* #power-profiles-daemon, */
+/* #backlight { */
+/*   background: transparent; */
+/*   opacity: 1; */
+/* } */
+
+#clock {
+  background-color: @foreground;
+  color: @background;
+  padding: 0 15px;
+  font-size: 14px;
+  border-radius: 5px;
+  font-size: 16px;
+}
+
+#power-profiles-daemon {
+  background-color: @foreground;
+  border-radius: 5px;
+  padding: 0 10px;
+}
+
+#power-profiles-daemon.performance {
+  padding-right: 13px;
+  color: #c73117;
+  font-size: 20px;
+}
+
+#power-profiles-daemon.balanced {
+  color: #67c717;
+  font-size: 20px;
+  padding-right: 20px;
+}
+
+#power-profiles-daemon.power-saver {
+  color: #17bac7;
+  font-size: 20px;
+  padding-right: 15px;
+}
+
+#custom-notify {
+  background-color: @foreground;
+  color: @background;
+  font-size: 20px;
+  border-radius: 5px;
+  padding-left: 10px;
+  padding-right: 5px;
+}
+
+#custom-clipboard,
+#custom-nightlight,
+#idle_inhibitor {
+  font-size: 20px;
+  background-color: @foreground;
+  color: @background;
+  border-radius: 5px;
+  padding: 0 10px;
+}
+
+#idle_inhibitor {
+  font-size: 20px;
+  font-weight: bold;
+  padding-left: 15px;
+  padding-right: 18px;
+  margin-right: 0px;
+}
+
+#network {
+  background-color: @foreground;
+  color: @background;
+  font-size: 15px;
+  border-radius: 5px;
+  padding: 0 10px;
+  padding-right: 12px;
+}
+
+#pulseaudio {
+  background-color: @foreground;
+  color: @background;
+  border-radius: 5px;
+  padding: 0 15px;
+}
+
+#pulseaudio.microphone {
+  /* color: #cba6f7; */
+  border: 2px solid @color8;
+  border-left: 0px;
+  border-right: 0px;
+  border-radius: 0;
+  /* margin-right: 5px; */
+}
+
+#custom-updater {
+  background-color: @foreground;
+  color: @background;
+  font-size: 16px;
+  border-radius: 5px;
+  padding: 0 10px;
+}
+
+#battery {
+  color: #009f29;
+  background-color: @foreground;
+  padding: 0 15px;
+  font-size: 20px;
+  border-radius: 5px;
+}
+
+@keyframes blink {
+  to {
+    background-color: #ffffff;
+    color: #333333;
+  }
+}
+
+#battery.critical:not(.charging) {
+  color: #f53c3c;
+  animation-name: blink;
+  animation-duration: 0.5s;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+}
+
+#backlight {
+  font-size: 20px;
+  background-color: @foreground;
+  color: @background;
+  padding: 0 10px;
+  padding-left: 15px;
+  border-radius: 5px;
+}

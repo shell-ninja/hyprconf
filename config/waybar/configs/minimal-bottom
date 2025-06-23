@@ -1,0 +1,76 @@
+{
+    "include": [
+        "$HOME/.config/waybar/modules/modules-main.jsonc",
+        "$HOME/.config/waybar/modules/modules-groups.jsonc",
+        "$HOME/.config/waybar/modules/modules-custom.jsonc",
+    ],
+
+    "layer": "bottom",
+    "position": "bottom",
+    "mod": "dock",
+    "exclusive": true,
+    "passthrough": false,
+    "gtk-layer-shell": true,
+    "reload_style_on_change": true,
+    "height": 24,
+    //"margin-top": 20,
+    "margin-bottom": 20,
+    "margin-left": 50,
+    "margin-right": 50,
+    "spacing": 7,
+
+    "modules-left": [
+        "hyprland/workspaces"
+    ],
+
+    "modules-center": [
+    ],
+
+    "modules-right": [
+        "custom/updater", 
+        "custom/notify",
+        "group/network",
+        "pulseaudio", 
+        "battery", 
+        "backlight",  
+        "clock",
+        "group/power-profiles-daemon",
+    ],
+
+
+    // network speed
+    "network#speed": {
+        // "interface": "wlp2*", // (Optional) To force the use of this interface
+        "format": "<span foreground='#009f91'> {bandwidthDownBytes}</span> <span foreground='#9f4300'> {bandwidthUpBytes}</span>",
+        "format-disconnected": "󰖪 ",
+        "tooltip": false,
+        "interval": 1,
+        "max-length": 30,
+    	"format-icons": [
+    		"󰤯", "󰤟", "󰤢", "󰤥", "󰤨"
+    	],
+        "on-click-right": "kitty -e nmtui"
+    },
+
+    "custom/notify": {
+        "tooltip": true,
+        "tooltip-format": "Left Click: Launch Notification Center\nRight Click: Do not Disturb",
+        "format": "{icon} ",
+        "format-icons": {
+            "notification": "<span foreground='red'><sup></sup></span>",
+            "none": "",
+            "dnd-notification": "<span foreground='red'><sup></sup></span>",
+            "dnd-none": "",
+            "inhibited-notification": "<span foreground='red'><sup></sup></span>",
+            "inhibited-none": "",
+            "dnd-inhibited-notification": "<span foreground='red'><sup></sup></span>",
+            "dnd-inhibited-none": ""
+        },
+        "return-type": "json",
+        "exec-if": "which swaync-client",
+        "exec": "swaync-client -swb",
+        "on-click": "sleep 0.1 && swaync-client -t -sw",
+        "on-click-right": "swaync-client -d -sw",
+        "escape": true,
+    },
+}
