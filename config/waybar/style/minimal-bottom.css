@@ -27,15 +27,12 @@ tooltip label {
   color: @background;
 }
 
-/* #workspaces { */
-/*   margin-left: 30px; */
-/* } */
-
 #workspaces button {
   padding: 5px 3px;
   color: @foreground;
   margin-right: 5px;
   background-color: transparent;
+  transition: none;
 }
 
 #workspaces button.active {
