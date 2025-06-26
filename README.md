@@ -33,7 +33,7 @@ This Hyprland configuration is kind of minila looking, but also little bit gorge
 
 <a id="screenshots"></a>
 
-## <img src="https://readme-typing-svg.herokuapp.com?font=Lexend+Giga&size=25&pause=1000&color=90EE90&vCenter=true&width=435&height=25&lines=SCREENSHOTS" width="450"/>
+## <img src="https://readme-typing-svg.herokuapp.com?font=Lexend+Giga&size=25&pause=1000&color=90EE90&vCenter=true&width=450&height=25&lines=SCREENSHOTS" width="450"/>
 
 <details close>
 <summary>Overall</summary>
@@ -109,7 +109,7 @@ This Hyprland configuration is kind of minila looking, but also little bit gorge
 
 <a id="features"></a>
 
-## <img src="https://readme-typing-svg.herokuapp.com?font=Lexend+Giga&size=25&pause=1000&color=90EE90&vCenter=true&width=435&height=25&lines=FEATURES" width="450"/>
+## <img src="https://readme-typing-svg.herokuapp.com?font=Lexend+Giga&size=25&pause=1000&color=90EE90&vCenter=true&width=450&height=25&lines=FEATURES" width="450"/>
 
 - Dynamic Wallpaper changing script
 - Change colors according to the changed wallpaper (pywal)
@@ -164,7 +164,7 @@ This Hyprland configuration is kind of minila looking, but also little bit gorge
   <a href="#top"><kbd> <br> 🡅 <br> </kbd></a>
 </div>
 
-## <img src="https://readme-typing-svg.herokuapp.com?font=Lexend+Giga&size=25&pause=1000&color=90EE90&vCenter=true&width=435&height=25&lines=SETUP" width="450"/>
+## <img src="https://readme-typing-svg.herokuapp.com?font=Lexend+Giga&size=25&pause=1000&color=90EE90&vCenter=true&width=450&height=25&lines=SETUP" width="450"/>
 
 <h4>To install and setup this hyprland configuration automaticly, just follow these stpes...</h4>
 
@@ -191,7 +191,7 @@ This Hyprland configuration is kind of minila looking, but also little bit gorge
   <a href="#top"><kbd> <br> 🡅 <br> </kbd></a>
 </div>
 
-## <img src="https://readme-typing-svg.herokuapp.com?font=Lexend+Giga&size=25&pause=1000&color=90EE90&vCenter=true&width=435&height=25&lines=UPDATE" width="450"/>
+## <img src="https://readme-typing-svg.herokuapp.com?font=Lexend+Giga&size=25&pause=1000&color=90EE90&vCenter=true&width=450&height=25&lines=UPDATE" width="450"/>
 
 <h4>To Update into the latest commit. jusr run this command in your tarminal..</h4>
 
@@ -217,7 +217,7 @@ bash -c "$(wget -q  https://raw.githubusercontent.com/shell-ninja/hyprconf/main/
   <a href="#top"><kbd> <br> 🡅 <br> </kbd></a>
 </div>
 
-## <img src="https://readme-typing-svg.herokuapp.com?font=Lexend+Giga&size=25&pause=1000&color=90EE90&vCenter=true&width=435&height=25&lines=KEYBOARD-SHORTCUTS" width="450"/>
+## <img src="https://readme-typing-svg.herokuapp.com?font=Lexend+Giga&size=25&pause=1000&color=90EE90&vCenter=true&width=450&height=25&lines=KEYBOARD-SHORTCUTS" width="450"/>
 
 > [!IMPORTANT]
 >
@@ -232,7 +232,7 @@ bash -c "$(wget -q  https://raw.githubusercontent.com/shell-ninja/hyprconf/main/
   <a href="#top"><kbd> <br> 🡅 <br> </kbd></a>
 </div>
 
-## <img src="https://readme-typing-svg.herokuapp.com?font=Lexend+Giga&size=25&pause=1000&color=90EE90&vCenter=true&width=435&height=25&lines=CONTRIBUTING" width="450"/>
+## <img src="https://readme-typing-svg.herokuapp.com?font=Lexend+Giga&size=25&pause=1000&color=90EE90&vCenter=true&width=450&height=25&lines=CONTRIBUTING" width="450"/>
 
 <h4> If you want to add your ideas in this project, just do some steps. </h4>
 
@@ -252,7 +252,7 @@ git checkout -b your_user_name
 4. Now add your ideas and commit to github. <br> Make sure to commit with a detailed test message. For example:
 
 ```shell
-git commit -m "fix: Fixed a but in the "example.sh script"
+git commit -m "fix: Fixed a but in the "example.sh script""
 ```
 
 ```shell
@@ -274,3 +274,5 @@ git push origin your_branch_name
 ## Reference
 
 #### I would like to thank [JaKooLit](https://github.com/JaKooLit). I was inspired from his Hyprland installation scripts and prepared my script. I took and modified some of his scripts and used here.
+
+<!-- This is an example change for a pull request. -->
