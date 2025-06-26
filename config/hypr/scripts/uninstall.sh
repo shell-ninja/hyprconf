@@ -47,6 +47,24 @@ msg() {
 clear && display_text
 printf " \n \n"
 
+# search for hyprland packages
+if [[ -n "$(command -v pacman)" ]] &> /dev/null; then
+    hypr_pkgs=($(pacman -Qq | grep '^hypr'))
+    rofi=($(pacman -Qq | grep '^rofi'))
+elif [[ -n "$(command -v dnf)" ]] &> /dev/null; then
+    hypr_pkgs=($(rpm -q --qf "%{NAME}\n" | grep '^hypr'))
+    rofi=($(rpm -q --qf "%{NAME}\n" | grep '^rofi'))
+fi
+
+others=(
+    hyprland
+    waybar
+    kitty
+    nwg-look
+    dunst
+    pyprland
+)
+
 # Config directories to remove/backup
 DOTFILES=(
     btop
@@ -75,39 +93,27 @@ current_session="${XDG_CURRENT_DESKTOP:- $DESKTOP_SESSION}"
 
 # if [[ "$current_session" == "Hyprland" ]]; then
 #     msg skp "\nYou are currently using ${cyan}Hyprland${end}. Logout first and then run this script."
-#     # exit
+#     exit
 # fi
 
-if command -v "pacman" &> /dev/null; then
-    hypr_pkgs=$(pacman -Qq | grep '^hypr')
-elif command -v "dnf" &> /dev/null; then
-    hypr_pkgs=($(rpm -q --qf "%{NAME}\n" | grep '^hypr'))
-fi
-others=(
-    waybar
-    rofi
-    kitty
-    nwg-look
-    dunst
-    pyprland
-)
 
+# package uninstallation function
 uninstallation() {
-    if command -v "pacman" &> /dev/null; then
-        for pkg in "${hypr_pkgs[@]}"; do
-            if pacman -Qs "$pkg" &> /dev/null; then
+    if [[ -n "$(command -v pacman)" ]] &> /dev/null; then
+        for pkg in "${others[@]}" "${rofi[@]}" "${hypr_pkgs[@]}"; do
+            if pacman -Qq "$pkg" &> /dev/null; then
                 msg act "Removing $pkg.."
                 sudo pacman -Rns "$pkg" --noconfirm
 
-                if pacman -Qs "$pkg" &> /dev/null; then
+                if pacman -Qq "$pkg" &> /dev/null; then
                     msg err "Could not remove $pkg"
                 else
                     msg dn "Removed $pkg successfully!"
                 fi
             fi
         done
-    elif command -v "dnf" &> /dev/null; then
-        for pkg in "${hypr_pkgs[@]}"; do
+    elif [[ -n "$(command -v dnf)" ]] &> /dev/null; then
+        for pkg in "${others[@]}" "${rofi[@]}" "${hypr_pkgs[@]}"; do
             if rpm -q "$pkg" &> /dev/null; then
                 msg act "Removing $pkg.."
                 sudo dnf remove "$pkg" -y
@@ -122,12 +128,9 @@ uninstallation() {
     fi
 }
 
-
-# msg nt "Uninstallation means, it will remove the dotfiles directories."
-# msg nt "Your sddm login manager will be untouched."
-# msg att "It will not remove the packages. Removing packages can cause system crash. You should remove them manually."
+# print the list of packages
 pkg_print() {
-    for pkg in "${hypr_pkgs[@]}" "${others[@]}"; do
+    for pkg in "${hypr_pkgs[@]}" "${rofi[@]}" "${others[@]}"; do
     cat << EOF
 $pkg
 EOF
@@ -147,7 +150,7 @@ msg att "These packages will be removed from your system"
 echo
 
 # Ask for uninstallation confirmation
-if ! gum confirm "Would you like to uninstall your config setup?" \
+if ! gum confirm "Would you like to continue?" \
     --prompt.foreground "#e1a5cf" \
     --affirmative "Continue" \
     --selected.background "#e1a5cf" \
@@ -178,8 +181,15 @@ fi
 
 sleep 1 && clear
 
+msg act "Uninstalling packages..."
+msg att "Some 'Hyprland' related package might not be uninstalled due to dependency issues. Uninstall them menually." && sleep 1
+echo
+uninstallation
+
+sleep 1 && clear
+
 # Backup and remove dotfiles
-msg act "Removing dotfiles and backing up..."
+msg act "Removing dotfiles..."
 
 mkdir -p "$BACKUP_DIR" &> /dev/null
 
@@ -198,11 +208,6 @@ if [[ -d "$BACKUP_DIR/hypr" ]]; then
     tar -czf "$CACHE_DIR/$ARCHIVE_NAME" -C "$(dirname "$BACKUP_DIR")" "$(basename "$BACKUP_DIR")" &> /dev/null
     # msg dn "Dotfiles archived at $CACHE_DIR/$ARCHIVE_NAME"
 fi
-
-sleep 1 && clear
-
-msg act "Uninstalling packages"
-uninstallation
 
 sleep 1 && clear
 
