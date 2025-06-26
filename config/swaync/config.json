@@ -92,7 +92,7 @@
         "actions": [
           {
             "label": "Bluetooth Manager",
-            "command": "blueman"
+            "command": "blueman-manager"
           }
         ]
       },
