@@ -37,6 +37,7 @@ msg() {
         dn)  printf "${cyan}::${end} $msg\n\n" ;;
         att) printf "${yellow}!!${end} $msg\n" ;;
         nt)  printf "${blue}\$\$${end} $msg\n" ;;
+        wrn) printf "${yellow}[ WARNING ]${end}\n" ;;
         skp) printf "${magenta}[ SKIP ]${end} $msg\n" ;;
         err) printf "${red}>< Ohh sheet! an error..${end}\n   $msg\n"; sleep 1 ;;
         *)   printf "$msg\n" ;;
@@ -45,6 +46,24 @@ msg() {
 
 clear && display_text
 printf " \n \n"
+
+# search for hyprland packages
+if [[ -n "$(command -v pacman)" ]] &> /dev/null; then
+    hypr_pkgs=($(pacman -Qq | grep '^hypr'))
+    rofi=($(pacman -Qq | grep '^rofi'))
+elif [[ -n "$(command -v dnf)" ]] &> /dev/null; then
+    hypr_pkgs=($(rpm -q --qf "%{NAME}\n" | grep '^hypr'))
+    rofi=($(rpm -q --qf "%{NAME}\n" | grep '^rofi'))
+fi
+
+others=(
+    hyprland
+    waybar
+    kitty
+    nwg-look
+    dunst
+    pyprland
+)
 
 # Config directories to remove/backup
 DOTFILES=(
@@ -70,14 +89,68 @@ DOTFILES=(
 BACKUP_DIR="$HOME/.config/hyprconf-$(date +%d-%m-%Y)"
 WALLPAPER_DIR="$HOME/.config/hypr/Wallpaper"
 
-msg nt "Uninstallation means, it will remove the dotfiles directories."
-msg nt "Your sddm login manager will be untouched."
-msg att "It will not remove the packages. Removing packages can cause system crash. You should remove them manually."
+current_session="${XDG_CURRENT_DESKTOP:- $DESKTOP_SESSION}"
+
+# if [[ "$current_session" == "Hyprland" ]]; then
+#     msg skp "\nYou are currently using ${cyan}Hyprland${end}. Logout first and then run this script."
+#     exit
+# fi
+
+
+# package uninstallation function
+uninstallation() {
+    if [[ -n "$(command -v pacman)" ]] &> /dev/null; then
+        for pkg in "${others[@]}" "${rofi[@]}" "${hypr_pkgs[@]}"; do
+            if pacman -Qq "$pkg" &> /dev/null; then
+                msg act "Removing $pkg.."
+                sudo pacman -Rns "$pkg" --noconfirm
+
+                if pacman -Qq "$pkg" &> /dev/null; then
+                    msg err "Could not remove $pkg"
+                else
+                    msg dn "Removed $pkg successfully!"
+                fi
+            fi
+        done
+    elif [[ -n "$(command -v dnf)" ]] &> /dev/null; then
+        for pkg in "${others[@]}" "${rofi[@]}" "${hypr_pkgs[@]}"; do
+            if rpm -q "$pkg" &> /dev/null; then
+                msg act "Removing $pkg.."
+                sudo dnf remove "$pkg" -y
+
+                if rpm -q "$pkg" &> /dev/null; then
+                    msg err "Could not remove $pkg"
+                else
+                    msg dn "Removed $pkg successfully!"
+                fi
+            fi
+        done
+    fi
+}
+
+# print the list of packages
+pkg_print() {
+    for pkg in "${hypr_pkgs[@]}" "${rofi[@]}" "${others[@]}"; do
+    cat << EOF
+$pkg
+EOF
+done
+}
+
+msg wrn
+
+echo "<> --------- <>"
+pkg_print
+echo "<> --------- <>"
+
+echo
+
+msg att "These packages will be removed from your system"
 
 echo
 
 # Ask for uninstallation confirmation
-if ! gum confirm "Would you like to uninstall your config setup?" \
+if ! gum confirm "Would you like to continue?" \
     --prompt.foreground "#e1a5cf" \
     --affirmative "Continue" \
     --selected.background "#e1a5cf" \
@@ -108,8 +181,15 @@ fi
 
 sleep 1 && clear
 
+msg act "Uninstalling packages..."
+msg att "Some 'Hyprland' related package might not be uninstalled due to dependency issues. Uninstall them menually." && sleep 1
+echo
+uninstallation
+
+sleep 1 && clear
+
 # Backup and remove dotfiles
-msg act "Removing dotfiles and backing up..."
+msg act "Removing dotfiles..."
 
 mkdir -p "$BACKUP_DIR" &> /dev/null
 
@@ -132,14 +212,16 @@ fi
 sleep 1 && clear
 
 msg dn "Uninstallation complete! Need to reboot the system..."
-msg ask "Would you like to reboot now?"
-if gum confirm "Choose" \
-    --prompt.foreground "#e1a5cf" \
-    --affirmative "Reboot" \
-    --selected.background "#e1a5cf" \
-    --selected.foreground "#070415" \
-    --negative "Skip"
-then
-    msg act "Rebooting the system in 3s" && sleep 3
-    systemctl reboot --now
-fi
+msg act "Rebooting the system now..." && sleep 2
+# if gum confirm "Choose" \
+#     --prompt.foreground "#e1a5cf" \
+#     --affirmative "Reboot" \
+#     --selected.background "#e1a5cf" \
+#     --selected.foreground "#070415" \
+#     --negative "Skip"
+# then
+#     msg act "Rebooting the system in 3s" && sleep 3
+#     systemctl reboot --now
+# fi
+
+systemctl reboot --now
