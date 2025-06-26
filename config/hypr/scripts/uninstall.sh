@@ -37,6 +37,7 @@ msg() {
         dn)  printf "${cyan}::${end} $msg\n\n" ;;
         att) printf "${yellow}!!${end} $msg\n" ;;
         nt)  printf "${blue}\$\$${end} $msg\n" ;;
+        wrn) printf "${yellow}[ WARNING ]${end}\n" ;;
         skp) printf "${magenta}[ SKIP ]${end} $msg\n" ;;
         err) printf "${red}>< Ohh sheet! an error..${end}\n   $msg\n"; sleep 1 ;;
         *)   printf "$msg\n" ;;
@@ -70,9 +71,78 @@ DOTFILES=(
 BACKUP_DIR="$HOME/.config/hyprconf-$(date +%d-%m-%Y)"
 WALLPAPER_DIR="$HOME/.config/hypr/Wallpaper"
 
-msg nt "Uninstallation means, it will remove the dotfiles directories."
-msg nt "Your sddm login manager will be untouched."
-msg att "It will not remove the packages. Removing packages can cause system crash. You should remove them manually."
+current_session="${XDG_CURRENT_DESKTOP:- $DESKTOP_SESSION}"
+
+# if [[ "$current_session" == "Hyprland" ]]; then
+#     msg skp "\nYou are currently using ${cyan}Hyprland${end}. Logout first and then run this script."
+#     # exit
+# fi
+
+if command -v "pacman" &> /dev/null; then
+    hypr_pkgs=$(pacman -Qq | grep '^hypr')
+elif command -v "dnf" &> /dev/null; then
+    hypr_pkgs=($(rpm -q --qf "%{NAME}\n" | grep '^hypr'))
+fi
+others=(
+    waybar
+    rofi
+    kitty
+    nwg-look
+    dunst
+    pyprland
+)
+
+uninstallation() {
+    if command -v "pacman" &> /dev/null; then
+        for pkg in "${hypr_pkgs[@]}"; do
+            if pacman -Qs "$pkg" &> /dev/null; then
+                msg act "Removing $pkg.."
+                sudo pacman -Rns "$pkg" --noconfirm
+
+                if pacman -Qs "$pkg" &> /dev/null; then
+                    msg err "Could not remove $pkg"
+                else
+                    msg dn "Removed $pkg successfully!"
+                fi
+            fi
+        done
+    elif command -v "dnf" &> /dev/null; then
+        for pkg in "${hypr_pkgs[@]}"; do
+            if rpm -q "$pkg" &> /dev/null; then
+                msg act "Removing $pkg.."
+                sudo dnf remove "$pkg" -y
+
+                if rpm -q "$pkg" &> /dev/null; then
+                    msg err "Could not remove $pkg"
+                else
+                    msg dn "Removed $pkg successfully!"
+                fi
+            fi
+        done
+    fi
+}
+
+
+# msg nt "Uninstallation means, it will remove the dotfiles directories."
+# msg nt "Your sddm login manager will be untouched."
+# msg att "It will not remove the packages. Removing packages can cause system crash. You should remove them manually."
+pkg_print() {
+    for pkg in "${hypr_pkgs[@]}" "${others[@]}"; do
+    cat << EOF
+$pkg
+EOF
+done
+}
+
+msg wrn
+
+echo "<> --------- <>"
+pkg_print
+echo "<> --------- <>"
+
+echo
+
+msg att "These packages will be removed from your system"
 
 echo
 
@@ -131,15 +201,22 @@ fi
 
 sleep 1 && clear
 
+msg act "Uninstalling packages"
+uninstallation
+
+sleep 1 && clear
+
 msg dn "Uninstallation complete! Need to reboot the system..."
-msg ask "Would you like to reboot now?"
-if gum confirm "Choose" \
-    --prompt.foreground "#e1a5cf" \
-    --affirmative "Reboot" \
-    --selected.background "#e1a5cf" \
-    --selected.foreground "#070415" \
-    --negative "Skip"
-then
-    msg act "Rebooting the system in 3s" && sleep 3
-    systemctl reboot --now
-fi
+msg act "Rebooting the system now..." && sleep 2
+# if gum confirm "Choose" \
+#     --prompt.foreground "#e1a5cf" \
+#     --affirmative "Reboot" \
+#     --selected.background "#e1a5cf" \
+#     --selected.foreground "#070415" \
+#     --negative "Skip"
+# then
+#     msg act "Rebooting the system in 3s" && sleep 3
+#     systemctl reboot --now
+# fi
+
+systemctl reboot --now
