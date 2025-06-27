@@ -73,7 +73,7 @@ others=(
     hypridle
     hyprlock
     waybar
-    kitty
+    # kitty
     # nwg-look
     swaync
 )
