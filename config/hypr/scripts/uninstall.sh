@@ -33,11 +33,12 @@ msg() {
     local msg=$2
     case $actn in
         act) printf "${green}=>${end} $msg\n" ;;
-        ask) printf "${orange}??${end} $msg\n" ;;
-        dn)  printf "${cyan}::${end} $msg\n\n" ;;
+        ask) printf "${orange} ${end} $msg\n" ;;
+        alrt)printf "${yellow} ${end} $msg\n" ;;
+        dn)  printf "${cyan}󱗼 ${end} $msg\n\n" ;;
         att) printf "${yellow}!!${end} $msg\n" ;;
-        nt)  printf "${blue}\$\$${end} $msg\n" ;;
-        wrn) printf "${yellow}[ WARNING ]${end}\n" ;;
+        nt)  printf "${blue}󱞁 ${end} $msg\n" ;;
+        wrn) printf "${red}[ WARNING ]${end}\n" ;;
         skp) printf "${magenta}[ SKIP ]${end} $msg\n" ;;
         err) printf "${red}>< Ohh sheet! an error..${end}\n   $msg\n"; sleep 1 ;;
         *)   printf "$msg\n" ;;
@@ -46,6 +47,9 @@ msg() {
 
 clear && display_text
 printf " \n \n"
+
+msg alrt "Starting the uninstallation process..."
+sleep 2 && clear
 
 # search for hyprland packages
 if [[ -n "$(command -v pacman)" ]] &> /dev/null; then
@@ -97,10 +101,9 @@ WALLPAPER_DIR="$HOME/.config/hypr/Wallpaper"
 
 current_session="${XDG_CURRENT_DESKTOP:- $DESKTOP_SESSION}"
 
-# if [[ "$current_session" == "Hyprland" ]]; then
-#     msg skp "\nYou are currently using ${cyan}Hyprland${end}. Logout first and then run this script."
-#     exit
-# fi
+if [[ "$current_session" == "Hyprland" ]]; then
+    msg wrn "\nYou are currently using Hyprland. After finishing the sctipt and rebooting the system, you will no longer be able to log into hyprland."
+fi
 
 
 # package uninstallation function
