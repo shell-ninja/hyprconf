@@ -32,37 +32,50 @@ msg() {
     local actn=$1
     local msg=$2
     case $actn in
-        act) printf "${green}=>${end} $msg\n" ;;
-        ask) printf "${orange}??${end} $msg\n" ;;
-        dn)  printf "${cyan}::${end} $msg\n\n" ;;
-        att) printf "${yellow}!!${end} $msg\n" ;;
-        nt)  printf "${blue}\$\$${end} $msg\n" ;;
-        wrn) printf "${yellow}[ WARNING ]${end}\n" ;;
+        act) printf "\n${green}=>${end} $msg\n" ;;
+        ask) printf "\n${orange} ${end} $msg\n" ;;
+        alrt)printf "\n${yellow} ${end} $msg\n" ;;
+        dn)  printf "\n${cyan}󱗼 ${end} $msg\n\n" ;;
+        att) printf "\n${yellow}!!${end} $msg\n" ;;
+        nt)  printf "\n${blue}󱞁 ${end} $msg\n" ;;
+        wrn) printf "${red}[ WARNING ]${end}\n $msg\n" ;;
         skp) printf "${magenta}[ SKIP ]${end} $msg\n" ;;
-        err) printf "${red}>< Ohh sheet! an error..${end}\n   $msg\n"; sleep 1 ;;
+        err) printf "\n${red}>< Ohh sheet! an error..${end}\n   $msg\n"; sleep 1 ;;
         *)   printf "$msg\n" ;;
     esac
 }
 
 clear && display_text
-printf " \n \n"
+
+msg alrt "Starting the uninstallation process..."
+sleep 2 && clear
 
 # search for hyprland packages
 if [[ -n "$(command -v pacman)" ]] &> /dev/null; then
+    aur=$(command -v yay || command -v paru)
+
     hypr_pkgs=($(pacman -Qq | grep '^hypr'))
+    grmblst=($(pacman -Qq | grep '^grimblast'))
     rofi=($(pacman -Qq | grep '^rofi'))
 elif [[ -n "$(command -v dnf)" ]] &> /dev/null; then
     hypr_pkgs=($(rpm -q --qf "%{NAME}\n" | grep '^hypr'))
+    grmblst=($(rpm -q --qf "%{NAME}\n" | grep '^grimblast'))
     rofi=($(rpm -q --qf "%{NAME}\n" | grep '^rofi'))
 fi
 
 others=(
-    hyprland
-    waybar
-    kitty
-    nwg-look
-    dunst
     pyprland
+    cliphist
+    wl-clipboard
+    xdg-desktop-portal-hyprland
+    hyprland
+    hyprcursor
+    hypridle
+    hyprlock
+    waybar
+    # kitty
+    # nwg-look
+    swaync
 )
 
 # Config directories to remove/backup
@@ -91,21 +104,21 @@ WALLPAPER_DIR="$HOME/.config/hypr/Wallpaper"
 
 current_session="${XDG_CURRENT_DESKTOP:- $DESKTOP_SESSION}"
 
-# if [[ "$current_session" == "Hyprland" ]]; then
-#     msg skp "\nYou are currently using ${cyan}Hyprland${end}. Logout first and then run this script."
-#     exit
-# fi
+if [[ "$current_session" == "Hyprland" ]]; then
+    msg wrn "You are currently using Hyprland. After finishing the sctipt and rebooting the system, you will no longer be able to log into hyprland."
+    echo
+fi
 
 
 # package uninstallation function
 uninstallation() {
     if [[ -n "$(command -v pacman)" ]] &> /dev/null; then
-        for pkg in "${others[@]}" "${rofi[@]}" "${hypr_pkgs[@]}"; do
-            if pacman -Qq "$pkg" &> /dev/null; then
+        for pkg in "${grmblst[@]}" "${others[@]}" "${rofi[@]}" "${hypr_pkgs[@]}"; do
+            if "$aur" -Qq "$pkg" &> /dev/null; then
                 msg act "Removing $pkg.."
-                sudo pacman -Rns "$pkg" --noconfirm
+                "$aur" -Rns "$pkg" --noconfirm
 
-                if pacman -Qq "$pkg" &> /dev/null; then
+                if "$aur" -Qq "$pkg" &> /dev/null; then
                     msg err "Could not remove $pkg"
                 else
                     msg dn "Removed $pkg successfully!"
@@ -113,7 +126,7 @@ uninstallation() {
             fi
         done
     elif [[ -n "$(command -v dnf)" ]] &> /dev/null; then
-        for pkg in "${others[@]}" "${rofi[@]}" "${hypr_pkgs[@]}"; do
+        for pkg in "${grmblst[@]}" "${others[@]}" "${rofi[@]}" "${hypr_pkgs[@]}"; do
             if rpm -q "$pkg" &> /dev/null; then
                 msg act "Removing $pkg.."
                 sudo dnf remove "$pkg" -y
@@ -130,18 +143,18 @@ uninstallation() {
 
 # print the list of packages
 pkg_print() {
-    for pkg in "${hypr_pkgs[@]}" "${rofi[@]}" "${others[@]}"; do
+    for pkg in "${others[@]}" "${grmblst[@]}" "${rofi[@]}"; do
+        if "$aur" -Qq "$pkg" &> /dev/null;then
     cat << EOF
 $pkg
 EOF
+        fi
 done
 }
 
-msg wrn
-
-echo "<> --------- <>"
+echo -e "${yellow}<> --------- <>${orange}"
 pkg_print
-echo "<> --------- <>"
+echo -e "${yellow}<> --------- <>${end}"
 
 echo
 
@@ -209,19 +222,12 @@ if [[ -d "$BACKUP_DIR/hypr" ]]; then
     # msg dn "Dotfiles archived at $CACHE_DIR/$ARCHIVE_NAME"
 fi
 
+msg dn "Uninstallation complete! Need to reboot the system..."
+
 sleep 1 && clear
 
-msg dn "Uninstallation complete! Need to reboot the system..."
-msg act "Rebooting the system now..." && sleep 2
-# if gum confirm "Choose" \
-#     --prompt.foreground "#e1a5cf" \
-#     --affirmative "Reboot" \
-#     --selected.background "#e1a5cf" \
-#     --selected.foreground "#070415" \
-#     --negative "Skip"
-# then
-#     msg act "Rebooting the system in 3s" && sleep 3
-#     systemctl reboot --now
-# fi
+for sec in {5..1}; do
+    msg act "Rebooting the system in $sec seconds..." && sleep 1 && clear
+done
 
 systemctl reboot --now
