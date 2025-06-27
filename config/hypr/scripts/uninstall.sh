@@ -32,15 +32,15 @@ msg() {
     local actn=$1
     local msg=$2
     case $actn in
-        act) printf "${green}=>${end} $msg\n" ;;
-        ask) printf "${orange} ${end} $msg\n" ;;
-        alrt)printf "${yellow} ${end} $msg\n" ;;
-        dn)  printf "${cyan}󱗼 ${end} $msg\n\n" ;;
-        att) printf "${yellow}!!${end} $msg\n" ;;
-        nt)  printf "${blue}󱞁 ${end} $msg\n" ;;
+        act) printf "\n${green}=>${end} $msg\n" ;;
+        ask) printf "\n${orange} ${end} $msg\n" ;;
+        alrt)printf "\n${yellow} ${end} $msg\n" ;;
+        dn)  printf "\n${cyan}󱗼 ${end} $msg\n\n" ;;
+        att) printf "\n${yellow}!!${end} $msg\n" ;;
+        nt)  printf "\n${blue}󱞁 ${end} $msg\n" ;;
         wrn) printf "${red}[ WARNING ]${end}\n $msg\n" ;;
         skp) printf "${magenta}[ SKIP ]${end} $msg\n" ;;
-        err) printf "${red}>< Ohh sheet! an error..${end}\n   $msg\n"; sleep 1 ;;
+        err) printf "\n${red}>< Ohh sheet! an error..${end}\n   $msg\n"; sleep 1 ;;
         *)   printf "$msg\n" ;;
     esac
 }
@@ -107,6 +107,7 @@ current_session="${XDG_CURRENT_DESKTOP:- $DESKTOP_SESSION}"
 
 if [[ "$current_session" == "Hyprland" ]]; then
     msg wrn "You are currently using Hyprland. After finishing the sctipt and rebooting the system, you will no longer be able to log into hyprland."
+    echo
 fi
 
 
@@ -152,11 +153,9 @@ EOF
 done
 }
 
-msg wrn
-
-echo "<> --------- <>"
+echo -e "${yellow}<> --------- <>${orange}"
 pkg_print
-echo "<> --------- <>"
+echo -e "${yellow}<> --------- <>${end}"
 
 echo
 
