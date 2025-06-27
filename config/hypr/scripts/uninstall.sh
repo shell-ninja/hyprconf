@@ -49,6 +49,8 @@ printf " \n \n"
 
 # search for hyprland packages
 if [[ -n "$(command -v pacman)" ]] &> /dev/null; then
+    aur=$(command -v yay || command -v paru)
+
     hypr_pkgs=($(pacman -Qq | grep '^hypr'))
     rofi=($(pacman -Qq | grep '^rofi'))
 elif [[ -n "$(command -v dnf)" ]] &> /dev/null; then
@@ -58,6 +60,7 @@ fi
 
 others=(
     hyprland
+    xdg-desktop-portal-hyprland
     waybar
     kitty
     nwg-look
@@ -101,11 +104,11 @@ current_session="${XDG_CURRENT_DESKTOP:- $DESKTOP_SESSION}"
 uninstallation() {
     if [[ -n "$(command -v pacman)" ]] &> /dev/null; then
         for pkg in "${others[@]}" "${rofi[@]}" "${hypr_pkgs[@]}"; do
-            if pacman -Qq "$pkg" &> /dev/null; then
+            if "$aur" -Qq "$pkg" &> /dev/null; then
                 msg act "Removing $pkg.."
-                sudo pacman -Rns "$pkg" --noconfirm
+                "$aur" -Rns "$pkg" --noconfirm
 
-                if pacman -Qq "$pkg" &> /dev/null; then
+                if "$aur" -Qq "$pkg" &> /dev/null; then
                     msg err "Could not remove $pkg"
                 else
                     msg dn "Removed $pkg successfully!"
@@ -131,9 +134,11 @@ uninstallation() {
 # print the list of packages
 pkg_print() {
     for pkg in "${hypr_pkgs[@]}" "${rofi[@]}" "${others[@]}"; do
+        if "$aur" -Qq "$pkg" &> /dev/null;then
     cat << EOF
 $pkg
 EOF
+        fi
 done
 }
 
