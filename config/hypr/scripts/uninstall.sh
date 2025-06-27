@@ -52,9 +52,11 @@ if [[ -n "$(command -v pacman)" ]] &> /dev/null; then
     aur=$(command -v yay || command -v paru)
 
     hypr_pkgs=($(pacman -Qq | grep '^hypr'))
+    grmblst=($(pacman -Qq | grep '^grimblast'))
     rofi=($(pacman -Qq | grep '^rofi'))
 elif [[ -n "$(command -v dnf)" ]] &> /dev/null; then
     hypr_pkgs=($(rpm -q --qf "%{NAME}\n" | grep '^hypr'))
+    grmblst=($(rpm -q --qf "%{NAME}\n" | grep '^grimblast'))
     rofi=($(rpm -q --qf "%{NAME}\n" | grep '^rofi'))
 fi
 
@@ -103,7 +105,7 @@ current_session="${XDG_CURRENT_DESKTOP:- $DESKTOP_SESSION}"
 # package uninstallation function
 uninstallation() {
     if [[ -n "$(command -v pacman)" ]] &> /dev/null; then
-        for pkg in "${others[@]}" "${rofi[@]}" "${hypr_pkgs[@]}"; do
+        for pkg in "${grmblst[@]}" "${others[@]}" "${rofi[@]}" "${hypr_pkgs[@]}"; do
             if "$aur" -Qq "$pkg" &> /dev/null; then
                 msg act "Removing $pkg.."
                 "$aur" -Rns "$pkg" --noconfirm
@@ -116,7 +118,7 @@ uninstallation() {
             fi
         done
     elif [[ -n "$(command -v dnf)" ]] &> /dev/null; then
-        for pkg in "${others[@]}" "${rofi[@]}" "${hypr_pkgs[@]}"; do
+        for pkg in "${grmblst[@]}" "${others[@]}" "${rofi[@]}" "${hypr_pkgs[@]}"; do
             if rpm -q "$pkg" &> /dev/null; then
                 msg act "Removing $pkg.."
                 sudo dnf remove "$pkg" -y
