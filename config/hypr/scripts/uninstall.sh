@@ -38,7 +38,7 @@ msg() {
         dn)  printf "${cyan}󱗼 ${end} $msg\n\n" ;;
         att) printf "${yellow}!!${end} $msg\n" ;;
         nt)  printf "${blue}󱞁 ${end} $msg\n" ;;
-        wrn) printf "${red}[ WARNING ]${end}\n" ;;
+        wrn) printf "${red}[ WARNING ]${end}\n $msg\n" ;;
         skp) printf "${magenta}[ SKIP ]${end} $msg\n" ;;
         err) printf "${red}>< Ohh sheet! an error..${end}\n   $msg\n"; sleep 1 ;;
         *)   printf "$msg\n" ;;
@@ -65,14 +65,18 @@ elif [[ -n "$(command -v dnf)" ]] &> /dev/null; then
 fi
 
 others=(
-    hyprland
-    xdg-desktop-portal-hyprland
-    waybar
+    pyprland
+    cliphist
     wl-clipboard
+    xdg-desktop-portal-hyprland
+    hyprland
+    hyprcursor
+    hypridle
+    hyprlock
+    waybar
     kitty
     # nwg-look
-    dunst
-    pyprland
+    swaync
 )
 
 # Config directories to remove/backup
@@ -102,7 +106,7 @@ WALLPAPER_DIR="$HOME/.config/hypr/Wallpaper"
 current_session="${XDG_CURRENT_DESKTOP:- $DESKTOP_SESSION}"
 
 if [[ "$current_session" == "Hyprland" ]]; then
-    msg wrn "\nYou are currently using Hyprland. After finishing the sctipt and rebooting the system, you will no longer be able to log into hyprland."
+    msg wrn "You are currently using Hyprland. After finishing the sctipt and rebooting the system, you will no longer be able to log into hyprland."
 fi
 
 
