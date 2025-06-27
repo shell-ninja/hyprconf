@@ -64,8 +64,9 @@ others=(
     hyprland
     xdg-desktop-portal-hyprland
     waybar
+    wl-clipboard
     kitty
-    nwg-look
+    # nwg-look
     dunst
     pyprland
 )
