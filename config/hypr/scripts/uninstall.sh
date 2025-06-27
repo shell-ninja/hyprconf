@@ -46,7 +46,6 @@ msg() {
 }
 
 clear && display_text
-printf " \n \n"
 
 msg alrt "Starting the uninstallation process..."
 sleep 2 && clear
@@ -144,7 +143,7 @@ uninstallation() {
 
 # print the list of packages
 pkg_print() {
-    for pkg in "${hypr_pkgs[@]}" "${rofi[@]}" "${others[@]}"; do
+    for pkg in "${others[@]}" "${grmblst[@]}" "${rofi[@]}"; do
         if "$aur" -Qq "$pkg" &> /dev/null;then
     cat << EOF
 $pkg
@@ -223,19 +222,12 @@ if [[ -d "$BACKUP_DIR/hypr" ]]; then
     # msg dn "Dotfiles archived at $CACHE_DIR/$ARCHIVE_NAME"
 fi
 
+msg dn "Uninstallation complete! Need to reboot the system..."
+
 sleep 1 && clear
 
-msg dn "Uninstallation complete! Need to reboot the system..."
-msg act "Rebooting the system now..." && sleep 2
-# if gum confirm "Choose" \
-#     --prompt.foreground "#e1a5cf" \
-#     --affirmative "Reboot" \
-#     --selected.background "#e1a5cf" \
-#     --selected.foreground "#070415" \
-#     --negative "Skip"
-# then
-#     msg act "Rebooting the system in 3s" && sleep 3
-#     systemctl reboot --now
-# fi
+for sec in {5..1}; do
+    msg act "Rebooting the system in $sec seconds..." && sleep 1 && clear
+done
 
 systemctl reboot --now
