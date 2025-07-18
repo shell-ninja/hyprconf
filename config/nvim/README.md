@@ -4,10 +4,10 @@
 
 | Mode(s) | Keybinding | Action                                            |
 | ------- | ---------- | ------------------------------------------------- |
-| i       | jk         | Exit insert mode                                  |
-| n       | <leader>cl | Clear search highlights                           |
+| i, n    | jf         | Save and exit                                     |
+| i       | jk         | Save and insert mode                              |
+| n       | cc         | Clear search highlights                           |
 | i, n    | <C-x>      | Save and exit                                     |
-| i       | jf         | Save and exit                                     |
 | i, n    | <C-s>      | Save                                              |
 | i, n    | <C-z>      | Undo                                              |
 | n       | u          | Undo                                              |
@@ -15,12 +15,13 @@
 | i, n    | <C-y>      | Redo                                              |
 | n       | dw         | Delete word backwards                             |
 | n       | de         | Delete word forwards                              |
-| n       | <C-d>      | Delete word backwards                             |
+| n       | df         | Delete line after the cursor                      |
+| n       | db         | Delete like before the cursor                     |
 | n       | <C-a>      | Select all                                        |
 | n       | <leader>v  | Split window vertically                           |
 | n       | <leader>h  | Split window horizontally                         |
-| n       | <leader>ee | Make splits equal size                            |
-| n       | <leader>ex | Close current split                               |
+| n       | <leader>e  | Make splits equal size                            |
+| n       | <leader>x  | Close current split                               |
 | n       | <leader>to | Open new tab                                      |
 | n       | <leader>tx | Close current tab                                 |
 | n       | <C-n>      | Go to next tab                                    |
@@ -59,4 +60,4 @@
 | n       | <leader>ff | Find files using Telescope                        |
 | n       | <leader>fg | Live grep using Telescope                         |
 | n       | <leader>fb | List open buffers using Telescope                 |
-| n       | <leader>fh | Find help tags using Telescope                    |
+| n       | <leader>fs | Find help tags using Telescope                    |
