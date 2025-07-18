@@ -87,12 +87,10 @@
     "custom/nightlight": {
         "format": "󰖔 ",
         "exec": "~/.config/hypr/scripts/nightlight.sh",
-        "on-scroll-down": "~/.config/hypr/scripts/nightlight.sh --dec",
-        "on-scroll-up": "~/.config/hypr/scripts/nightlight.sh --inc",
         "on-click": "~/.config/hypr/scripts/nightlight.sh --value",
         "on-click-right": "~/.config/hypr/scripts/nightlight.sh --def",
         "tooltip": true,
-        "tooltip-format": "Screen temperature is: {}\n\nLeft Click: set temp 5000k\nRight Click: set temp 6500k (default)\n\nScroll Down: increase temp(+100K)\nScroll Up: decrease temp(-100K)",
+        "tooltip-format": "Left Click: set temp 5000k\nRight Click: set temp default",
         "interval": 1
     },
 
