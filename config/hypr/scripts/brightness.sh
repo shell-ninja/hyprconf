@@ -15,13 +15,15 @@ if [[ -d "/sys/class/power_supply/BAT0" ]]; then
     get_icon() {
         current=$(get_backlight | sed 's/%//')
 
-        if   [ "$current" -le "20" ]; then
+        if   [ "$current" = 0 ]; then
+            icon="$iDIR/brightness-0.png"
+        elif [ "$current" = 20 ]; then
             icon="$iDIR/brightness-20.png"
-        elif [ "$current" -le "40" ]; then
+        elif [ "$current" = 40 ]; then
             icon="$iDIR/brightness-40.png"
-        elif [ "$current" -le "60" ]; then
+        elif [ "$current" = 60 ]; then
             icon="$iDIR/brightness-60.png"
-        elif [ "$current" -le "80" ]; then
+        elif [ "$current" = 80 ]; then
             icon="$iDIR/brightness-80.png"
         else
             icon="$iDIR/brightness-100.png"
@@ -39,13 +41,15 @@ else
     get_icon() {
         current=$(get_backlight)
 
-        if   [ "$current" -le "20" ]; then
+        if   [ "$current" = 0 ]; then
+            icon="$iDIR/brightness-0.png"
+        elif [ "$current" = 20 ]; then
             icon="$iDIR/brightness-20.png"
-        elif [ "$current" -le "40" ]; then
+        elif [ "$current" = 40 ]; then
             icon="$iDIR/brightness-40.png"
-        elif [ "$current" -le "60" ]; then
+        elif [ "$current" = 60 ]; then
             icon="$iDIR/brightness-60.png"
-        elif [ "$current" -le "80" ]; then
+        elif [ "$current" = 80 ]; then
             icon="$iDIR/brightness-80.png"
         else
             icon="$iDIR/brightness-100.png"
