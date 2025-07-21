@@ -2,23 +2,26 @@ vim.g.mapleader = " "
 
 local keymap = vim.keymap -- for conciseness
 
-keymap.set("i", "jk", "<ESC>", { desc = "Exit insert mode with jk" })
-keymap.set("n", "<leader>cl", ":nohl<CR>", { desc = "Clear search highlights" })
+keymap.set("i", "jk", "<ESC>:w<CR>", { desc = "Exit insert mode and save file with jk" })
+keymap.set("n", "cc", ":nohl<CR>", { desc = "Clear search highlights" })
 keymap.set({ "i", "n" }, "<C-x>", "<ESC>:wq<CR>", { desc = "save and exit" })
 
 -- keymaps similar to vs code
 keymap.set({ "i", "n" }, "<C-s>", "<ESC>:w<CR>", { desc = "save with Ctrl + s" }) -- save with ctrl + s
-keymap.set({ "i" }, "jf", "<ESC>:wq<CR>", { desc = "save with j+f" })             -- save with j + s
+keymap.set({ "i" }, "jf", "<ESC>:wq<CR>", { desc = "save and close with j+f" })   -- save with j + f
 keymap.set({ "i", "n" }, "<C-z>", "<ESC>u", { desc = "undo" })                    -- undo with ctrl + z
 keymap.set({ "i", "n" }, "<C-y>", "<C-r>", { desc = "redo" })                     -- redo with ctrl + y
-
 
 -- Delete a word backwards
 keymap.set("n", "dw", 'vb"_di')
 keymap.set("n", "<C-d>", 'vb"_d')
 
+-- Delect in line
+keymap.set("n", "df", 'd$')  -- deletes after the cursor
+keymap.set("n", "db", 'v0d') -- deletes before the cursor
+
 -- Select all
-keymap.set("n", "<C-a>", "gg<S-v>G")
+keymap.set("n", "<C-a>", "gg<S-v>G") -- Select all
 
 -- window management
 keymap.set("n", "<leader>v", "<C-w>v", { desc = "Split window vertically" })                    -- split window vertically

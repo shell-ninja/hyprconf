@@ -14,18 +14,8 @@ if [[ -d "/sys/class/power_supply/BAT0" ]]; then
     # get icon
     get_icon() {
         current=$(get_backlight | sed 's/%//')
+        icon="$iDIR/brightness-${current}.png"
 
-        if   [ "$current" -le "20" ]; then
-            icon="$iDIR/brightness-20.png"
-        elif [ "$current" -le "40" ]; then
-            icon="$iDIR/brightness-40.png"
-        elif [ "$current" -le "60" ]; then
-            icon="$iDIR/brightness-60.png"
-        elif [ "$current" -le "80" ]; then
-            icon="$iDIR/brightness-80.png"
-        else
-            icon="$iDIR/brightness-100.png"
-        fi
     }
 else
     device="Desktop"
@@ -33,23 +23,6 @@ else
     # Get brightness
     get_backlight() {
         echo $(ddcutil --sleep-multiplier=0 getvcp 10 | awk '{print $9}' | tr -d ',')
-    }
-
-    # get icon
-    get_icon() {
-        current=$(get_backlight)
-
-        if   [ "$current" -le "20" ]; then
-            icon="$iDIR/brightness-20.png"
-        elif [ "$current" -le "40" ]; then
-            icon="$iDIR/brightness-40.png"
-        elif [ "$current" -le "60" ]; then
-            icon="$iDIR/brightness-60.png"
-        elif [ "$current" -le "80" ]; then
-            icon="$iDIR/brightness-80.png"
-        else
-            icon="$iDIR/brightness-100.png"
-        fi
     }
 fi
 
@@ -88,17 +61,7 @@ change_backlight() {
 
         # Reuse value
         current=$new
-        if   [ "$current" -le 20 ]; then
-            icon="$iDIR/brightness-20.png"
-        elif [ "$current" -le 40 ]; then
-            icon="$iDIR/brightness-40.png"
-        elif [ "$current" -le 60 ]; then
-            icon="$iDIR/brightness-60.png"
-        elif [ "$current" -le 80 ]; then
-            icon="$iDIR/brightness-80.png"
-        else
-            icon="$iDIR/brightness-100.png"
-        fi
+        icon="$iDIR/brightness-${current}.png"
 
         notify_user
     fi

@@ -16,9 +16,9 @@ return {
         local border = "#547998"
 
         require("catppuccin").setup({
-            flavour = "mocha", -- latte, frappe, macchiato, mocha
+            flavour = "mocha", -- mocha, frappe, macchiato, mocha
             background = {     -- :h background
-                light = "latte",
+                light = "mocha",
                 dark = "mocha",
             },
             transparent_background = true, -- disables setting the background color.
