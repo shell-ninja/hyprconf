@@ -13,6 +13,7 @@ file_exists() {
 
 # Kill already running processes
 _ps=(
+    dunst
     swaync
     rofi
     # waybar
@@ -24,8 +25,11 @@ for _prs in "${_ps[@]}"; do
 done
 
 sleep 0.1
-# waybar &
-swaync &
+if [[ -n "$(command -v swaync)" ]]; then
+    swaync &
+elif [[ -n "$(command -v dunst)" ]]; then
+    dunst &
+fi
 
 sleep 1
 hyprctl reload
