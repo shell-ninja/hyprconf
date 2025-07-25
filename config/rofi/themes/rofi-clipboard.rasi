@@ -38,7 +38,7 @@ window {
     fullscreen:                   false;
     enabled:                      true;
     border-radius:                @radius;
-    background-color:             @background;
+    background-color:              transparent;
 }
 
 /* ---- Mainbox ---- */
