@@ -33,13 +33,13 @@ window {
     border:                       @border-size;
     border-color:                 @foreground;
     cursor:                       "default";
-    transparency:                 "real";
+    // transparency:                 "real";
     location:                     center;
     anchor:                       center;
     fullscreen:                   false;
     enabled:                      true;
     border-radius:                @radius;
-    background-color:             @background;
+    background-color:             transparent;
 }
 
 /* ---- Mainbox ---- */
@@ -48,7 +48,7 @@ mainbox {
     orientation:                  vertical;
     spacing:                      0px;
     margin:                       0px;
-    background-color:             @background;
+    background-color:             transparent;
     children:                     [ "inputbar", "listbox"];
 }
 
@@ -105,7 +105,7 @@ mode-switcher{
 
 button {
     border-radius:                @radius;
-    background-color:             @background;
+    background-color:             transparent;
     text-color:                   inherit;
     cursor:                       pointer;
     border:                       0px;
@@ -140,23 +140,23 @@ element {
     enabled:                      true;
     padding:                      5px 10px;
     cursor:                       pointer;
-    background-color:             @background;
+    background-color:             transparent;
     border-radius:                @radius;
-    border:                       2px;
+    border:                       0;
 }
 
 element normal.normal {
-    background-color:            inherit;
+    background-color:            transparent;
     text-color:                  @foreground;
 }
 
 element normal.urgent {
-    background-color:            inherit;
+    background-color:            transparent;
     text-color:                  @foreground;
 }
 
 element normal.active {
-    background-color:            inherit;
+    background-color:            transparent;
     text-color:                  @foreground;
 }
 
@@ -171,17 +171,17 @@ element selected.urgent {
 }
 
 element selected.active {
-    background-color:            inherit;
+    background-color:            transparent;
     text-color:                  @foreground;
 }
 
 element alternate.normal {
-    background-color:            inherit;
+    background-color:            transparent;
     text-color:                  @foreground;
 }
 
 element alternate.urgent {
-    background-color:            inherit;
+    background-color:            transparent;
     text-color:                  @foreground;
 }
 

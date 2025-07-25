@@ -39,7 +39,7 @@ window {
     fullscreen:                   false;
     enabled:                      true;
     border-radius:                @radius;
-    background-color:             @background;
+    background-color:             transparent;
 }
 
 /* ---- Mainbox ---- */
@@ -150,23 +150,23 @@ element {
     padding:                      10px;
     margin:                       5px;
     cursor:                       pointer;
-    background-color:             @background;
+    background-color:             transparent;
     border-radius:                @radius;
-    border:                       2px;
+    border:                       @border-size;
 }
 
 element normal.normal {
-    background-color:            inherit;
+    background-color:            transparent;
     text-color:                  @foreground;
 }
 
 element normal.urgent {
-    background-color:            inherit;
+    background-color:            transparent;
     text-color:                  @foreground;
 }
 
 element normal.active {
-    background-color:            inherit;
+    background-color:            transparent;
     text-color:                  @foreground;
 }
 
@@ -181,12 +181,12 @@ element selected.urgent {
 }
 
 element selected.active {
-    background-color:            inherit;
+    background-color:            transparent;
     text-color:                  @foreground;
 }
 
 element alternate.normal {
-    background-color:            inherit;
+    background-color:            transparent;
     text-color:                  @foreground;
 }
 

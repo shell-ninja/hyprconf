@@ -14,11 +14,11 @@ configuration {
 /*****----- Main Window -----*****/
 window {
     transparency:                "real";
-    location:                    center;
+    location:                    west;
     anchor:                      center;
     fullscreen:                  false;
-    width:                       100%;
-    height:                      63%;
+    width:                       25%;
+    height:                      100%;
     x-offset:                    0px;
     y-offset:                    0px;
     enabled:                     true;
@@ -34,9 +34,9 @@ window {
 /*****----- Main Box -----*****/
 mainbox {
     enabled:                     true;
-    spacing:                     80px;
+    spacing:                     20px;
     margin:                      0px;
-    padding:                     30px;
+    padding:                     20px;
     border:                      0px solid;
     border-radius:               0px 0px 0px 0px;
     border-color:                @selected-active-background;
@@ -53,7 +53,7 @@ inputbar {
     border:                      0px;
     border-radius:               0px;
     border-color:                @selected-active-background;
-    background-color:            @background;
+    background-color:            transparent;
     text-color:                  @foreground;
     children:                    [ "entry" ];
 }
@@ -61,10 +61,10 @@ inputbar {
 entry {
     enabled:                     true;
     expand:                      false;
-    width:                       350px;
-    padding:                     15px 20px;
+    width:                       200px;
+    // padding:                     15px 20px;
     border-radius:               15px;
-    background-color:            @alternate-active-background;
+    background-color:            transparent;
     text-color:                  @foreground;
     cursor:                      text;
     placeholder:                 " Search Wallpaper...";
@@ -74,17 +74,16 @@ entry {
 /*****----- Listview -----*****/
 listview {
     enabled:                     true;
-    columns:                     3;
-    lines:                       1;
+    columns:                     1;
+    lines:                       3;
     cycle:                       true;
     dynamic:                     true;
     scrollbar:                   false;
     layout:                      vertical;
     reverse:                     false;
-    fixed-height:                false;
-    fixed-columns:               true;
-    
-    spacing:                     50px;
+    fixed-height:                true;
+    // fixed-columns:               true;
+    spacing:                     10px;
     margin:                      0px;
     padding:                     0px;
     border:                      0px solid;
@@ -104,7 +103,7 @@ scrollbar {
 /* ---- Element ---- */
 element {
     enabled:                true;
-    padding:                5px;
+    padding:                0px;
     cursor:                 pointer;
 	orientation: 			vertical;
     background-color:       transparent;
@@ -160,7 +159,7 @@ element alternate.active {
 element-icon {
     background-color:            transparent;
     text-color:                  inherit;
-    size:                        500px;
+    size:                        350px;
     margin:                      -50px 0px;
     cursor:                      inherit;
 }
