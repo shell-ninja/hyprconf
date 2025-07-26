@@ -327,10 +327,21 @@ printf " \n"
 # =========  wallpaper section  ========= #
 
 if [[ "$wallpaper" =~ ^[Y|y]$ ]]; then
+    url="https://github.com/shell-ninja/Wallpapers/archive/refs/heads/main.zip"
+
+    target_dir="$HOME/.cache/wallpaper-cache"
+    zip_path="$target_dir.zip"
     msg act "Downloading some wallpapers..."
     
-    # cloning the wallpapers in a temporary directory
-    git clone --depth=1 https://github.com/shell-ninja/Wallpapers.git ~/.cache/wallpaper-cache 2>&1 | tee -a "$log" &> /dev/null
+    # Download the ZIP silently with a progress bar
+    wget --quiet --show-progress "$url" -O "$zip_path"
+
+    if [[ -f "$zip_path" ]]; then
+        mkdir -p "$target_dir"
+        unzip "$zip_path" "wallpaper-cache-main/*" -d "$target_dir" > /dev/null
+        mv "$target_dir/wallpaper-cache-main/"* "$target_dir" && rmdir "$target_dir/wallpaper-cache-main"
+        rm "$zip_path"
+    fi
 
     # copying the wallpaper to the main directory
     if [[ -d "$HOME/.cache/wallpaper-cache" ]]; then
