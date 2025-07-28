@@ -5,24 +5,11 @@ if [ -z "$XDG_PICTURES_DIR" ] ; then
 fi
 
 sound_file="/usr/share/sounds/freedesktop/stereo/screen-capture.oga"
-swpy_dir="$HOME/.config/swappy"
 save_dir="${2:-$XDG_PICTURES_DIR/Screenshots}"
 save_file=$(date +'screenshot_%y%m%d_%H%M%S.png')
-temp_screenshot="/tmp/screenshot.png"
+temp_screenshot="/tmp/screenshot.png" # Satty can also read from stdin, but using a temp file fits your current script structure
 
-mkdir -p $save_dir
-mkdir -p $swpy_dir
-echo -e "[Default]\nsave_dir=$save_dir\nsave_filename_format=$save_file" > $swpy_dir/config
-
-function print_error
-{
-cat << "EOF"
-    ./screenshot.sh <action>
-    ...valid actions are...
-        p : print all screens
-        s : snip current screen
-EOF
-}
+mkdir -p "$save_dir"
 
 ss_sound() {
     paplay "$sound_file"
@@ -39,6 +26,7 @@ send_notification() {
     local msg="$1"
     notify-send -e "Taking Screenshot in" "$msg"
     sleep 1
+    # pkill dunst
     pkill swaync
 }
 
@@ -48,20 +36,18 @@ case $choice in
             send_notification "$time"
         done
         sleep 1
-        grimblast copysave screen $temp_screenshot && ss_sound &&  swappy -f $temp_screenshot
+        grimblast copysave screen "$temp_screenshot" && ss_sound && \
+        satty --filename "$temp_screenshot" --output-filename "$save_dir/$save_file" --early-exit
         ;;
     $option2)  # drag to manually snip an area / click on a window to print it
-        grimblast --freeze copysave area $temp_screenshot && ss_sound &&  swappy -f $temp_screenshot
-        sleep 0.5
+        sleep 0.5 && killall rofi
+        grimblast --freeze copysave area "$temp_screenshot" && ss_sound && \
+        satty --filename "$temp_screenshot" --output-filename "$save_dir/$save_file" --early-exit
         ;;
-    *)  # invalid option
-        print_error ;;
 esac
 
+# Satty saves directly to the final path, so we don't need to check for the temp file,
+# but we still need to remove it after satty has processed it.
 rm "$temp_screenshot"
-
-if [ -f "$save_dir/$save_file" ] ; then
-    notify-send "saved in" "$save_dir" -i "$save_dir/$save_file" -r 91190 -t 2200
-fi
 
 swaync &
