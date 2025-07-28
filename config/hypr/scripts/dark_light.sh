@@ -53,6 +53,7 @@ if [ "$next_mode" == "light" ]; then
 
     # gtk theme
     gsettings set org.gnome.desktop.interface gtk-theme "Religh"
+    crudini --set "$HOME/.config/Kvantum/kvantum.kvconfig" General theme "Relax-Light-Kvantum"
 
 
     # switch wallpaper
@@ -72,6 +73,7 @@ elif [[ "$next_mode" == "dark" ]]; then
 
     # gtk theme
     gsettings set org.gnome.desktop.interface gtk-theme "TokyoNight"
+    crudini --set "$HOME/.config/Kvantum/kvantum.kvconfig" General theme "Dracula"
 
     # switch wallpaper
     set_wallpaper "$walldir"
