@@ -8,13 +8,10 @@
 This Hyprland configuration is kind of minila looking, but also little bit gorgeous I guess. Why don't you check it out?
 
 > [!NOTE]
-> This repo only contains the dotfiles. It won't install any packages and themes. Don't run the setup script before installing necessary packages.
+> This repo only contains the dotfiles. It won't install any packages and themes. Don't run the setup script before installing necessary packages. <br>
 > Visit [this](https://github.com/shell-ninja/hyprconf-install) repository and run the installation script.
-> To install necessary packages and setup this hyprland configuration automaticly, you need to run only one command
 
-```shell
-    bash <(curl -s https://raw.githubusercontent.com/shell-ninja/hyprconf-install/main/direct_run.sh)
-```
+<br>
 
 <div align="center">
 
