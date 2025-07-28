@@ -165,3 +165,43 @@ function y
     end
     rm -f $tmp
 end
+
+# search package using aur helper
+function ss
+    set -l yay (command -v yay)
+    set -l paru (command -v paru)
+    set -l aur
+
+    if test -n "$yay"
+        set aur $yay
+    else if test -n "$paru"
+        set aur $paru
+    end
+
+    if test "$aur" = "$yay"
+        yay -Slq | fzf --multi --preview 'yay -Sii {1}' --preview-window=down:75% | xargs -ro yay -S
+    else if test "$aur" = "$paru"
+        paru -Slq | fzf --multi --preview 'paru -Sii {1}' --preview-window=down:75% | xargs -ro paru -S
+    else
+        set -l pkg (command -v apt)
+        if test -z "$pkg"
+            set pkg (command -v dnf)
+        end
+        if test -z "$pkg"
+            set pkg (command -v zypper)
+        end
+
+        function search
+            set -l package $argv[1]
+            if test -z "$package"
+                echo "Please add your package name."
+                echo "Usage: ss <package_name>"
+                return
+            else
+                $pkg search $package
+            end
+        end
+
+        search $argv[1]
+    end
+end
