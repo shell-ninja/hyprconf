@@ -102,6 +102,7 @@ msg act "Now setting up the pre installed Hyprland configuration..."sleep 1
 mkdir -p ~/.config
 dirs=(
     btop
+    dunst
     fastfetch
     fish
     gtk-3.0
@@ -109,6 +110,7 @@ dirs=(
     hypr
     kitty
     Kvantum
+    menus
     nvim
     nwg-look
     qt5ct
@@ -119,6 +121,9 @@ dirs=(
     xfce4
     xsettingsd
     yazi
+    dolphinrc
+    kwalletmanagerrc
+    kwalletrc
 )
 
 # Paths
@@ -187,7 +192,7 @@ fi
 for confs in "${dirs[@]}"; do
     mkdir -p "$HOME/.config/backup_hyprconf-${USER}"
     dir_path="$HOME/.config/$confs"
-    if [[ -d "$dir_path" ]]; then
+    if [[ -d "$dir_path" || -f "$dir_path" ]]; then
         mv "$dir_path" "$HOME/.config/backup_hyprconf-${USER}/" 2>&1 | tee -a "$log"
     fi
 done
@@ -273,6 +278,12 @@ fi
 cp -r "$dir/extras/fonts" "$fonts_dir"
 msg act "Updating font cache..."
 sudo fc-cache -fv 2>&1 | tee -a "$log" &> /dev/null
+
+# Setup dolphin files
+if [[ -f "$HOME/.local/state/dolphinstaterc" ]]; then
+    mv "$HOME/.local/state/dolphinstaterc" "$HOME/.local/state/dolphinstaterc.back"
+    cp "$dir/extras/dolphinstaterc" "$HOME/.local/state/"
+fi
 
 
 wayland_session_dir=/usr/share/wayland-sessions
