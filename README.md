@@ -18,9 +18,6 @@ This Hyprland configuration is kind of minila looking, but also little bit gorge
 <br>
 
 <a href="#screenshots"><kbd> <br> Screenshots <br> </kbd></a>&ensp;&ensp;
-
-<!-- <a href="#setup"><kbd> <br> Setup <br> </kbd></a>&ensp;&ensp; -->
-
 <a href="#update"><kbd> <br> Update <br> </kbd></a>&ensp;&ensp;
 <a href="#config"><kbd> <br> Configuration <br> </kbd></a>&ensp;&ensp;
 <a href="#keybinds"><kbd> <br> keyboard Shortcuts <br> </kbd></a>&ensp;&ensp;
