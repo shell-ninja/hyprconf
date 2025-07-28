@@ -7,15 +7,26 @@
 
 This Hyprland configuration is kind of minila looking, but also little bit gorgeous I guess. Why don't you check it out?
 
+> [!NOTE]
+> This repo only contains the dotfiles. It won't install any packages and themes. Don't run the setup script before installing necessary packages.
+> Visit [this](https://github.com/shell-ninja/hyprconf-install) repository and run the installation script.
+> To install necessary packages and setup this hyprland configuration automaticly, you need to run only one command
+
+```shell
+    bash <(curl -s https://raw.githubusercontent.com/shell-ninja/hyprconf-install/main/direct_run.sh)
+```
+
 <div align="center">
 
 <br>
 
 <a href="#screenshots"><kbd> <br> Screenshots <br> </kbd></a>&ensp;&ensp;
-<a href="#setup"><kbd> <br> Setup <br> </kbd></a>&ensp;&ensp;
+
+<!-- <a href="#setup"><kbd> <br> Setup <br> </kbd></a>&ensp;&ensp; -->
+
 <a href="#update"><kbd> <br> Update <br> </kbd></a>&ensp;&ensp;
 <a href="#config"><kbd> <br> Configuration <br> </kbd></a>&ensp;&ensp;
-<a href="#keyboards"><kbd> <br> keyboard Shortcuts <br> </kbd></a>&ensp;&ensp;
+<a href="#keybinds"><kbd> <br> keyboard Shortcuts <br> </kbd></a>&ensp;&ensp;
 <a href="#contrib"><kbd> <br> Contrubution <br> </kbd></a>&ensp;&ensp;
 <a href="https://t.me/+OxKQy7Y6XWxjOTQ9"><kbd> <br> Telegram <br> </kbd></a>
 
@@ -157,33 +168,6 @@ This Hyprland configuration is kind of minila looking, but also little bit gorge
 
 <br>
 
-<a id="setup"></a>
-
-<div align="right">
-  <br>
-  <a href="#top"><kbd> <br> 🡅 <br> </kbd></a>
-</div>
-
-## <img src="https://readme-typing-svg.herokuapp.com?font=Lexend+Giga&size=25&pause=1000&color=90EE90&vCenter=true&width=435&height=25&lines=SETUP" width="450"/>
-
-<h4>To install and setup this hyprland configuration automaticly, just follow these stpes...</h4>
-
-- Clone this Repository
-
-```shell
-   git clone --depth=1 https://github.com/shell-ninja/hyprconf.git
-```
-
-- Now run this commands:
-
-```shell
-  cd ~/hyprconf
-  chmod +x setup.sh
-  ./setup.sh
-```
-
-<br>
-
 <a id="update"></a>
 
 <div align="right">
@@ -200,17 +184,11 @@ bash -c "$(wget -q  https://raw.githubusercontent.com/shell-ninja/hyprconf/main/
 ```
 
 - Hurrah! Now reboot your system, select Hyprland from your login manager, log into your Hyprland and enjoy it.
-<hr> <br>
-
-## -----------(O_O)-----------
-
-#### Well if you want to automate the required packages installation process and setup this config automaticly. then you should visit [This Repository](https://github.com/shell-ninja/hyprconf-install.git). I will automate the process for you.
+<hr>
 
 <br>
 
-<br>
-
-<a id="keyboards"></a>
+<a id="keybinds"></a>
 
 <div align="right">
   <br>

@@ -2,13 +2,13 @@ vim.g.mapleader = " "
 
 local keymap = vim.keymap -- for conciseness
 
-keymap.set("i", "jk", "<ESC>:w<CR>", { desc = "Exit insert mode and save file with jk" })
+keymap.set({ "i" }, "jf", "<ESC>:w<CR>", { desc = "Exit insert mode and save file with jf" })
 keymap.set("n", "cc", ":nohl<CR>", { desc = "Clear search highlights" })
 keymap.set({ "i", "n" }, "<C-x>", "<ESC>:wq<CR>", { desc = "save and exit" })
+keymap.set({ "n" }, "qq", ":wq<CR>", { desc = "save and exit" })
 
 -- keymaps similar to vs code
 keymap.set({ "i", "n" }, "<C-s>", "<ESC>:w<CR>", { desc = "save with Ctrl + s" }) -- save with ctrl + s
-keymap.set({ "i" }, "jf", "<ESC>:wq<CR>", { desc = "save and close with j+f" })   -- save with j + f
 keymap.set({ "i", "n" }, "<C-z>", "<ESC>u", { desc = "undo" })                    -- undo with ctrl + z
 keymap.set({ "i", "n" }, "<C-y>", "<C-r>", { desc = "redo" })                     -- redo with ctrl + y
 

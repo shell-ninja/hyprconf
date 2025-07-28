@@ -1,9 +1,8 @@
 | Mode(s) | Keybinding | Action                                            |
 | ------- | ---------- | ------------------------------------------------- |
-| i       | jk         | Exit insert mode                                  |
-| n       | <leader>cl | Clear search highlights                           |
+| n       | cc         | Clear search highlights                           |
 | i, n    | <C-x>      | Save and exit                                     |
-| i       | jf         | Save and exit                                     |
+| i       | jf         | Save and exit insert mode                         |
 | i, n    | <C-s>      | Save                                              |
 | i, n    | <C-z>      | Undo                                              |
 | n       | u          | Undo                                              |
