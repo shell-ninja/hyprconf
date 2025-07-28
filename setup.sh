@@ -398,6 +398,10 @@ gsettings set org.gnome.desktop.interface gtk-theme 'TokyoNight'
 gsettings set org.gnome.desktop.interface icon-theme 'TokyoNight'
 gsettings set org.gnome.desktop.interface cursor-theme 'Bibata-Modern-Ice'
 
+crudini --set ~/.config/Kvantum/kvantum.kvconfig General theme "Dracula"
+crudini --set ~/.config/kdeglobals Icons Theme "TokyoNight"
+
+
 msg dn "Script execution was successful! Now logout and log back in and enjoy your customization..." && sleep 1
 
 # === ___ Script Ends Here ___ === #
