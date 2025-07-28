@@ -1,7 +1,18 @@
 source ~/.config/fish/functions/functions.fish
 
+#==============================================================================
+
+# ███████╗██╗  ██╗███████╗██╗         ███╗   ██╗██╗███╗   ██╗     ██╗ █████╗ 
+# ██╔════╝██║  ██║██╔════╝██║         ████╗  ██║██║████╗  ██║     ██║██╔══██╗
+# ███████╗███████║█████╗  ██║         ██╔██╗ ██║██║██╔██╗ ██║     ██║███████║
+# ╚════██║██╔══██║██╔══╝  ██║         ██║╚██╗██║██║██║╚██╗██║██   ██║██╔══██║
+# ███████║██║  ██║███████╗███████╗    ██║ ╚████║██║██║ ╚████║╚█████╔╝██║  ██║
+# ╚══════╝╚═╝  ╚═╝╚══════╝╚══════╝    ╚═╝  ╚═══╝╚═╝╚═╝  ╚═══╝ ╚════╝ ╚═╝  ╚═╝
+                                                                            
+#==============================================================================
+
 ## list ##
-alias ls='eza --color=always --icons=always'
+alias ls='eza -T --level=1 --color=always --icons=always'
 alias la='eza -a --icons=always'
 alias ll='eza -l -a --icons=always --no-time'
 alias lst='eza -T --level=2 --color=always --icons=always'
@@ -30,6 +41,8 @@ alias cls='clear'
 alias clar='clear'
 alias c='clear'
 alias q='exit'
+alias s='pacman -Ss'
+alias i='sudo pacman -S'
 
 # disk spaces and RAM usage
 alias du='du -sh'
@@ -82,7 +95,6 @@ alias pushm='git push -u origin main'
 alias pusho='git push origin' # and add your branch name 
 alias pull='git pull'
 alias info='git_info'
-# alias status='git status'
 
 # others
 alias nc='clr && neofetch'
@@ -102,5 +114,8 @@ alias ipexternal="curl -s ifconfig.me && echo"
 alias ipexternal="wget -qO- ifconfig.me && echo"
 alias exe='chmod +x'
 
+alias sddt='sddm-greeter-qt6 --test-mode --theme'
+
 alias style='~/.config/fish/functions/change_style.sh'
 alias ffstyle='~/.config/fish/functions/ffstyle.sh'
+# alias ffimg='~/.config/fish/functions/ffimg.sh'

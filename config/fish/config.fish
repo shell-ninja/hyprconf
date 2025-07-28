@@ -34,7 +34,7 @@ if command -v fastfetch > /dev/null
     # Only run fastfetch if we're in an interactive shell
     if status --is-interactive
         if test -d "$HOME/.local/share/fastfetch"
-            set ffconfig "minimal"
+            set ffconfig ascii-art
             fastfetch --config "$ffconfig"
         else
             fastfetch

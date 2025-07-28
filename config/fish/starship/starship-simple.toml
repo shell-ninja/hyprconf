@@ -36,29 +36,39 @@ format = '[$path ]($style)'
 truncation_length = 3
 truncation_symbol = '../'
 truncate_to_repo = false
+home_symbol = ''
+read_only = ' 󰉐 '
 
 [directory.substitutions]
-'Documents' = '󰈙'
-'Downloads' = ' '
-'Music' = ' '
-'Pictures' = ' '
+'Documents' = ' 󰈙 '
+'Downloads' = '  '
+'Music' = '  '
+'Pictures' = '  '
+'Videos' = '  '
+'Home' = ''
 
 [git_branch]
 style = 'italic fg:maroon'
-symbol = ' '
-format = '[on](flamingo) [$symbol$branch ]($style)'
+symbol = ' '
+format = '(flamingo) [$symbol$branch ]($style)'
 
 [git_status]
-style = 'fg:green'
-format = '([$all_status$ahead_behind]($style) )'
+style = 'italic fg:subtext0'
+modified = '!${count}'
+ahead = '⇡${count}'
+diverged = '⇕⇡${ahead_count}⇣${behind_count}'
+behind = '⇣${count}'
+deleted = '🗑'
 
 [git_metrics]
+disabled = false
 added_style = 'bold green'
 deleted_style = 'bold red'
-format = '[+$added]($added_style)/[-deleted]($deleted_style)'
+format = '[+$added]($added_style)/[-$deleted]($deleted_style) '
 
 [fill]
 symbol = ' '
+style = 'light cyan'
 
 [python]
 style = 'blue'
