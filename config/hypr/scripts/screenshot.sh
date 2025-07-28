@@ -50,9 +50,4 @@ esac
 # but we still need to remove it after satty has processed it.
 rm "$temp_screenshot"
 
-# Check if the final saved file exists
-if [ -f "$save_dir/$save_file" ] ; then
-    notify-send "Screenshot saved in" "$save_dir" -i "$save_dir/$save_file" -r 91190 -t 2200
-fi
-
-# swaync &
+swaync &
