@@ -284,14 +284,15 @@ sudo fc-cache -fv 2>&1 | tee -a "$log" &> /dev/null
 # dolphinstaterc
 if [[ -f "$HOME/.local/state/dolphinstaterc" ]]; then
     mv "$HOME/.local/state/dolphinstaterc" "$HOME/.local/state/dolphinstaterc.back"
-    cp "$dir/local/state/dolphinstaterc" "$HOME/.local/state/"
 fi
 
 # konsole
 if [[ -d "$HOME/.local/share/konsole" ]]; then
     mv "$HOME/.local/share/konsole" "$HOME/.local/share/konsole.back"
-    cp -r "$dir/local/share/konsole" "$HOME/.local/share/"
 fi
+
+cp "$dir/local/state/dolphinstaterc" "$HOME/.local/state/"
+cp -r "$dir/local/share/konsole" "$HOME/.local/share/"
 
 
 # wayland session dir
