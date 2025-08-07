@@ -279,13 +279,22 @@ cp -r "$dir/extras/fonts" "$fonts_dir"
 msg act "Updating font cache..."
 sudo fc-cache -fv 2>&1 | tee -a "$log" &> /dev/null
 
-# Setup dolphin files
+### Setup extra files and dirs
+
+# dolphinstaterc
 if [[ -f "$HOME/.local/state/dolphinstaterc" ]]; then
     mv "$HOME/.local/state/dolphinstaterc" "$HOME/.local/state/dolphinstaterc.back"
-    cp "$dir/extras/dolphinstaterc" "$HOME/.local/state/"
+    cp "$dir/local/state/dolphinstaterc" "$HOME/.local/state/"
+fi
+
+# konsole
+if [[ -d "$HOME/.local/share/konsole" ]]; then
+    mv "$HOME/.local/share/konsole" "$HOME/.local/share/konsole.back"
+    cp -r "$dir/local/share/konsole" "$HOME/.local/share/"
 fi
 
 
+# wayland session dir
 wayland_session_dir=/usr/share/wayland-sessions
 if [ -d "$wayland_session_dir" ]; then
     msg att "$wayland_session_dir found..."
