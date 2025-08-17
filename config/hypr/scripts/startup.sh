@@ -34,7 +34,7 @@ fi
 
 monitor_setting=$(cat $monitor_config | grep "monitor")
 monitor_icon="$HOME/.config/hypr/icons/monitor.png"
-if [[ "$monitor_setting" == "monitor=,preferred,auto,auto" ]]; then
+if [[ "$monitor_setting" == "monitor=,preferred, auto, 1" ]]; then
     notify-send -i "$monitor_icon" "Monitor Setup" "A popup for your monitor configuration will appear within 5 seconds." && sleep 5
     kitty --title monitor sh -c "$scripts_dir/monitor.sh"
 fi

@@ -79,28 +79,28 @@ others=(
 )
 
 # Config directories to remove/backup
-DOTFILES=(
-    btop
-    dunst
-    fastfetch
-    fish
-    gtk-3.0
-    gtk-4.0
-    hypr
-    kitty
-    Kvantum
-    nvim
-    nwg-look
-    qt5ct
-    qt6ct
-    rofi
-    waybar
-    xsettingsd
-    yazi
-)
+# DOTFILES=(
+#     btop
+#     dunst
+#     fastfetch
+#     fish
+#     gtk-3.0
+#     gtk-4.0
+#     hypr
+#     kitty
+#     Kvantum
+#     nvim
+#     nwg-look
+#     qt5ct
+#     qt6ct
+#     rofi
+#     waybar
+#     xsettingsd
+#     yazi
+# )
 
-BACKUP_DIR="$HOME/.config/hyprconf-$(date +%d-%m-%Y)"
-WALLPAPER_DIR="$HOME/.config/hypr/Wallpaper"
+BACKUP_DIR="$HOME/.hyprconf-backup-$(date +%d-%m-%Y)"
+WALLPAPER_DIR="$HOME/.dotfiles/config/hypr/Wallpaper"
 
 current_session="${XDG_CURRENT_DESKTOP:- $DESKTOP_SESSION}"
 
@@ -206,20 +206,22 @@ msg act "Removing dotfiles..."
 
 mkdir -p "$BACKUP_DIR" &> /dev/null
 
-for item in "${DOTFILES[@]}"; do
-    if [[ -d "$HOME/.config/$item" ]]; then
-        mv "$HOME/.config/$item" "$BACKUP_DIR/" &> /dev/null
+for dir in "$HOME/.dotfiles/config"/*; do
+    name=$(basename "$dir")
+    if [[ -L "$HOME/.config/$name" ]]; then
+        unlink "$HOME/.config/$name"
+        echo "Unlinked $HOME/.config/$name"
     fi
 done
 
+mv "$HOME/.dotfiles" "$BACKUP_DIR/"
+
 # Compress backup
 CACHE_DIR="$HOME/.cache"
-mkdir -p "$CACHE_DIR"
 
-if [[ -d "$BACKUP_DIR/hypr" ]]; then
+if [[ -d "$BACKUP_DIR/.dotfiles" ]]; then
     ARCHIVE_NAME="$(basename "$BACKUP_DIR").tar.gz"
     tar -czf "$CACHE_DIR/$ARCHIVE_NAME" -C "$(dirname "$BACKUP_DIR")" "$(basename "$BACKUP_DIR")" &> /dev/null
-    # msg dn "Dotfiles archived at $CACHE_DIR/$ARCHIVE_NAME"
 fi
 
 msg dn "Uninstallation complete! Need to reboot the system..."
