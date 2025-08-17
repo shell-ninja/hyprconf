@@ -253,9 +253,20 @@ fi
 
 sleep 1
 
-# cloning the dotfiles repository into ~/.config/hypr
-cp -r "$dir/config"/* "$HOME/.config/" && sleep 0.5
-[[ ! -d "$HOME/.local/share/fastfetch/" ]] && mv "$HOME/.config/fastfetch" "$HOME/.local/share/"
+# # cloning the dotfiles repository into ~/.config/hypr
+# cp -r "$dir/config"/* "$HOME/.config/" && sleep 0.5
+# [[ ! -d "$HOME/.local/share/fastfetch/" ]] && mv "$HOME/.config/fastfetch" "$HOME/.local/share/"
+
+# creating symlinks
+mkdir -p ~/.dotfiles
+cp -a "$dir/config"/* "$HOME/.dotfiles/"
+
+for dotfilesDir in "$HOME/.dotfiles"/*; do
+    configDirName=$(basename "$dotfilesDir")
+    configDirPath="$HOME/.config/$configDirName"
+
+    ln -sfn "$dotfilesDir" "$configDirPath"
+done
 
 sleep 1
 
