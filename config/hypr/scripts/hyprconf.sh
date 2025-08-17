@@ -8,59 +8,40 @@ end="\x1b[0m"
 
 # dirs and files
 _dir=`pwd`
-_cache="$HOME/.cache"
-_hyprconf="$_cache/hyprconf"
 
 clear
 
-# fn for git actions
-_git_clone() {
-    git clone --depth=1 https://github.com/shell-ninja/hyprconf.git ~/.cache/hyprconf &> /dev/null
-}
-
 # fn for the process
 _upd() {
-   if [[ -d "$_hyprconf" ]]; then
-       echo -e ":: hyrconf dir is available in the cache. Removing it"
-       echo
-       rm -rf "$_hyprconf" && sleep 1
-    fi
+   if [[ -d "$HOME/.dotfiles/.git" ]]; then
+       cd "$HOME/.dotfiles"
 
-   echo -e "${color}=>${end} Now cloning the updated repository..."
-   _git_clone
+       # Check for uncommitted changes
+       if ! git diff --quiet || ! git diff --cached --quiet; then
+           echo -e "${color}You have local uncommitted changes.${end}"
+           echo -e "${color}Stashing them before pulling...${end}"
+           git stash push -m "Auto-stash before pull"
+           STASHED=true
+       fi
 
-   if [[ -d "$_hyprconf" ]]; then
-       echo -e ":: Successfully cloned repo."
-        gum spin \
-            --spinner dot \
-            --title "Now updating in your system locally." -- \
-            sleep 2
+       # Pull latest updates
+       git pull origin main
 
-       cd "$_hyprconf"
-       chmod +x setup.sh
-       ./setup.sh
-    else
-        echo -e "!! Sorry, could not clone repository..."
-    gum spin \
-        --spinner dot \
-        --spinner.foreground "#FF0000" \
-        --title.foreground "#FF0000" \
-        --title "Exiting the script" -- \
-        sleep 3
+       # If we stashed earlier, apply the stash back
+       if [[ "$STASHED" == true ]]; then
+           echo -e "${color}Re-applying your local changes...${end}"
+           git stash pop
+       fi
+
+   else
+       gum spin \
+           --spinner dot \
+           --spinner.foreground "#FF0000" \
+           --title.foreground "#FF0000" \
+           --title "No github repo found. Exiting..." -- \
+           sleep 3
    fi
 }
-
-# asking user for confirmation
-choice=$(
-        gum confirm \
-        "Would you like to update your current 'hyprconf'?" \
-        --affirmative "Yes! update" \
-        --selected.background "#e0ffff" \
-        --selected.foreground "#2f4f4f" \
-        --unselected.background "#2f4f4f" \
-        --unselected.foreground "#e0ffff" \
-        --negative "No!, skip"
-)
 
 if [[ $? -eq 0 ]]; then
     gum spin \
