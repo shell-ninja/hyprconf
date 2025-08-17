@@ -8,7 +8,7 @@ red="\e[1;31m"
 green="\e[1;32m"
 yellow="\e[1;33m"
 blue="\e[1;34m"
-megenta="\e[1;1;35m"
+magenta="\e[1;1;35m"
 cyan="\e[1;36m"
 orange="\x1b[38;5;214m"
 end="\e[1;0m"
@@ -93,7 +93,7 @@ msg() {
 
 
 # Directories ----------------------------
-hypr_dir="$HOME/.config/hypr"
+hypr_dir="$HOME/.dotfiles/hypr"
 scripts_dir="$hypr_dir/scripts"
 fonts_dir="$HOME/.local/share/fonts"
 
@@ -128,14 +128,10 @@ dirs=(
 
 # Paths
 backup_dir="$HOME/.temp-back"
-keybinds_backup="$backup_dir/keybinds.conf"
-wrules_backup="$backup_dir/wrules.conf"
 wallpapers_backup="$backup_dir/Wallpaper"
 hypr_cache_backup="$backup_dir/.cache"
-keybinds="$HOME/.config/hypr/configs/keybinds.conf"
-wrules="$HOME/.config/hypr/configs/wrules.conf"
-wallpapers="$HOME/.config/hypr/Wallpaper"
-hypr_cache="$HOME/.config/hypr/.cache"
+wallpapers="$HOME/.dotfiles/hypr/Wallpaper"
+hypr_cache="$HOME/.dotfiles/hypr/.cache"
 
 # Ensure backup directory exists
 mkdir -p "$backup_dir"
@@ -146,6 +142,7 @@ backup_or_restore() {
     local file_type="$2"
 
     if [[ -e "$file_path" ]]; then
+        echo
         msg att "A $file_type has been found."
         if command -v gum &> /dev/null; then
             gum confirm "Would you Restore it or put it into the Backup?" \
@@ -160,11 +157,11 @@ backup_or_restore() {
             fi
 
         else
-            msg ask "Would you Restore it or put it into the Backup? [ y/n ]"
+            msg ask "Would you Restore it or put it into the Backup? [ b/r ]"
             read -r -p "$(echo -e '\e[1;32mSelect: \e[0m')" action
         fi
 
-        if [[ "$action" =~ ^[Yy]$ ]]; then
+        if [[ "$action" =~ ^[Bb]$ ]]; then
             cp -r "$file_path" "$backup_dir/"
         else
             msg att "$file_type will be backed up..."
@@ -173,56 +170,56 @@ backup_or_restore() {
 }
 
 # Backing up keybinds, wrules, and wallpapers
-backup_or_restore "$keybinds" "keybinds config file"
-backup_or_restore "$wrules" "window rules config file"
+# backup_or_restore "$keybinds" "keybinds config file"
+# backup_or_restore "$wrules" "window rules config file"
 backup_or_restore "$wallpapers" "wallpaper directory"
 [[ -e "$hypr_cache" ]] && cp -r "$hypr_cache" "$backup_dir/"
 
 # if some main directories exists, backing them up.
-if [[ -d "$HOME/.config/backup_hyprconf-${USER}" ]]; then
+if [[ -d "$HOME/.backup_hyprconf-${USER}" ]]; then
     msg att "a backup_hyprconf-${USER} directory was there. Archiving it..."
-    cd "$HOME/.config"
-    mkdir -p "archive_hyprconf-${USER}"
-    tar -czf "archive_hyprconf-${USER}/backup_hyprconf-$(date +%d-%m-%Y_%I-%M-%p)-${USER}.tar.gz" "backup_hyprconf-${USER}" &> /dev/null
+    cd
+    mkdir -p ".archive_hyprconf-${USER}"
+    tar -czf ".archive_hyprconf-${USER}/backup_hyprconf-$(date +%d-%m-%Y_%I-%M-%p)-${USER}.tar.gz" ".backup_hyprconf-${USER}" &> /dev/null
     # mv "HyprBackup-${USER}.zip" "HyprArchive-${USER}/"
-    rm -rf "backup_hyprconf-${USER}"
-    msg dn "backup_hyprconf-${USER} was archived inside archive_hyprconf-${USER} directory..." && sleep 1
+    rm -rf ".backup_hyprconf-${USER}"
+    msg dn "~/.backup_hyprconf-${USER} was archived inside ~/.archive_hyprconf-${USER} directory..." && sleep 1
 fi
 
 for confs in "${dirs[@]}"; do
-    mkdir -p "$HOME/.config/backup_hyprconf-${USER}"
-    dir_path="$HOME/.config/$confs"
+    mkdir -p "$HOME/.backup_hyprconf-${USER}"
+    dir_path="$HOME/.dotfiles"
     if [[ -d "$dir_path" || -f "$dir_path" ]]; then
-        mv "$dir_path" "$HOME/.config/backup_hyprconf-${USER}/" 2>&1 | tee -a "$log"
+        mv "$dir_path" "$HOME/.backup_hyprconf-${USER}/" 2>&1 | tee -a "$log"
     fi
 done
 
-[[ -d "$HOME/.config/backup_hyprconf-${USER}/hypr" ]] && msg dn "Everything has been backuped in $HOME/.config/backup_hyprconf-${USER}..."
+[[ -d "$HOME/.backup_hyprconf-${USER}/hypr" ]] && msg dn "Everything has been backuped in $HOME/.backup_hyprconf-${USER}..."
 
 sleep 1
 
 ####################################################################
 
 #_____ if OpenBangla Keyboard is installed
-# keyboard_path="/usr/share/openbangla-keyboard"
-#
-# if [[ -d "$keyboard_path" ]]; then
-#     msg act "Setting up OpenBangla-Keyboard..."
-#
-#     # Add fcitx5 environment variables to /etc/environment if not already present
-#     if ! grep -q "GTK_IM_MODULE=fcitx" /etc/environment; then
-#         printf "\nGTK_IM_MODULE=fcitx\n" | sudo tee -a /etc/environment 2>&1 | tee -a >(sed 's/\x1B\[[0-9;]*[JKmsu]//g' >> "$log") &> /dev/null
-#     fi
-#
-#     if ! grep -q "QT_IM_MODULE=fcitx" /etc/environment; then
-#         printf "QT_IM_MODULE=fcitx\n" | sudo tee -a /etc/environment 2>&1 | tee -a >(sed 's/\x1B\[[0-9;]*[JKmsu]//g' >> "$log") &> /dev/null
-#     fi
-#
-#     if ! grep -q "XMODIFIERS=@im=fcitx" /etc/environment; then
-#         printf "XMODIFIERS=@im=fcitx\n" | sudo tee -a /etc/environment 2>&1 | tee -a >(sed 's/\x1B\[[0-9;]*[JKmsu]//g' >> "$log") &> /dev/null
-#     fi
-#
-# fi
+keyboard_path="/usr/share/openbangla-keyboard"
+
+if [[ -d "$keyboard_path" ]]; then
+    msg act "Setting up OpenBangla-Keyboard..."
+
+    # Add fcitx5 environment variables to /etc/environment if not already present
+    if ! grep -q "GTK_IM_MODULE=fcitx" /etc/environment; then
+        printf "\nGTK_IM_MODULE=fcitx\n" | sudo tee -a /etc/environment 2>&1 | tee -a >(sed 's/\x1B\[[0-9;]*[JKmsu]//g' >> "$log") &> /dev/null
+    fi
+
+    if ! grep -q "QT_IM_MODULE=fcitx" /etc/environment; then
+        printf "QT_IM_MODULE=fcitx\n" | sudo tee -a /etc/environment 2>&1 | tee -a >(sed 's/\x1B\[[0-9;]*[JKmsu]//g' >> "$log") &> /dev/null
+    fi
+
+    if ! grep -q "XMODIFIERS=@im=fcitx" /etc/environment; then
+        printf "XMODIFIERS=@im=fcitx\n" | sudo tee -a /etc/environment 2>&1 | tee -a >(sed 's/\x1B\[[0-9;]*[JKmsu]//g' >> "$log") &> /dev/null
+    fi
+
+fi
 
 ####################################################################
 
@@ -273,7 +270,7 @@ sleep 1
 if [[ -d "$scripts_dir" ]]; then
     # make all the scripts executable...
     chmod +x "$scripts_dir"/* 2>&1 | tee -a "$log"
-    chmod +x "$HOME/.config/fish"/* 2>&1 | tee -a "$log"
+    chmod +x "$HOME/.dotfiles/fish/functions"/* 2>&1 | tee -a "$log"
     msg dn "All the necessary scripts have been executable..."
     sleep 1
 else
@@ -339,8 +336,8 @@ restore_backup() {
 }
 
 # Restore files
-restore_backup "$keybinds_backup" "$keybinds" "keybinds config file"
-restore_backup "$wrules_backup" "$wrules" "window rules config file"
+# restore_backup "$keybinds_backup" "$keybinds" "keybinds config file"
+# restore_backup "$wrules_backup" "$wrules" "window rules config file"
 restore_backup "$wallpapers_backup" "$wallpapers" "wallpaper directory"
 
 # restoring hyprland cache
