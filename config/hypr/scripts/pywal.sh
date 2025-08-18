@@ -60,6 +60,7 @@ ln -sf "$HOME/.cache/wal/colors-waybar.css" "$HOME/.config/waybar/style/theme.cs
 sysupd_script="$scripts_dir/pkgupdate.sh"
 monitor_setup_script="$scripts_dir/monitor.sh"
 settings_script="$scripts_dir/settings.sh"
+avatar_script="$scripts_dir/sddm_avatar.sh"
 
 background_color=$(jq -r '.special.background' "$colors_file")
 foreground_color=$(jq -r '.special.foreground' "$colors_file")
@@ -75,6 +76,8 @@ sed -i "s/--selected.foreground .*/--selected.foreground \"$foreground_color\" \
 sed -i "s/--cursor.foreground .*/--cursor.foreground \"$foreground_color\" \\\/g" "$monitor_setup_script"
 sed -i "s/--header.foreground .*/--header.foreground \"$foreground_color\" \\\/g" "$settings_script"
 sed -i "s/--cursor.foreground .*/--cursor.foreground \"$foreground_color\" \\\/g" "$settings_script"
+sed -i "s/--header.foreground .*/--header.foreground \"$foreground_color\" \\\/g" "$avatar_script"
+sed -i "s/--placeholder.foreground .*/--placeholder.foreground \"$foreground_color\" \\\/g" "$avatar_script"
 
 # ----- Dunst
 dunst_file="$HOME/.config/dunst/dunstrc"

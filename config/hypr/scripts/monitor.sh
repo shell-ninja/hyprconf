@@ -1,7 +1,7 @@
 #!/bin/bash
 
 config_file="$HOME/.config/hypr/configs/monitor.conf"
-auto_generated_setting=$(cat $config_file | grep "monitor=,preferred,auto,auto")
+auto_generated_setting=$(cat $config_file | grep "monitor=,preferred, auto, 1")
 
 display() {
     cat << "EOF"

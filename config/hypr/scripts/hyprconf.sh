@@ -6,17 +6,11 @@
 color="\x1b[38;2;224;255;255m"
 end="\x1b[0m"
 
-# dirs and files
-_dir=`pwd`
-_cache="$HOME/.cache"
-_hyprconf="$_cache/hyprconf"
-
 clear
 
-# fn for git actions
-_git_clone() {
-    git clone --depth=1 https://github.com/shell-ninja/hyprconf.git ~/.cache/hyprconf &> /dev/null
-}
+repo="https://github.com/shell-ninja/hyprconf/archive/refs/heads/main.zip"
+target_dir="$HOME/.cache/hyrconf"
+zip_path="$target_dir.zip"
 
 # fn for the process
 _upd() {
@@ -27,16 +21,24 @@ _upd() {
     fi
 
    echo -e "${color}=>${end} Now cloning the updated repository..."
-   _git_clone
+   curl -L "$repo" -o "$zip_path"
 
-   if [[ -d "$_hyprconf" ]]; then
+   sleep 1
+
+   if [[ -f "$zip_path" ]]; then
+        unzip "$zip_path" "hyprconf-main/*" -d "$target_dir" > /dev/null
+        mv "$target_dir/hyprconf-main/"* "$target_dir" && rmdir "$target_dir/hyprconf-main"
+        rm "$zip_path"
+    fi
+
+   if [[ -d "$HOME/.cache/hyrconf" ]]; then
        echo -e ":: Successfully cloned repo."
         gum spin \
             --spinner dot \
             --title "Now updating in your system locally." -- \
             sleep 2
 
-       cd "$_hyprconf"
+       cd "$HOME/.cache/hyrconf/"
        chmod +x setup.sh
        ./setup.sh
     else
@@ -78,7 +80,7 @@ else
         --title "Cancelling..." -- \
         sleep 3
 
-    exit 1
+    # exit 1
 fi
 
 # running the script

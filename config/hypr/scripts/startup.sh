@@ -1,10 +1,8 @@
 #!/bin/bash
 
-scripts_dir="$HOME/.config/hypr/scripts"
-wallpaper="$HOME/.config/hypr/.cache/current_wallpaper.png"
-monitor_config="$HOME/.config/hypr/configs/monitor.conf"
-
-nightlight_value=$(cat "$HOME/.config/hypr/.cache/.nightlight")
+scripts_dir="$HOME/.hyprconf/hypr/scripts"
+wallpaper="$HOME/.hyprconf/hypr/.cache/current_wallpaper.png"
+monitor_config="$HOME/.hyprconf/hypr/configs/monitor.conf"
 
 # Transition config
 FPS=60
@@ -15,7 +13,7 @@ SWWW_PARAMS="--transition-fps $FPS --transition-type $TYPE --transition-duration
 
 if [[ -f "$wallpaper" ]]; then
     swww-daemon &
-    swww img ${wallpaper} $SWWW_PARAMS
+    swww img $wallpaper $SWWW_PARAMS
 else
     "$scripts_dir/Wallpaper.sh"
 fi
@@ -34,13 +32,13 @@ fi
 
 #_____ setup monitor ( updated teh monitor.conf for the high resolution and higher refresh rate )
 
-# monitor_setting=$(cat $monitor_config | grep "monitor")
-# monitor_icon="$HOME/.config/hypr/icons/monitor.png"
-# if [[ "$monitor_setting" == "monitor=,preferred,auto,auto" ]]; then
-#     notify-send -i "$monitor_icon" "Monitor Setup" "A popup for your monitor configuration will appear within 5 seconds." && sleep 5
-#     kitty --title monitor sh -c "$scripts_dir/monitor.sh"
-# fi
-#
-# sleep 3
+monitor_setting=$(cat $monitor_config | grep "monitor")
+monitor_icon="$HOME/.hyprconf/hypr/icons/monitor.png"
+if [[ "$monitor_setting" == "monitor=,preferred, auto, 1" ]]; then
+    notify-send -i "$monitor_icon" "Monitor Setup" "A popup for your monitor configuration will appear within 5 seconds." && sleep 5
+    kitty --title monitor sh -c "$scripts_dir/monitor.sh"
+fi
+
+sleep 3
 
 "$scripts_dir/default_browser.sh"
