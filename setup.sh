@@ -130,8 +130,10 @@ dirs=(
 backup_dir="$HOME/.temp-back"
 wallpapers_backup="$backup_dir/Wallpaper"
 hypr_cache_backup="$backup_dir/.cache"
+hypr_config_backup="$backup_dir/configs.conf"
 wallpapers="$HOME/.hyprconf/hypr/Wallpaper"
 hypr_cache="$HOME/.hyprconf/hypr/.cache"
+hypr_config="$HOME/.hyprconf/hypr/configs/configs.conf"
 
 # Ensure backup directory exists
 mkdir -p "$backup_dir"
@@ -171,6 +173,7 @@ backup_or_restore() {
 
 # Backing wallpapers
 backup_or_restore "$wallpapers" "wallpaper directory"
+backup_or_restore "$hypr_config" "hyprland config file"
 
 [[ -e "$hypr_cache" ]] && cp -r "$hypr_cache" "$backup_dir/"
 
@@ -335,11 +338,16 @@ restore_backup() {
         else
             msg err "Could not restore defaults."
         fi
+
+        if [[ -e "${original_path}.backup" ]]; then
+            rm -rf "${original_path}.backup"
+        fi
     fi
 }
 
 # Restore files
 restore_backup "$wallpapers_backup" "$wallpapers" "wallpaper directory"
+restore_backup "$hypr_config_backup" "$hypr_config" "hyprland config file"
 
 # restoring hyprland cache
 [[ -e "$HOME/.hyprconf/hypr/.cache" ]] && rm -rf "$HOME/.hyprconf/hypr/.cache"
