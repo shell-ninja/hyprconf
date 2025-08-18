@@ -93,7 +93,7 @@ msg() {
 
 
 # Directories ----------------------------
-hypr_dir="$HOME/.dotfiles/config/hypr"
+hypr_dir="$HOME/.hyprconf/hypr"
 scripts_dir="$hypr_dir/scripts"
 fonts_dir="$HOME/.local/share/fonts"
 
@@ -130,8 +130,8 @@ dirs=(
 backup_dir="$HOME/.temp-back"
 wallpapers_backup="$backup_dir/Wallpaper"
 hypr_cache_backup="$backup_dir/.cache"
-wallpapers="$HOME/.dotfiles/config/hypr/Wallpaper"
-hypr_cache="$HOME/.dotfiles/config/hypr/.cache"
+wallpapers="$HOME/.hyprconf/hypr/Wallpaper"
+hypr_cache="$HOME/.hyprconf/hypr/.cache"
 
 # Ensure backup directory exists
 mkdir -p "$backup_dir"
@@ -169,15 +169,14 @@ backup_or_restore() {
     fi
 }
 
-# Backing up keybinds, wrules, and wallpapers
-# backup_or_restore "$keybinds" "keybinds config file"
-# backup_or_restore "$wrules" "window rules config file"
+# Backing wallpapers
 backup_or_restore "$wallpapers" "wallpaper directory"
+
 [[ -e "$hypr_cache" ]] && cp -r "$hypr_cache" "$backup_dir/"
 
 # if some main directories exists, backing them up.
 if [[ -d "$HOME/.backup_hyprconf-${USER}" ]]; then
-    msg att "a backup_hyprconf-${USER} directory was there. Archiving it..."
+    msg att "a .backup_hyprconf-${USER} directory was there. Archiving it..."
     cd
     mkdir -p ".archive_hyprconf-${USER}"
     tar -czf ".archive_hyprconf-${USER}/backup_hyprconf-$(date +%d-%m-%Y_%I-%M-%p)-${USER}.tar.gz" ".backup_hyprconf-${USER}" &> /dev/null
@@ -207,7 +206,7 @@ sleep 1
 keyboard_path="/usr/share/openbangla-keyboard"
 
 if [[ -d "$keyboard_path" ]]; then
-    msg act "Setting up OpenBangla-Keyboard..."
+    msg act "Setting up things for OpenBangla-Keyboard..."
 
     # Add fcitx5 environment variables to /etc/environment if not already present
     if ! grep -q "GTK_IM_MODULE=fcitx" /etc/environment; then
@@ -234,11 +233,6 @@ if hostnamectl | grep -q 'Chassis: vm'; then
     sed -i '/env = WLR_NO_HARDWARE_CURSORS,1/s/^#//' "$dir/config/hypr/configs/environment.conf"
     sed -i '/env = WLR_RENDERER_ALLOW_SOFTWARE,1/s/^#//' "$dir/config/hypr/configs/environment.conf"
     echo -e '#Monitor\nmonitor=Virtual-1, 1920x1080@60,auto,1' > "$dir/config/hypr/configs/monitor.conf"
-#
-# else
-#     #_____ setting up the monitor
-#     msg act "Setting the high resolution and maximum refresh rate for your monitor..."
-#     echo -e "#Monitor\nmonitor=,highres,auto,1\nmonitor=,highrr,auto,1" > "$dir/config/hypr/configs/monitor.conf"
 fi
 
 
@@ -255,9 +249,9 @@ sleep 1
 
 
 # creating symlinks
-cp -a "$dir" "$HOME/.dotfiles"
+cp -a "$dir/config" "$HOME/.hyprconf"
 
-for dotfilesDir in "$HOME/.dotfiles/config"/*; do
+for dotfilesDir in "$HOME/.hyprconf"/*; do
     configDirName=$(basename "$dotfilesDir")
     configDirPath="$HOME/.config/$configDirName"
 
@@ -269,7 +263,7 @@ sleep 1
 if [[ -d "$scripts_dir" ]]; then
     # make all the scripts executable...
     chmod +x "$scripts_dir"/* 2>&1 | tee -a "$log"
-    chmod +x "$HOME/.dotfiles/config/fish/functions"/* 2>&1 | tee -a "$log"
+    chmod +x "$HOME/.hyprconf/fish/functions"/* 2>&1 | tee -a "$log"
     msg dn "All the necessary scripts have been executable..."
     sleep 1
 else
@@ -298,8 +292,8 @@ if [[ -d "$HOME/.local/share/konsole" ]]; then
     mv "$HOME/.local/share/konsole" "$HOME/.local/share/konsole.back"
 fi
 
-ln -snf "$HOME/.dotfiles/local/state/dolphinstaterc" "$HOME/.local/state/"
-ln -snf "$HOME/.dotfiles/local/share/konsole" "$HOME/.local/share/"
+cp -r "$dir/local/state/dolphinstaterc" "$HOME/.local/state/"
+cp -r "$dir/local/share/konsole" "$HOME/.local/share/"
 
 
 # wayland session dir
@@ -338,7 +332,7 @@ restore_backup() {
 restore_backup "$wallpapers_backup" "$wallpapers" "wallpaper directory"
 
 # restoring hyprland cache
-[[ -e "$HOME/.dotfiles/config/hypr/.cache" ]] && rm -rf "$HOME/.dotfiles/config/hypr/.cache"
+[[ -e "$HOME/.hyprconf/hypr/.cache" ]] && rm -rf "$HOME/.hyprconf/hypr/.cache"
 [[ -e "$hypr_cache_backup" ]] && cp -r "$hypr_cache_backup" "$hypr_cache"
 rm -rf "$backup_dir"
 
@@ -360,7 +354,7 @@ if [[ "$wallpaper" =~ ^[Y|y]$ ]]; then
     msg act "Downloading some wallpapers..."
     
     # Download the ZIP silently with a progress bar
-    wget --quiet --show-progress "$url" -O "$zip_path"
+    curl -L "$url" -o "$zip_path"
 
     if [[ -f "$zip_path" ]]; then
         mkdir -p "$target_dir"
@@ -371,7 +365,7 @@ if [[ "$wallpaper" =~ ^[Y|y]$ ]]; then
 
     # copying the wallpaper to the main directory
     if [[ -d "$HOME/.cache/wallpaper-cache" ]]; then
-        cp -r "$HOME/.cache/wallpaper-cache"/* ~/.dotfiles/config/hypr/Wallpaper/ &> /dev/null
+        cp -r "$HOME/.cache/wallpaper-cache"/* ~/.hyprconf/hypr/Wallpaper/ &> /dev/null
         rm -rf "$HOME/.cache/wallpaper-cache" &> /dev/null
         msg dn "Wallpapers were downloaded successfully..." 2>&1 | tee -a >(sed 's/\x1B\[[0-9;]*[JKmsu]//g' >> "$log") & sleep 0.5
     else
@@ -381,20 +375,20 @@ fi
 
 # =========  wallpaper section  ========= #
 
-if [[ -d "$HOME/.dotfiles/config/hypr/Wallpaper" ]]; then
+if [[ -d "$HOME/.hyprconf/hypr/Wallpaper" ]]; then
 
-    if [[ -d "$HOME/.dotfiles/config/hypr/.cache" ]]; then
-        wallName=$(cat "$HOME/.dotfiles/config/hypr/.cache/.wallpaper")
-        wallpaper=$(find "$HOME/.dotfiles/config/hypr/Wallpaper" -type f -name "$wallName.*" | head -n 1)
+    if [[ -d "$HOME/.hyprconf/hypr/.cache" ]]; then
+        wallName=$(cat "$HOME/.hyprconf/hypr/.cache/.wallpaper")
+        wallpaper=$(find "$HOME/.hyprconf/hypr/Wallpaper" -type f -name "$wallName.*" | head -n 1)
     else
-        mkdir -p "$HOME/.dotfiles/config/hypr/.cache"
-        wallCache="$HOME/.dotfiles/config/hypr/.cache/.wallpaper"
+        mkdir -p "$HOME/.hyprconf/hypr/.cache"
+        wallCache="$HOME/.hyprconf/hypr/.cache/.wallpaper"
 
         touch "$wallCache"      
 
-        if [ -f "$HOME/.dotfiles/config/hypr/Wallpaper/linux.jpg" ]; then
+        if [ -f "$HOME/.hyprconf/hypr/Wallpaper/linux.jpg" ]; then
             echo "linux" > "$wallCache"
-            wallpaper="$HOME/.dotfiles/config/hypr/Wallpaper/linux.jpg"
+            wallpaper="$HOME/.hyprconf/hypr/Wallpaper/linux.jpg"
         fi
     fi
 
@@ -412,18 +406,6 @@ ln -sf "$HOME/.config/hypr/lockscreens/hyprlock-1.conf" "$HOME/.config/hypr/hypr
 msg act "Generating colors and other necessary things..."
 "$HOME/.config/hypr/scripts/wallcache.sh" &> /dev/null
 "$HOME/.config/hypr/scripts/pywal.sh" &> /dev/null
-
-
-# removing some files from the script
-if [[ -e "$HOME/.dotfiles/setup.sh" ]]; then
-    rm "$HOME/.dotfiles/setup.sh"
-    rm "$HOME/.dotfiles/update.sh"
-    rm "$HOME/.dotfiles/UPDATES.md"
-    rm "$HOME/.dotfiles/PACKAGES.md"
-    rm "$HOME/.dotfiles/README.md"
-    rm "$HOME/.dotfiles/LICENSE"
-    rm -rf "$HOME/.dotfiles/extras"
-fi
 
 
 # setting default themes, icon and cursor
