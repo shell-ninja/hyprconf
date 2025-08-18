@@ -393,19 +393,19 @@ if [[ -d "$HOME/.hyprconf/hypr/Wallpaper" ]]; then
     fi
 
     # setting the default wallpaper
-    ln -sf "$wallpaper" "$HOME/.config/hypr/.cache/current_wallpaper.png"
+    ln -sf "$wallpaper" "$HOME/.hyprconf/hypr/.cache/current_wallpaper.png"
 fi
 
 # setting up the waybar
-ln -sf "$HOME/.config/waybar/configs/full-top" "$HOME/.config/waybar/config"
-ln -sf "$HOME/.config/waybar/style/full-top.css" "$HOME/.config/waybar/style.css"
+ln -sf "$HOME/.hyprconf/waybar/configs/full-top" "$HOME/.hyprconf/waybar/config"
+ln -sf "$HOME/.hyprconf/waybar/style/full-top.css" "$HOME/.hyprconf/waybar/style.css"
 
 # setting up hyprlock theme
-ln -sf "$HOME/.config/hypr/lockscreens/hyprlock-1.conf" "$HOME/.config/hypr/hyprlock.conf"
+ln -sf "$HOME/.hyprconf/hypr/lockscreens/hyprlock-1.conf" "$HOME/.hyprconf/hypr/hyprlock.conf"
 
 msg act "Generating colors and other necessary things..."
-"$HOME/.config/hypr/scripts/wallcache.sh" &> /dev/null
-"$HOME/.config/hypr/scripts/pywal.sh" &> /dev/null
+"$HOME/.hyprconf/hypr/scripts/wallcache.sh" &> /dev/null
+"$HOME/.hyprconf/hypr/scripts/pywal.sh" &> /dev/null
 
 
 # setting default themes, icon and cursor

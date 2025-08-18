@@ -1,8 +1,8 @@
 #!/bin/bash
 
-scripts_dir="$HOME/.config/hypr/scripts"
-wallpaper="$HOME/.config/hypr/.cache/current_wallpaper.png"
-monitor_config="$HOME/.dotfiles/config/hypr/configs/monitor.conf"
+scripts_dir="$HOME/.hyprconf/hypr/scripts"
+wallpaper="$HOME/.hyprconf/hypr/.cache/current_wallpaper.png"
+monitor_config="$HOME/.hyprconf/hypr/configs/monitor.conf"
 
 # Transition config
 FPS=60
@@ -13,7 +13,7 @@ SWWW_PARAMS="--transition-fps $FPS --transition-type $TYPE --transition-duration
 
 if [[ -f "$wallpaper" ]]; then
     swww-daemon &
-    swww img ${wallpaper} $SWWW_PARAMS
+    swww img $wallpaper $SWWW_PARAMS
 else
     "$scripts_dir/Wallpaper.sh"
 fi
