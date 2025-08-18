@@ -11,10 +11,10 @@ engine=$(cat "$engine_file")
 [[ ! -f "$wallCache" ]] && touch "$wallCache"
 
 # Transition config
-FPS=60
-TYPE="random"
+FPS=120
+TYPE="any"
 DURATION=1
-BEZIER=".43,1.19,1,.4"
+BEZIER=".28,.58,.99,.37"
 SWWW_PARAMS="--transition-fps $FPS --transition-type $TYPE --transition-duration $DURATION"
 
 

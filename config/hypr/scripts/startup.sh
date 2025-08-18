@@ -5,10 +5,10 @@ wallpaper="$HOME/.hyprconf/hypr/.cache/current_wallpaper.png"
 monitor_config="$HOME/.hyprconf/hypr/configs/monitor.conf"
 
 # Transition config
-FPS=60
+FPS=120
 TYPE="any"
-DURATION=2
-BEZIER=".43,1.19,1,.4"
+DURATION=1
+BEZIER=".28,.58,.99,.37"
 SWWW_PARAMS="--transition-fps $FPS --transition-type $TYPE --transition-duration $DURATION --transition-bezier $BEZIER"
 
 if [[ -f "$wallpaper" ]]; then
