@@ -185,16 +185,25 @@ if [[ -d "$HOME/.backup_hyprconf-${USER}" ]]; then
     msg dn "~/.backup_hyprconf-${USER} was archived inside ~/.archive_hyprconf-${USER} directory..." && sleep 1
 fi
 
-for confs in "${dirs[@]}"; do
-    mkdir -p "$HOME/.backup_hyprconf-${USER}"
-    conf_path="$HOME/.config/$confs"
 
-    # If the config exists and is NOT a symlink → backup it
-    if [[ -e "$conf_path" && ! -L "$conf_path" ]]; then
-        mv "$conf_path" "$HOME/.backup_hyprconf-${USER}/" 2>&1 | tee -a "$log"
-        msg dn "Backed up $confs config to ~/.backup_hyprconf-${USER}/"
-    fi
-done
+mkdir -p "$HOME/.backup_hyprconf-${USER}"
+if [[ -d "$HOME/.hyprconf" ]]; then
+
+    mv "$HOME/.hyprconf" "$HOME/.backup_hyprconf-${USER}/"
+
+else
+
+    for confs in "${dirs[@]}"; do
+        conf_path="$HOME/.config/$confs"
+
+        # If the config exists and is NOT a symlink → backup it
+        if [[ -e "$conf_path" && ! -L "$conf_path" ]]; then
+            mv "$conf_path" "$HOME/.backup_hyprconf-${USER}/" 2>&1 | tee -a "$log"
+        fi
+    done
+    
+    msg dn "Backed up $confs config to ~/.backup_hyprconf-${USER}/"
+fi
 
 [[ -d "$HOME/.backup_hyprconf-${USER}/hypr" ]] && msg dn "Everything has been backuped in $HOME/.backup_hyprconf-${USER}..."
 
@@ -250,6 +259,7 @@ sleep 1
 
 # creating symlinks
 cp -a "$dir/config" "$HOME/.hyprconf"
+mv "$HOME/.hyprconf/fastfetch" "$HOME/.local/share/"
 
 for dotfilesDir in "$HOME/.hyprconf"/*; do
     configDirName=$(basename "$dotfilesDir")
