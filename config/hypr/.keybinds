@@ -48,8 +48,8 @@ F11 | increase volume
  + F1 | decrease nightlight
  + F2 | increase nightlight
  + F3 | reset nightlight
-F3 | increase brightness
-F2 | decrease brightness
+F4 | increase brightness
+F3 | decrease brightness
  + J | move focus down
  + K | move focus up
  + L | move focus right
