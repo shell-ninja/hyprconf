@@ -99,7 +99,7 @@ for user_choice in "${primary_choice[@]}"; do
             _blur_passes=$(gum input --placeholder "Type the amount of blur passes...")
         done
         sed -i "s/\$blur_size = .*/\\\$blur_size = $_blur_size/g" "$setting"
-        sed -i "s/\$blur_passes = .*/\\\$blur_passes = $_blur_passes/g" "$setting"
+        sed -i "s/\$blur_pass = .*/\\\$blur_pass = $_blur_passes/g" "$setting"
         ;;
     "opacity")
         printf "\n[ <> ]\nSetting opacity...\n\n"
