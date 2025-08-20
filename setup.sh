@@ -118,6 +118,7 @@ dirs=(
     rofi
     swaync
     waybar
+    wlogout
     xfce4
     xsettingsd
     yazi

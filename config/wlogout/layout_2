@@ -1,0 +1,27 @@
+{
+    "label": "lock",
+    "action": "sleep 0.3 && $HOME/.hyprconf/hypr/scripts/power.sh --lock",
+    "text": "Lock",
+    "keybind": "l"
+}
+
+{
+    "label": "logout",
+    "action": "$HOME/.hyprconf/hypr/scripts/power.sh --logout",
+    "text": "Logout",
+    "keybind": "e"
+}
+
+{
+    "label": "shutdown",
+    "action": "$HOME/.hyprconf/hypr/scripts/power.sh --poweroff",
+    "text": "Power Off",
+    "keybind": "s"
+}
+
+{
+    "label": "reboot",
+    "action": "$HOME/.hyprconf/hypr/scripts/power.sh --reboot",
+    "text": "Reboot",
+    "keybind": "r"
+}

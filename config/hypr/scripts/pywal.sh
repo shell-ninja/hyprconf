@@ -56,6 +56,9 @@ ln -sf "$HOME/.cache/wal/colors-waybar.css" "$HOME/.config/waybar/style/theme.cs
 # setting swaync colors
 [[ -n "$(command -v swaync)" ]] && ln -sf "$HOME/.cache/wal/colors-swaync.css" "$HOME/.config/swaync/colors.css"
 
+# setting wlogout colors
+ln -sf "$HOME/.cache/wal/colors-waybar.css" "$HOME/.config/wlogout/colors.css"
+
 # updated system update gum colors.
 sysupd_script="$scripts_dir/pkgupdate.sh"
 monitor_setup_script="$scripts_dir/monitor.sh"
