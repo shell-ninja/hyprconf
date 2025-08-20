@@ -35,16 +35,15 @@ apply_config() {
     ln -sf "$layout_file" "$waybar_config"
     ln -sf "$style_file" "$waybar_style"
 
-    if [[ "$1" == "fancy-top" || "$1" == "colorful-bottom" || "$1" == "full-top" || "$1" == "rounded-top" ]]; then
-        echo "Enabling blur in $window_rules"
-        sed -i "/^#blurls = waybar$/ s/#//" "$window_rules"
-        sed -i "/^#blurls = waybar$/d" "$window_rules"
+    if [[ "$1" == "full-top" || "$1" == "rounded-top" ]]; then
+        # echo "Enabling blur in $window_rules"
+        sed -i "/^#layerrule = blur, waybar$/ s/#//" "$window_rules"
     else
-        echo "Disabling blur in $window_rules"
-        sed -i "/^blurls = waybar$/ s/^/#/" "$window_rules"
+        # echo "Disabling blur in $window_rules"
+        sed -i "/^layerrule = blur, waybar$/ s/^/#/" "$window_rules"
     fi
 
-    if [[ "$1" == *"-top"* && ! "$1" == "dual-tone-top" && ! "$1" == "reflection-top" && ! "$1" == "rounded-top" && ! "$1" == "border-top" ]]; then
+    if [[ "$1" == *"-top"* && ! "$1" == "dual-tone-top" && ! "$1" == "rounded-top" && ! "$1" == "border-top" ]]; then
         sed -i "s/location:.*/location: northWest;/g" "$rofi_menu"
         sed -i "s/x-offset:.*/x-offset: 15px;/g" "$rofi_menu"
         sed -i "s/y-offset:.*/y-offset: 15px;/g" "$rofi_menu"
