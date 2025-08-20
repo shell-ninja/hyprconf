@@ -73,8 +73,6 @@ This Hyprland configuration is kind of minila looking, but also little bit gorge
 <p align="center">
    <img aligh="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/power/1.png?raw=true" />
    <img aligh="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/power/2.png?raw=true" /> <br>
-
-   <img aligh="center" width="99%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/power/3.png?raw=true" />
 </p> <br>
 </details>
 
