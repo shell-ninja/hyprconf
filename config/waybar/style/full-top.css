@@ -290,7 +290,8 @@ tooltip label {
 #workspaces {
   padding: 2px 17px;
   border-radius: 15px;
-  margin-left: -5px;
+  margin-left: 10px;
+  margin-right: 15px;
 }
 
 #window {
