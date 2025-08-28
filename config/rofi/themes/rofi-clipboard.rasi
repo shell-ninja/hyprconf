@@ -34,7 +34,7 @@ window {
     cursor:                       "default";
     transparency:                 "real";
     location: northEast;
-    anchor: northeast;
+    anchor: northEast;
     fullscreen:                   false;
     enabled:                      true;
     border-radius:                @radius;
@@ -47,7 +47,7 @@ mainbox {
     orientation:                  vertical;
     spacing:                      0px;
     margin:                       0px;
-    background-color:             @background;
+    background-color:             transparent;
     children:                     [ "inputbar", "listbox"];
 }
 
@@ -139,23 +139,23 @@ element {
     enabled:                      true;
     padding:                      5px 10px;
     cursor:                       pointer;
-    background-color:             @background;
+    background-color:             transparent;
     border-radius:                @radius;
-    border:                       2px;
+    border:                       0;
 }
 
 element normal.normal {
-    background-color:            inherit;
+    background-color:            transparent;
     text-color:                  @foreground;
 }
 
 element normal.urgent {
-    background-color:            inherit;
+    background-color:            transparent;
     text-color:                  @foreground;
 }
 
 element normal.active {
-    background-color:            inherit;
+    background-color:            transparent;
     text-color:                  @foreground;
 }
 
@@ -165,27 +165,27 @@ element selected.normal {
 }
 
 element selected.urgent {
-    background-color:            inherit;
+    background-color:            transparent;
     text-color:                  @foreground;
 }
 
 element selected.active {
-    background-color:            inherit;
+    background-color:            transparent;
     text-color:                  @foreground;
 }
 
 element alternate.normal {
-    background-color:            inherit;
+    background-color:            transparent;
     text-color:                  @foreground;
 }
 
 element alternate.urgent {
-    background-color:            inherit;
+    background-color:            transparent;
     text-color:                  @foreground;
 }
 
 element alternate.active {
-    background-color:            inherit;
+    background-color:            transparent;
     text-color:                  @foreground;
 }
 
