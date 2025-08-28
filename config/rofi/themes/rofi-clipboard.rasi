@@ -24,7 +24,7 @@ configuration {
 window {
     width:                        600px;
     x-offset: -15px;
-    y-offset: -15px;
+    y-offset: 15px;
     spacing:                      0px;
     padding:                      0px;
     margin:                       0px; 
@@ -33,8 +33,8 @@ window {
     border-color:                 @foreground;
     cursor:                       "default";
     transparency:                 "real";
-    location: center;
-    anchor: center;
+    location: northEast;
+    anchor: northEast;
     fullscreen:                   false;
     enabled:                      true;
     border-radius:                @radius;
