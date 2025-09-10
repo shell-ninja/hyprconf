@@ -17,8 +17,8 @@
  + ALT + W | wipe clipboard history
  + SHIFT + D | open emoji picker
  + SHIFT + P | toggle pseudo-tiling
- + X | open power menu
- + ALT + X | switch power menu theme
+ + X | open wlogout style 1
+ + ALT + X | open wlogout style 2
  + C | open VS Code
  + B | open browser (Default)
 ALT + B | reset default browser
@@ -64,3 +64,10 @@ F3 | decrease brightness
  + mouse scroll | cycle workspaces
  + left click | move window
  + right click | resize window
+ALT + f | open Facebook
+ALT + I | open Instagram
+ALT + Y | open YouTube
+ALT + W | open WhatsApp Web
+ALT + G | open GitHub
+ALT + A | open ChatGPT
+CTRL + ALT + A | open Gemini
