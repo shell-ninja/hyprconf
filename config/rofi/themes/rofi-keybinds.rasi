@@ -34,7 +34,7 @@ window {
     transparency:                 "real";
     fullscreen:                   false;
     enabled:                      true;
-    background-color:             transparent;
+    background-color:             @background;
 }
 
 mainbox {
