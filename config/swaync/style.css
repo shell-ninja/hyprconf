@@ -5,17 +5,14 @@
   color: @noti-fg;
 }
 
-.notification-row {
-  outline: none;
-}
-
 .notification {
-  border: 1px solid alpha(@bg-selected, 0.55);
-  border-radius: 4px;
+  /* background: alpha(@noti-bg, 0.5); */
+  border: 1px solid @noti-fg;
+  border-radius: 8px;
   margin: 6px 12px;
   box-shadow: none;
   padding: 0;
-  font-size: 20px;
+  font-size: 28px;
 }
 
 .critical {
@@ -25,17 +22,17 @@
 .notification-content {
   background: transparent;
   padding: 6px;
-  border-radius: 4px;
+  border-radius: 8px;
 }
 
 .close-button {
-  background: @noti-fg;
-  color: @noti-bg;
+  background: transparent;
+  color: #ff0000;
   text-shadow: none;
-  padding: 0;
+  padding: 3px;
   border-radius: 100%;
-  margin-top: 10px;
-  margin-right: 16px;
+  margin-top: 20px;
+  margin-right: 20px;
   box-shadow: none;
   border: none;
   min-width: 24px;
@@ -44,25 +41,27 @@
 
 .close-button:hover {
   box-shadow: none;
-  background: @noti-close-bg-hover;
-  transition: all 0.15s ease-in-out;
-  border: none;
+  background: #ff0000;
+  color: @noti-bg;
+  transition: all 0.4s ease-in-out;
 }
 
 .notification-default-action,
 .notification-action {
   padding: 4px;
   margin: 0;
+  border-radius: 8px;
+  font-size: 40px;
   box-shadow: none;
-  background: @noti-bg;
-  border: 1px solid @noti-border-color;
-  color: white;
+  background: transparent;
+  border: 1px solid @noti-fg;
+  color: @noti-fg;
 }
 
 .notification-default-action:hover,
 .notification-action:hover {
   -gtk-icon-effect: none;
-  background: @noti-bg-alt;
+  background: transparent;
 }
 
 .notification-default-action {
@@ -92,6 +91,8 @@
 }
 
 .image {
+  min-width: 30px;
+  min-height: auto;
 }
 
 .body-image {
