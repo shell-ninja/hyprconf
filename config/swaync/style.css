@@ -9,11 +9,6 @@
   outline: none;
 }
 
-.notification-row:focus,
-.notification-row:hover {
-  background: @noti-bg-focus;
-}
-
 .notification {
   border: 1px solid alpha(@bg-selected, 0.55);
   border-radius: 4px;

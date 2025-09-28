@@ -111,11 +111,11 @@
         "position": "center",
         "actions": [
           {
-            "label": " Performance",
+            "label": "󱓞 Performance",
             "command": "powerprofilesctl set performance"
           },
           {
-            "label": " Balanced",
+            "label": "  Balanced",
             "command": "powerprofilesctl set balanced"
           },
           {
