@@ -73,11 +73,11 @@
       "subsystem": "leds"
     },
     "volume": {
-      "label": ""
+      "label": " "
     },
     "menubar": {
       "menu#network-buttons": {
-        "label": "",
+        "label": "󰌘",
         "position": "center",
         "actions": [
           {
@@ -107,7 +107,7 @@
         ]
       },
       "menu#powermode-buttons": {
-        "label": "",
+        "label": "󱓞",
         "position": "center",
         "actions": [
           {

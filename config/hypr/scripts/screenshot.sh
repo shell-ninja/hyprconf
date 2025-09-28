@@ -15,27 +15,17 @@ ss_sound() {
     paplay "$sound_file"
 }
 
-option1="Fullscreen (delay 3 sec)"
-option2="Selected area"
+option1="Fullscreen"
+option2="Selected Area"
 
 options="$option1\n$option2"
 
 choice=$(echo -e "$options" | rofi -dmenu -replace -config ~/.config/rofi/themes/rofi-screenshots.rasi -i -no-show-icons -l 2 -width 30 -p)
 
-send_notification() {
-    local msg="$1"
-    notify-send -e "Taking Screenshot in" "$msg"
-    sleep 1
-    # pkill dunst
-    pkill swaync
-}
-
 case $choice in
-    $option1)  # full area, 3 sec delay.
-        for time in 3 2 1; do
-            send_notification "$time"
-        done
-        sleep 1
+    $option1)  # Fullscreen
+        killall rofi
+        sleep 0.3
         grimblast copysave screen "$temp_screenshot" && ss_sound && \
         satty --filename "$temp_screenshot" --output-filename "$save_dir/$save_file" --early-exit
         ;;
