@@ -21,7 +21,12 @@
         "tray", 
         "pulseaudio/slider",
         "pulseaudio#audio", 
+        "custom/dot",
+        "network", 
+        "custom/notify",
         "custom/endt",
+        "custom/endn",
+        "custom/endt"
     ],
 
     "modules-center": [
@@ -32,7 +37,8 @@
 
     "modules-right": [ 
         "custom/endn",
-        "network", 
+        "custom/endt",
+        "custom/endn",
         "idle_inhibitor", 
         "custom/dot",
         "custom/nightlight",

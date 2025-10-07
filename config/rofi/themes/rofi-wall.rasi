@@ -22,12 +22,12 @@ configuration {
 
 /* ---- Window ---- */
 window {
-    width:					900px;
-	height:				    830px;
+    width:					1500px;
+	height:				    900px;
     x-offset:               0px;
     y-offset:               0px;
     spacing:                0px;
-    padding:                2px;
+    padding:                0px;
     margin:                 0px; 
     border:                 @border-size;
     border-color:           @foreground;
@@ -51,7 +51,7 @@ mainbox {
 
 /* ---- Listbox ---- */
 listbox {
-    spacing:                     20px;
+    spacing:                     0;
     background-color:            transparent;
     border:                      0px;
     border-color:                transparent;
@@ -94,7 +94,7 @@ entry {
 }
 
 button {
-    border-radius:                @radius;
+    border-radius:                15px;
     background-color:             @background;
     text-color:                   inherit;
     cursor:                       pointer;
@@ -109,9 +109,8 @@ button selected {
 /* ---- Listview ---- */
 listview {
 	enabled:				true;
-	columns:				3;
-	lines:					5;
-	spacing:                4px;
+	columns:				5;
+	spacing:                10px;
 	dynamic:                true;
 	cycle:                  true;
 	scrollbar:              false;
@@ -126,11 +125,11 @@ listview {
 /* ---- Element ---- */
 element {
     enabled:                true;
-    padding:                5px;
+    padding:                2px;
     cursor:                 pointer;
 	orientation: 			vertical;
     background-color:       transparent;
-    border-radius:          @radius;
+    border-radius:          15px;
     border:                 0px;
 }
 
