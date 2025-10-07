@@ -60,6 +60,7 @@ tooltip label {
 
 #custom-launch_rofi,
 #custom-power_btn,
+#custom-notify,
 #idle_inhibitor,
 #custom-nightlight,
 #clock,
@@ -154,6 +155,10 @@ tooltip label {
   padding-left: 10px;
   font-size: 16px;
   border-radius: 5px 5px 0 0;
+}
+
+#custom-notify {
+  color: @peach;
 }
 
 #pulseaudio-slider {
