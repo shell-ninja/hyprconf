@@ -11,7 +11,6 @@ EOF
 # Script for setting window border width and roundness.
 setting="$HOME/.config/hypr/configs/configs.conf"
 rofiVars="$HOME/.config/rofi/rofi-vars.rasi"
-dunst="$HOME/.config/dunst/dunstrc"
 
 
 # gum function to choose multiple settings
@@ -53,7 +52,6 @@ for user_choice in "${primary_choice[@]}"; do
             borderSize=$(gum input --placeholder "Type border width...")
         done
         sed -i "s/\$border = .*/\\\$border = $borderSize/g" "$setting"
-        sed -i "s/frame_width = .*/frame_width = $borderSize/g" "$dunst"
         sed -i "s/border-size: .*/border-size: ${borderSize}px;/g" "$rofiVars"
         ;;
     "roundness")
@@ -66,7 +64,6 @@ for user_choice in "${primary_choice[@]}"; do
         sed -i 's/\$rounding = .*/$rounding = '"$rounding"'/g' "$setting"
         sed -i "s/radius: .*/radius: ${rounding}px;/g" "$rofiVars"
         sed -i "s/radius-second: .*/radius-second: $((rounding / 2))px;/g" "$rofiVars"
-        sed -i "s/^[[:space:]]*corner_radius[[:space:]]*= .*/corner_radius = $((rounding / 2))/g" "$dunst"
         ;;
     "inner gap")
         printf "\n[ <> ]\nSetting inner gap...\n\n"
@@ -133,6 +130,4 @@ done
 
 # Reload Hyprland
 printf "\n[ ** ] Reloading Hyprland configuration...\n" && sleep 1
-killall dunst
-dunst &
 hyprctl reload

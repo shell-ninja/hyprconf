@@ -22,17 +22,25 @@
   padding: calc(var(--border-radius) / 2);
   border: var(--border);
 }
-}
 
 .control-center-list-placeholder {
   padding: var(--border-radius);
 }
 
+.close-button {
+  min-width: 24px;
+  min-height: 24px;
+  border-radius: 50%;
+  background: transparent;
+  color: @noti-fg;
+  transition: all 0.2s ease;
+}
+
 .close-button:hover {
+  background: transparent;
+  color: red;
   box-shadow: none;
-  background: #ff0000;
-  color: @noti-bg;
-  transition: all 0.4s ease-in-out;
+  transition: all 0.2s ease-in-out;
 }
 
 .notification-default-action,
@@ -50,7 +58,7 @@
 .notification-group {
   border-radius: var(--border-radius);
   padding: 8px;
-    background: transparent;
+  background: transparent;
 }
 
 .widget.widget-mpris {
@@ -77,4 +85,9 @@
 }
 .widget-mpris-player:only-child {
   margin: 0;
+}
+
+image {
+  border-radius: 0;
+  padding: 0 20px 0 0;
 }
