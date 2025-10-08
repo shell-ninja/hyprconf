@@ -54,7 +54,7 @@
 
     "custom/notify": {
         "tooltip": true,
-        "tooltip-format": "Left Click: Launch Notification Center\nRight Click: Do not Disturb",
+        "tooltip-format": "You have<span foreground='#4A6096'> {} </span>notifications.",
         "format": "{icon} ",
         "format-icons": {
             "notification": "<span foreground='red'><sup></sup></span>",
