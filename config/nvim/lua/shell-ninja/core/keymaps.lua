@@ -23,6 +23,9 @@ keymap.set("n", "db", 'v0d') -- deletes before the cursor
 -- Select all
 keymap.set("n", "<C-a>", "gg<S-v>G") -- Select all
 
+-- yank and paste
+keymap.set("v", "p", '"_dp')
+
 -- window management
 keymap.set("n", "<leader>v", "<C-w>v", { desc = "Split window vertically" })                    -- split window vertically
 keymap.set("n", "<leader>h", "<C-w>s", { desc = "Split window horizontally" })                  -- split window horizontally

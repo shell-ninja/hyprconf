@@ -1,7 +1,5 @@
 #!/bin/bash
 
-SCRIPTSDIR=$HOME/.config/hypr/scripts
-
 # Define file_exists function
 file_exists() {
     if [ -e "$1" ]; then
@@ -13,7 +11,6 @@ file_exists() {
 
 # Kill already running processes
 _ps=(
-    dunst
     swaync
     rofi
     # waybar
@@ -25,11 +22,7 @@ for _prs in "${_ps[@]}"; do
 done
 
 sleep 0.1
-if [[ -n "$(command -v swaync)" ]]; then
-    swaync &
-elif [[ -n "$(command -v dunst)" ]]; then
-    dunst &
-fi
+swaync &
 
 sleep 1
 hyprctl reload
