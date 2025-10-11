@@ -22,14 +22,6 @@ get_icon() {
     fi
 }
 
-# Notify using dunst
-# notify_user() {
-#     if [[ "$(get_volume)" == " " ]]; then
-#         notify-send -a -r -h string:x-dunst-stack-tag:volume_notif -i "$(get_icon)" "Volume: Muted"
-#     else
-#         notify-send -a -r -h string:x-dunst-stack-tag:volume_notif -i "$(get_icon)" "Volume: $(get_volume)"
-#     fi
-# }
 
 # Notify using swaync
 notify_user() {

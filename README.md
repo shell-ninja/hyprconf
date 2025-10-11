@@ -119,7 +119,7 @@ This Hyprland configuration is kind of minila looking, but also little bit gorge
 - Select and Open apps using Rofi app launcher
 - Gorgeous looking Waybar styles
 - Rofi app launcher styles
-- Rofi power menu
+- Wlogout power menu
 - Locking with Hyprlock
 - Set your user image in Hyprlock ( a script `~/.config/hypr/add_user.sh` to set your user image )
 - Hypridle to handle auto lock and suspend when no action is runnin
@@ -138,7 +138,7 @@ This Hyprland configuration is kind of minila looking, but also little bit gorge
 >
 > ### Hyprland
 >
-> To configure hyprland settings, you can visit to `~/.config/hypr` directory. Inside it, you will fine `configs` dir, holding all the configuration files; `scripts` dir for all the scripts.
+> To configure hyprland settings, you can visit to `~/.config/hypr` directory. Inside it, you will find`configs` dir, holding all the configuration files; `scripts` dir for all the scripts.
 > Wallpapers are stored in the `~/.config/hypr/Wallpaper/` directory. Just copy your favourite wallpapers into this directory.
 >
 > ### Rofi
@@ -148,7 +148,7 @@ This Hyprland configuration is kind of minila looking, but also little bit gorge
 > ### Waybar
 >
 > Visit to `~/.config/waybar` directory.
-> You will fine <i>configs</i> dir holding all the configurations.
+> You will find <i>configs</i> dir holding all the configurations.
 > A <i>style</i> dir holding all the <b>css</b> files.
 > A <i>moduled</i> dir for all the modules.
 >
