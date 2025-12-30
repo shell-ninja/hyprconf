@@ -225,7 +225,7 @@
             "class<nwg-look>": " ",
             "class<[Pp]avucontrol|org.pulseaudio.pavucontrol>": "󱡫 ",
             "class<steam>": " ",
-            "class<thunar|nemo>": "󰝰 ",	
+            "class<thunar|nemo|org.kde.dolphin>": "󰝰 ",	
             "class<Gparted>":"",
             "class<gimp>": " ",
             "class<emulator>": "📱 ",
