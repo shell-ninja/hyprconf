@@ -16,10 +16,10 @@ FPS=120
 TYPE="any"
 DURATION=1
 BEZIER=".28,.58,.99,.37"
-SWWW_PARAMS="--transition-fps $FPS --transition-type $TYPE --transition-duration $DURATION --transition-bezier $BEZIER"
+AWWW_PARAMS="--transition-fps $FPS --transition-type $TYPE --transition-duration $DURATION --transition-bezier $BEZIER"
 
-swww-daemon &
-swww img ${wallpaper} $SWWW_PARAMS
+awww-daemon &
+awww img ${wallpaper} $AWWW_PARAMS
 
 ln -sf "$wallpaper" "$cache_dir/current_wallpaper.png"
 

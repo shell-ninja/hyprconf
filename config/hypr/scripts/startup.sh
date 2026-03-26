@@ -9,11 +9,11 @@ FPS=120
 TYPE="any"
 DURATION=1
 BEZIER=".28,.58,.99,.37"
-SWWW_PARAMS="--transition-fps $FPS --transition-type $TYPE --transition-duration $DURATION --transition-bezier $BEZIER"
+AWWW_PARAMS="--transition-fps $FPS --transition-type $TYPE --transition-duration $DURATION --transition-bezier $BEZIER"
 
 if [[ -f "$wallpaper" ]]; then
-    swww-daemon &
-    swww img $wallpaper $SWWW_PARAMS
+    awww-daemon &
+    awww img $wallpaper $AWWW_PARAMS
 else
     "$scripts_dir/Wallpaper.sh"
 fi
