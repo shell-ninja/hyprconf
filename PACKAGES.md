@@ -79,7 +79,7 @@ Packages that need to be installed for this configuration
 | hyprsunset       | Screen temperature controller for Hyprland            |
 | hyprland-qtutils | Qt integration utilities for Hyprland                 |
 | pyprland         | Python-based extension loader for Hyprland            |
-| swww             | Wallpaper manager with transition effects for Wayland |
+| awww             | Wallpaper manager with transition effects for Wayland |
 | waybar           | Status bar for Wayland                                |
 | rofi-wayland     | Application launcher for Wayland                      |
 | dunst            | Lightweight notification daemon                       |

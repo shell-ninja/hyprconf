@@ -15,7 +15,7 @@ FPS=60
 TYPE="outer"
 DURATION=2
 BEZIER=".43,1.19,1,.4"
-SWWW_PARAMS="--transition-fps $FPS --transition-type $TYPE --transition-duration $DURATION --transition-bezier $BEZIER"
+AWWW_PARAMS="--transition-fps $FPS --transition-type $TYPE --transition-duration $DURATION --transition-bezier $BEZIER"
 
 # Read the current mode and wallpaper engine
 current_mode=$(cat "$mode_file")
@@ -31,7 +31,7 @@ set_wallpaper() {
         wallpaper="${wallpaper_files[RANDOM % ${#wallpaper_files[@]}]}"
     fi
 
-    swww query || swww init && swww img ${wallpaper} $SWWW_PARAMS
+    awww query || awww init && awww img ${wallpaper} $AWWW_PARAMS
 
     ln -sf "$wallpaper" "$HOME/.config/hypr/.cache/current_wallpaper.png"
 
