@@ -28,6 +28,8 @@ fi
 "$scripts_dir/wallcache.sh"
 "$scripts_dir/pywal.sh"
 "$scripts_dir/system.sh" run &
+"$scripts_dir/prayertime.sh"
+"$scripts_dir/prayertime_notify.sh"
 
 
 #_____ setup monitor ( updated teh monitor.conf for the high resolution and higher refresh rate )

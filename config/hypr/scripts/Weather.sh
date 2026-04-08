@@ -1,6 +1,7 @@
 #!/bin/bash
 
-city=$(timedatectl | grep "Time zone" | awk '{split($3, a, "/"); print a[2]}')
+# city=$(timedatectl | grep "Time zone" | awk '{split($3, a, "/"); print a[2]}')
+city="Munshiganj"
 cachedir=~/.cache/rbn
 cachefile=${0##*/}-$1
 

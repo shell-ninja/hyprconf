@@ -17,6 +17,7 @@ case $1 in
         hyprctl dispatch exit 1
         ;;
     --lock)
+        sleep 0.1
         hyprlock
         ;;
 esac
