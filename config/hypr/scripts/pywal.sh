@@ -127,6 +127,47 @@ if [[ -n "$(command -v code)" ]]; then
     fi
 fi
 
-# ── 8. Reload everything ──────────────────────────────────────────────────────
+# ── 8. GTK Themes Setup ─────────────────────────────────────────────────────────
+# Force GTK3 schema to FlatColor which natively imports .cache/wal
+gsettings set org.gnome.desktop.interface gtk-theme "FlatColor"
+
+# Dynamically map Pywal to Libadwaita for modern GTK4 Apps
+mkdir -p "$HOME/.config/gtk-4.0"
+cat <<EOF > "$HOME/.config/gtk-4.0/gtk.css"
+@import url("file://$HOME/.cache/wal/colors-waybar.css");
+
+@define-color window_bg_color @background;
+@define-color window_fg_color @foreground;
+@define-color view_bg_color @background;
+@define-color view_fg_color @foreground;
+@define-color headerbar_bg_color @color0;
+@define-color headerbar_fg_color @foreground;
+@define-color popover_bg_color @background;
+@define-color popover_fg_color @foreground;
+@define-color dialog_bg_color @background;
+@define-color dialog_fg_color @foreground;
+@define-color accent_color @color4;
+@define-color accent_bg_color @color4;
+@define-color accent_fg_color @background;
+EOF
+
+# Dynamically map Pywal to Qt5/Qt6 Palette
+mkdir -p "$HOME/.config/qt5ct/colors" "$HOME/.config/qt6ct/colors"
+cat <<EOF > "$HOME/.config/qt5ct/colors/Pywal.conf"
+[ColorScheme]
+active_colors=${foreground_color}, ${background_color}, ${color1}, ${color2}, ${color3}, ${color4}, ${foreground_color}, ${color5}, ${foreground_color}, ${background_color}, ${background_color}, ${color0}, ${color4}, ${background_color}, ${color6}, ${color5}, ${color0}, ${foreground_color}, ${background_color}, ${foreground_color}, ${color8}
+inactive_colors=${foreground_color}, ${background_color}, ${color1}, ${color2}, ${color3}, ${color4}, ${foreground_color}, ${color5}, ${foreground_color}, ${background_color}, ${background_color}, ${color0}, ${color4}, ${background_color}, ${color6}, ${color5}, ${color0}, ${foreground_color}, ${background_color}, ${foreground_color}, ${color8}
+disabled_colors=${color8}, ${background_color}, ${color1}, ${color2}, ${color3}, ${color4}, ${color8}, ${color8}, ${color8}, ${background_color}, ${background_color}, ${color0}, ${color4}, ${background_color}, ${color6}, ${color5}, ${color0}, ${foreground_color}, ${background_color}, ${color8}, ${color8}
+EOF
+cp "$HOME/.config/qt5ct/colors/Pywal.conf" "$HOME/.config/qt6ct/colors/Pywal.conf" 2>/dev/null || true
+
+# Hook Pywal.conf to active Qt configs
+for qt_conf in "$HOME/.config/qt5ct/qt5ct.conf" "$HOME/.config/qt6ct/qt6ct.conf"; do
+    if [[ -f "\$qt_conf" ]]; then
+        sed -i "s|^color_scheme_path=.*|color_scheme_path=$HOME/.config/qt5ct/colors/Pywal.conf|g" "\$qt_conf"
+    fi
+done
+
+# ── 9. Reload everything ──────────────────────────────────────────────────────
 sleep 0.3
 "${scripts_dir}/Refresh.sh"
