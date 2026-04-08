@@ -1,37 +1,30 @@
 #!/usr/bin/env sh
+# wallcache.sh — Generate thumbnail, blur, and quad images for the current wallpaper.
 
-# Set environment variables
-export cacheDir="$HOME/.config/hypr/.cache"
-export thmbDir="${cacheDir}/thumbs"
+cacheDir="$HOME/.config/hypr/.cache"
+thmbDir="${cacheDir}/thumbs"
 currentWall_name="$(cat "${cacheDir}/.wallpaper")"
-
-# Input file
 input_file="${cacheDir}/current_wallpaper.png"
 
 mkdir -p "${thmbDir}"
-chmod u+w "${thmbDir}"
 
-# Check if the input file exists
-if [ ! -f "${input_file}" ]; then
-    exit 1
-fi
+[[ ! -f "${input_file}" ]] && exit 1
 
-# Define the fn_wallcache function
 fn_wallcache() {
     local wall_name="${1}"
     local x_wall="${2}"
 
-    # Generate square thumbnail
+    # Generate square thumbnail (only if missing)
     [ ! -e "${thmbDir}/${wall_name}.sqre" ] && \
-        magick "${x_wall}"[0] -strip -thumbnail 500x500^ -gravity center -extent 500x500 \
+        magick "${x_wall}[0]" -strip -thumbnail 500x500^ -gravity center -extent 500x500 \
         "${thmbDir}/${wall_name}.sqre"
 
-    # Generate blurred image
+    # Generate blurred image (only if missing)
     [ ! -e "${thmbDir}/${wall_name}.blur" ] && \
-        magick "${x_wall}"[0] -strip -scale 70% -blur 0x10 -resize 100% \
+        magick "${x_wall}[0]" -strip -scale 70% -blur 0x10 -resize 100% \
         "${thmbDir}/${wall_name}.blur"
 
-    # Generate quad image
+    # Generate quad image (only if missing)
     [ ! -e "${thmbDir}/${wall_name}.quad" ] && \
         magick "${thmbDir}/${wall_name}.sqre" \
         \( -size 500x500 xc:white -fill "rgba(0,0,0,0.7)" \
@@ -39,19 +32,15 @@ fn_wallcache() {
            -fill black \
            -draw "polygon 500,500 500,0 450,500" \) \
         -alpha Off -compose CopyOpacity -composite \
-        "${thmbDir}/${wall_name}.png" && \
-        mv "${thmbDir}/${wall_name}.png" "${thmbDir}/${wall_name}.quad"
+        "${thmbDir}/${wall_name}.quad"
 
-    [[ -f "${cacheDir}/${wall_name}.blur" ]] && rm -rf  "${cacheDir}/${wall_name}.blur"
-    cp -r "${thmbDir}/${wall_name}.blur" "${cacheDir}/wall.blur"
-
-    [[ -f "${cacheDir}/${wall_name}.quad" ]] && rm -rf  "${cacheDir}/${wall_name}.quad"
-    cp -r "${thmbDir}/${wall_name}.quad" "${cacheDir}/wall.quad"
+    # Copy blur and quad to cache root (plain cp — no -r needed for files)
+    cp "${thmbDir}/${wall_name}.blur" "${cacheDir}/wall.blur"
+    cp "${thmbDir}/${wall_name}.quad" "${cacheDir}/wall.quad"
 }
 
-# Process the current wallpaper
 fn_wallcache "${currentWall_name}" "${input_file}"
 
-if [ ! -f "${thmbDir}/${currentWall_name}.quad" ]; then
-    exit 1
-fi
+[ ! -f "${thmbDir}/${currentWall_name}.quad" ] && exit 1
+
+exit 0

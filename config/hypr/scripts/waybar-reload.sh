@@ -3,8 +3,8 @@
 
 case "$1" in
     --reload)
-        killall waybar
-        waybar &
+        killall waybar swaync
+        waybar & swaync &
         sleep 0.3
         hyprctl reload
         ;;

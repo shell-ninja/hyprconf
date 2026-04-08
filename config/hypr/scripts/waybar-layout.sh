@@ -40,7 +40,7 @@ apply_config() {
         sed -i "/^#layerrule = match:namespace waybar, blur on$/ s/#//" "$window_rules"
     else
         # echo "Disabling blur in $window_rules"
-        sed -i "/^layerrule = match:namespace waybar, blur on$/ s/^/#/" "$window_rules"
+        sed -i "/^layerrule = match:namespace waybar, blur on/ s/^/#/" "$window_rules"
     fi
 
     if [[ "$1" == *"-top"* && ! "$1" == "dual-tone-top" && ! "$1" == "rounded-top" && ! "$1" == "border-top" ]]; then

@@ -1,30 +1,22 @@
 #!/bin/bash
+# Refresh.sh — Restart notification daemon and reload Hyprland.
 
-# Define file_exists function
-file_exists() {
-    if [ -e "$1" ]; then
-        return 0  # File exists
-    else
-        return 1  # File does not exist
-    fi
-}
-
-# Kill already running processes
-_ps=(
-    swaync
-    rofi
-    # waybar
-)
+# Kill running daemons
+_ps=(dunst swaync rofi)
 for _prs in "${_ps[@]}"; do
-    if pidof "${_prs}" &> /dev/null; then
-        pkill "${_prs}"
-    fi
+    pidof "${_prs}" &>/dev/null && pkill "${_prs}"
 done
 
 sleep 0.1
-swaync &
 
-sleep 1
+# Start notification daemon
+if [[ -n "$(command -v swaync)" ]]; then
+    swaync &
+elif [[ -n "$(command -v dunst)" ]]; then
+    dunst &
+fi
+
+sleep 0.3
 hyprctl reload
 
 exit 0

@@ -6,7 +6,7 @@ fi
 
 sound_file="/usr/share/sounds/freedesktop/stereo/screen-capture.oga"
 save_dir="${2:-$XDG_PICTURES_DIR/Screenshots}"
-save_file=$(date +'screenshot_%y%m%d_%H%M%S.png')
+save_file=$(date +'hyprland_screenshot_%y%m%d_%H%M%S.png')
 temp_screenshot="/tmp/screenshot.png" # Satty can also read from stdin, but using a temp file fits your current script structure
 
 mkdir -p "$save_dir"
@@ -24,8 +24,7 @@ choice=$(echo -e "$options" | rofi -dmenu -replace -config ~/.config/rofi/themes
 
 case $choice in
     $option1)  # Fullscreen
-        killall rofi
-        sleep 0.3
+        sleep 0.5
         grimblast copysave screen "$temp_screenshot" && ss_sound && \
         satty --filename "$temp_screenshot" --output-filename "$save_dir/$save_file" --early-exit
         ;;
@@ -44,3 +43,4 @@ rm "$temp_screenshot"
 if [ -f "$save_dir/$save_file" ] ; then
     notify-send "Screenshot saved in" "$save_dir" -i "$save_dir/$save_file" -r 91190 -t 5000
 fi
+

@@ -1,133 +1,131 @@
 #!/bin/bash
+# volumecontrol.sh — Volume and microphone control with notifications.
 
-iDIR="$HOME/.config/hypr/icons/vol"
+iDIR="$HOME/.hyprconf/hypr/icons/vol"
 
-# Get Volume
+# ── Speakers ──────────────────────────────────────────────────────────────────
+
 get_volume() {
-    volume=$(pamixer --get-volume)
-    if [[ "$volume" -eq "0" ]]; then
-        echo "Muted"
-    else
-        echo "$volume%"
-    fi
+    pamixer --get-volume
 }
 
-# Get icons
+is_muted() {
+    [[ "$(pamixer --get-mute)" == "true" ]]
+}
+
 get_icon() {
-    current=$(get_volume)
-    if [[ "$current" == "Muted" ]]; then
+    local vol
+    vol=$(get_volume)
+    if [[ "$vol" -eq 0 ]] || is_muted; then
         echo "$iDIR/muted-speaker.svg"
     else
-        echo "$iDIR/vol-${current%\%}.svg"
+        echo "$iDIR/vol-${vol}.svg"
     fi
 }
 
-
-# Notify using swaync
-notify_user() {
-    if [[ "$(get_volume)" == "Muted" ]]; then
-        notify-send -e -h string:x-canonical-private-synchronous:volume_notif -u low -i "$(get_icon)" "Volume: Muted"
+get_volume_label() {
+    if is_muted; then
+        echo "Muted"
     else
-        notify-send -e -h int:value:"$(get_volume | sed 's/%//')" -h string:x-canonical-private-synchronous:volume_notif -u low -i "$(get_icon)" "Volume: $(get_volume)"
+        echo "$(get_volume)%"
     fi
 }
 
-# Increase Volume
+notify_user() {
+    local vol icon label
+    vol=$(get_volume)
+    label=$(get_volume_label)
+    icon=$(get_icon)
+    notify-send -e \
+        -h string:x-canonical-private-synchronous:volume_notif \
+        -u low -i "$icon" "Volume: $label"
+}
+
 inc_volume() {
-    if [ "$(pamixer --get-mute)" == "true" ]; then
-        pamixer -u && notify_user
-    fi
-    pamixer -i 5 && notify_user
+    # Unmute first if muted, then increase
+    is_muted && pamixer -u
+    pamixer -i 5
+    notify_user
 }
 
-# Decrease Volume
 dec_volume() {
-    if [ "$(pamixer --get-mute)" == "true" ]; then
-        pamixer -u && notify_user
-    fi
-    pamixer -d 5 && notify_user
+    # Unmute first if muted, then decrease
+    is_muted && pamixer -u
+    pamixer -d 5
+    notify_user
 }
 
-# Toggle Mute
 toggle_mute() {
-    if [ "$(pamixer --get-mute)" == "false" ]; then
-        pamixer -m && notify-send -a -h -i "$iDIR/muted-speaker.svg" "Volume Switched OFF"
-    elif [ "$(pamixer --get-mute)" == "true" ]; then
-        pamixer -u && notify-send -a -h -i "$iDIR/unmuted-speaker.svg" "Volume Switched ON"
+    if is_muted; then
+        pamixer -u
+        notify-send -e -i "$iDIR/unmuted-speaker.svg" "Volume Switched ON"
+    else
+        pamixer -m
+        notify-send -e -i "$iDIR/muted-speaker.svg" "Volume Switched OFF"
     fi
 }
 
-# Toggle Mic
-toggle_mic() {
-    if [ "$(pamixer --default-source --get-mute)" == "false" ]; then
-        pamixer --default-source -m && notify-send -e -u low -i "$iDIR/muted-mic.svg" "Microphone Switched OFF"
-    elif [ "$(pamixer --default-source --get-mute)" == "true" ]; then
-        pamixer --default-source -u && notify-send -e -u low -i "$iDIR/unmuted-mic.svg" "Microphone Switched ON"
-    fi
+# ── Microphone ────────────────────────────────────────────────────────────────
+
+is_mic_muted() {
+    [[ "$(pamixer --default-source --get-mute)" == "true" ]]
 }
 
-# Get Mic Icon
+get_mic_volume() {
+    pamixer --default-source --get-volume
+}
+
+get_mic_label() {
+    local vol
+    vol=$(get_mic_volume)
+    [[ "$vol" -eq 0 ]] || is_mic_muted && echo "Muted" || echo "${vol}%"
+}
+
 get_mic_icon() {
-    current=$(pamixer --default-source --get-volume)
-    if [[ "$current" -eq "0" ]]; then
+    if is_mic_muted; then
         echo "$iDIR/muted-mic.svg"
     else
         echo "$iDIR/unmuted-mic.svg"
     fi
 }
 
-# Get Microphone Volume
-get_mic_volume() {
-    volume=$(pamixer --default-source --get-volume)
-    if [[ "$volume" -eq "0" ]]; then
-        echo "Muted"
-    else
-        echo "$volume%"
-    fi
-}
-
-# Notify for Microphone
 notify_mic_user() {
-    volume=$(get_mic_volume)
-    icon=$(get_mic_icon)
-    notify-send -a -r 91190 -t 800 -i "$icon" "Mic=vel: $volume"
+    notify-send -r 91190 -t 800 \
+        -i "$(get_mic_icon)" "Mic level: $(get_mic_label)"
 }
 
-# Increase MIC Volume
 inc_mic_volume() {
-    if [ "$(pamixer --default-source --get-mute)" == "true" ]; then
-        pamixer --default-source -u && notify_mic_user
-    fi
-    pamixer --default-source -i 5 && notify_mic_user
+    is_mic_muted && pamixer --default-source -u
+    pamixer --default-source -i 5
+    notify_mic_user
 }
 
-# Decrease MIC Volume
 dec_mic_volume() {
-    if [ "$(pamixer --default-source --get-mute)" == "true" ]; then
-        pamixer --default-source -u && notify_mic_user
-    fi
-    pamixer --default-source -d 5 && notify_mic_user
+    is_mic_muted && pamixer --default-source -u
+    pamixer --default-source -d 5
+    notify_mic_user
 }
 
-# Execute accordingly
-if [[ "$1" == "--get" ]]; then
-    get_volume
-elif [[ "$1" == "--inc" ]]; then
-    inc_volume
-elif [[ "$1" == "--dec" ]]; then
-    dec_volume
-elif [[ "$1" == "--toggle" ]]; then
-    toggle_mute
-elif [[ "$1" == "--toggle-mic" ]]; then
-    toggle_mic
-elif [[ "$1" == "--get-icon" ]]; then
-    get_icon
-elif [[ "$1" == "--get-mic-icon" ]]; then
-    get_mic_icon
-elif [[ "$1" == "--mic-inc" ]]; then
-    inc_mic_volume
-elif [[ "$1" == "--mic-dec" ]]; then
-    dec_mic_volume
-else
-    get_volume
-fi
+toggle_mic() {
+    if is_mic_muted; then
+        pamixer --default-source -u
+        notify-send -e -u low -i "$iDIR/unmuted-mic.svg" "Microphone Switched ON"
+    else
+        pamixer --default-source -m
+        notify-send -e -u low -i "$iDIR/muted-mic.svg" "Microphone Switched OFF"
+    fi
+}
+
+# ── Dispatch ──────────────────────────────────────────────────────────────────
+case "$1" in
+    --get)          get_volume_label ;;
+    --inc)          inc_volume ;;
+    --dec)          dec_volume ;;
+    --toggle)       toggle_mute ;;
+    --toggle-mic)   toggle_mic ;;
+    --get-icon)     get_icon ;;
+    --get-mic-icon) get_mic_icon ;;
+    --mic-inc)      inc_mic_volume ;;
+    --mic-dec)      dec_mic_volume ;;
+    *)              get_volume_label ;;
+esac

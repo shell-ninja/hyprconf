@@ -14,10 +14,10 @@ if command -v hyprsunset &> /dev/null; then
     fn_change_value() {
         case $1 in
             --value)
-                value=5000
+                value=4000
                 echo "$value" > "$value_file"
-                notify-send "Nightlight" "Screen temp set to 5000K"
-                hyprsunset -t 5000
+                notify-send "Nightlight" "Screen temp set to 4000K"
+                hyprsunset -t 4000
             ;;
             --def)
                 value=$default
