@@ -1,0 +1,98 @@
+/* @import "./colors.css"; */
+
+* {
+  box-shadow: none;
+  outline-style: none;
+    font-size: ${fntSize}px;
+}
+
+window {
+  background-color: transparent;
+}
+
+button {
+  color: @foreground;
+  background-color: @background;
+    border: none;
+  border-radius: 0;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 20%;
+  animation: gradient_f 20s ease-in infinite;
+}
+
+button:focus {
+  border: 0px;
+  outline-style: none;
+  background-size: 30%;
+}
+
+button:hover {
+  background-color: @foreground;
+  color: @background;
+  background-size: 40%;
+  outline-style: none;
+  animation: gradient_f 20s ease-in infinite;
+  transition: all 0.3s cubic-bezier(0.55, 0, 0.28, 1.682);
+}
+
+
+button:hover#lock {
+    border-radius: ${active_rad}px 0px 0px ${active_rad}px;
+    margin : ${hvr}px 0px ${hvr}px ${mgn}px;
+}
+
+button:hover#logout {
+    margin : ${hvr}px 0px ${hvr}px 0px;
+}
+
+button:hover#suspend {
+    margin : ${hvr}px 0px ${hvr}px 0px;
+}
+
+button:hover#shutdown {
+    margin : ${hvr}px 0px ${hvr}px 0px;
+}
+
+button:hover#hibernate {
+    margin : ${hvr}px 0px ${hvr}px 0px;
+}
+
+button:hover#reboot {
+    border-radius: 0px ${active_rad}px ${active_rad}px 0px;
+    margin : ${hvr}px ${mgn}px ${hvr}px 0px;
+}
+
+#lock {
+  background-image: url("${HOME}/.hyprconf/wlogout/icons/lock.png");
+  border-radius: 30px 0 0 30px;
+    margin : ${mgn}px 0px ${mgn}px ${mgn}px;
+}
+
+#suspend {
+  background-image: url("${HOME}/.hyprconf/wlogout/icons/sleep.png");
+    margin : ${mgn}px 0px ${mgn}px 0px;
+}
+
+#hibernate {
+  background-image: url("${HOME}/.hyprconf/wlogout/icons/hibernate.png");
+    margin : ${mgn}px 0px ${mgn}px 0px;
+  border-radius: 0;
+}
+
+#logout {
+  background-image: url("${HOME}/.hyprconf/wlogout/icons/logout.png");
+  border-radius: 0;
+    margin : ${mgn}px 0px ${mgn}px 0px;
+}
+
+#shutdown {
+  background-image: url("${HOME}/.hyprconf/wlogout/icons/poweroff.png");
+    margin : ${mgn}px 0px ${mgn}px 0px;
+}
+
+#reboot {
+  background-image: url("${HOME}/.hyprconf/wlogout/icons/reboot.png");
+    margin : ${mgn}px ${mgn}px ${mgn}px 0px;
+  border-radius: 0 30px 30px 0;
+}

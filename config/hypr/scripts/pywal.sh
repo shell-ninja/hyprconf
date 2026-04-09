@@ -130,6 +130,7 @@ fi
 # ── 8. GTK Themes Setup ─────────────────────────────────────────────────────────
 # Force GTK3 schema to FlatColor which natively imports .cache/wal
 gsettings set org.gnome.desktop.interface gtk-theme "FlatColor"
+gsettings set org.gnome.desktop.interface color-scheme "prefer-dark"
 
 # Dynamically map Pywal to Libadwaita for modern GTK4 Apps
 mkdir -p "$HOME/.config/gtk-4.0"

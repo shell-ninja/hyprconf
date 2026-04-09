@@ -16,23 +16,17 @@ set_lockscreen() {
 
 # styles
 styles() {
-    echo "Style-1"
-    echo "Style-2"
-    echo "Style-3"
+    for file in "$themes"/hyprlock-*.conf; do
+        num=$(basename "$file" .conf | sed 's/hyprlock-//')
+        echo "Theme $num"
+    done
 }
 
 # choice
 choice=$(styles | ${rofi_command})
 
-case "$choice" in
-    Style-1)
-        set_lockscreen "$themes/hyprlock-1.conf"
-        ;;
-    Style-2)
-        set_lockscreen "$themes/hyprlock-2.conf"
-        ;;
-    Style-3)
-        set_lockscreen "$themes/hyprlock-3.conf"
-        ;;
-esac
+if [[ -n "$choice" ]]; then
+    num=$(echo "$choice" | awk '{print $2}')
+    set_lockscreen "$themes/hyprlock-$num.conf"
+fi
 
