@@ -428,7 +428,9 @@ msg act "Generating colors and other necessary things..."
 
 
 # setting default themes, icon and cursor
-gsettings set org.gnome.desktop.interface gtk-theme 'TokyoNight'
+gsettings set org.gnome.desktop.interface gtk-theme "FlatColor"
+gsettings set org.gnome.desktop.interface color-scheme "prefer-dark"
+
 gsettings set org.gnome.desktop.interface icon-theme 'TokyoNight'
 gsettings set org.gnome.desktop.interface cursor-theme 'Bibata-Modern-Ice'
 
