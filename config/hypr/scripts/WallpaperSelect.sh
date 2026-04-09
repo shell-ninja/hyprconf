@@ -55,9 +55,11 @@ esac
 # No choice → exit
 [[ -z "$choice" ]] && exit 0
 
-# Ensure awww daemon is running
-awww-daemon &>/dev/null &
-sleep 0.1
+if ! pgrep -x "awww-daemon" > /dev/null; then
+    awww-daemon &>/dev/null &
+    disown
+    sleep 0.5
+fi
 
 # Random choice
 if [[ "$choice" == "$RANDOM_PIC_NAME" ]]; then
