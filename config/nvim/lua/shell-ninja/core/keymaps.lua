@@ -24,7 +24,9 @@ keymap.set("n", "db", 'v0d') -- deletes before the cursor
 keymap.set("n", "<C-a>", "gg<S-v>G") -- Select all
 
 -- yank and paste
-keymap.set("v", "p", '"_dp')
+-- keymap.set("v", "p", '"_dp') -- it pastes after the " " and it's an issue while coding
+-- keymap.set("v", "p", '"_dP') -- so I have used the 'P' in capital letter
+keymap.set("x", "p", [["_dP"]]) -- so I have used the 'P' in capital letter
 
 -- window management
 keymap.set("n", "<leader>v", "<C-w>v", { desc = "Split window vertically" })                    -- split window vertically
