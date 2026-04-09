@@ -26,9 +26,12 @@ DURATION=1
 BEZIER=".28,.58,.99,.37"
 AWWW_PARAMS="--transition-fps $FPS --transition-type $TYPE --transition-duration $DURATION --transition-bezier $BEZIER"
 
-# Ensure awww daemon is running
-awww-daemon &>/dev/null &
-sleep 0.1
+if ! pgrep -x "awww-daemon" > /dev/null; then
+    awww-daemon &>/dev/null &
+    disown
+    sleep 0.5
+fi
+
 awww img "$wallpaper" $AWWW_PARAMS
 
 ln -sf "$wallpaper" "$cache_dir/current_wallpaper.png"
