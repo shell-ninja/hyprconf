@@ -167,8 +167,8 @@ tooltip label {
 }
 
 #pulseaudio-slider slider {
-  min-height: 7px;
-  min-width: 15px;
+  min-height: 5px;
+  min-width: 10px;
   opacity: 0;
   background-color: @text;
   border-radius: 3px;
@@ -176,7 +176,7 @@ tooltip label {
 }
 
 #pulseaudio-slider trough {
-  min-height: 100px;
+  min-height: 75px;
   min-width: 7px;
   border-radius: 5px;
   background-color: @surface0;

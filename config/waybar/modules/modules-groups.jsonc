@@ -97,6 +97,7 @@
 
         "modules": [
             "power-profiles-daemon",
+            "tray",
             "idle_inhibitor", 
             "custom/nightlight", 
             "custom/clipboard", 

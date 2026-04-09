@@ -6,7 +6,7 @@
         "format": "",   // for arch
          // "format": "󰣛",   // for fedora
         // "format": "",  // for opensuse
-        "on-click": "rofi -show drun -theme ~/.config/rofi/menu/menu.rasi || killall rofi",
+        "on-click": "rofi -show drun -theme ~/.config/rofi/menu/menu.rasi || pkill rofi",
         "on-click-right": "kitty --title yazi -e yazi",
         "tooltip": true,
         "tooltip-format": "Left Click: Launch Rofi\nRight Click: Launch yazi"
@@ -15,7 +15,7 @@
     // power menu ( universal )
     "custom/power_btn": {
         "format": "",
-        "on-click": "wlogout -b 6 --layout ~/.config/wlogout/layout --css ~/.config/wlogout/style.css",
+        "on-click": "$HOME/.hyprconf/hypr/scripts/wlogout.sh 1",
         "tooltip": false
     },
 
@@ -46,8 +46,8 @@
     "custom/updater": {
         "exec": "~/.config/hypr/scripts/systemupdate.sh --check",
         "return-type": "json",
-        "format": " {}",
-        // "format": " {}", // for arch linux only
+        // "format": " {}",
+        "format": " {}", // for arch linux only
         "on-click": "~/.config/hypr/scripts/systemupdate.sh --update",
         "interval": 86400,
         "tooltip": true

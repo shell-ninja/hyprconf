@@ -10,7 +10,7 @@
 @import "style/theme.css";
 
 window#waybar {
-  background: transparent;
+  background: alpha(@background, 0.3);
   color: @foreground;
   /* border-radius: 20px; */
 }
