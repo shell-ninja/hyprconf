@@ -49,7 +49,7 @@
     // idle inhibitor
     "idle_inhibitor": {
         "format": "{icon}",
-        "start-activated": false,
+        "start-activated": true,
             "format-icons": {
                 "activated": "",
                 "deactivated": "󰛊"
@@ -174,7 +174,7 @@
             "class<[Tt]elegram-desktop|org.telegram.desktop|io.github.tdesktop_x64.TDesktop>": " ",
             "class<discord|[Ww]ebcord|Vesktop>": " ",
             "title<.*whatsapp.*>": " ",
-        "title<.*zapzap.*>": " ",
+            "title<.*zapzap.*>": " ",
             "title<.*messenger.*>": " ",
             "title<.*facebook.*>": " ",
             "title<.*instagram.*>": "󰋾 ",
@@ -204,7 +204,7 @@
             "class<remmina>": "🖥️ ",
 
             "class<VSCode|code-url-handler|code-oss|codium|codium-url-handler|VSCodium|code>": "󰨞 ",
-        "class<dev.zed.Zed>": "󰵁",
+            "class<dev.zed.Zed>": "󰵁",
             "class<codeblocks>": "󰅩 ",
             "title<.*github.*>": " ",
             "title<*[Pp]hotopea.*>": " ",
@@ -387,7 +387,7 @@
     "pulseaudio#microphone": {
         "format": "{format_source}",
         "format-source": " {volume}%",
-        "format-source-muted": "",
+        "format-source-muted": " ",
         "on-click": "pamixer --default-source -t",
         "on-click-right": "pavucontrol",
         "on-scroll-up": "pamixer --default-source -i 5",
@@ -432,7 +432,7 @@
       "tooltip-format": "Power profile: {profile}\nDriver: {driver}",
       "tooltip": true,
       "format-icons": {
-        "default": "󱓞",
+        "default": "",
         "performance": "󱓞",
         "balanced": "",
         "power-saver": ""

@@ -20,8 +20,8 @@
       "tooltip-format": "Power profile: {profile}\nDriver: {driver}",
       "tooltip": true,
       "format-icons": {
-        "default": "󱓞",
-        "performance": "󱓞",
+        "default": "",
+        "performance": "",
         "balanced": "",
         "power-saver": ""
       }
@@ -149,7 +149,7 @@
     },
 
     "custom/notify_icon": {
-        "tooltip": true,
+        "tooltip": false,
         "tooltip-format": "You have<span foreground='#4A6096'> {} </span>notifications.",
         "format": "{icon} ",
         "format-icons": {

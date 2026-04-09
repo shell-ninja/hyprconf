@@ -1,7 +1,9 @@
 * {
   border: none;
   border-radius: 0;
-  font-family: "Caskaydia Cove Nerd Font", "JetBrainsMono Nerd Font", "MesloLGS Nerd Font", "Font Awesome";
+  font-family:
+    "Caskaydia Cove Nerd Font", "JetBrainsMono Nerd Font", "MesloLGS Nerd Font",
+    "Font Awesome";
   font-weight: bold;
   font-size: 14px;
   min-height: 0;
@@ -76,22 +78,6 @@ tooltip label {
   opacity: 1;
 }
 
-/* #custom-updater, */
-/* #idle_inhibitor, */
-/* #custom-clipboard, */
-/* #clock, */
-/* #pulseaudio, */
-/* #network, */
-/* #workspaces, */
-/* #custom-notify, */
-/* #battery, */
-/* #custom-nightlight, */
-/* #power-profiles-daemon, */
-/* #backlight { */
-/*   background: transparent; */
-/*   opacity: 1; */
-/* } */
-
 #clock {
   background-color: @foreground;
   color: @background;
@@ -136,7 +122,8 @@ tooltip label {
 
 #custom-clipboard,
 #custom-nightlight,
-#idle_inhibitor {
+#idle_inhibitor,
+#tray {
   font-size: 20px;
   background-color: @foreground;
   color: @background;
