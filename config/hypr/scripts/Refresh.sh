@@ -4,10 +4,10 @@
 # Kill running daemons
 _ps=(dunst swaync rofi)
 for _prs in "${_ps[@]}"; do
-    pidof "${_prs}" &>/dev/null && pkill "${_prs}"
+    pidof "${_prs}" &>/dev/null && pkill -SIGTERM "${_prs}"
 done
 
-sleep 0.1
+sleep 0.4
 
 # Start notification daemon
 if [[ -n "$(command -v swaync)" ]]; then
@@ -15,8 +15,6 @@ if [[ -n "$(command -v swaync)" ]]; then
 elif [[ -n "$(command -v dunst)" ]]; then
     dunst &
 fi
-
-sleep 0.3
 hyprctl reload
 
 exit 0

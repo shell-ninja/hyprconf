@@ -35,9 +35,8 @@ case $choice in
         ;;
 esac
 
-# Satty saves directly to the final path, so we don't need to check for the temp file,
-# but we still need to remove it after satty has processed it.
-rm "$temp_screenshot"
+# Remove the temp file if it still exists after satty processed it
+[[ -f "$temp_screenshot" ]] && rm -f "$temp_screenshot"
 
 # Check if the final saved file exists
 if [ -f "$save_dir/$save_file" ] ; then

@@ -13,13 +13,13 @@ is_muted() {
     [[ "$(pamixer --get-mute)" == "true" ]]
 }
 
+# Get icons
 get_icon() {
-    local vol
-    vol=$(get_volume)
-    if [[ "$vol" -eq 0 ]] || is_muted; then
+    current=$(get_volume)
+    if [[ "$current" == "Muted" ]]; then
         echo "$iDIR/muted-speaker.svg"
     else
-        echo "$iDIR/vol-${vol}.svg"
+        echo "$iDIR/vol-${current%\%}.svg"
     fi
 }
 

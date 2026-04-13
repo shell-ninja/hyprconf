@@ -40,6 +40,5 @@ baseName="$(basename "$wallpaper")"
 wallName="${baseName%.*}"
 echo "$wallName" > "$wallCache"
 
-sleep 0.3
-"$scripts_dir/wallcache.sh"
+"$scripts_dir/wallcache.sh" &
 "$scripts_dir/pywal.sh"

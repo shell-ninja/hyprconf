@@ -34,8 +34,7 @@ set_wallpaper() {
     fi
 
     # Ensure awww daemon is running, then set wallpaper
-    awww query &>/dev/null || awww-daemon &>/dev/null &
-    sleep 0.1
+    awww query &>/dev/null || { awww-daemon &>/dev/null & disown; sleep 0.2; }
     awww img "$wallpaper" $AWWW_PARAMS
 
     ln -sf "$wallpaper" "$HOME/.config/hypr/.cache/current_wallpaper.png"
@@ -46,7 +45,9 @@ set_wallpaper() {
 if [[ "$next_mode" == "light" ]]; then
     notify-send "Mode" "Changing to Light" -t 1500
 
-    sed -i 's/mocha/latte/g' "$HOME/.config/nvim/lua/shell-ninja/plugins/colorscheme.lua"
+    sed -i \
+        -e 's/mocha/latte/g' \
+        "$HOME/.config/nvim/lua/shell-ninja/plugins/colorscheme.lua"
     sed -i \
         -e 's/rgba(0, 0, 0, 0.5)/rgba(255, 255, 255, 0.5)/g' \
         "$HOME/.config/waybar/style/fancy-top.css" \
@@ -62,7 +63,9 @@ if [[ "$next_mode" == "light" ]]; then
 elif [[ "$next_mode" == "dark" ]]; then
     notify-send "Mode" "Changing to Dark" -t 1500
 
-    sed -i 's/latte/mocha/g' "$HOME/.config/nvim/lua/shell-ninja/plugins/colorscheme.lua"
+    sed -i \
+        -e 's/latte/mocha/g' \
+        "$HOME/.config/nvim/lua/shell-ninja/plugins/colorscheme.lua"
     sed -i \
         -e 's/rgba(255, 255, 255, 0.5)/rgba(0, 0, 0, 0.5)/g' \
         "$HOME/.config/waybar/style/fancy-top.css" \
@@ -76,6 +79,5 @@ elif [[ "$next_mode" == "dark" ]]; then
     echo "dark"  > "$mode_file"
 fi
 
-sleep 0.3
-"$scripts_dir/wallcache.sh"
+"$scripts_dir/wallcache.sh" &
 "$scripts_dir/pywal.sh"

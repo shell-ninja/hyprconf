@@ -84,24 +84,13 @@ check_update() {
 package_update() {
     if [ -n "$(command -v pacman)" ]; then
         aurhlpr=$(command -v yay || command -v paru)
-        
+
         kitty --title update sh -c "${upd_script}"
-        check_for_updates() {
-            aur=$(${aurhlpr} -Qua | wc -l)
-            ofc=$(checkupdates | wc -l)
 
-            # Calculate total available updates
-            upd=$(( ofc + aur ))
-
-            echo "$upd"
-        }
-
-        # tooltip in waybar
+        # Recheck updates after upgrade completes
         aur=$(${aurhlpr} -Qua | wc -l)
         ofc=$(checkupdates | wc -l)
-
-        # Initial check for updates
-        upd=$(check_for_updates)
+        upd=$(( ofc + aur ))
 
         sleep 1
 

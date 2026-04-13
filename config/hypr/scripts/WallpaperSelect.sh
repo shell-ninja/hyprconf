@@ -91,6 +91,5 @@ else
     echo "$wallName" > "$wallCache"
 fi
 
-sleep 0.3
-"$scripts_dir/wallcache.sh"
+"$scripts_dir/wallcache.sh" &
 "$scripts_dir/pywal.sh"
