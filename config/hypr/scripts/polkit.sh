@@ -16,13 +16,12 @@ polkit=(
     "/usr/libexec/xfce-polkit"
 )
 
-executed=false  # Flag to track if a file has been executed
-
-# Loop through the list of files
+# Launch the first polkit agent found; exec replaces this shell process
 for file in "${polkit[@]}"; do
-  if [ -e "$file" ]; then
-    exec "$file"  
-    executed=true
-    break
-  fi
+    if [[ -x "$file" ]]; then
+        exec "$file"
+    fi
 done
+
+echo "[polkit.sh] Warning: No polkit authentication agent found!" >&2
+exit 1

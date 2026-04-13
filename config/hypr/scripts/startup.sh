@@ -25,11 +25,9 @@ fi
 
 
 "$scripts_dir/notification.sh" sys
-"$scripts_dir/wallcache.sh"
+"$scripts_dir/wallcache.sh" &
 "$scripts_dir/pywal.sh"
 "$scripts_dir/system.sh" run &
-"$scripts_dir/prayertime.sh"
-"$scripts_dir/prayertime_notify.sh"
 
 
 #_____ setup monitor ( updated teh monitor.conf for the high resolution and higher refresh rate )
@@ -41,6 +39,6 @@ if [[ "$monitor_setting" == "monitor=,preferred, auto, 1" ]]; then
     kitty --title monitor sh -c "$scripts_dir/monitor.sh"
 fi
 
-sleep 3
+sleep 1
 
 "$scripts_dir/default_browser.sh"

@@ -14,4 +14,3 @@ case "$1" in
         hyprctl reload
         ;;
 esac
-
