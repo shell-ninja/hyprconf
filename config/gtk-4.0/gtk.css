@@ -1,1 +1,15 @@
-@import 'colors.css';
+@import url("file:///home/shell-ninja/.cache/wal/colors-waybar.css");
+
+@define-color window_bg_color @background;
+@define-color window_fg_color @foreground;
+@define-color view_bg_color @background;
+@define-color view_fg_color @foreground;
+@define-color headerbar_bg_color @color0;
+@define-color headerbar_fg_color @foreground;
+@define-color popover_bg_color @background;
+@define-color popover_fg_color @foreground;
+@define-color dialog_bg_color @background;
+@define-color dialog_fg_color @foreground;
+@define-color accent_color @color4;
+@define-color accent_bg_color @color4;
+@define-color accent_fg_color @background;

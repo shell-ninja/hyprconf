@@ -87,6 +87,15 @@
   margin: 0;
 }
 
+/* Restore icons to original shape */
+/* .notification-icon, */
+/* .notification-image { */
+/*     border-radius: 0; */
+/*     -gtk-icon-transform: none; */
+/*     padding-right: 50px; */
+/*     margin: 0; */
+/* } */
+
 image {
   border-radius: 0;
   padding: 0 20px 0 0;

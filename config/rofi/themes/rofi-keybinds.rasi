@@ -69,7 +69,7 @@ textbox-prompt-colon {
     str:                         "";
     padding:                     1em 1em 0em 0em;
     text-color:                  @foreground;
-    background-color:            @background;
+    background-color:            transparent;
 }
 
 entry {
@@ -87,7 +87,7 @@ entry {
 listbox {
     orientation:                 vertical;
     children:                    [ "inputbar", "listview" , "message" ];
-    background-color:            @background;
+    background-color:            transparent;
 }
 
 listview {

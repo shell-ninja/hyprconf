@@ -17,8 +17,8 @@
  + ALT + W | wipe clipboard history
  + SHIFT + D | open emoji picker
  + SHIFT + P | toggle pseudo-tiling
- + X | open wlogout style 1
- + ALT + X | open wlogout style 2
+ + X | open power menu
+ + ALT + X | switch power menu theme
  + C | open VS Code
  + B | open browser (Default)
 ALT + B | reset default browser

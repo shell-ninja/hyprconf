@@ -6,6 +6,24 @@ return {
         { "nvim-telescope/telescope-fzf-native.nvim", build = "make" },
         "nvim-tree/nvim-web-devicons",
         "folke/todo-comments.nvim",
+        "folke/trouble.nvim",
+    },
+    keys = {
+        { "<leader>ff", "<cmd>Telescope find_files<cr>", desc = "Fuzzy find files in cwd" },
+        { "<leader>fr", "<cmd>Telescope oldfiles<cr>", desc = "Fuzzy find recent files" },
+        { "<leader>fs", "<cmd>Telescope live_grep<cr>", desc = "Find string in cwd" },
+        { "<leader>fc", "<cmd>Telescope grep_string<cr>", desc = "Find string under cursor in cwd" },
+        { "<leader>ft", "<cmd>TodoTelescope<cr>", desc = "Find todos" },
+        {
+            "<leader>fg",
+            function()
+                require("telescope.builtin").live_grep({
+                    prompt_title = "Global Search (Word)",
+                    cwd = vim.fn.expand("%:p:h"), -- Search from the current file's directory
+                })
+            end,
+            desc = "Global search in directory",
+        },
     },
     config = function()
         local telescope = require("telescope")
@@ -38,22 +56,5 @@ return {
         })
 
         telescope.load_extension("fzf")
-
-        -- set keymaps
-        local keymap = vim.keymap -- for conciseness
-
-        keymap.set("n", "<leader>ff", "<cmd>Telescope find_files<cr>", { desc = "Fuzzy find files in cwd" })
-        keymap.set("n", "<leader>fr", "<cmd>Telescope oldfiles<cr>", { desc = "Fuzzy find recent files" })
-        keymap.set("n", "<leader>fs", "<cmd>Telescope live_grep<cr>", { desc = "Find string in cwd" })
-        keymap.set("n", "<leader>fc", "<cmd>Telescope grep_string<cr>", { desc = "Find string under cursor in cwd" })
-        keymap.set("n", "<leader>ft", "<cmd>TodoTelescope<cr>", { desc = "Find todos" })
-
-        -- Add global search using live_grep
-        keymap.set("n", "<leader>fg", function()
-            require("telescope.builtin").live_grep({
-                prompt_title = "Global Search (Word)",
-                cwd = vim.fn.expand("%:p:h"), -- Search from the current file's directory
-            })
-        end, { desc = "Global search in directory" })
     end,
 }

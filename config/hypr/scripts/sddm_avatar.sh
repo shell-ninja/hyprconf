@@ -16,8 +16,8 @@ printf "${actSign} Setting up user avatar...\n" && sleep 1
 echo 
 img=$(gum input \
     --header "Image path:" \
-    --header.foreground "#dceabf" \
-    --placeholder.foreground "#dceabf" \
+    --header.foreground "#bdb0ca" \
+    --placeholder.foreground "#bdb0ca" \
     --placeholder "Paste the image path"
 )
 

@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Exit cleanly when the reader (e.g. waybar) closes the pipe
+trap 'exit 0' SIGPIPE
+
 SOUND_FILE_UPDATE="$HOME/.config/hypr/sounds/update.wav"
 SOUND_FILE_ERROR="$HOME/.config/hypr/sounds/error.wav"
 update_sign="$HOME/.config/hypr/icons/update.png"
@@ -84,13 +87,24 @@ check_update() {
 package_update() {
     if [ -n "$(command -v pacman)" ]; then
         aurhlpr=$(command -v yay || command -v paru)
-
+        
         kitty --title update sh -c "${upd_script}"
+        check_for_updates() {
+            aur=$(${aurhlpr} -Qua | wc -l)
+            ofc=$(checkupdates | wc -l)
 
-        # Recheck updates after upgrade completes
+            # Calculate total available updates
+            upd=$(( ofc + aur ))
+
+            echo "$upd"
+        }
+
+        # tooltip in waybar
         aur=$(${aurhlpr} -Qua | wc -l)
         ofc=$(checkupdates | wc -l)
-        upd=$(( ofc + aur ))
+
+        # Initial check for updates
+        upd=$(check_for_updates)
 
         sleep 1
 

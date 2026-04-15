@@ -4,7 +4,7 @@ MenuBar=Disabled
 update_info=dolphin_detailsmodesettings.upd:rename-leading-padding
 
 [DetailsMode]
-PreviewSize=80
+PreviewSize=96
 
 [General]
 ShowStatusBar=false
@@ -13,9 +13,9 @@ Version=202
 ViewPropsTimestamp=2023,4,26,16,58,48.324
 
 [IconsMode]
-IconSize=48
+IconSize=128
 MaximumTextLines=1
-PreviewSize=144
+PreviewSize=112
 
 [KFileDialog Settings]
 Places Icons Auto-resize=false
@@ -28,8 +28,11 @@ Places Icons Static Size=48
 MenuBar=Disabled
 
 [MainWindow][Toolbar mainToolBar]
-IconSize=16
+IconSize=32
 ToolButtonStyle=IconOnly
+
+[Notification Messages]
+ConfirmRenameFileType=false
 
 [PlacesPanel]
 IconSize=48

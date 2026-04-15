@@ -204,6 +204,7 @@
             "class<remmina>": "🖥️ ",
 
             "class<VSCode|code-url-handler|code-oss|codium|codium-url-handler|VSCodium|code>": "󰨞 ",
+            "class<antigravity>": " ",
             "class<dev.zed.Zed>": "󰵁",
             "class<codeblocks>": "󰅩 ",
             "title<.*github.*>": " ",

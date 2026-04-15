@@ -27,15 +27,7 @@ source ~/.config/fish/conf.d/personal.fish
 #           zoxide and thefuck
 #===============================================#
 zoxide init fish | source
-
-# Lazy-load thefuck: only initialize on first invocation to avoid
-# the 100-300ms startup cost on every new shell.
-function fuck --description 'Lazy-load thefuck on first use'
-    # Replace this function with the real thefuck aliases on first call
-    thefuck --alias | source
-    # Now call the real implementation
-    fuck $argv
-end
+thefuck --alias | source
 
 
 if command -v fastfetch > /dev/null
