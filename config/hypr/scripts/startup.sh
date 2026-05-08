@@ -11,14 +11,15 @@ DURATION=1
 BEZIER=".28,.58,.99,.37"
 AWWW_PARAMS="--transition-fps $FPS --transition-type $TYPE --transition-duration $DURATION --transition-bezier $BEZIER"
 
+if command -v awww &> /dev/null; then
+    ENGINE=awww
+elif command -v swww &> /dev/null; then
+    ENGINE=swww
+fi
+
 if [[ -f "$wallpaper" ]]; then
-    if command -v awww &> /dev/null; then
-        awww-daemon &
-        awww img $wallpaper $AWWW_PARAMS
-    elif command -v swww &> /dev/null; then
-        swww-daemon &
-        swww img $wallpaper $AWWW_PARAMS
-    fi
+    ${ENGINE}-daemon &
+    ${ENGINE} img $wallpaper $AWWW_PARAMS
 else
     "$scripts_dir/Wallpaper.sh"
 fi
@@ -47,3 +48,4 @@ fi
 sleep 1
 
 "$scripts_dir/default_browser.sh"
+

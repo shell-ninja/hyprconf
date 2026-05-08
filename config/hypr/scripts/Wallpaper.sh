@@ -39,40 +39,21 @@ DURATION=1
 BEZIER=".28,.58,.99,.37"
 
 AWWW_PARAMS="--transition-fps $FPS --transition-type $TYPE --transition-duration $DURATION --transition-bezier $BEZIER"
-SWWW_PARAMS="--transition-fps $FPS --transition-type $TYPE --transition-duration $DURATION"
 
 # Start daemon if needed
 start_daemon() {
-    case "$ENGINE" in
-        awww)
-            if ! pgrep -x "awww-daemon" >/dev/null; then
-                awww-daemon &>/dev/null &
-                disown
-                sleep 0.5
-            fi
-            ;;
-        swww)
-            if ! pgrep -x "swww-daemon" >/dev/null; then
-                swww-daemon &>/dev/null &
-                disown
-                sleep 0.5
-            fi
-            ;;
-    esac
+    if ! pgrep -x "${ENGINE}-daemon" >/dev/null; then
+        ${ENGINE}-daemon &>/dev/null &
+        disown
+        sleep 0.5
+    fi
 }
 
 # Apply wallpaper
 set_wallpaper() {
     local img="$1"
 
-    case "$ENGINE" in
-        awww)
-            awww img "$img" $AWWW_PARAMS
-            ;;
-        swww)
-            swww img "$img" $SWWW_PARAMS
-            ;;
-    esac
+    ${ENGINE} img "$img" $AWWW_PARAMS
 
     ln -sf "$img" "$cache_dir/current_wallpaper.png"
 
