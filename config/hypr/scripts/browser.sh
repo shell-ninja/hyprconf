@@ -37,12 +37,19 @@ choose_default() {
 
 
 open_browser() {
+    local pywal_theme="$HOME/.cache/wal/pywal-browser-theme"
+    local pywal_watcher="$HOME/.cache/wal/pywal-browser-watcher"
     if [[ "$default" == "" ]]; then
         "$scripts_dir/default_browser.sh"
-    elif [[ ! "$default" == "firefox" ]]; then
-        "$default" --enable-wayland-ime
     elif [[ "$default" == "firefox" ]]; then
         "$default"
+    else
+        # Chromium-based browser — auto-load pywal theme + watcher extensions
+        if [[ -d "$pywal_theme" && -d "$pywal_watcher" ]]; then
+            "$default" --enable-wayland-ime --load-extension="$pywal_theme,$pywal_watcher"
+        else
+            "$default" --enable-wayland-ime
+        fi
     fi
 }
 
@@ -54,3 +61,4 @@ case $1 in
         open_browser
         ;;
 esac
+

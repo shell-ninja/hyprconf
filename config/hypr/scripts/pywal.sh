@@ -209,6 +209,9 @@ for sock in /run/user/$(id -u)/nvim.*.0 /tmp/nvim*/nvim.*.0 "$XDG_RUNTIME_DIR"/n
         --remote-send '<Esc>:doautocmd User PywalReload<CR>' 2>/dev/null &
 done
 
-# ── 11. Reload everything ─────────────────────────────────────────────────────
+# ── 11. Browser pywal theme ───────────────────────────────────────────────────
+"${scripts_dir}/browser_pywal.sh" &>/dev/null &
+
+# ── 12. Reload everything ─────────────────────────────────────────────────────
 sleep 0.3
 "${scripts_dir}/Refresh.sh"
