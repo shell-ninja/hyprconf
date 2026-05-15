@@ -1,0 +1,262 @@
+/* ---- Style 8: Left Sidebar Panel ---- */
+/* Full-height sidebar launcher with search at top and app list filling space */
+
+configuration {
+    modi:                       "drun,filebrowser,window";
+    show-icons:                 true;
+
+    display-drun:               "";
+    display-run:                "";
+    display-filebrowser:        "";
+    display-window:             "";
+
+    drun-display-format:        "{name}";
+    hover-select:               true;
+
+    me-select-entry:            "MouseSecondary";
+    me-accept-entry:            "MousePrimary";
+
+    window-format:              "{w}{t}";
+
+    font:                       "JetBrainsMono Nerd Font 10";
+    icon-theme:                 "Tela-circle-dracula";
+}
+
+@import "~/.config/rofi/themes/rofi-colors.rasi"
+
+/* ---- Window ---- */
+window {
+    enabled:                    true;
+
+    width:                      300px;
+    height:                     1000px;
+
+    x-offset:                   0px;
+    y-offset:                   0px;
+
+    location:                   west;
+    anchor:                     west;
+
+    fullscreen:                 false;
+
+    padding:                    0px;
+    margin:                     0px;
+    spacing:                    0px;
+
+    border:                     0px;
+    border-radius:              0px 16px 16px 0px;
+
+    cursor:                     "default";
+
+    background-color:           @background;
+}
+
+/* ---- Mainbox ---- */
+mainbox {
+    enabled:                    true;
+    orientation:                vertical;
+
+    spacing:                    0px;
+    padding:                    0px;
+
+    background-color:           transparent;
+
+    children:                   [ "inputbar", "listview", "mode-switcher" ];
+}
+
+/* ---- Search ---- */
+inputbar {
+    enabled:                    true;
+
+    margin:                     14px 14px 8px 14px;
+    padding:                    12px 14px;
+
+    spacing:                    8px;
+
+    background-color:           @selected-normal-background;
+    text-color:                 @foreground;
+
+    border-radius:              10px;
+
+    children:                   [ "textbox-prompt-colon", "entry" ];
+}
+
+textbox-prompt-colon {
+    enabled:                    true;
+
+    expand:                     false;
+
+    padding:                    0px;
+
+    str:                        "";
+
+    vertical-align:             0.5;
+
+    text-color:                 inherit;
+    background-color:           transparent;
+}
+
+entry {
+    enabled:                    true;
+
+    padding:                    0px;
+
+    text-color:                 inherit;
+
+    cursor:                     text;
+
+    placeholder:                "Search...";
+    placeholder-color:          inherit;
+
+    background-color:           transparent;
+}
+
+/* ---- Listview ---- */
+listview {
+    enabled:                    true;
+
+    columns:                    1;
+    lines:                      20;
+
+    expand:                     true;
+
+    dynamic:                    false;
+    cycle:                      true;
+
+    scrollbar:                  false;
+
+    layout:                     vertical;
+    reverse:                    false;
+
+    fixed-height:               false;
+    fixed-columns:              false;
+
+    spacing:                    2px;
+
+    padding:                    0px 10px;
+
+    background-color:           transparent;
+}
+
+/* ---- Elements ---- */
+element {
+    enabled:                    true;
+
+    orientation:                horizontal;
+
+    spacing:                    12px;
+
+    margin:                     1px 0px;
+    padding:                    8px 10px;
+
+    border-radius:              10px;
+
+    cursor:                     pointer;
+
+    background-color:           transparent;
+}
+
+element normal.normal {
+    background-color:           transparent;
+    text-color:                 @foreground;
+}
+
+element selected.normal {
+    background-color:           @selected-normal-background;
+    text-color:                 @foreground;
+}
+
+element alternate.normal {
+    background-color:           transparent;
+    text-color:                 @foreground;
+}
+
+element normal.urgent,
+element normal.active,
+element selected.urgent,
+element selected.active,
+element alternate.urgent,
+element alternate.active {
+    background-color:           inherit;
+    text-color:                 @foreground;
+}
+
+element-icon {
+    size:                       32px;
+
+    cursor:                     inherit;
+
+    background-color:           transparent;
+    text-color:                 inherit;
+}
+
+element-text {
+    cursor:                     inherit;
+
+    vertical-align:             0.5;
+    horizontal-align:           0;
+
+    background-color:           transparent;
+    text-color:                 inherit;
+}
+
+/* ---- Mode Switcher ---- */
+mode-switcher {
+    enabled:                    true;
+
+    orientation:                horizontal;
+
+    spacing:                    8px;
+
+    padding:                    12px 16px;
+
+    background-color:           @selected-normal-background;
+
+    expand:                     false;
+}
+
+button {
+    padding:                    8px 0px;
+
+    border:                     0px;
+    border-radius:              8px;
+
+    cursor:                     pointer;
+
+    expand:                     true;
+
+    horizontal-align:           0.5;
+
+    background-color:           transparent;
+    text-color:                 @foreground;
+}
+
+button selected {
+    background-color:           @background;
+    text-color:                 @foreground;
+}
+
+/* ---- Messages ---- */
+message {
+    margin:                     8px;
+
+    border-radius:              10px;
+
+    background-color:           @background;
+}
+
+textbox {
+    padding:                    10px;
+
+    background-color:           @background;
+    text-color:                 @foreground;
+}
+
+error-message {
+    padding:                    15px;
+
+    border-radius:              12px;
+
+    background-color:           @background;
+    text-color:                 @foreground;
+}
