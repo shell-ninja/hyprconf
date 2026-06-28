@@ -33,6 +33,7 @@ fi
 "$scripts_dir/notification.sh" sys
 "$scripts_dir/wallcache.sh" &
 "$scripts_dir/pywal.sh"
+"$scripts_dir/nightlight.sh"
 "$scripts_dir/system.sh" run &
 
 

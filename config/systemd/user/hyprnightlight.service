@@ -1,0 +1,6 @@
+[Unit]
+Description=Hyprland nightlight auto adjust
+
+[Service]
+Type=oneshot
+ExecStart=%h/.config/hypr/scripts/nightlight.sh
