@@ -1,0 +1,1 @@
+/home/temp/.cache/wal/colors-hyprland.lua

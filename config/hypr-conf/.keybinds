@@ -1,0 +1,75 @@
+ = 
+ + Return | open terminal (kitty)
+ + SHIFT + Return | open floating terminal (kitty)
+ + Q | kill active window
+ + D | launch app menu (rofi)
+ + W | change wallpaper (Wallpaper.sh)
+ + T | change theme (dark/light)
+ + ALT + U | delete hyprconf (dotfiles)
+ + SHIFT + W | select wallpaper (WallpaperSelect.sh)
+ + E | open file manager (Thunar)
+ + SHIFT + E | open terminal file manager (Yazi)
+ + V | toggle floating window
+ + ALT + V | toggle all windows to float
+ + F | toggle fullscreen
+ + ALT + D | switch Rofi theme
+ + ALT + C | clipboard manager
+ + ALT + W | wipe clipboard history
+ + SHIFT + D | open emoji picker
+ + SHIFT + P | toggle pseudo-tiling
+ + X | open power menu
+ + ALT + X | switch power menu theme
+ + C | open VS Code
+ + B | open browser (Default)
+ALT + B | reset default browser
+CTRL + ESCAPE | reload Waybar
+CTRL + ALT + ESCAPE | toggle Waybar visibility
+ + SHIFT + L | lockscreen (hyprlock)
+ + ALT + L | lockscreen theme (hyprlock)
+ + CTRL + W | switch Waybar layout
+ + CTRL + R | reload Hyprland
+ + CTRL + p | re-generate colors
+CTRL + U | system update
+ + CTRL + U | updated hyprconf
+PRINT | take screenshot
+ + SHIFT + H | show keybind help
+ + SHIFT + M | exit Hyprland
+ + N | toggle special minimized (pyprland)
+ + SHIFT + N | toggle minimized (pyprland)
+ + SHIFT + R | run startup script
+ + SHIFT + Z | ++ zoom
+ + Z | zoom
+ + S | open settings in terminal
+ + TAB | switch windows with Rofi
+ALT + TAB | Cycle through Windows
+F9 | toggle audio mute
+F10 | decrease volume
+F11 | increase volume
+ + F1 | decrease nightlight
+ + F2 | increase nightlight
+ + F3 | reset nightlight
+F4 | increase brightness
+F3 | decrease brightness
+ + J | move focus down
+ + K | move focus up
+ + L | move focus right
+ + H | move focus left
+ + CTRL + J | move window down
+ + CTRL + K | move window up
+ + CTRL + L | move window right
+ + CTRL + H | move window left
+ + 1-0 | switch workspace 1-10
+ + SHIFT + 1-0 | move window to workspace 1-10
+ + ALT + 1-0 | move window silently to workspace 1-10
+ + mouse scroll | cycle workspaces
+ + left click | move window
+ + right click | resize window
+ALT + R | open Reddit
+ALT + X | open X (Twitter)
+ALT + f | open Facebook
+ALT + I | open Instagram
+ALT + Y | open YouTube
+ALT + W | open WhatsApp Web
+ALT + G | open GitHub
+ALT + A | open ChatGPT
+CTRL + ALT + A | open Gemini
