@@ -135,7 +135,7 @@ hypr_cache_backup="$backup_dir/.cache"
 hypr_config_backup="$backup_dir/configs.conf"
 wallpapers="$HOME/.hyprconf/hypr/Wallpaper"
 hypr_cache="$HOME/.hyprconf/hypr/.cache"
-hypr_config="$HOME/.hyprconf/hypr/configs/configs.conf"
+hypr_config="$HOME/.hyprconf/hypr/configs/configs.lua"
 
 # Ensure backup directory exists
 mkdir -p "$backup_dir"
@@ -296,7 +296,7 @@ env_file="$HOME/.hyprconf/hypr/configs/environment.$suffix"
 monitor_file="$HOME/.hyprconf/hypr/configs/monitor.$suffix"
 
 # Virtual Machine adjustments
-if hostnamectl | grep -q 'Chassis: vm'; then
+if systemd-detect-virt --quiet; then
     msg att "You are using this script in a Virtual Machine..."
     msg act "Applying VM specific settings..."
 
@@ -342,7 +342,7 @@ fi
 sleep 1
 
 # Move fastfetch to local share
-mv "$HOME/.hyprconf/fastfetch" "$HOME/.local/share/"
+[[ ! -d "$HOME/.local/share/fastfetch" ]] && mv "$HOME/.hyprconf/fastfetch" "$HOME/.local/share/"
 
 for dotfilesDir in "$HOME/.hyprconf"/*; do
     configDirName=$(basename "$dotfilesDir")
@@ -369,9 +369,13 @@ if [[ ! -d "$fonts_dir" ]]; then
 	mkdir -p "$fonts_dir"
 fi
 
-cp -r "$dir/extras/fonts" "$fonts_dir"
-msg act "Updating font cache..."
-sudo fc-cache -fv 2>&1 | tee -a "$log" &> /dev/null
+if [[ ! -f "$HOME/.local/share/fonts/fonts/Icomoon-Feather.ttf" || ! -f "$HOME/.local/share/fonts/Icomoon-Feather.ttf" ]]; then
+    cp -a "$dir/extras/fonts/." "$fonts_dir/"
+
+    msg act "Updating font cache..."
+    sudo fc-cache -fv 2>&1 | tee -a "$log" &> /dev/null
+fi
+
 
 ### Setup extra files and dirs
 
@@ -395,7 +399,7 @@ if [ -d "$wayland_session_dir" ]; then
     msg att "$wayland_session_dir found..."
 else
     msg att "$wayland_session_dir NOT found, creating..."
-    sudo mkdir $wayland_session_dir 2>&1 | tee -a "$log"
+    sudo mkdir -p $wayland_session_dir 2>&1 | tee -a "$log"
 fi
     sudo cp "$dir/extras/hyprland.desktop" /usr/share/wayland-sessions/ 2>&1 | tee -a "$log"
 
@@ -413,7 +417,7 @@ restore_backup() {
         fi
 
         # Restore the file/directory from the backup
-        if cp -r "$backup_path" "$original_path"; then
+        if cp -an "$backup_path" "$original_path"; then
             msg dn "$file_type restored to its original location: $original_path."
         else
             msg err "Could not restore defaults."
@@ -452,7 +456,7 @@ if [[ "$wallpaper" =~ ^[Y|y]$ ]]; then
     msg act "Downloading some wallpapers..."
     
     # Download the ZIP silently with a progress bar
-    curl -L "$url" -o "$zip_path"
+    curl -fL "$url" -o "$zip_path"
 
     if [[ -f "$zip_path" ]]; then
         mkdir -p "$target_dir"
@@ -475,9 +479,17 @@ fi
 
 if [[ -d "$HOME/.hyprconf/hypr/Wallpaper" ]]; then
 
-    if [[ -d "$HOME/.hyprconf/hypr/.cache" ]]; then
-        wallName=$(cat "$HOME/.hyprconf/hypr/.cache/.wallpaper")
-        wallpaper=$(find "$HOME/.hyprconf/hypr/Wallpaper" -type f -name "$wallName.*" | head -n 1)
+    if [[ -f "$HOME/.hyprconf/hypr/.cache/.wallpaper" ]]; then
+        read -r wallName < "$HOME/.hyprconf/hypr/.cache/.wallpaper"
+        wallpaper=$(find "$HOME/.hyprconf/hypr/Wallpaper" \
+            -type f -name "$wallName.*" | head -n1)
+
+        if [[ -z "$wallpaper" ]]; then
+            if [[ -f "$HOME/.hyprconf/hypr/Wallpaper/shell-ninja.png" ]]; then
+                wallpaper="$HOME/.hyprconf/hypr/Wallpaper/shell-ninja.png"
+                echo "shell-ninja" > "$HOME/.hyprconf/hypr/.cache/.wallpaper"
+            fi
+        fi
     else
         mkdir -p "$HOME/.hyprconf/hypr/.cache"
         wallCache="$HOME/.hyprconf/hypr/.cache/.wallpaper"
@@ -491,7 +503,11 @@ if [[ -d "$HOME/.hyprconf/hypr/Wallpaper" ]]; then
     fi
 
     # setting the default wallpaper
-    ln -sf "$wallpaper" "$HOME/.hyprconf/hypr/.cache/current_wallpaper.png"
+    if [[ -n "$wallpaper" ]]; then
+        ln -sf "$wallpaper" "$HOME/.hyprconf/hypr/.cache/current_wallpaper.png"
+    else
+        msg att "No valid wallpaper found. Skipping wallpaper symlink."
+    fi
 fi
 
 # setting up the waybar
