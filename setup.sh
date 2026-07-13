@@ -117,6 +117,7 @@ dirs=(
     rofi
     satty
     swaync
+    systemd
     waybar
     wlogout
     xfce4
@@ -184,7 +185,6 @@ if [[ -d "$HOME/.backup_hyprconf-${USER}" ]]; then
     cd
     mkdir -p ".archive_hyprconf-${USER}"
     tar -czf ".archive_hyprconf-${USER}/backup_hyprconf-$(date +%d-%m-%Y_%I-%M-%p)-${USER}.tar.gz" ".backup_hyprconf-${USER}" &> /dev/null
-    # mv "HyprBackup-${USER}.zip" "HyprArchive-${USER}/"
     rm -rf ".backup_hyprconf-${USER}"
     msg dn "~/.backup_hyprconf-${USER} was archived inside ~/.archive_hyprconf-${USER} directory..." && sleep 1
 fi
@@ -238,31 +238,110 @@ fi
 
 ####################################################################
 
-#_____ for virtual machine
-# Check if the configuration is in a virtual box
-if hostnamectl | grep -q 'Chassis: vm'; then
-    msg att "You are using this script in a Virtual Machine..."
-    msg act "Setting up things for you..." 
-    sed -i '/env = WLR_NO_HARDWARE_CURSORS,1/s/^#//' "$dir/config/hypr/configs/environment.conf"
-    sed -i '/env = WLR_RENDERER_ALLOW_SOFTWARE,1/s/^#//' "$dir/config/hypr/configs/environment.conf"
-    echo -e '#Monitor\nmonitor=Virtual-1, 1920x1080@60,auto,1' > "$dir/config/hypr/configs/monitor.conf"
+# =============================================
+#  CHOOSE HYPRLAND CONFIG VARIANT (conf vs lua)
+# =============================================
+variant_conf="$dir/config/hypr-conf"
+variant_lua="$dir/config/hypr-lua"
+
+if [[ -d "$variant_conf" && -d "$variant_lua" ]]; then
+    msg act "Two Hyprland configuration variants found. Which one would you like to install?"
+    msg nt "hypr-conf : Classic Hyprland config using separate .conf files (keybinds, window rules, etc.)"
+    msg nt "hypr-lua  : Modern Lua‑based config with scripting and dynamic reloading capabilities."
+    if command -v gum &> /dev/null; then
+        chosen_variant=$(gum choose "hypr-conf" "hypr-lua" --header "Choose your configuration style:")
+    else
+        printf "\n1) hypr-conf  (classic .conf files)\n"
+        printf "2) hypr-lua   (Lua configuration)\n"
+        read -r -p "$(echo -e '\e[1;32mSelect [1/2]: \e[0m')" choice_num
+        case $choice_num in
+            1) chosen_variant="hypr-conf";;
+            2) chosen_variant="hypr-lua";;
+            *) msg err "Invalid choice, defaulting to hypr-conf"; chosen_variant="hypr-conf";;
+        esac
+    fi
+elif [[ -d "$variant_conf" ]]; then
+    msg nt "Only hypr-conf variant found. Using it."
+    chosen_variant="hypr-conf"
+elif [[ -d "$variant_lua" ]]; then
+    msg nt "Only hypr-lua variant found. Using it."
+    chosen_variant="hypr-lua"
+else
+    chosen_variant=""
 fi
 
+# Copy the whole config tree first
+cp -a "$dir/config" "$HOME/.hyprconf"
 
-#_____ for nvidia gpu. I don't know if it's gonna work or not. Because I don't have any gpu.
-# uncommenting WLR_NO_HARDWARE_CURSORS if nvidia is detected
+# Replace hypr directory with the chosen variant and clean up
+if [[ -n "$chosen_variant" ]]; then
+    rm -rf "$HOME/.hyprconf/hypr"
+    mv "$HOME/.hyprconf/$chosen_variant" "$HOME/.hyprconf/hypr"
+    # Remove the other variant directory if it exists (unused copy)
+    [[ -d "$HOME/.hyprconf/hypr-conf" ]] && rm -rf "$HOME/.hyprconf/hypr-conf"
+    [[ -d "$HOME/.hyprconf/hypr-lua" ]] && rm -rf "$HOME/.hyprconf/hypr-lua"
+    msg dn "Installed Hyprland configuration: $chosen_variant"
+else
+    msg att "No variant directories found, using default hypr config if present."
+fi
+
+# --- Apply VM / NVIDIA specific adjustments to the final hypr config ---
+# Determine file suffix
+if [[ "$chosen_variant" == "hypr-lua" ]]; then
+    suffix="lua"
+else
+    suffix="conf"
+fi
+env_file="$HOME/.hyprconf/hypr/configs/environment.$suffix"
+monitor_file="$HOME/.hyprconf/hypr/configs/monitor.$suffix"
+
+# Virtual Machine adjustments
+if hostnamectl | grep -q 'Chassis: vm'; then
+    msg att "You are using this script in a Virtual Machine..."
+    msg act "Applying VM specific settings..."
+
+    if [[ "$suffix" == "lua" ]]; then
+        # Uncomment Lua environment variables
+        [[ -f "$env_file" ]] && sed -i '/^-- hl\.env("WLR_NO_HARDWARE_CURSORS"/s/^-- //' "$env_file"
+        [[ -f "$env_file" ]] && sed -i '/^-- hl\.env("WLR_RENDERER_ALLOW_SOFTWARE"/s/^-- //' "$env_file"
+        # Create monitor.lua with VM default (overwrites existing)
+        cat > "$monitor_file" << 'MONITOR_LUA_EOF'
+-- Virtual machine monitor
+hl.monitor({
+    output   = "Virtual-1",
+    mode     = "1920x1080@60",
+    position = "auto",
+    scale    = "auto",
+})
+MONITOR_LUA_EOF
+    else
+        # Classic .conf adjustments
+        [[ -f "$env_file" ]] && sed -i '/env = WLR_NO_HARDWARE_CURSORS,1/s/^#//' "$env_file"
+        [[ -f "$env_file" ]] && sed -i '/env = WLR_RENDERER_ALLOW_SOFTWARE,1/s/^#//' "$env_file"
+        echo -e '#Monitor\nmonitor=Virtual-1, 1920x1080@60,auto,1' > "$monitor_file"
+    fi
+fi
+
+# NVIDIA GPU adjustments
 if lspci -k | grep -A 2 -E "(VGA|3D)" | grep -iq nvidia; then
-  msg act "Nvidia GPU detected. Setting up proper env's" 2>&1 | tee -a >(sed 's/\x1B\[[0-9;]*[JKmsu]//g' >> "$log") || true
-  sed -i '/env = WLR_NO_HARDWARE_CURSORS,1/s/^#//' config/hypr/configs/environment.conf
-  sed -i '/env = LIBVA_DRIVER_NAME,nvidia/s/^#//' config/hypr/configs/environment.conf
-  sed -i '/env = __GLX_VENDOR_LIBRARY_NAME,nvidia/s/^# //' config/hypr/configs/environment.conf
+    msg act "Nvidia GPU detected. Setting up proper environment variables..."
+
+    if [[ "$suffix" == "lua" ]]; then
+        # Uncomment Lua environment variables for NVIDIA
+        [[ -f "$env_file" ]] && sed -i '/^-- hl\.env("LIBVA_DRIVER_NAME"/s/^-- //' "$env_file"
+        [[ -f "$env_file" ]] && sed -i '/^-- hl\.env("__GLX_VENDOR_LIBRARY_NAME"/s/^-- //' "$env_file"
+        [[ -f "$env_file" ]] && sed -i '/^-- hl\.env("GBM_BACKEND"/s/^-- //' "$env_file"
+    else
+        # Classic .conf adjustments
+        [[ -f "$env_file" ]] && sed -i '/env = WLR_NO_HARDWARE_CURSORS,1/s/^#//' "$env_file"
+        [[ -f "$env_file" ]] && sed -i '/env = LIBVA_DRIVER_NAME,nvidia/s/^#//' "$env_file"
+        [[ -f "$env_file" ]] && sed -i '/env = __GLX_VENDOR_LIBRARY_NAME,nvidia/s/^# //' "$env_file"
+    fi
 fi
 
 sleep 1
 
-
-# creating symlinks
-cp -a "$dir/config" "$HOME/.hyprconf"
+# Move fastfetch to local share
 mv "$HOME/.hyprconf/fastfetch" "$HOME/.local/share/"
 
 for dotfilesDir in "$HOME/.hyprconf"/*; do
