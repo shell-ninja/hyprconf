@@ -484,9 +484,9 @@ if [[ -d "$HOME/.hyprconf/hypr/Wallpaper" ]]; then
 
         touch "$wallCache"      
 
-        if [ -f "$HOME/.hyprconf/hypr/Wallpaper/linux.jpg" ]; then
-            echo "linux" > "$wallCache"
-            wallpaper="$HOME/.hyprconf/hypr/Wallpaper/linux.jpg"
+        if [ -f "$HOME/.hyprconf/hypr/Wallpaper/shell-ninja.png" ]; then
+            echo "shell-ninja" > "$wallCache"
+            wallpaper="$HOME/.hyprconf/hypr/Wallpaper/shell-ninja.png"
         fi
     fi
 
