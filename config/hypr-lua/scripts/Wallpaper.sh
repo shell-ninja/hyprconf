@@ -1,10 +1,10 @@
 #!/bin/bash
 # Wallpaper.sh — Pick a random wallpaper and apply it.
 
-scripts_dir="$HOME/.config/hypr/scripts"
-cache_dir="$HOME/.config/hypr/.cache"
+scripts_dir="$HOME/.hyprconf/hypr/scripts"
+cache_dir="$HOME/.hyprconf/hypr/.cache"
 wallCache="$cache_dir/.wallpaper"
-wallpaper_dir="$HOME/.config/hypr/Wallpaper"
+wallpaper_dir="$HOME/.hyprconf/hypr/Wallpaper"
 
 [[ ! -f "$wallCache" ]] && touch "$wallCache"
 
