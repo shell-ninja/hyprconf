@@ -1,101 +1,156 @@
 #!/bin/bash
 
 config_file="$HOME/.config/hypr/configs/monitor.conf"
-auto_generated_setting=$(cat $config_file | grep "monitor=,preferred, auto, 1")
+auto_generated_setting=$(grep '^monitor=,preferred, auto, 1' "$config_file" 2>/dev/null)
 
 display() {
-    # Get terminal width
-    local cols=$(tput cols)
-    
-    # Use a here-document with quoted 'EOF' to treat content as literal text
-    # This prevents issues with backticks or quotes inside the ASCII art
+    local cols
+    cols=$(tput cols 2>/dev/null || echo 80)
+
     local art
     art=$(cat << 'EOF'
-   __  ___          _ __             ____    __          
-  /  |/  /__  ___  (_) /____  ____  / __/__ / /___ _____ 
+   __  ___          _ __             ____    __
+  /  |/  /__  ___  (_) /____  ____  / __/__ / /___ _____
  / /|_/ / _ \/ _ \/ / __/ _ \/ __/ _\ \/ -_) __/ // / _ \
 /_/  /_/\___/_//_/_/\__/\___/_/   /___/\__/\__/\_,_/ .__/
-                                                  /_/    
+                                                  /_/
 EOF
 )
 
-    # Find the width of the widest line
     local max_width=0
     while IFS= read -r line; do
-        local len=${#line}
-        if (( len > max_width )); then
-            max_width=$len
-        fi
+        (( ${#line} > max_width )) && max_width=${#line}
     done <<< "$art"
 
-    # Calculate padding
     local padding=0
-    if (( cols > max_width )); then
-        padding=$(( (cols - max_width) / 2 ))
-    fi
+    (( cols > max_width )) && padding=$(( (cols - max_width) / 2 ))
 
-    # Print with padding
-    local spaces=$(printf '%*s' "$padding" '')
+    local spaces
+    spaces=$(printf '%*s' "$padding" '')
+
     while IFS= read -r line; do
         printf "%s%s\n" "$spaces" "$line"
     done <<< "$art"
-}   
+}
 
+# Only run if the default auto-generated monitor line exists
+[[ -z "$auto_generated_setting" ]] && exit 0
+
+# Dependency check
+for cmd in hyprctl jq gum; do
+    if ! command -v "$cmd" >/dev/null 2>&1; then
+        echo "Error: '$cmd' is not installed."
+        exit 1
+    fi
+done
+
+clear
 display
 printf "\n"
 
-if [[ "$auto_generated_setting" ]]; then
+gum spin \
+    --spinner minidot \
+    --spinner.foreground "#bdb0ca" \
+    --title.foreground "#bdb0ca" \
+    --title "Setting up your Monitor" -- \
+    sleep 2
 
-    gum spin \
-        --spinner minidot \
-        --spinner.foreground "#bdb0ca" \
-        --title.foreground "#bdb0ca" \
-        --title "Setting up for your Monitor" -- \
-        sleep 2
+# Get monitor list
+mapfile -t monitors < <(
+    hyprctl monitors -j |
+    jq -r '.[] | "\(.name) (\(.width)x\(.height) @ \(.refreshRate|floor)Hz)"'
+)
 
-    monitor_name=$(xrandr | grep "connected" | awk '{print $1}')
-    monitor_resolution=$(xrandr | grep "connected" | awk '{print $3}' | cut -d'+' -f1)
-
-    display
-    refresh_rate=$(gum choose \
-                    --header \
-                    "󰍹 Choose the refresh rate for your '$monitor_name' monitor:" \
-                    --header.foreground "#bdb0ca" \
-                    --selected.foreground "#bdb0ca" \
-                    --cursor.foreground "#bdb0ca" \
-                    "60Hz" "75Hz" "120Hz" "144Hz" "165Hz" "180Hz" "200Hz" "240Hz"
-                )
-
-    case $refresh_rate in
-        60Hz)
-            settings="monitor=${monitor_name},${monitor_resolution}@60, 0x0, 1"
-            ;;
-        75Hz)
-            settings="monitor=${monitor_name},${monitor_resolution}@75, 0x0, 1"
-            ;;
-        120Hz)
-            settings="monitor=${monitor_name},${monitor_resolution}@120, 0x0, 1"
-            ;;
-        144Hz)
-            settings="monitor=${monitor_name},${monitor_resolution}@144, 0x0, 1"
-            ;;
-        165Hz)
-            settings="monitor=${monitor_name},${monitor_resolution}@165, 0x0, 1"
-            ;;
-        180Hz)
-            settings="monitor=${monitor_name},${monitor_resolution}@165, 0x0, 1"
-            ;;
-        200Hz)
-            settings="monitor=${monitor_name},${monitor_resolution}@200, 0x0, 1"
-            ;;
-        240Hz)
-            settings="monitor=${monitor_name},${monitor_resolution}@240, 0x0, 1"
-            ;;
-        *)
-            echo -e ">< Nothing will be changed. Exiting.."
-            exit 0
-            ;;
-    esac
-
-    sed -i "s/$auto_generated_setting/$settings/" "$config_file"
+if [[ ${#monitors[@]} -eq 0 ]]; then
+    echo "No monitors detected."
+    exit 1
 fi
+
+clear
+display
+printf "\n"
+
+# Monitor selection
+if [[ ${#monitors[@]} -eq 1 ]]; then
+    selected_monitor="${monitors[0]}"
+else
+    selected_monitor=$(
+        printf '%s\n' "${monitors[@]}" | gum choose \
+            --header "󰍹 Select a monitor:" \
+            --header.foreground "#bdb0ca" \
+            --selected.foreground "#bdb0ca" \
+            --cursor.foreground "#bdb0ca"
+    )
+fi
+
+monitor_name="${selected_monitor%% (*}"
+
+monitor_resolution=$(
+    hyprctl monitors -j |
+    jq -r --arg name "$monitor_name" \
+        '.[] | select(.name == $name) | "\(.width)x\(.height)"'
+)
+
+current_refresh=$(
+    hyprctl monitors -j |
+    jq -r --arg name "$monitor_name" \
+        '.[] | select(.name == $name) | (.refreshRate|floor)'
+)
+
+clear
+display
+printf "\n"
+
+refresh_rate=$(
+    gum choose \
+        --header "󰍹 Choose refresh rate for '$monitor_name' (Current: ${current_refresh}Hz)" \
+        --header.foreground "#bdb0ca" \
+        --selected.foreground "#bdb0ca" \
+        --cursor.foreground "#bdb0ca" \
+        "60Hz" \
+        "75Hz" \
+        "120Hz" \
+        "144Hz" \
+        "165Hz" \
+        "180Hz" \
+        "200Hz" \
+        "240Hz"
+)
+
+clear
+display
+printf "\n"
+
+scale=$(
+    gum choose \
+        --header "󰍹 Choose display scaling:" \
+        --header.foreground "#bdb0ca" \
+        --selected.foreground "#bdb0ca" \
+        --cursor.foreground "#bdb0ca" \
+        "1" \
+        "1.25" \
+        "1.5" \
+        "1.75" \
+        "2"
+)
+
+hz="${refresh_rate%Hz}"
+
+settings="monitor=${monitor_name},${monitor_resolution}@${hz}, auto, ${scale}"
+
+sed -i \
+    "s|${auto_generated_setting}|${settings}|" \
+    "$config_file"
+
+clear
+display
+printf "\n"
+
+echo "✓ Monitor configuration updated successfully."
+echo
+echo "Monitor : $monitor_name"
+echo "Mode    : ${monitor_resolution}@${hz}"
+echo "Scale   : $scale"
+echo
+echo "Reload Hyprland to apply changes:"
+echo "  hyprctl reload"
