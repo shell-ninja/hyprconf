@@ -521,6 +521,10 @@ msg act "Generating colors and other necessary things..."
 "$HOME/.hyprconf/hypr/scripts/wallcache.sh" &> /dev/null
 "$HOME/.hyprconf/hypr/scripts/pywal.sh" &> /dev/null
 
+# Setting nightlight auto transition
+systemctl --user daemon-reload
+systemctl --user enable --now hyprnightlight.timer
+
 
 # setting default themes, icon and cursor
 gsettings set org.gnome.desktop.interface gtk-theme "FlatColor"

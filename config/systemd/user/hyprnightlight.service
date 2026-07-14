@@ -1,5 +1,5 @@
 [Unit]
-Description=Hyprland nightlight auto adjust
+Description=Hyprland Night Light
 
 [Service]
 Type=oneshot

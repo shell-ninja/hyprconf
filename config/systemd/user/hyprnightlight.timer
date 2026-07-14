@@ -1,9 +1,9 @@
 [Unit]
-Description=Run nightlight script every 5 minutes
+Description=Update Hyprland Night Light every 5 minutes
 
 [Timer]
-OnCalendar=*:0/5
-Persistent=true   # run immediately after boot if the last scheduled run was missed
+OnCalendar=*-*-* *:*:00
+AccuracySec=1s
 
 [Install]
 WantedBy=timers.target
