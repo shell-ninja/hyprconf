@@ -3,7 +3,7 @@
 ICON="$HOME/.hyprconf/hypr/icons/pc.png"
 
 # uptime cache file
-uptime_file="$HOME/.config/hypr/.cache/.uptime"
+uptime_file="$HOME/.hyprconf/hypr/.cache/.uptime"
 [[ ! -f "$uptime_file" ]] && touch "$uptime_file"
 
 uptime=$(uptime -p | cut -d' ' -f2-)

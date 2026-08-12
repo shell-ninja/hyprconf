@@ -41,10 +41,10 @@ printf "\n"
 
 # Directly check the exit code of gum confirm without capturing output
 if gum confirm "Would you like to," \
-        --prompt.foreground "#ccb7b6" \
+        --prompt.foreground "#9dd1e8" \
         --affirmative "Update now!" \
-        --selected.background "#ccb7b6" \
-        --selected.foreground "#0F0F13" \
+        --selected.background "#9dd1e8" \
+        --selected.foreground "#040915" \
         --negative "Skip updating!"; then
     
     # User selected "Update now!" (Exit code 0)
@@ -77,7 +77,7 @@ else
     # User selected "Skip updating!" (Exit code 1) or other error
     gum spin \
         --spinner dot \
-        --spinner.foreground "#ccb7b6" \
+        --spinner.foreground "#9dd1e8" \
         --title "Skipping updating your system..." -- \
         sleep 2
 fi   

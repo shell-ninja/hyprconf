@@ -1,9 +1,9 @@
 #!/bin/bash
 # WallpaperSelect.sh — Select a wallpaper via rofi and apply it.
 
-scripts_dir="$HOME/.config/hypr/scripts"
-wallDIR="$HOME/.config/hypr/Wallpaper"
-cache_dir="$HOME/.config/hypr/.cache"
+scripts_dir="$HOME/.hyprconf/hypr/scripts"
+wallDIR="$HOME/.hyprconf/hypr/Wallpaper"
+cache_dir="$HOME/.hyprconf/hypr/.cache"
 wallCache="$cache_dir/.wallpaper"
 
 [[ ! -f "$wallCache" ]] && touch "$wallCache"
@@ -26,10 +26,11 @@ BEZIER=".28,.58,.99,.37"
 
 AWWW_PARAMS="--transition-fps $FPS --transition-type $TYPE --transition-duration $DURATION --transition-bezier $BEZIER"
 
-# Safely retrieve image files
+# Safely retrieve image files (NUL-delimited to handle spaces in names)
 mapfile -d '' _PICS_FULL < <(
     find "$wallDIR" -maxdepth 1 -type f \
-    \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.gif" \) -print0
+    \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.gif" \) \
+    -print0
 )
 
 # Exit if no wallpapers found
@@ -72,9 +73,9 @@ esac
 # No choice → exit
 [[ -z "$choice" ]] && exit 0
 
-# Start daemon if needed
+# Start daemon if not already running
 start_daemon() {
-    if ! pgrep -x ${ENGINE}-daemon >/dev/null; then
+    if ! pgrep -x "${ENGINE}-daemon" >/dev/null; then
         ${ENGINE}-daemon &>/dev/null &
         disown
         sleep 0.5
@@ -88,6 +89,7 @@ set_wallpaper() {
 
     ln -sf "$img" "$cache_dir/current_wallpaper.png"
 
+    local baseName wallName
     baseName="$(basename "$img")"
     wallName="${baseName%.*}"
 
@@ -120,5 +122,5 @@ else
     set_wallpaper "$selected_full"
 fi
 
-"$scripts_dir/wallcache.sh" &
+# wallcache.sh is called by pywal.sh — no need to call it again here
 "$scripts_dir/pywal.sh"

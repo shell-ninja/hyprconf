@@ -45,6 +45,9 @@ EOF
 # Script for setting window border width and roundness.
 setting="$HOME/.config/hypr/configs/configs.lua"
 rofiVars="$HOME/.config/rofi/rofi-vars.rasi"
+kittyConf="$HOME/.config/kitty/kitty.conf"
+gtk3Css="$HOME/.config/gtk-3.0/gtk.css"
+gtk4Css="$HOME/.config/gtk-4.0/gtk.css"
 
 
 # gum function to choose multiple settings
@@ -53,9 +56,9 @@ printf "\n  => Choose which settings you want to change\n  -> Need to select usi
 echo
 _hyprland_choice=$(gum choose \
     --header "Select settings:" \
-    --header.foreground "#ccb7b6" \
+    --header.foreground "#9dd1e8" \
     --no-limit \
-    --cursor.foreground "#ccb7b6" \
+    --cursor.foreground "#9dd1e8" \
     "border size" \
     "roundness" \
     "inner gap" \
@@ -133,19 +136,36 @@ for user_choice in "${primary_choice[@]}"; do
         sed -i "s/^blur_pass[ ]*=.*/blur_pass     = $_blur_passes/g" "$setting"
         ;;
     "opacity")
-        printf "\n[ <> ]\nSetting opacity...\n\n"
-        _act_op=$(gum input --placeholder "Type the amount of active opacity (ex: 0.9)...")
-        while ! [[ "$_act_op" =~ ^[0-9]+(\.[0-9]+)?$ ]]; do
-            printf "Invalid input. Please enter a number.\n"
-            _act_op=$(gum input --placeholder "Type the amount of active opacity (ex: 0.9)...")
+        printf "\n[ <> ]\nSetting opacity...\n"
+        printf "   Applied to: Hyprland (active + inactive), kitty bg, GTK3, GTK4.\n\n"
+        _opacity=$(gum input --placeholder "Opacity 0.0–1.0 (e.g. 0.85)...")
+        while ! [[ "$_opacity" =~ ^(0(\.[0-9]+)?|1(\.0+)?)$ ]]; do
+            printf "Invalid input. Enter a value between 0.0 and 1.0.\n"
+            _opacity=$(gum input --placeholder "Opacity 0.0–1.0 (e.g. 0.85)...")
         done
-            _inact_op=$(gum input --placeholder "Type the amount of inactive opacity (ex: 0.9)...")
-        while ! [[ "$_inact_op" =~ ^[0-9]+(\.[0-9]+)?$ ]]; do
-            printf "Invalid input. Please enter a number.\n"
-            _inact_op=$(gum input --placeholder "Type the amount of inactive opacity (ex: 0.9)...")
+
+        _opacity_deact=$(gum input --placeholder "Opacity 0.0–1.0 (e.g. 0.85)...")
+        while ! [[ "$_opacity_deact" =~ ^(0(\.[0-9]+)?|1(\.0+)?)$ ]]; do
+            printf "Invalid input. Enter a value between 0.0 and 1.0.\n"
+            _opacity_deact=$(gum input --placeholder "Opacity 0.0–1.0 (e.g. 0.85)...")
         done
-        sed -i "s/^opacity_act[ ]*=.*/opacity_act   = $_act_op/g" "$setting"
-        sed -i "s/^opacity_deact[ ]*=.*/opacity_deact = $_inact_op/g" "$setting"
+
+        # ─ Hyprland compositor opacity (active + inactive)
+        sed -i "s/^opacity_act[ ]*=.*/opacity_act   = $_opacity/g" "$setting"
+        sed -i "s/^opacity_deact[ ]*=.*/opacity_deact = $_opacity_deact/g" "$setting"
+
+        # ─ Kitty: background_opacity applies per-pixel (bg transparent, text opaque)
+        sed -i "s/^background_opacity.*/background_opacity $_opacity/" "$kittyConf"
+        # Live-reload all running kitty windows
+        pkill -SIGUSR1 kitty 2>/dev/null || true
+
+        # ─ GTK3: rgba() bg — Hyprland blurs behind transparent bg pixels
+        sed -i -E "s/rgba\(([0-9]+), ([0-9]+), ([0-9]+), [0-9.]+\)/rgba(\1, \2, \3, $_opacity)/g" "$gtk3Css"
+
+        # ─ GTK4: alpha(@background, X)
+        sed -i -E "s/alpha\(@background, [0-9.]+\)/alpha(@background, $_opacity)/g" "$gtk4Css"
+
+        printf "\n[ ok ] Opacity set to %s everywhere.\n" "$_opacity"
         ;;
     "shadow")
         printf "\n[ <> ]\nSetting shadow range ( 0 means no shadow )...\n\n"

@@ -29,27 +29,56 @@ tooltip label {
   color: @background;
 }
 
+/* Universal smooth visual transition rule for modules */
+#clock,
+#battery,
+#backlight,
+#pulseaudio,
+#network,
+#network#speed,
+#custom-notify,
+#custom-updater,
+#custom-clipboard,
+#custom-nightlight,
+#idle_inhibitor,
+#tray,
+#power-profiles-daemon,
+#window,
+#mpris,
+#cpu,
+#memory,
+#disk,
+#temperature,
 #workspaces button {
-  padding: 5px 3px;
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out, opacity 0.2s ease-in-out, border-color 0.2s ease-in-out;
+}
+
+#workspaces button {
+  padding: 0 8px;
   color: @foreground;
   margin-right: 5px;
-  background-color: transparent;
-  transition: none;
+  background: transparent;
+  box-shadow: none;
+  text-shadow: none;
+  border: none;
+  border-radius: 5px;
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out, opacity 0.2s ease-in-out, padding 0.2s ease-in-out;
 }
 
 #workspaces button.active {
   color: @background;
   background: @foreground;
-  padding: 0 15px;
+  padding: 0 14px;
   border-radius: 5px;
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out, opacity 0.2s ease-in-out, padding 0.2s ease-in-out;
 }
 
 #workspaces button.active:hover {
   color: @foreground;
   background: @background;
-  padding: 0 15px;
+  padding: 0 14px;
   border-radius: 5px;
-  transition: linear 0.2s;
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
 }
 
 #workspaces button.empty {
@@ -63,7 +92,7 @@ tooltip label {
   background: @foreground;
   color: @background;
   opacity: 1;
-  transition: linear 1s forward;
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out, opacity 0.2s ease-in-out;
 }
 
 #workspaces button.urgent {
@@ -76,6 +105,7 @@ tooltip label {
   background: transparent;
   color: @foreground;
   opacity: 1;
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out, opacity 0.2s ease-in-out;
 }
 
 #clock {

@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # Path to the sound files
-SOUND_FILE_UPDATE="$HOME/.config/hypr/sounds/update.wav"
-SOUND_FILE_SYSTEM="$HOME/.config/hypr/sounds/system-startup.wav"
-SOUND_FILE_LOGOUT="$HOME/.config/hypr/sounds/poweroff.mp3"
+SOUND_FILE_UPDATE="$HOME/.hyprconf/hypr/sounds/update.wav"
+SOUND_FILE_SYSTEM="$HOME/.hyprconf/hypr/sounds/system-startup.wav"
+SOUND_FILE_LOGOUT="$HOME/.hyprconf/hypr/sounds/poweroff.mp3"
 
 # Function to send notification and play sound
 notify_with_sound() {
@@ -21,10 +21,10 @@ logout_with_sound() {
 
 case $1 in
   sys)
-        startup_with_sound 
+        startup_with_sound
       ;;
   logout)
-        logout_with_sound 
+        logout_with_sound
       ;;
   notify)
       if [ -n "$2" ]; then

@@ -26,11 +26,41 @@ tooltip label {
   color: @foreground;
 }
 
+/* Universal smooth visual transition rule for modules */
+#clock,
+#battery,
+#backlight,
+#pulseaudio,
+#network,
+#network#speed,
+#custom-notify,
+#custom-updater,
+#custom-clipboard,
+#custom-nightlight,
+#idle_inhibitor,
+#tray,
+#power-profiles-daemon,
+#window,
+#mpris,
+#cpu,
+#memory,
+#disk,
+#temperature,
+#workspaces button,
+#taskbar button {
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out, opacity 0.2s ease-in-out, border-color 0.2s ease-in-out;
+}
+
 #workspaces button {
-  padding: 2px;
+  padding: 0 6px;
   color: @foreground;
   margin-right: 5px;
-  background-color: rgba(17, 17, 27, 0);
+  background: transparent;
+  box-shadow: none;
+  text-shadow: none;
+  border: none;
+  border-radius: 15px;
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out, opacity 0.2s ease-in-out, padding 0.2s ease-in-out;
 }
 
 #workspaces button.active {
@@ -39,6 +69,7 @@ tooltip label {
   padding: 0 12px;
   margin: 3px 0;
   border-radius: 15px;
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out, opacity 0.2s ease-in-out, padding 0.2s ease-in-out;
 }
 
 #workspaces button.focused {
@@ -57,6 +88,7 @@ tooltip label {
   background: transparent;
   color: @color8;
   border: none;
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
 }
 
 #taskbar button {
@@ -69,7 +101,7 @@ tooltip label {
   padding-left: 3px;
   padding-right: 3px;
   animation: gradient_f 20s ease-in infinite;
-  transition: all 0.5s cubic-bezier(0.55, -0.68, 0.48, 1.682);
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out, padding 0.2s ease-in-out;
 }
 
 #taskbar button.active {
@@ -79,7 +111,7 @@ tooltip label {
   padding-right: 12px;
   margin-right: 3px;
   animation: gradient_f 20s ease-in infinite;
-  transition: all 0.3s cubic-bezier(0.55, -0.68, 0.48, 1.682);
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out, padding 0.2s ease-in-out;
 }
 
 #taskbar button:hover {
@@ -87,7 +119,7 @@ tooltip label {
   padding-left: 3px;
   padding-right: 3px;
   animation: gradient_f 20s ease-in infinite;
-  transition: all 0.3s cubic-bezier(0.55, -0.68, 0.48, 1.682);
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out, padding 0.2s ease-in-out;
 }
 
 #custom-launch_rofi,

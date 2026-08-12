@@ -6,15 +6,14 @@
 notified=false
 while true; do
 
-    # memory usage
-    total_mem=$(free -m | awk 'NR==2 {print $2}')
-    eighty_percent=$(( total_mem * 80 / 100 ))
+    # Parse total and used memory in one single awk call (no double free -m)
+    read -r total_mem used_mem < <(free -m | awk 'NR==2 {print $2, $3}')
 
-    used_mem=$(free -m | awk 'NR==2 {print $3}')
+    eighty_percent=$(( total_mem * 80 / 100 ))
 
     if [[ "$used_mem" -ge "$eighty_percent" ]]; then
         if [[ "$notified" == false ]]; then
-            notify-send -u "critical" -i "$HOME/.config/hypr/icons/warning.png" \
+            notify-send -u "critical" -i "$HOME/.hyprconf/hypr/icons/warning.png" \
             "Warning!" "80% of memory used: $used_mem MB in use"
             notified=true
         fi
@@ -22,8 +21,5 @@ while true; do
         notified=false
     fi
 
-    # Sleep for 60 seconds to reduce CPU usage
     sleep 5
 done
-
-

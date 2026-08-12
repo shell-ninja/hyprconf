@@ -54,10 +54,39 @@ apply_config() {
     fi
     # ---------------------------------------------------------
 
-    # Rofi adjustments (unchanged)
+    # Rofi adjustments
     if [[ "$1" == *"-top"* && ! "$1" == "dual-tone-top" && ! "$1" == "rounded-top" && ! "$1" == "border-top" ]]; then
         sed -i "s/location:.*/location: northWest;/g" "$rofi_menu"
-        # ... rest of rofi positioning unchanged ...
+    fi
+
+    # Adjust clipboard rofi position based on selected waybar layout
+    if [[ -f "$rofi_clipboard" ]]; then
+        case "$1" in
+            "minimal-bottom")
+                sed -i 's/location:.*/location: southEast;/' "$rofi_clipboard"
+                sed -i 's/anchor:.*/anchor: southeast;/' "$rofi_clipboard"
+                sed -i 's/x-offset:.*/x-offset: -15px;/' "$rofi_clipboard"
+                sed -i 's/y-offset:.*/y-offset: -60px;/' "$rofi_clipboard"
+                ;;
+            "rounded-top"|"dual-tone-top")
+                sed -i 's/location:.*/location: northWest;/' "$rofi_clipboard"
+                sed -i 's/anchor:.*/anchor: northwest;/' "$rofi_clipboard"
+                sed -i 's/x-offset:.*/x-offset: 15px;/' "$rofi_clipboard"
+                sed -i 's/y-offset:.*/y-offset: 40px;/' "$rofi_clipboard"
+                ;;
+            "bar-left"|"skew-left")
+                sed -i 's/location:.*/location: northWest;/' "$rofi_clipboard"
+                sed -i 's/anchor:.*/anchor: northwest;/' "$rofi_clipboard"
+                sed -i 's/x-offset:.*/x-offset: 50px;/' "$rofi_clipboard"
+                sed -i 's/y-offset:.*/y-offset: 15px;/' "$rofi_clipboard"
+                ;;
+            *)
+                sed -i 's/location:.*/location: northEast;/' "$rofi_clipboard"
+                sed -i 's/anchor:.*/anchor: northeast;/' "$rofi_clipboard"
+                sed -i 's/x-offset:.*/x-offset: -15px;/' "$rofi_clipboard"
+                sed -i 's/y-offset:.*/y-offset: 40px;/' "$rofi_clipboard"
+                ;;
+        esac
     fi
 
     restart_waybar

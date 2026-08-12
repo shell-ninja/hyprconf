@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 # wallcache.sh — Generate thumbnail, blur, and quad images for the current wallpaper.
 
-cacheDir="$HOME/.config/hypr/.cache"
+cacheDir="$HOME/.hyprconf/hypr/.cache"
 thmbDir="${cacheDir}/thumbs"
 currentWall_name="$(cat "${cacheDir}/.wallpaper")"
 input_file="${cacheDir}/current_wallpaper.png"
@@ -34,9 +34,13 @@ fn_wallcache() {
         -alpha Off -compose CopyOpacity -composite \
         "${thmbDir}/${wall_name}.quad"
 
-    # Copy blur and quad to cache root (plain cp — no -r needed for files)
-    cp "${thmbDir}/${wall_name}.blur" "${cacheDir}/wall.blur"
-    cp "${thmbDir}/${wall_name}.quad" "${cacheDir}/wall.quad"
+    # Copy blur and quad to cache root only when they differ
+    if ! cmp -s "${thmbDir}/${wall_name}.blur" "${cacheDir}/wall.blur"; then
+        cp "${thmbDir}/${wall_name}.blur" "${cacheDir}/wall.blur"
+    fi
+    if ! cmp -s "${thmbDir}/${wall_name}.quad" "${cacheDir}/wall.quad"; then
+        cp "${thmbDir}/${wall_name}.quad" "${cacheDir}/wall.quad"
+    fi
 }
 
 fn_wallcache "${currentWall_name}" "${input_file}"

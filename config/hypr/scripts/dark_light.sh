@@ -1,10 +1,10 @@
 #!/bin/bash
 # dark_light.sh — Toggle between dark and light mode.
 
-mode_file="$HOME/.config/hypr/.cache/.current_mode"
-next_mode_file="$HOME/.config/hypr/.cache/.next_mode"
-scripts_dir="$HOME/.config/hypr/scripts"
-cache_dir="$HOME/.config/hypr/.cache"
+mode_file="$HOME/.hyprconf/hypr/.cache/.current_mode"
+next_mode_file="$HOME/.hyprconf/hypr/.cache/.next_mode"
+scripts_dir="$HOME/.hyprconf/hypr/scripts"
+cache_dir="$HOME/.hyprconf/hypr/.cache"
 
 # Initialise mode files if missing
 [[ ! -f "$mode_file" ]]      && echo "dark"  > "$mode_file"
@@ -17,9 +17,9 @@ DURATION=2
 BEZIER=".43,1.19,1,.4"
 AWWW_PARAMS="--transition-fps $FPS --transition-type $TYPE --transition-duration $DURATION --transition-bezier $BEZIER"
 
-next_mode=$(cat "$next_mode_file")
-walldir="$HOME/.config/hypr/Wallpaper/${next_mode}"
-wallName=$(cat "$HOME/.config/hypr/.cache/.wallpaper")
+next_mode=$(< "$next_mode_file")
+walldir="$HOME/.hyprconf/hypr/Wallpaper/${next_mode}"
+wallName=$(< "$cache_dir/.wallpaper")
 
 set_wallpaper() {
     local dir="$1"
@@ -37,9 +37,10 @@ set_wallpaper() {
     awww query &>/dev/null || { awww-daemon &>/dev/null & disown; sleep 0.2; }
     awww img "$wallpaper" $AWWW_PARAMS
 
-    ln -sf "$wallpaper" "$HOME/.config/hypr/.cache/current_wallpaper.png"
+    ln -sf "$wallpaper" "$cache_dir/current_wallpaper.png"
+    local baseName
     baseName="$(basename "$wallpaper")"
-    echo "${next_mode}_${baseName%.*}" > "$HOME/.config/hypr/.cache/.wallpaper"
+    echo "${next_mode}_${baseName%.*}" > "$cache_dir/.wallpaper"
 }
 
 if [[ "$next_mode" == "light" ]]; then

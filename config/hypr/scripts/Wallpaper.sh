@@ -21,7 +21,8 @@ fi
 # Use mapfile+find to correctly handle filenames with spaces
 mapfile -d '' PICS < <(
     find "$wallpaper_dir" -maxdepth 1 -type f \
-    \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.gif" \) -print0
+    \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.gif" \) \
+    -print0
 )
 
 # No wallpapers found
@@ -40,7 +41,7 @@ BEZIER=".28,.58,.99,.37"
 
 AWWW_PARAMS="--transition-fps $FPS --transition-type $TYPE --transition-duration $DURATION --transition-bezier $BEZIER"
 
-# Start daemon if needed
+# Start daemon if not already running
 start_daemon() {
     if ! pgrep -x "${ENGINE}-daemon" >/dev/null; then
         ${ENGINE}-daemon &>/dev/null &
@@ -57,6 +58,7 @@ set_wallpaper() {
 
     ln -sf "$img" "$cache_dir/current_wallpaper.png"
 
+    local baseName wallName
     baseName="$(basename "$img")"
     wallName="${baseName%.*}"
 
@@ -66,5 +68,5 @@ set_wallpaper() {
 start_daemon
 set_wallpaper "$wallpaper"
 
-"$scripts_dir/wallcache.sh" &
+# wallcache.sh is called by pywal.sh — no need to call it here too
 "$scripts_dir/pywal.sh"

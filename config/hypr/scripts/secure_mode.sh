@@ -1,16 +1,15 @@
 #!/bin/bash
 
-# secure mode conains a nature wallpaper.
+# secure_mode — applies a neutral/nature wallpaper immediately.
 
-if [[ -z "$(command -v awww)" ]]; then
+if ! command -v awww &>/dev/null; then
     notify-send "Bro,,, Where is a wallpaper daemon?"
     exit 1
 fi
 
-scripts_dir="$HOME/.config/hypr/scripts"
-cache_dir="$HOME/.config/hypr/.cache"
+scripts_dir="$HOME/.hyprconf/hypr/scripts"
+cache_dir="$HOME/.hyprconf/hypr/.cache"
 Wallpaper="$HOME/.hyprconf/hypr/Wallpaper/crime.jpg"
-previous=$(cat "$cache_dir/.wallpaper")
 
 # Transition config
 FPS=30
@@ -19,8 +18,14 @@ DURATION=0.2
 BEZIER=".28,.58,.99,.37"
 AWWW_PARAMS="--transition-fps $FPS --transition-type $TYPE --transition-duration $DURATION --transition-bezier $BEZIER"
 
-awww-daemon &
-awww img ${Wallpaper} $AWWW_PARAMS
+# Start daemon only if not already running
+if ! pgrep -x "awww-daemon" >/dev/null; then
+    awww-daemon &>/dev/null &
+    disown
+    sleep 0.3
+fi
+
+awww img "${Wallpaper}" $AWWW_PARAMS
 
 ln -sf "$Wallpaper" "$cache_dir/current_wallpaper.png"
 
