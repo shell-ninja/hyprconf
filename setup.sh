@@ -388,14 +388,21 @@ if [[ -d "$HOME/.hyprconf/hypr/Wallpaper" ]]; then
     wall_cache_file="$HOME/.hyprconf/hypr/.cache/.wallpaper"
     mkdir -p "$HOME/.hyprconf/hypr/.cache"
 
-    if [[ -f "$wall_cache_file" ]]; then
-        read -r wallName < "$wall_cache_file"
-        wallpaper=$(find "$HOME/.hyprconf/hypr/Wallpaper" -type f -name "${wallName}.*" 2>/dev/null | head -n1)
-    fi
-
-    if [[ -z "$wallpaper" && -f "$HOME/.hyprconf/hypr/Wallpaper/shell-ninja.png" ]]; then
+    if [[ -f "$HOME/.hyprconf/hypr/Wallpaper/shell-ninja.png" ]]; then
         wallpaper="$HOME/.hyprconf/hypr/Wallpaper/shell-ninja.png"
         echo "shell-ninja" > "$wall_cache_file"
+    elif [[ -f "$wall_cache_file" ]]; then
+        read -r wallName < "$wall_cache_file"
+        [[ -n "$wallName" ]] && wallpaper=$(find "$HOME/.hyprconf/hypr/Wallpaper" -maxdepth 1 -type f -name "${wallName}.*" 2>/dev/null | head -n1)
+    fi
+
+    # Fallback to any available wallpaper if still empty
+    if [[ -z "$wallpaper" ]]; then
+        wallpaper=$(find "$HOME/.hyprconf/hypr/Wallpaper" -maxdepth 1 -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" \) 2>/dev/null | head -n1)
+        if [[ -n "$wallpaper" ]]; then
+            baseName=$(basename "$wallpaper")
+            echo "${baseName%.*}" > "$wall_cache_file"
+        fi
     fi
 
     if [[ -n "$wallpaper" ]]; then
