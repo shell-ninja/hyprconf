@@ -25,35 +25,66 @@ tooltip label {
   color: @teal;
 }
 
+/* Universal smooth visual transition rule for modules */
+#clock,
+#battery,
+#backlight,
+#pulseaudio,
+#network,
+#network#speed,
+#custom-notify,
+#custom-updater,
+#custom-clipboard,
+#custom-nightlight,
+#idle_inhibitor,
+#tray,
+#power-profiles-daemon,
+#window,
+#mpris,
+#cpu,
+#memory,
+#disk,
+#temperature,
+#workspaces button {
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out, opacity 0.2s ease-in-out, border-color 0.2s ease-in-out;
+}
+
 #workspaces button {
   padding: 5px;
   color: @surface1;
   opacity: 0.6;
   margin-right: 5px;
-  background-color: @mantle;
+  background: transparent;
+  box-shadow: none;
+  text-shadow: none;
+  border: none;
+  border-radius: 0;
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out, opacity 0.2s ease-in-out;
 }
 
 #workspaces button.active {
   color: @lavender;
   opacity: 0.8;
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out, opacity 0.2s ease-in-out;
 }
 
 #workspaces button.focused {
   color: @rosewater;
-  background: @crust;
-  border-radius: 15px;
+  background: transparent;
+  border: none;
 }
 
 #workspaces button.urgent {
   color: #11111b;
-  background: @crust;
-  border-radius: 15px;
+  background: transparent;
+  border: none;
 }
 
 #workspaces button:hover {
-  background: @crust;
+  background: transparent;
   color: @flamingo;
-  border-radius: 15px;
+  border: none;
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out, opacity 0.2s ease-in-out;
 }
 
 #custom-launch_rofi,
