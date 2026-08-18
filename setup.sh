@@ -512,6 +512,39 @@ if command -v crudini &> /dev/null; then
     crudini --set ~/.config/kdeglobals Icons Theme "TokyoNight" &> /dev/null || true
 fi
 
+# Set Dolphin / KDE default terminal to kitty
+msg act "Setting Dolphin default terminal to kitty..."
+kdeglobals="$HOME/.config/kdeglobals"
+mkdir -p "$HOME/.config"
+
+if command -v kwriteconfig6 &> /dev/null; then
+    kwriteconfig6 --file kdeglobals --group General --key TerminalApplication "kitty" &> /dev/null || true
+elif command -v kwriteconfig5 &> /dev/null; then
+    kwriteconfig5 --file kdeglobals --group General --key TerminalApplication "kitty" &> /dev/null || true
+elif command -v crudini &> /dev/null; then
+    crudini --set "$kdeglobals" General TerminalApplication "kitty" &> /dev/null || true
+else
+    if [[ ! -f "$kdeglobals" ]]; then
+        cat << 'EOF' >> "$kdeglobals"
+[General]
+TerminalApplication=kitty
+EOF
+    elif grep -q '^\[General\]' "$kdeglobals"; then
+        if grep -q '^TerminalApplication=' "$kdeglobals"; then
+            sed -i 's/^TerminalApplication=.*/TerminalApplication=kitty/' "$kdeglobals"
+        else
+            sed -i '/^\[General\]/a TerminalApplication=kitty' "$kdeglobals"
+        fi
+    else
+        cat << 'EOF' >> "$kdeglobals"
+
+[General]
+TerminalApplication=kitty
+EOF
+    fi
+fi
+
 msg dn "Script execution completed successfully! Please log out and log back in to enjoy your setup."
 
 # === ___ Script Ends Here ___ === #
+
