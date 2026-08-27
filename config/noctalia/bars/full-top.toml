@@ -115,6 +115,7 @@ logging_out = "~/.hyprconf/hypr/scripts/notification.sh logout"
 rebooting = "~/.hyprconf/hypr/scripts/notification.sh logout"
 shutting_down = "~/.hyprconf/hypr/scripts/notification.sh logout"
 started = "~/.hyprconf/hypr/scripts/notification.sh sys"
+wallpaper_changed = "~/.hyprconf/hypr/scripts/Wallpaper.sh set"
 
 [hot_corners]
 enabled = true
