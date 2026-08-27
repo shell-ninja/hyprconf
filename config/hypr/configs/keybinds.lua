@@ -5,6 +5,7 @@ local mainMod         = "SUPER"
 local ctrl            = "CTRL"
 local alt             = "ALT"
 local shift           = "SHIFT"
+local ipc             = ""
 
 local scripts_dir     = os.getenv("HOME") .. "/.hyprconf/hypr/scripts"
 
@@ -25,8 +26,7 @@ hl.bind(mainMod .. " + SHIFT + W", hl.dsp.exec_cmd(wallpaperSelect))
 hl.bind(mainMod .. " + CTRL + SHIFT + W", hl.dsp.exec_cmd(wallpaperSelect))
 
 -- ── Screenshots / Secure mode ─────────────────────────────────────────────────
-hl.bind("print", hl.dsp.exec_cmd(scripts_dir .. "/screenshot.sh"))
-hl.bind("F8", hl.dsp.exec_cmd(scripts_dir .. "/secure_mode.sh"))
+hl.bind("print", hl.dsp.exec_cmd(ipc .. "panel-open launcher \">screenshot\""))
 
 -- ── Help ──────────────────────────────────────────────────────────────────────
 hl.bind(mainMod .. " + SHIFT + H", hl.dsp.exec_cmd(help))
@@ -42,21 +42,19 @@ hl.bind(mainMod .. " + ALT + V", hl.dsp.exec_cmd("hyprctl dispatch workspaceopt 
 hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen())
 hl.bind(mainMod .. " + D", hl.dsp.exec_cmd(scripts_dir .. "/menu.sh || pkill rofi"))
 hl.bind(mainMod .. " + Space", hl.dsp.exec_cmd(scripts_dir .. "/menu.sh"))
-hl.bind(mainMod .. " + ALT + D",
-    hl.dsp.exec_cmd("if pgrep -x noctalia >/dev/null; then " ..
-        scripts_dir .. "/noctalia-launcher.sh; else " .. scripts_dir .. "/rofi_theme.sh; fi"))
+-- hl.bind(mainMod .. " + ALT + D",
+--     hl.dsp.exec_cmd("if pgrep -x noctalia >/dev/null; then " ..
+--         scripts_dir .. "/noctalia-launcher.sh; else " .. scripts_dir .. "/rofi_theme.sh; fi"))
 hl.bind(mainMod .. " + ALT + C",
-    hl.dsp.exec_cmd("if pgrep -x noctalia >/dev/null; then noctalia msg panel-toggle clipboard; else " ..
-        scripts_dir .. "/cliphist.sh c; fi"))
-hl.bind(mainMod .. " + ALT + W", hl.dsp.exec_cmd(scripts_dir .. "/cliphist.sh w"))
-hl.bind(mainMod .. " + SHIFT + D", hl.dsp.exec_cmd(rofi_emoji))
+    hl.dsp.exec_cmd(ipc .. "panel-toggle clipboard"))
+-- hl.bind(mainMod .. " + ALT + W", hl.dsp.exec_cmd(scripts_dir .. "/cliphist.sh w"))
+hl.bind(mainMod .. " + SHIFT + D", hl.dsp.exec_cmd(ipc .. "panel-open launcher \">emo\""))
 hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
 hl.bind(mainMod .. " + SHIFT + P", hl.dsp.window.pseudo())
 
 -- ── Logout / lock ─────────────────────────────────────────────────────────────
-hl.bind(mainMod .. " + X", hl.dsp.exec_cmd("noctalia msg panel-toggle session"))
-hl.bind(mainMod .. " + ALT + X", hl.dsp.exec_cmd(scripts_dir .. "/wlogout.sh 1"))
-hl.bind(mainMod .. " + SHIFT + L", hl.dsp.exec_cmd("noctalia msg session lock"))
+hl.bind(mainMod .. " + X", hl.dsp.exec_cmd(ipc .. "panel-toggle session"))
+hl.bind(mainMod .. " + SHIFT + L", hl.dsp.exec_cmd(ipc .. "session lock"))
 
 -- ── Browser / apps ───────────────────────────────────────────────────────────
 hl.bind(mainMod .. " + C", hl.dsp.exec_cmd("code || codium"))
@@ -70,26 +68,24 @@ hl.bind(alt .. " + B", hl.dsp.exec_cmd(scripts_dir .. "/default_browser.sh --res
 
 -- ── Layout / config ───────────────────────────────────────────────────────────
 hl.bind(mainMod .. " + CTRL + W",
-    hl.dsp.exec_cmd("if pgrep -x noctalia >/dev/null; then " ..
-        scripts_dir .. "/noctalia-bar.sh; else " .. scripts_dir .. "/waybar-layout.sh; fi"))
-hl.bind(mainMod .. " + CTRL + E", hl.dsp.exec_cmd(scripts_dir .. "/edit-dotfiles.sh"))
+    hl.dsp.exec_cmd(scripts_dir .. "/noctalia-bar.sh"))
 hl.bind(mainMod .. " + ALT + B", hl.dsp.exec_cmd(scripts_dir .. "/shell.sh"))
-hl.bind(mainMod .. " + comma", hl.dsp.exec_cmd("noctalia msg settings-toggle"))
-hl.bind(mainMod .. " + SHIFT + S", hl.dsp.exec_cmd("noctalia msg panel-toggle control-center"))
+hl.bind(mainMod .. " + comma", hl.dsp.exec_cmd(ipc .. "settings-toggle"))
+hl.bind(mainMod .. " + SHIFT + S", hl.dsp.exec_cmd(ipc .. "panel-toggle control-center"))
 hl.bind(mainMod .. " + CTRL + R", hl.dsp.exec_cmd("hyprctl reload && notify-send 'Done' 'Hyprland reload'"))
 hl.bind(ctrl .. " + U", hl.dsp.exec_cmd(scripts_dir .. "/systemupdate.sh --update"))
-hl.bind(mainMod .. " + CTRL + U", hl.dsp.exec_cmd("kitty --title browser sh -c '" .. scripts_dir .. "/hyprconf.sh'"))
+-- hl.bind(mainMod .. " + CTRL + U", hl.dsp.exec_cmd("kitty --title browser sh -c '" .. scripts_dir .. "/hyprconf.sh'"))
 hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd(scripts_dir .. "/startup.sh &> /dev/null"))
 hl.bind(mainMod .. " + S", hl.dsp.exec_cmd("kitty --title browser sh -c '" .. scripts_dir .. "/settings.sh'"))
-hl.bind(mainMod .. " + T", hl.dsp.exec_cmd(scripts_dir .. "/dark_light.sh"))
-hl.bind(mainMod .. " + ALT + U", hl.dsp.exec_cmd("kitty sh -c '" .. scripts_dir .. "/uninstall.sh'"))
+-- hl.bind(mainMod .. " + T", hl.dsp.exec_cmd(scripts_dir .. "/dark_light.sh"))
+-- hl.bind(mainMod .. " + ALT + U", hl.dsp.exec_cmd("kitty sh -c '" .. scripts_dir .. "/uninstall.sh'"))
 hl.bind(mainMod .. " + F1", hl.dsp.exec_cmd(scripts_dir .. "/animations_toggle.sh"))
 hl.bind(mainMod .. " + CTRL + P", hl.dsp.exec_cmd(scripts_dir .. "/regenerate-colors.sh"))
 
 -- ── Window switcher / grouping ────────────────────────────────────────────────
 hl.bind(mainMod .. " + Tab",
     hl.dsp.exec_cmd(
-        "if pgrep -x noctalia >/dev/null; then noctalia msg window-switcher; else rofi -show window -theme ~/.config/rofi/themes/rofi-window.rasi; fi"))
+        "if pgrep -x noctalia >/dev/null; then window-switcher; else rofi -show window -theme ~/.config/rofi/themes/rofi-window.rasi; fi"))
 
 -- Cycle next window (Corrected: use hl.dsp.window.cycle_next)
 hl.bind(alt .. " + Tab", hl.dsp.window.cycle_next())

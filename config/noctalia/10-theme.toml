@@ -4,11 +4,28 @@
 # ==============================================================================
 
 [theme]
-mode              = "dark"
-source            = "wallpaper"
-builtin           = "Catppuccin"
-wallpaper_scheme  = "m3-content"
-pure_black_dark   = false
+builtin = "Catppuccin"
+community_palette = "Everforest"
+mode = "dark"
+source = "wallpaper"
+wallpaper_scheme = "vibrant"
 
-[wallpaper.default]
-path = "~/.hyprconf/hypr/Wallpaper"
+    [theme.templates]
+    builtin_ids = [ "alacritty", "btop", "cava", "gtk3", "gtk4", "hyprland", "kcolorscheme", "kitty", "qt", "starship" ]
+    community_ids = [ "antigravity", "neovim", "vscode", "fastfetch", "obs", "bat", "lazygit" ]
+    enable_community_templates = true
+
+[wallpaper]
+directory = "~/.hyprconf/hypr/Wallpaper"
+fill_color = "primary"
+transition_duration = 600
+transition_on_startup = true
+
+    [wallpaper.default]
+    path = "~/.hyprconf/hypr/Wallpaper/future_town.jpg"
+
+    [wallpaper.last]
+    path = "~/.hyprconf/hypr/Wallpaper/future_town.jpg"
+
+    [wallpaper.monitors.HDMI-A-1]
+    path = "~/.hyprconf/hypr/Wallpaper/future_town.jpg"

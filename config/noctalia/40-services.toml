@@ -7,7 +7,116 @@
 enable_daemon = true
 
 [location]
+address = "Munshiganj, Bangladesh"
 custom_schedule = false
 
 [weather]
 unit = "celsius"
+
+[shell.launcher.dmenu.entry.screenshot]
+command = "printf 'Full Screen\tCapture Entire Screen\nSelected Area\tPick a region with mouse\n'"
+exec = "~/.hyprconf/hypr/scripts/screenshot.sh {selection}"
+prefix = "screenshot"   
+
+[desktop_widgets]
+schema_version = 2
+widget_order = [ "desktop-widget-0000000000000002", "desktop-widget-0000000000000003" ]
+
+    [desktop_widgets.grid]
+    cell_size = 64
+    major_interval = 4
+    visible = true
+
+    [desktop_widgets.widget.desktop-widget-0000000000000002]
+    box_height = 64.0
+    box_width = 320.0
+    cx = 1568.0
+    cy = 1020.0
+    output = "HDMI-A-1"
+    placement_height = 1080.0
+    placement_width = 1920.0
+    rotation = 0.0
+    type = "audio_visualizer"
+
+        [desktop_widgets.widget.desktop-widget-0000000000000002.settings]
+        background = false
+        background_padding = 18
+        background_radius = 0
+        bands = 80
+        centered = false
+        mirrored = true
+        show_when_idle = true
+
+    [desktop_widgets.widget.desktop-widget-0000000000000003]
+    box_height = 64.0
+    box_width = 320.0
+    cx = 352.0
+    cy = 1020.0
+    output = "HDMI-A-1"
+    placement_height = 1080.0
+    placement_width = 1920.0
+    rotation = 0.0
+    type = "audio_visualizer"
+
+        [desktop_widgets.widget.desktop-widget-0000000000000003.settings]
+        background = false
+        bands = 80
+        centered = false
+        mirrored = true
+        show_when_idle = true
+
+[dock]
+cross_axis_padding = 3
+icon_size = 25
+item_spacing = 0
+main_axis_padding = 20
+margin_edge = 10
+
+[hooks]
+logging_out = "~/.hyprconf/hypr/scripts/notification.sh logout"
+rebooting = "~/.hyprconf/hypr/scripts/notification.sh logout"
+shutting_down = "~/.hyprconf/hypr/scripts/notification.sh logout"
+started = "~/.hyprconf/hypr/scripts/notification.sh sys"
+
+[hot_corners]
+enabled = true
+
+    [hot_corners.top_left]
+    action = "control_center"
+
+[lockscreen_widgets]
+enabled = false
+schema_version = 2
+widget_order = [ "lockscreen-login-box@HDMI-A-1" ]
+
+    [lockscreen_widgets.grid]
+    cell_size = 16
+    major_interval = 4
+    visible = true
+
+    [lockscreen_widgets.widget."lockscreen-login-box@HDMI-A-1"]
+    box_height = 196.0
+    box_width = 810.0
+    cx = 960.0
+    cy = 898.0
+    output = "HDMI-A-1"
+    placement_height = 1080.0
+    placement_width = 1920.0
+    rotation = 0.0
+    type = "login_box"
+
+        [lockscreen_widgets.widget."lockscreen-login-box@HDMI-A-1".settings]
+        background_color = "surface_variant"
+        background_opacity = 0.88
+        background_radius = 12.0
+        center_password_text = false
+        input_opacity = 1.0
+        input_radius = 6.0
+        layout = "regular"
+        show_caps_lock = true
+        show_keyboard_layout = true
+        show_login_button = true
+        show_media = true
+        show_session_buttons = true
+        show_unlock_hint = true
+        show_weather = true

@@ -4,76 +4,161 @@
 # ==============================================================================
 
 [shell]
-font_family                 = "JetBrainsMono Nerd Font"
-corner_radius_scale         = 1.4
-button_borders              = true
-input_borders               = true
-popup_borders               = true
-card_borders                = true
-popup_shadows               = true
-time_format                 = "{:%I:%M}"
-date_format                 = "%A, %d %B"
-avatar_path                 = "~/.hyprconf/hypr/icons/pc.png"
-settings_show_advanced      = true
-settings_window_translucent = true
-show_location               = true
-clipboard_enabled           = true
-clipboard_keep_from_closed_apps = true
-clipboard_history_max_entries   = 150
+avatar_path = "/home/noct-conf/.hyprconf/hypr/.cache/shell-ninja.jpg"
+button_borders = true
+card_borders = true
+clipboard_auto_paste = "auto"
 clipboard_confirm_clear_history = true
-clipboard_auto_paste        = "auto"
-shared_gl_context           = true
-polkit_agent                = false
+clipboard_enabled = true
+clipboard_history_max_entries = 150
+clipboard_keep_from_closed_apps = true
+corner_radius_scale = 1.3999999999999999
+date_format = "%A, %d %B"
+font_family = "JetBrainsMono Nerd Font"
+input_borders = true
+polkit_agent = false
+popup_borders = true
+popup_shadows = true
+settings_show_advanced = true
+settings_window_translucent = true
+shared_gl_context = true
+show_location = true
+time_format = "{:%I:%M}"
 
-[shell.animation]
-enabled = true
-speed   = 1.0
+    [shell.animation]
+    enabled = true
+    speed = 1.0
 
-[shell.shadow]
-direction = "down"
-alpha     = 0.55
+    [shell.launcher]
+    app_grid = true
+    auto_paste = "auto"
+    categories = true
+    compact = false
+    provider_prefix = ">"
+    show_app_actions = true
+    show_app_origin_indicator = true
+    show_icons = true
+    sort_by_usage = true
 
-[shell.panel]
-transparency_mode          = "glass"
-borders                    = true
-shadow                     = true
-list_item_background       = false
-floating_layer             = "overlay"
-launcher_placement         = "floating"
-clipboard_placement        = "floating"
-control_center_placement   = "attached"
-wallpaper_placement        = "attached"
-session_placement          = "attached"
-polkit_placement           = "floating"
-launcher_position          = "center"
-clipboard_position         = "center"
-polkit_position            = "center"
-floating_offset            = 10
-open_near_click_control_center = false
-open_near_click_launcher       = false
-open_near_click_clipboard      = false
-open_near_click_wallpaper      = false
-open_near_click_session        = false
+        [shell.launcher.dmenu.entry.bar_layouts]
+        command = """printf '
+full-top
+minimal-bottom
+bar-left
+'"""
+        exec = "~/.hyprconf/hypr/scripts/noctalia-bar.sh {selection}"
+        global = false
+        glyph = "monitor"
+        label = "Bar Layout"
+        prefix = "bar"
 
-[shell.screenshot]
-save_to_file         = true
-directory            = "~/Pictures"
-copy_to_clipboard    = true
-freeze_screen        = true
-confirm_region       = false
-remember_last_region = false
-show_cursor          = false
-pipe_to_command      = false
-pipe_command         = ""
+        [shell.launcher.dmenu.entry.commands]
+        command = """printf 'Reload Hyprland	Reload compositor
+Wallpaper Panel	Open wallpaper picker
+Bar: full-top
+Bar: minimal-bottom
+Bar: bar-left
+Noctalia Settings
+'"""
+        exec = "bash -c 'case \"$1\" in \"Reload Hyprland\") hyprctl reload ;; \"Wallpaper Panel\") noctalia msg panel-toggle wallpaper ;; \"Bar: \"*) ~/.hyprconf/hypr/scripts/noctalia-bar.sh \"$1\" ;; \"Launcher: \"*) ~/.hyprconf/hypr/scripts/noctalia-launcher.sh \"$1\" ;; \"Noctalia Settings\") noctalia msg settings-open ;; esac' -- {selection}"
+        global = false
+        glyph = "terminal"
+        label = "Commands"
+        prefix = "cmd"
 
+        [shell.launcher.dmenu.entry.ssh]
+        command = "awk '/^Host /{print $2}' ~/.ssh/config 2>/dev/null || true"
+        exec = "kitty -e ssh {selection}"
+        global = false
+        glyph = "server"
+        prefix = "ssh"
 
-[shell.screen_corners]
-enabled = true
-size    = 32
+        [shell.launcher.providers.calculator]
+        global = true
+        prefix = "calc"
 
-[hooks]
-logging_out = "~/.hyprconf/hypr/scripts/notification.sh logout"
-rebooting = "~/.hyprconf/hypr/scripts/notification.sh logout"
-shutting_down = "~/.hyprconf/hypr/scripts/notification.sh logout"
-started = "~/.hyprconf/hypr/scripts/notification.sh sys"
-wallpaper_changed = "~/.hyprconf/hypr/scripts/Wallpaper.sh set"
+        [shell.launcher.providers.emoji]
+        prefix = "emo"
+
+        [shell.launcher.providers.session]
+        global = false
+        prefix = "session"
+
+        [shell.launcher.providers.wallpaper]
+        prefix = "wall"
+
+        [shell.launcher.providers.windows]
+        prefix = "win"
+
+    [shell.panel]
+    borders = false
+    clipboard_placement = "attached"
+    clipboard_position = "center"
+    control_center_placement = "attached"
+    floating_layer = "top"
+    floating_offset = 10
+    launcher_placement = "attached"
+    launcher_position = "auto"
+    list_item_background = false
+    open_near_click_clipboard = true
+    open_near_click_control_center = false
+    open_near_click_launcher = true
+    open_near_click_session = true
+    open_near_click_wallpaper = true
+    polkit_placement = "floating"
+    polkit_position = "center"
+    session_placement = "attached"
+    shadow = true
+    transparency_mode = "glass"
+    wallpaper_placement = "floating"
+
+    [shell.screen_corners]
+    enabled = true
+    size = 35
+
+    [shell.screenshot]
+    confirm_region = true
+    copy_to_clipboard = true
+    directory = "/home/noct-conf/Pictures/Screenshots"
+    freeze_screen = true
+    pipe_command = ""
+    pipe_to_command = false
+    remember_last_region = false
+    save_to_file = true
+    show_cursor = false
+
+    [shell.session]
+    grid = true
+    grid_columns = 1
+
+        [[shell.session.actions]]
+        action = "lock"
+        countdown_seconds = 0.0
+        enabled = true
+        shortcut = "1"
+        variant = "default"
+
+        [[shell.session.actions]]
+        action = "logout"
+        countdown_seconds = 0.0
+        enabled = true
+        shortcut = "2"
+        variant = "default"
+
+        [[shell.session.actions]]
+        action = "reboot"
+        countdown_seconds = 0.0
+        enabled = true
+        shortcut = "4"
+        variant = "default"
+
+        [[shell.session.actions]]
+        action = "shutdown"
+        countdown_seconds = 0.0
+        enabled = true
+        shortcut = "5"
+        variant = "destructive"
+
+    [shell.shadow]
+    alpha = 0.55000000000000004
+    direction = "down"

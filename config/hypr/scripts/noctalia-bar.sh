@@ -35,7 +35,7 @@ fi
 
 # ── Mode 2: Open dedicated bar layout picker via noctalia launcher /bar ─────────
 if pgrep -x "noctalia" > /dev/null 2>&1; then
-    noctalia msg panel-open launcher "/bar"
+    noctalia msg panel-open launcher ">bar"
     exit 0
 fi
 
