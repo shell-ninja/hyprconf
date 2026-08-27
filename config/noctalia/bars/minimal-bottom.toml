@@ -141,7 +141,7 @@ widget_order = [ "lockscreen-login-box@HDMI-A-1" ]
 enable_daemon = true
 
 [shell]
-avatar_path = "/home/noct-conf/.hyprconf/hypr/.cache/shell-ninja.jpg"
+avatar_path = "~/.hyprconf/hypr/.cache/shell-ninja.jpg"
 button_borders = true
 card_borders = true
 clipboard_auto_paste = "auto"
@@ -263,7 +263,7 @@ Noctalia Settings	Open settings
     [shell.screenshot]
     confirm_region = true
     copy_to_clipboard = true
-    directory = "/home/noct-conf/Pictures/Screenshots"
+    directory = "~/Pictures/Screenshots"
     freeze_screen = true
     pipe_command = ""
     pipe_to_command = false
@@ -320,19 +320,19 @@ wallpaper_scheme = "m3-content"
     enable_community_templates = false
 
 [wallpaper]
-directory = "/home/noct-conf/.hyprconf/hypr/Wallpaper"
+directory = "~/.hyprconf/hypr/Wallpaper"
 fill_color = "primary"
 transition_duration = 600
 transition_on_startup = true
 
     [wallpaper.default]
-    path = "/home/noct-conf/.hyprconf/hypr/Wallpaper/astronaut_wormhole.jpg"
+    path = "~/.hyprconf/hypr/Wallpaper/shell-ninja.png"
 
     [wallpaper.last]
-    path = "/home/noct-conf/.hyprconf/hypr/Wallpaper/astronaut_wormhole.jpg"
+    path = "~/.hyprconf/hypr/Wallpaper/shell-ninja.png"
 
     [wallpaper.monitors.HDMI-A-1]
-    path = "/home/noct-conf/.hyprconf/hypr/Wallpaper/astronaut_wormhole.jpg"
+    path = "~/.hyprconf/hypr/Wallpaper/shell-ninja.png"
 
 [weather]
 unit = "celsius"

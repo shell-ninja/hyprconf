@@ -11,4 +11,4 @@ wallpaper_scheme  = "m3-content"
 pure_black_dark   = false
 
 [wallpaper.default]
-path = "/home/noct-conf/.hyprconf/hypr/Wallpaper"
+path = "~/.hyprconf/hypr/Wallpaper"

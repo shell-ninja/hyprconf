@@ -208,9 +208,9 @@ fi
 # Copy complete configuration tree
 cp -a "$dir/config" "$HOME/.hyprconf"
 
-# Replace placeholder paths in Noctalia configuration with current user's home
+# Dynamically resolve home paths in Noctalia configuration for current user
 if [[ -d "$HOME/.hyprconf/noctalia" ]]; then
-    find "$HOME/.hyprconf/noctalia" -type f -name "*.toml" -exec sed -i "s|/home/noct-conf|$HOME|g" {} + 2>/dev/null || true
+    find "$HOME/.hyprconf/noctalia" -type f -name "*.toml" -exec sed -i "s|~|$HOME|g; s|/home/[^/]*|$HOME|g" {} + 2>/dev/null || true
 fi
 
 # Environment file paths
@@ -299,7 +299,7 @@ mkdir -p "$HOME/.local/state" "$HOME/.local/share"
 [[ -f "$dir/local/state/dolphinstaterc" ]] && cp -r "$dir/local/state/dolphinstaterc" "$HOME/.local/state/"
 if [[ -d "$dir/local/state/noctalia" ]]; then
     cp -r "$dir/local/state/noctalia" "$HOME/.local/state/"
-    find "$HOME/.local/state/noctalia" -type f -exec sed -i "s|/home/noct-conf|$HOME|g" {} + 2>/dev/null || true
+    find "$HOME/.local/state/noctalia" -type f -exec sed -i "s|~|$HOME|g; s|/home/[^/]*|$HOME|g" {} + 2>/dev/null || true
 fi
 [[ -d "$dir/local/share/konsole" ]] && cp -r "$dir/local/share/konsole" "$HOME/.local/share/"
 
@@ -521,51 +521,21 @@ select_noctalia_lockscreen_config() {
     fi
 }
 
-# Interactive Hyprlock Theme Selection
-select_hyprlock_config() {
-    local lock_dir="$HOME/.hyprconf/hypr/lockscreens"
-    local selected_lock="hyprlock-1.conf"
-
-    if [[ -d "$lock_dir" ]]; then
-        local lock_themes=()
-        for theme in "$lock_dir"/hyprlock-*.conf; do
-            [[ -f "$theme" ]] && lock_themes+=("$(basename "$theme")")
-        done
-
-        if [[ ${#lock_themes[@]} -gt 0 ]]; then
-            msg ask "Select your preferred Hyprlock theme:"
-            if command -v gum &> /dev/null; then
-                selected_lock=$(gum choose "${lock_themes[@]}" --selected="hyprlock-1.conf")
-            elif [[ -t 0 ]]; then
-                PS3="$(echo -e '\e[1;32mEnter selection number (default hyprlock-1.conf): \e[0m')"
-                select opt in "${lock_themes[@]}"; do
-                    if [[ -n "$opt" ]]; then
-                        selected_lock="$opt"
-                        break
-                    fi
-                done
-            fi
-        fi
-    fi
-
-    [[ -z "$selected_lock" ]] && selected_lock="hyprlock-1.conf"
-    msg act "Applying Hyprlock theme: $selected_lock"
-    ln -sf "$HOME/.hyprconf/hypr/lockscreens/$selected_lock" "$HOME/.hyprconf/hypr/hyprlock.conf"
-}
+# Ensure default Hyprlock theme symlink
+ln -sf "$HOME/.hyprconf/hypr/lockscreens/hyprlock-1.conf" "$HOME/.hyprconf/hypr/hyprlock.conf"
 
 # Run selection menus
 select_noctalia_bar_config
 select_noctalia_launcher_config
 select_noctalia_lockscreen_config
-select_hyprlock_config
 
-# Generate colors and cache files
+# Generate colors and cache files for default shell-ninja wallpaper
 msg act "Generating colors and cache files..."
 if command -v gum &> /dev/null; then
-    gum spin --title="Generating color scheme & wallpaper cache..." -- bash -c '"$HOME/.hyprconf/hypr/scripts/wallcache.sh" &>/dev/null && "$HOME/.hyprconf/hypr/scripts/noctalia-colors.sh" &>/dev/null'
+    gum spin --title="Generating color scheme & wallpaper cache..." -- bash -c '"$HOME/.hyprconf/hypr/scripts/wallcache.sh" &>/dev/null && "$HOME/.hyprconf/hypr/scripts/noctalia-colors.sh" "'"$wallpaper"'" &>/dev/null'
 else
     "$HOME/.hyprconf/hypr/scripts/wallcache.sh" &> /dev/null
-    "$HOME/.hyprconf/hypr/scripts/noctalia-colors.sh" &> /dev/null
+    "$HOME/.hyprconf/hypr/scripts/noctalia-colors.sh" "$wallpaper" &> /dev/null
 fi
 
 # Enable nightlight service if systemd user daemon is active

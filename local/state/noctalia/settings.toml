@@ -193,7 +193,7 @@ media = false
 enabled = [ "apex077/eyecare", "yuuto/arch-updater" ]
 
 [shell]
-avatar_path = "/home/noct-conf/.hyprconf/hypr/.cache/shell-ninja.jpg"
+avatar_path = "~/.hyprconf/hypr/.cache/shell-ninja.jpg"
 screen_time_enabled = true
 time_format = "{:%I:%M}"
 
@@ -223,7 +223,7 @@ time_format = "{:%I:%M}"
 
     [shell.screenshot]
     confirm_region = true
-    directory = "/home/noct-conf/Pictures/Screenshots"
+    directory = "~/Pictures/Screenshots"
 
     [shell.session]
     grid_columns = 2
@@ -269,19 +269,19 @@ wallpaper_scheme = "m3-content"
     enable_community_templates = false
 
 [wallpaper]
-directory = "/home/noct-conf/.hyprconf/hypr/Wallpaper"
+directory = "~/.hyprconf/hypr/Wallpaper"
 fill_color = "primary"
 transition_duration = 600
 transition_on_startup = true
 
     [wallpaper.default]
-    path = "/home/noct-conf/.hyprconf/hypr/Wallpaper/8.png"
+    path = "~/.hyprconf/hypr/Wallpaper/shell-ninja.png"
 
     [wallpaper.last]
-    path = "/home/noct-conf/.hyprconf/hypr/Wallpaper/8.png"
+    path = "~/.hyprconf/hypr/Wallpaper/shell-ninja.png"
 
     [wallpaper.monitors.HDMI-A-1]
-    path = "/home/noct-conf/.hyprconf/hypr/Wallpaper/8.png"
+    path = "~/.hyprconf/hypr/Wallpaper/shell-ninja.png"
 
 [widget.clock]
 anchor = true

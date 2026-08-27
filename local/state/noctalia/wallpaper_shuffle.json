@@ -1,11 +1,8 @@
 {
   "scopes": {
     "global": {
-      "/home/noct-conf/.hyprconf/hypr/Wallpaper": [
-        "/home/noct-conf/.hyprconf/hypr/Wallpaper/catching-the-desert.jpeg",
-        "/home/noct-conf/.hyprconf/hypr/Wallpaper/linux.jpg",
-        "/home/noct-conf/.hyprconf/hypr/Wallpaper/light/light_mountain.jpg",
-        "/home/noct-conf/.hyprconf/hypr/Wallpaper/8.png"
+      "~/.hyprconf/hypr/Wallpaper": [
+        "~/.hyprconf/hypr/Wallpaper/shell-ninja.png"
       ]
     }
   },

@@ -36,8 +36,11 @@ def get_wallpaper_path():
         except Exception:
             pass
             
-    # Default fallback from Wallpaper folder
+    # Default fallback from Wallpaper folder (prefer shell-ninja.png)
     default_dir = Path(HOME) / ".hyprconf/hypr/Wallpaper"
+    shell_ninja = default_dir / "shell-ninja.png"
+    if shell_ninja.exists():
+        return str(shell_ninja)
     for ext in ["*.jpg", "*.png", "*.jpeg"]:
         for f in default_dir.glob(ext):
             return str(f)
