@@ -47,6 +47,9 @@ hl.window_rule({ match = { title = "^(Authentication Required)$" }, float = true
 hl.window_rule({ match = { class = "^([Tt]hunar)$", title = "^(File Operation Progress)$" }, float = true, center = true })
 hl.window_rule({ match = { class = "^([Tt]hunar)$", title = "^(Confirm to replace files)$" }, float = true, center = true })
 
+-- settings app
+hl.window_rule({ match = { class = "^(dev.shellninja.hypr-settings)$", title = "^(Hyprland Settings)$" }, float = true, center = true })
+
 -- Kitty titles
 hl.window_rule({ match = { class = "^(kitty)$", title = "^(update|floating|yazi|monitor|browser)$" }, float = true })
 hl.window_rule({ match = { class = "^(kitty)$", title = "^(yazi|update|browser)$" }, center = true })
@@ -120,4 +123,3 @@ hl.layer_rule({
     blur = true,
     blur_popups = true,
 })
-

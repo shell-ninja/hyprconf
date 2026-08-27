@@ -76,7 +76,7 @@ hl.bind(mainMod .. " + CTRL + R", hl.dsp.exec_cmd("hyprctl reload && notify-send
 hl.bind(ctrl .. " + U", hl.dsp.exec_cmd(scripts_dir .. "/systemupdate.sh --update"))
 -- hl.bind(mainMod .. " + CTRL + U", hl.dsp.exec_cmd("kitty --title browser sh -c '" .. scripts_dir .. "/hyprconf.sh'"))
 hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd(scripts_dir .. "/startup.sh &> /dev/null"))
-hl.bind(mainMod .. " + S", hl.dsp.exec_cmd(scripts_dir .. "/settings.py'"))
+hl.bind(mainMod .. " + S", hl.dsp.exec_cmd(scripts_dir .. "/settings.py"))
 -- hl.bind(mainMod .. " + T", hl.dsp.exec_cmd(scripts_dir .. "/dark_light.sh"))
 -- hl.bind(mainMod .. " + ALT + U", hl.dsp.exec_cmd("kitty sh -c '" .. scripts_dir .. "/uninstall.sh'"))
 hl.bind(mainMod .. " + F1", hl.dsp.exec_cmd(scripts_dir .. "/animations_toggle.sh"))
