@@ -1,0 +1,8 @@
+[catalog.fastfetch]
+name = "Fastfetch"
+category = "misc"
+
+[templates.fastfetch]
+input_path = "fastfetch-colors.jsonc"
+output_path = "$XDG_CONFIG_HOME/fastfetch/themes/noctalia.jsonc"
+post_hook = "bash '{{ config_dir }}/apply.sh'"

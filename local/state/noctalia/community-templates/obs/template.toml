@@ -1,0 +1,7 @@
+[catalog.obs]
+name = "OBS"
+category = "misc"
+
+[templates.obs]
+input_path = 'matugen.obt'
+output_path = '$XDG_CONFIG_HOME/obs-studio/themes/matugen.obt'

@@ -1,0 +1,18 @@
+[catalog.siyuan]
+name = "Siyuan"
+category = "misc"
+
+[templates.siyuan]
+input_path = "siyuan.css"
+output_path = "~/Documents/SiYuan/conf/appearance/themes/noctalia-siyuan/theme.css"
+requires_path = "~/Documents/SiYuan/conf/appearance/themes/"
+
+[templates.siyuan-home]
+input_path = "siyuan.css"
+output_path = "~/SiYuan/conf/appearance/themes/noctalia-siyuan/theme.css"
+requires_path = "~/SiYuan/conf/appearance/themes/"
+
+[templates.siyuan-dot]
+input_path = "siyuan.css"
+output_path = "~/.siyuan/conf/appearance/themes/noctalia-siyuan/theme.css"
+requires_path = "~/.siyuan/conf/appearance/themes/"

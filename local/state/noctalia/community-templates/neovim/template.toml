@@ -1,0 +1,8 @@
+[catalog.neovim]
+name = "Neovim"
+category = "editor"
+
+[templates.nvim-base16]
+input_path = "matugen-template.lua"
+output_path = "$XDG_CONFIG_HOME/nvim/lua/matugen.lua"
+post_hook = "bash '{{ config_dir }}/apply.sh'"

@@ -1,0 +1,51 @@
+id = "apex077/eyecare"
+name = "Eye-Care Reminders"
+version = "1.0.2"
+plugin_api = 3
+author = "Apex077"
+license = "MIT"
+dependencies = ["dbus-monitor", "canberra-gtk-play", "paplay", "pw-play", "aplay"]
+icon = "eye"
+description = "Periodically reminds you to take breaks using the 20-20-20 rule."
+tags = ["service", "bar", "utility", "productivity"]
+
+[[service]]
+id = "eyecare-service"
+entry = "service.luau"
+
+[[widget]]
+id = "eyecare-widget"
+entry = "widget.luau"
+
+# Global settings shared by service and widget
+[[setting]]
+key = "active_duration_minutes"
+type = "int"
+label_key = "settings.eyecare-active-duration.label"
+description_key = "settings.eyecare-active-duration.description"
+default = 20
+min = 1
+max = 180
+
+[[setting]]
+key = "break_duration_seconds"
+type = "int"
+label_key = "settings.eyecare-break-duration.label"
+description_key = "settings.eyecare-break-duration.description"
+default = 20
+min = 10
+max = 300
+
+[[setting]]
+key = "enable_sound"
+type = "bool"
+label_key = "settings.eyecare-sound.label"
+description_key = "settings.eyecare-sound.description"
+default = true
+
+[[setting]]
+key = "enable_notifications"
+type = "bool"
+label_key = "settings.eyecare-notifications.label"
+description_key = "settings.eyecare-notifications.description"
+default = true

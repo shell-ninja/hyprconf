@@ -1,0 +1,7 @@
+[catalog.rofi]
+name = "Rofi"
+category = "launcher"
+
+[templates.rofi]
+input_path = "rofi.rasi"
+output_path = "$XDG_CONFIG_HOME/rofi/noctalia.rasi"

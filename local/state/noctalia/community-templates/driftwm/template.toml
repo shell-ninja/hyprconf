@@ -1,0 +1,8 @@
+[catalog.driftwm]
+name = "DriftWM"
+category = "compositor"
+
+[templates.driftwm]
+input_path = "driftwm-colors"
+output_path = "$XDG_CACHE_HOME/noctalia-driftwm-colors"
+post_hook = "bash '{{ config_dir }}/apply.sh'"

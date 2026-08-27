@@ -13,3 +13,6 @@ require("configs.keybinds")
 require("configs.kaybinds-for-webapps")
 require("configs.tags")
 require("configs.wrules")
+
+-- For Noctalia Color templates
+require("noctalia").apply_theme()

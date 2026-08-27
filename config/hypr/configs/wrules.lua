@@ -104,8 +104,20 @@ hl.workspace_rule({
     -- decorate = true,  -- Optional: Explicitly enable decorations if disabled globally
 })
 
+hl.window_rule({ match = { class = "^(dev\\.noctalia\\.Noctalia)$" }, float = true, size = "monitor_w*0.6 monitor_h*0.75", center = true })
+
 -- Layer rules
 hl.layer_rule({ match = { namespace = "^rofi$" }, blur = true })
 hl.layer_rule({ match = { namespace = "^notifications$" }, blur = true })
 hl.layer_rule({ match = { namespace = "^gtk-layer-shell$" }, blur = true })
 hl.layer_rule({ match = { namespace = "^waybar$" }, blur = true })
+
+-- Noctalia Shell layer rules
+hl.layer_rule({
+    match = { namespace = "^noctalia-(bar-.+|notification|dock|panel|attached-panel|osd|window-switcher|screen-corner)$" },
+    no_anim = true,
+    ignore_alpha = 0.5,
+    blur = true,
+    blur_popups = true,
+})
+

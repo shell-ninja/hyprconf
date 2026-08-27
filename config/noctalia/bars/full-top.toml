@@ -1,0 +1,433 @@
+[bar.default]
+auto_hide = false
+background_opacity = 0.79999998211860657
+border = "primary"
+border_width = 0
+capsule = true
+capsule_fill = "primary"
+capsule_foreground = "on_primary"
+capsule_opacity = 0.74999998323619366
+capsule_padding = 12.0
+capsule_radius = 16.0
+capsule_thickness = 0.69999998807907104
+center = [ "power_profile", "clock", "notifications", "privacy" ]
+concave_edge_corners = true
+contact_shadow = false
+enabled = true
+end = [ "group:g2", "wallpaper", "group:g1", "network", "session" ]
+hover_highlight = true
+layer = "overlay"
+margin_edge = 0
+margin_ends = 0
+margin_opposite_edge = 0
+padding = 15
+position = "top"
+radius = 20
+reserve_space = true
+scale = 1.0
+shadow = false
+show_on_workspace_switch = true
+smart_auto_hide = false
+start = [ "launcher", "tray", "workspaces", "weather", "media" ]
+thickness = 35
+widget_spacing = 15
+
+    [[bar.default.capsule_group]]
+    accordion = false
+    accordion_direction = "end"
+    enabled = true
+    fill = "primary"
+    foreground = "on_primary"
+    id = "g1"
+    members = [ "caffeine", "nightlight", "clipboard" ]
+    opacity = 0.75
+    padding = 12.0
+    radius = 16.0
+
+    [[bar.default.capsule_group]]
+    accordion = false
+    accordion_direction = "end"
+    enabled = true
+    fill = "primary"
+    foreground = "on_primary"
+    id = "g2"
+    members = [ "volume", "input_volume" ]
+    opacity = 0.75
+    padding = 16.0
+    radius = 16.0
+
+[desktop_widgets]
+schema_version = 2
+widget_order = [ "desktop-widget-0000000000000002", "desktop-widget-0000000000000003" ]
+
+    [desktop_widgets.grid]
+    cell_size = 64
+    major_interval = 4
+    visible = true
+
+    [desktop_widgets.widget.desktop-widget-0000000000000002]
+    box_height = 64.0
+    box_width = 320.0
+    cx = 1568.0
+    cy = 1020.0
+    output = "HDMI-A-1"
+    placement_height = 1080.0
+    placement_width = 1920.0
+    rotation = 0.0
+    type = "audio_visualizer"
+
+        [desktop_widgets.widget.desktop-widget-0000000000000002.settings]
+        background = false
+        background_padding = 18
+        background_radius = 0
+        bands = 80
+        centered = false
+        mirrored = true
+        show_when_idle = true
+
+    [desktop_widgets.widget.desktop-widget-0000000000000003]
+    box_height = 64.0
+    box_width = 320.0
+    cx = 352.0
+    cy = 1020.0
+    output = "HDMI-A-1"
+    placement_height = 1080.0
+    placement_width = 1920.0
+    rotation = 0.0
+    type = "audio_visualizer"
+
+        [desktop_widgets.widget.desktop-widget-0000000000000003.settings]
+        background = false
+        bands = 80
+        centered = false
+        mirrored = true
+        show_when_idle = true
+
+[dock]
+cross_axis_padding = 3
+icon_size = 25
+item_spacing = 0
+main_axis_padding = 20
+margin_edge = 10
+
+[hooks]
+logging_out = "~/.hyprconf/hypr/scripts/notification.sh logout"
+rebooting = "~/.hyprconf/hypr/scripts/notification.sh logout"
+shutting_down = "~/.hyprconf/hypr/scripts/notification.sh logout"
+started = "~/.hyprconf/hypr/scripts/notification.sh sys"
+
+[hot_corners]
+enabled = true
+
+    [hot_corners.top_left]
+    action = "control_center"
+
+[location]
+address = "Munshiganj, Bangladesh"
+custom_schedule = false
+
+[lockscreen_widgets]
+enabled = false
+schema_version = 2
+widget_order = [ "lockscreen-login-box@HDMI-A-1" ]
+
+    [lockscreen_widgets.grid]
+    cell_size = 16
+    major_interval = 4
+    visible = true
+
+    [lockscreen_widgets.widget."lockscreen-login-box@HDMI-A-1"]
+    box_height = 196.0
+    box_width = 810.0
+    cx = 960.0
+    cy = 898.0
+    output = "HDMI-A-1"
+    placement_height = 1080.0
+    placement_width = 1920.0
+    rotation = 0.0
+    type = "login_box"
+
+        [lockscreen_widgets.widget."lockscreen-login-box@HDMI-A-1".settings]
+        background_color = "surface_variant"
+        background_opacity = 0.88
+        background_radius = 12.0
+        center_password_text = false
+        input_opacity = 1.0
+        input_radius = 6.0
+        layout = "regular"
+        show_caps_lock = true
+        show_keyboard_layout = true
+        show_login_button = true
+        show_media = true
+        show_session_buttons = true
+        show_unlock_hint = true
+        show_weather = true
+
+[notification]
+enable_daemon = true
+
+[shell]
+avatar_path = "/home/noct-conf/.hyprconf/hypr/.cache/shell-ninja.jpg"
+button_borders = true
+card_borders = true
+clipboard_auto_paste = "auto"
+clipboard_confirm_clear_history = true
+clipboard_enabled = true
+clipboard_history_max_entries = 150
+clipboard_keep_from_closed_apps = true
+corner_radius_scale = 1.3999999999999999
+date_format = "%A, %d %B"
+font_family = "JetBrainsMono Nerd Font"
+input_borders = true
+polkit_agent = false
+popup_borders = true
+popup_shadows = true
+settings_show_advanced = true
+settings_window_translucent = true
+shared_gl_context = true
+show_location = true
+time_format = "{:%I:%M}"
+
+    [shell.animation]
+    enabled = true
+    speed = 1.0
+
+    [shell.launcher]
+    app_grid = true
+    auto_paste = "auto"
+    categories = true
+    compact = false
+    provider_prefix = "/"
+    show_app_actions = true
+    show_app_origin_indicator = true
+    show_icons = true
+    sort_by_usage = true
+
+        [shell.launcher.dmenu.entry.bar_layouts]
+        command = """printf 'rounded-top	Floating pill bar (top)
+dual-tone-top	Dual-tone top bar
+full-top	Full-width top bar
+minimal-bottom	Minimal bottom bar
+bar-left	Vertical left sidebar
+'"""
+        exec = "~/.hyprconf/hypr/scripts/noctalia-bar.sh {selection}"
+        global = false
+        glyph = "monitor"
+        label = "Bar Layout"
+        prefix = "bar"
+
+        [shell.launcher.dmenu.entry.commands]
+        command = """printf 'Reload Hyprland	Reload compositor
+Wallpaper Panel	Open wallpaper picker
+Bar: rounded-top	Floating pill top bar
+Bar: dual-tone-top	Dual-tone top bar
+Bar: full-top	Full-width top bar
+Bar: minimal-bottom	Minimal bottom bar
+Bar: bar-left	Vertical left bar
+Launcher: compact-list	Compact list
+Launcher: spotlight-glass	Spotlight modal
+Launcher: grid	Icon grid
+Launcher: sidebar-attached	Sidebar drawer
+Noctalia Settings	Open settings
+'"""
+        exec = "bash -c 'case \"$1\" in \"Reload Hyprland\") hyprctl reload ;; \"Wallpaper Panel\") noctalia msg panel-toggle wallpaper ;; \"Bar: \"*) ~/.hyprconf/hypr/scripts/noctalia-bar.sh \"$1\" ;; \"Launcher: \"*) ~/.hyprconf/hypr/scripts/noctalia-launcher.sh \"$1\" ;; \"Noctalia Settings\") noctalia msg settings-open ;; esac' -- {selection}"
+        global = false
+        glyph = "terminal"
+        label = "Commands"
+        prefix = "cmd"
+
+        [shell.launcher.dmenu.entry.ssh]
+        command = "awk '/^Host /{print $2}' ~/.ssh/config 2>/dev/null || true"
+        exec = "kitty -e ssh {selection}"
+        global = false
+        glyph = "server"
+        prefix = "ssh"
+
+        [shell.launcher.providers.calculator]
+        global = true
+        prefix = "calc"
+
+        [shell.launcher.providers.emoji]
+        prefix = "emo"
+
+        [shell.launcher.providers.session]
+        global = false
+        prefix = "session"
+
+        [shell.launcher.providers.wallpaper]
+        prefix = "wall"
+
+        [shell.launcher.providers.windows]
+        prefix = "win"
+
+    [shell.panel]
+    borders = false
+    clipboard_placement = "attached"
+    clipboard_position = "center"
+    control_center_placement = "attached"
+    floating_layer = "top"
+    floating_offset = 10
+    launcher_placement = "attached"
+    launcher_position = "auto"
+    list_item_background = false
+    open_near_click_clipboard = true
+    open_near_click_control_center = false
+    open_near_click_launcher = true
+    open_near_click_session = true
+    open_near_click_wallpaper = true
+    polkit_placement = "floating"
+    polkit_position = "center"
+    session_placement = "attached"
+    shadow = true
+    transparency_mode = "glass"
+    wallpaper_placement = "floating"
+
+    [shell.screen_corners]
+    enabled = true
+    size = 32
+
+    [shell.screenshot]
+    confirm_region = true
+    copy_to_clipboard = true
+    directory = "/home/noct-conf/Pictures/Screenshots"
+    freeze_screen = true
+    pipe_command = ""
+    pipe_to_command = false
+    remember_last_region = false
+    save_to_file = true
+    show_cursor = false
+
+    [shell.session]
+    grid = true
+    grid_columns = 1
+
+        [[shell.session.actions]]
+        action = "lock"
+        countdown_seconds = 0.0
+        enabled = true
+        shortcut = "1"
+        variant = "default"
+
+        [[shell.session.actions]]
+        action = "logout"
+        countdown_seconds = 0.0
+        enabled = true
+        shortcut = "2"
+        variant = "default"
+
+        [[shell.session.actions]]
+        action = "reboot"
+        countdown_seconds = 0.0
+        enabled = true
+        shortcut = "4"
+        variant = "default"
+
+        [[shell.session.actions]]
+        action = "shutdown"
+        countdown_seconds = 0.0
+        enabled = true
+        shortcut = "5"
+        variant = "destructive"
+
+    [shell.shadow]
+    alpha = 0.55000000000000004
+    direction = "down"
+
+[theme]
+builtin = "Catppuccin"
+community_palette = "Everforest"
+mode = "dark"
+pure_black_dark = false
+source = "wallpaper"
+wallpaper_scheme = "m3-content"
+
+    [theme.templates]
+    builtin_ids = [ "alacritty", "btop", "cava", "gtk3", "gtk4", "hyprland", "kcolorscheme", "kitty", "qt", "starship" ]
+    enable_community_templates = false
+
+[wallpaper]
+directory = "/home/noct-conf/.hyprconf/hypr/Wallpaper"
+fill_color = "primary"
+transition_duration = 600
+transition_on_startup = true
+
+    [wallpaper.default]
+    path = "/home/noct-conf/.hyprconf/hypr/Wallpaper/future_town.jpg"
+
+    [wallpaper.last]
+    path = "/home/noct-conf/.hyprconf/hypr/Wallpaper/future_town.jpg"
+
+    [wallpaper.monitors.HDMI-A-1]
+    path = "/home/noct-conf/.hyprconf/hypr/Wallpaper/future_town.jpg"
+
+[weather]
+unit = "celsius"
+
+[widget.clock]
+anchor = true
+format = "  {:%I:%M %p}  "
+timezone = "Asia/Dhaka"
+tooltip_format = "{:%A, %B %d, %Y}"
+
+[widget.control-center]
+glyph = "settings"
+
+[widget.input_volume]
+font_weight = 800
+
+[widget.launcher]
+custom_image_colorize = true
+glyph = "menu-4"
+
+[widget.media]
+hide_when_no_media = true
+title_scroll = "always"
+
+[widget.network]
+show_label = false
+
+[widget.privacy]
+hide_inactive = true
+icon_spacing = 6
+type = "privacy"
+
+[widget.session]
+color = "on_error"
+font_weight = 800
+
+[widget.tray]
+detached_panel = false
+drawer = true
+drawer_columns = 3
+drawer_item_size = 20
+hidden = [ "org.kde.StatusNotifierItem-1-1" ]
+hide_passive = true
+pinned = []
+
+[widget.volume]
+font_weight = 800
+
+[widget.wallpaper]
+glyph = "photo"
+
+[widget.weather]
+show_condition = false
+
+[widget.workspaces]
+active_pill_size = 2.0499999999999998
+change_color_on_hover = true
+empty_color = "surface_variant"
+focused_color = "on_primary"
+focused_output_only = false
+hide_when_empty = true
+inactive_pill_size = 1.0
+label_source = "id"
+labels_only_when_occupied = true
+max_label_chars = 5
+occupied_color = "on_primary"
+pill_scale = 1.0
+scale = 1.2
+show_all_outputs = false
+show_labels = false
+style = "regular"
+urgent_color = "error"

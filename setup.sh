@@ -99,18 +99,14 @@ dirs=(
     kitty
     Kvantum
     menus
+    noctalia
     nvim
     nwg-look
     pypr
     qt5ct
     qt6ct
-    rofi
     satty
-    swaync
     systemd
-    wal
-    waybar
-    wlogout
     xfce4
     xsettingsd
     yazi
@@ -212,6 +208,11 @@ fi
 # Copy complete configuration tree
 cp -a "$dir/config" "$HOME/.hyprconf"
 
+# Replace placeholder paths in Noctalia configuration with current user's home
+if [[ -d "$HOME/.hyprconf/noctalia" ]]; then
+    find "$HOME/.hyprconf/noctalia" -type f -name "*.toml" -exec sed -i "s|/home/noct-conf|$HOME|g" {} + 2>/dev/null || true
+fi
+
 # Environment file paths
 env_file="$HOME/.hyprconf/hypr/configs/environment.lua"
 monitor_file="$HOME/.hyprconf/hypr/configs/monitor.lua"
@@ -247,12 +248,13 @@ if [[ -d "$HOME/.hyprconf/fastfetch" && ! -d "$HOME/.local/share/fastfetch" ]]; 
     mv "$HOME/.hyprconf/fastfetch" "$HOME/.local/share/"
 fi
 
-# Symlinking configuration directories to ~/.config
-for dotfilesDir in "$HOME/.hyprconf"/*; do
-    [[ -d "$dotfilesDir" ]] || continue
-    configDirName=$(basename "$dotfilesDir")
-    configDirPath="$HOME/.config/$configDirName"
-    ln -sfn "$dotfilesDir" "$configDirPath"
+# Symlinking configuration directories and files to ~/.config
+for dotfile in "$HOME/.hyprconf"/*; do
+    [[ -e "$dotfile" ]] || continue
+    configName=$(basename "$dotfile")
+    [[ "$configName" == "MIGRATION_TODO.md" ]] && continue
+    configPath="$HOME/.config/$configName"
+    ln -sfn "$dotfile" "$configPath"
 done
 
 # Set permissions for scripts and fish functions
@@ -282,9 +284,12 @@ else
     msg skp "Fonts are already installed."
 fi
 
-# Extra files setup (dolphinstaterc, konsole)
+# Extra files setup (dolphinstaterc, konsole, noctalia state)
 if [[ -f "$HOME/.local/state/dolphinstaterc" ]]; then
     mv "$HOME/.local/state/dolphinstaterc" "$HOME/.local/state/dolphinstaterc.back"
+fi
+if [[ -d "$HOME/.local/state/noctalia" ]]; then
+    mv "$HOME/.local/state/noctalia" "$HOME/.local/state/noctalia.back"
 fi
 if [[ -d "$HOME/.local/share/konsole" ]]; then
     mv "$HOME/.local/share/konsole" "$HOME/.local/share/konsole.back"
@@ -292,6 +297,10 @@ fi
 
 mkdir -p "$HOME/.local/state" "$HOME/.local/share"
 [[ -f "$dir/local/state/dolphinstaterc" ]] && cp -r "$dir/local/state/dolphinstaterc" "$HOME/.local/state/"
+if [[ -d "$dir/local/state/noctalia" ]]; then
+    cp -r "$dir/local/state/noctalia" "$HOME/.local/state/"
+    find "$HOME/.local/state/noctalia" -type f -exec sed -i "s|/home/noct-conf|$HOME|g" {} + 2>/dev/null || true
+fi
 [[ -d "$dir/local/share/konsole" ]] && cp -r "$dir/local/share/konsole" "$HOME/.local/share/"
 
 # Wayland session file installation
@@ -410,26 +419,26 @@ if [[ -d "$HOME/.hyprconf/hypr/Wallpaper" ]]; then
     fi
 fi
 
-# Interactive Waybar Configuration Selection
-select_waybar_config() {
-    local waybar_configs_dir="$HOME/.hyprconf/waybar/configs"
-    local selected_config="full-top"
+# Interactive Noctalia Bar Configuration Selection
+select_noctalia_bar_config() {
+    local bars_dir="$HOME/.hyprconf/noctalia/bars"
+    local selected_bar="full-top"
 
-    if [[ -d "$waybar_configs_dir" ]]; then
-        local configs=()
-        for cfg in "$waybar_configs_dir"/*; do
-            [[ -f "$cfg" ]] && configs+=("$(basename "$cfg")")
+    if [[ -d "$bars_dir" ]]; then
+        local bars=()
+        for cfg in "$bars_dir"/*.toml; do
+            [[ -f "$cfg" ]] && bars+=("$(basename "$cfg" .toml)")
         done
 
-        if [[ ${#configs[@]} -gt 0 ]]; then
-            msg ask "Select your preferred Waybar layout:"
+        if [[ ${#bars[@]} -gt 0 ]]; then
+            msg ask "Select your preferred Noctalia Bar layout:"
             if command -v gum &> /dev/null; then
-                selected_config=$(gum choose "${configs[@]}" --selected="full-top")
+                selected_bar=$(gum choose "${bars[@]}" --selected="full-top")
             elif [[ -t 0 ]]; then
                 PS3="$(echo -e '\e[1;32mEnter selection number (default full-top): \e[0m')"
-                select opt in "${configs[@]}"; do
+                select opt in "${bars[@]}"; do
                     if [[ -n "$opt" ]]; then
-                        selected_config="$opt"
+                        selected_bar="$opt"
                         break
                     fi
                 done
@@ -437,13 +446,78 @@ select_waybar_config() {
         fi
     fi
 
-    [[ -z "$selected_config" ]] && selected_config="full-top"
-    msg act "Applying Waybar layout: $selected_config"
-    ln -sf "$HOME/.hyprconf/waybar/configs/$selected_config" "$HOME/.hyprconf/waybar/config"
-    if [[ -f "$HOME/.hyprconf/waybar/style/${selected_config}.css" ]]; then
-        ln -sf "$HOME/.hyprconf/waybar/style/${selected_config}.css" "$HOME/.hyprconf/waybar/style.css"
-    else
-        ln -sf "$HOME/.hyprconf/waybar/style/full-top.css" "$HOME/.hyprconf/waybar/style.css"
+    [[ -z "$selected_bar" ]] && selected_bar="full-top"
+    msg act "Applying Noctalia Bar layout: $selected_bar"
+    if [[ -f "$bars_dir/${selected_bar}.toml" ]]; then
+        cp "$bars_dir/${selected_bar}.toml" "$HOME/.hyprconf/noctalia/20-bar.toml"
+    fi
+}
+
+# Interactive Noctalia Launcher Style Selection
+select_noctalia_launcher_config() {
+    local launchers_dir="$HOME/.hyprconf/noctalia/launchers"
+    local selected_launcher="spotlight-glass"
+
+    if [[ -d "$launchers_dir" ]]; then
+        local launchers=()
+        for cfg in "$launchers_dir"/*.toml; do
+            [[ -f "$cfg" ]] && launchers+=("$(basename "$cfg" .toml)")
+        done
+
+        if [[ ${#launchers[@]} -gt 0 ]]; then
+            msg ask "Select your preferred Noctalia Launcher style:"
+            if command -v gum &> /dev/null; then
+                selected_launcher=$(gum choose "${launchers[@]}" --selected="spotlight-glass")
+            elif [[ -t 0 ]]; then
+                PS3="$(echo -e '\e[1;32mEnter selection number (default spotlight-glass): \e[0m')"
+                select opt in "${launchers[@]}"; do
+                    if [[ -n "$opt" ]]; then
+                        selected_launcher="$opt"
+                        break
+                    fi
+                done
+            fi
+        fi
+    fi
+
+    [[ -z "$selected_launcher" ]] && selected_launcher="spotlight-glass"
+    msg act "Applying Noctalia Launcher style: $selected_launcher"
+    if [[ -f "$launchers_dir/${selected_launcher}.toml" ]]; then
+        cp "$launchers_dir/${selected_launcher}.toml" "$HOME/.hyprconf/noctalia/30-launcher.toml"
+    fi
+}
+
+# Interactive Noctalia Lockscreen Layout Selection
+select_noctalia_lockscreen_config() {
+    local locks_dir="$HOME/.hyprconf/noctalia/lockscreens"
+    local selected_lock="glass-card-center"
+
+    if [[ -d "$locks_dir" ]]; then
+        local locks=()
+        for cfg in "$locks_dir"/*.toml; do
+            [[ -f "$cfg" ]] && locks+=("$(basename "$cfg" .toml)")
+        done
+
+        if [[ ${#locks[@]} -gt 0 ]]; then
+            msg ask "Select your preferred Noctalia Lockscreen layout:"
+            if command -v gum &> /dev/null; then
+                selected_lock=$(gum choose "${locks[@]}" --selected="glass-card-center")
+            elif [[ -t 0 ]]; then
+                PS3="$(echo -e '\e[1;32mEnter selection number (default glass-card-center): \e[0m')"
+                select opt in "${locks[@]}"; do
+                    if [[ -n "$opt" ]]; then
+                        selected_lock="$opt"
+                        break
+                    fi
+                done
+            fi
+        fi
+    fi
+
+    [[ -z "$selected_lock" ]] && selected_lock="glass-card-center"
+    msg act "Applying Noctalia Lockscreen layout: $selected_lock"
+    if [[ -f "$locks_dir/${selected_lock}.toml" ]]; then
+        cp "$locks_dir/${selected_lock}.toml" "$HOME/.hyprconf/noctalia/50-lockscreen.toml"
     fi
 }
 
@@ -480,16 +554,18 @@ select_hyprlock_config() {
 }
 
 # Run selection menus
-select_waybar_config
+select_noctalia_bar_config
+select_noctalia_launcher_config
+select_noctalia_lockscreen_config
 select_hyprlock_config
 
 # Generate colors and cache files
 msg act "Generating colors and cache files..."
 if command -v gum &> /dev/null; then
-    gum spin --title="Generating color scheme & wallpaper cache..." -- bash -c '"$HOME/.hyprconf/hypr/scripts/wallcache.sh" &>/dev/null && "$HOME/.hyprconf/hypr/scripts/pywal.sh" &>/dev/null'
+    gum spin --title="Generating color scheme & wallpaper cache..." -- bash -c '"$HOME/.hyprconf/hypr/scripts/wallcache.sh" &>/dev/null && "$HOME/.hyprconf/hypr/scripts/noctalia-colors.sh" &>/dev/null'
 else
     "$HOME/.hyprconf/hypr/scripts/wallcache.sh" &> /dev/null
-    "$HOME/.hyprconf/hypr/scripts/pywal.sh" &> /dev/null
+    "$HOME/.hyprconf/hypr/scripts/noctalia-colors.sh" &> /dev/null
 fi
 
 # Enable nightlight service if systemd user daemon is active

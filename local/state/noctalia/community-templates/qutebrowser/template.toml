@@ -1,0 +1,8 @@
+[catalog.qutebrowser]
+name = "qutebrowser"
+category = "browser"
+
+[templates.qutebrowser]
+input_path = "template.py"
+output_path = "$XDG_CONFIG_HOME/qutebrowser/noctalia/colors.py"
+post_hook = "sh \"${XDG_STATE_HOME:-$HOME/.local/state}/noctalia/community-templates/qutebrowser/reload.sh\""

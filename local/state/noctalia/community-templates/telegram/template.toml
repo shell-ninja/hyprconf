@@ -1,0 +1,7 @@
+[catalog.telegram]
+name = "Telegram"
+category = "chat"
+
+[templates.telegram]
+input_path = "telegram.tdesktop-theme"
+output_path = "$XDG_CONFIG_HOME/telegram-desktop/themes/noctalia.tdesktop-theme"

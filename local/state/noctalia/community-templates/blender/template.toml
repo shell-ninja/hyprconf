@@ -1,0 +1,15 @@
+[catalog.blender]
+name = "Blender"
+category = "editor"
+
+[templates.blender]
+input_path = "blender_theme.py"
+output_path = "~/.cache/noctalia/blender_theme_rendered.py"
+post_hook = "blender --background --python ~/.cache/noctalia/blender_theme_rendered.py"
+requires_path = "~/.config/blender"
+
+[templates.blender-flatpak]
+input_path = "blender_theme.py"
+output_path = "~/.cache/noctalia/blender_theme_rendered.py"
+post_hook = "flatpak run org.blender.Blender --background --python ~/.cache/noctalia/blender_theme_rendered.py"
+requires_path = "~/.var/app/org.blender.Blender"

@@ -1,0 +1,25 @@
+/* One polkit password per update run instead of one per pacman transaction.
+ *
+ * paru runs `pkexec pacman ...` separately for the database sync and for
+ * every install transaction, and plain pkexec re-authenticates each time.
+ * AUTH_ADMIN_KEEP caches a successful authentication for ~5 minutes (same
+ * idea as sudo's timestamp), so one password covers the whole run. A build
+ * that takes longer than 5 minutes between transactions may still prompt
+ * again.
+ *
+ * Scope: only pkexec launching /usr/bin/pacman, only for an active local
+ * session of a wheel member.
+ *
+ * Install (root required):
+ *   sudo install -Dm644 polkit/49-arch-updater-pacman.rules /etc/polkit-1/rules.d/49-arch-updater-pacman.rules
+ * Remove:
+ *   sudo rm /etc/polkit-1/rules.d/49-arch-updater-pacman.rules
+ */
+polkit.addRule(function(action, subject) {
+    if (action.id == "org.freedesktop.policykit.exec" &&
+        action.lookup("program") == "/usr/bin/pacman" &&
+        subject.active && subject.local &&
+        subject.isInGroup("wheel")) {
+        return polkit.Result.AUTH_ADMIN_KEEP;
+    }
+});

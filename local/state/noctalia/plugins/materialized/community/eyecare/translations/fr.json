@@ -1,0 +1,10 @@
+{
+  "notifications": {
+    "eyecare-break-title": "Le temps d'une pause"
+  },
+  "settings": {
+    "eyecare-break-duration": {
+      "label": "Durée de la pause"
+    }
+  }
+}

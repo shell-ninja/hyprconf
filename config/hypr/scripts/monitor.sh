@@ -52,8 +52,8 @@ printf "\n"
 
 gum spin \
     --spinner minidot \
-    --spinner.foreground "#9dd1e8" \
-    --title.foreground "#9dd1e8" \
+    --spinner.foreground "#aab0c3" \
+    --title.foreground "#aab0c3" \
     --title "Setting up your monitor..." -- \
     sleep 2
 
@@ -79,9 +79,9 @@ else
     selected_monitor=$(
         printf '%s\n' "${monitors[@]}" | gum choose \
             --header "󰍹 Select a monitor:" \
-            --header.foreground "#9dd1e8" \
-            --selected.foreground "#9dd1e8" \
-            --cursor.foreground "#9dd1e8" \
+            --header.foreground "#aab0c3" \
+            --selected.foreground "#aab0c3" \
+            --cursor.foreground "#aab0c3" \
     )
 fi
 
@@ -107,9 +107,9 @@ printf "\n"
 refresh_rate=$(
     gum choose \
         --header "󰍹 Choose the refresh rate for '$monitor_name' (Current: ${current_refresh}Hz)" \
-        --header.foreground "#9dd1e8" \
-        --selected.foreground "#9dd1e8" \
-        --cursor.foreground "#9dd1e8" \
+        --header.foreground "#aab0c3" \
+        --selected.foreground "#aab0c3" \
+        --cursor.foreground "#aab0c3" \
         "60Hz" \
         "75Hz" \
         "120Hz" \
@@ -128,9 +128,9 @@ printf "\n"
 scale_choice=$(
     gum choose \
         --header "󰍹 Choose display scaling for '$monitor_name':" \
-        --header.foreground "#9dd1e8" \
-        --selected.foreground "#9dd1e8" \
-        --cursor.foreground "#9dd1e8" \
+        --header.foreground "#aab0c3" \
+        --selected.foreground "#aab0c3" \
+        --cursor.foreground "#aab0c3" \
         "1" \
         "1.25" \
         "1.5" \

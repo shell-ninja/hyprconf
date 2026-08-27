@@ -1,0 +1,14 @@
+# ==============================================================================
+# Noctalia Shell Configuration: Theming & Palettes
+# Synchronized with Hyprconf dotfiles & Pywal
+# ==============================================================================
+
+[theme]
+mode              = "dark"
+source            = "wallpaper"
+builtin           = "Catppuccin"
+wallpaper_scheme  = "m3-content"
+pure_black_dark   = false
+
+[wallpaper.default]
+path = "/home/noct-conf/.hyprconf/hypr/Wallpaper"

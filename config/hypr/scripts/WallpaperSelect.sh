@@ -1,5 +1,6 @@
-#!/bin/bash
-# WallpaperSelect.sh — Select a wallpaper via rofi and apply it.
+#!/usr/bin/env bash
+# WallpaperSelect.sh — Select a wallpaper and apply it.
+# Uses Noctalia's built-in wallpaper panel when noctalia is running.
 
 scripts_dir="$HOME/.hyprconf/hypr/scripts"
 wallDIR="$HOME/.hyprconf/hypr/Wallpaper"
@@ -8,10 +9,18 @@ wallCache="$cache_dir/.wallpaper"
 
 [[ ! -f "$wallCache" ]] && touch "$wallCache"
 
+# ── If Noctalia is running, delegate to its native wallpaper panel ─────────────
+if pgrep -x "noctalia" > /dev/null 2>&1; then
+    noctalia msg panel-toggle wallpaper
+    exit 0
+fi
+
+# ── Fallback: pick manually when noctalia is not running ──────────────────────
+
 # Detect wallpaper engine
-if command -v awww >/dev/null 2>&1; then
+if command -v awww > /dev/null 2>&1; then
     ENGINE="awww"
-elif command -v swww >/dev/null 2>&1; then
+elif command -v swww > /dev/null 2>&1; then
     ENGINE="swww"
 else
     notify-send "Wallpaper Error" "Neither awww nor swww is installed."
@@ -23,59 +32,19 @@ FPS=120
 TYPE="any"
 DURATION=1
 BEZIER=".28,.58,.99,.37"
-
 AWWW_PARAMS="--transition-fps $FPS --transition-type $TYPE --transition-duration $DURATION --transition-bezier $BEZIER"
 
-# Safely retrieve image files (NUL-delimited to handle spaces in names)
+# Collect wallpapers
 mapfile -d '' _PICS_FULL < <(
     find "$wallDIR" -maxdepth 1 -type f \
     \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.gif" \) \
     -print0
 )
+[[ ${#_PICS_FULL[@]} -eq 0 ]] && { notify-send "Wallpaper Error" "No wallpapers found."; exit 1; }
 
-# Exit if no wallpapers found
-[[ ${#_PICS_FULL[@]} -eq 0 ]] && exit 1
-
-# Build basename-only array
-PICS=()
-for p in "${_PICS_FULL[@]}"; do
-    PICS+=("$(basename "$p")")
-done
-
-RANDOM_PIC="${_PICS_FULL[RANDOM % ${#_PICS_FULL[@]}]}"
-RANDOM_PIC_NAME="${#PICS[@]}. random"
-
-# Rofi commands
-rofi_command1="rofi -show -dmenu -config ~/.config/rofi/themes/rofi-wall.rasi"
-rofi_command2="rofi -show -dmenu -config ~/.config/rofi/themes/rofi-wall-2.rasi"
-
-menu() {
-    for i in "${!PICS[@]}"; do
-        name="${PICS[$i]}"
-        full="${_PICS_FULL[$i]}"
-
-        if [[ "$name" != *.gif ]]; then
-            printf "%s\x00icon\x1f%s\n" "${name%.*}" "$full"
-        else
-            printf "%s\n" "$name"
-        fi
-    done
-
-    printf "%s\n" "$RANDOM_PIC_NAME"
-}
-
-case $1 in
-    thm1) choice=$(menu | ${rofi_command1}) ;;
-    thm2) choice=$(menu | ${rofi_command2}) ;;
-    *) choice=$(menu | ${rofi_command1}) ;;
-esac
-
-# No choice → exit
-[[ -z "$choice" ]] && exit 0
-
-# Start daemon if not already running
+# Start daemon if needed
 start_daemon() {
-    if ! pgrep -x "${ENGINE}-daemon" >/dev/null; then
+    if ! pgrep -x "${ENGINE}-daemon" > /dev/null 2>&1; then
         ${ENGINE}-daemon &>/dev/null &
         disown
         sleep 0.5
@@ -85,42 +54,16 @@ start_daemon() {
 # Apply wallpaper
 set_wallpaper() {
     local img="$1"
+    local base
+    base="$(basename "$img")"
     ${ENGINE} img "$img" $AWWW_PARAMS
-
     ln -sf "$img" "$cache_dir/current_wallpaper.png"
-
-    local baseName wallName
-    baseName="$(basename "$img")"
-    wallName="${baseName%.*}"
-
-    echo "$wallName" > "$wallCache"
+    echo "${base%.*}" > "$wallCache"
 }
 
+# Pick a random wallpaper (no UI fallback since rofi is removed)
 start_daemon
+set_wallpaper "${_PICS_FULL[RANDOM % ${#_PICS_FULL[@]}]}"
 
-# Random choice
-if [[ "$choice" == "$RANDOM_PIC_NAME" ]]; then
-    set_wallpaper "$RANDOM_PIC"
-else
-    # Match by stem
-    selected_full=""
-
-    for i in "${!PICS[@]}"; do
-        stem="${PICS[$i]%.*}"
-
-        if [[ "$stem" == "$choice" ]]; then
-            selected_full="${_PICS_FULL[$i]}"
-            break
-        fi
-    done
-
-    if [[ -z "$selected_full" ]]; then
-        notify-send "Wallpaper Error" "Image not found."
-        exit 1
-    fi
-
-    set_wallpaper "$selected_full"
-fi
-
-# wallcache.sh is called by pywal.sh — no need to call it again here
-"$scripts_dir/pywal.sh"
+# Apply dynamic colors to Kitty, Hyprland, and screen shader
+"$scripts_dir/noctalia-colors.sh"

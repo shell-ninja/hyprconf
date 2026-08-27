@@ -68,5 +68,12 @@ set_wallpaper() {
 start_daemon
 set_wallpaper "$wallpaper"
 
-# wallcache.sh is called by pywal.sh — no need to call it here too
-"$scripts_dir/pywal.sh"
+# Notify Noctalia shell if active
+if pgrep -x "noctalia" >/dev/null 2>&1; then
+    noctalia msg wallpaper-set "$wallpaper" &>/dev/null || true
+fi
+
+# Apply dynamic colors to Kitty, Hyprland, and screen shader
+"$scripts_dir/noctalia-colors.sh" "$wallpaper"
+
+

@@ -1,0 +1,8 @@
+[catalog.fuzzel]
+name = "Fuzzel"
+category = "launcher"
+
+[templates.fuzzel]
+input_path = "fuzzel.conf"
+output_path = "$XDG_CONFIG_HOME/fuzzel/themes/noctalia"
+post_hook = "bash '{{ config_dir }}/apply.sh'"

@@ -1,0 +1,334 @@
+config_version = 13
+
+[brightness]
+enable_ddcutil = true
+minimum_brightness = 0.29999999329447746
+sync_all_monitors = true
+
+[calendar]
+enabled = true
+
+[desktop_widgets]
+schema_version = 2
+widget_order = [ "desktop-widget-0000000000000002", "desktop-widget-0000000000000003" ]
+
+    [desktop_widgets.grid]
+    cell_size = 64
+    major_interval = 4
+    visible = true
+
+    [desktop_widgets.widget.desktop-widget-0000000000000002]
+    box_height = 64.0
+    box_width = 320.0
+    cx = 1568.0
+    cy = 1020.0
+    output = "HDMI-A-1"
+    placement_height = 1080.0
+    placement_width = 1920.0
+    rotation = 0.0
+    type = "audio_visualizer"
+
+        [desktop_widgets.widget.desktop-widget-0000000000000002.settings]
+        background = false
+        background_padding = 18
+        background_radius = 0
+        bands = 80
+        centered = false
+        mirrored = true
+        show_when_idle = true
+
+    [desktop_widgets.widget.desktop-widget-0000000000000003]
+    box_height = 64.0
+    box_width = 320.0
+    cx = 352.0
+    cy = 1020.0
+    output = "HDMI-A-1"
+    placement_height = 1080.0
+    placement_width = 1920.0
+    rotation = 0.0
+    type = "audio_visualizer"
+
+        [desktop_widgets.widget.desktop-widget-0000000000000003.settings]
+        background = false
+        bands = 80
+        centered = false
+        mirrored = true
+        show_when_idle = true
+
+[dock]
+cross_axis_padding = 3
+icon_size = 25
+item_spacing = 0
+main_axis_padding = 20
+margin_edge = 10
+
+[hooks]
+logging_out = "~/.hyprconf/hypr/scripts/notification.sh logout"
+rebooting = "~/.hyprconf/hypr/scripts/notification.sh logout"
+shutting_down = "~/.hyprconf/hypr/scripts/notification.sh logout"
+started = "~/.hyprconf/hypr/scripts/notification.sh sys"
+
+[hot_corners]
+enabled = true
+
+    [hot_corners.top_left]
+    action = "control_center"
+
+[location]
+address = "Munshiganj, Bangladesh"
+
+[lockscreen_widgets]
+enabled = true
+schema_version = 2
+widget_order = [
+    "lockscreen-login-box@HDMI-A-1",
+    "lockscreen-widget-0000000000000001",
+    "lockscreen-widget-0000000000000002",
+    "lockscreen-widget-0000000000000003",
+    "lockscreen-widget-0000000000000004"
+]
+
+    [lockscreen_widgets.grid]
+    cell_size = 16
+    major_interval = 4
+    visible = true
+
+    [lockscreen_widgets.widget."lockscreen-login-box@HDMI-A-1"]
+    box_height = 70.0
+    box_width = 512.0
+    cx = 960.0
+    cy = 993.0
+    output = "HDMI-A-1"
+    placement_height = 1080.0
+    placement_width = 1920.0
+    rotation = 0.0
+    type = "login_box"
+
+        [lockscreen_widgets.widget."lockscreen-login-box@HDMI-A-1".settings]
+        background_color = "surface"
+        background_opacity = 0.55000000000000004
+        background_radius = 12.0
+        center_password_text = false
+        input_opacity = 1.0
+        input_radius = 14.0
+        layout = "compact"
+        show_caps_lock = true
+        show_keyboard_layout = true
+        show_login_button = false
+        show_media = false
+        show_session_buttons = true
+        show_unlock_hint = true
+        show_weather = true
+
+    [lockscreen_widgets.widget.lockscreen-widget-0000000000000001]
+    box_height = 240.0
+    box_width = 528.0
+    cx = 960.0
+    cy = 156.0
+    output = "HDMI-A-1"
+    placement_height = 1080.0
+    placement_width = 1920.0
+    rotation = 0.0
+    type = "clock"
+
+        [lockscreen_widgets.widget.lockscreen-widget-0000000000000001.settings]
+        background = false
+        clock_style = "digital"
+        color = "primary"
+        format = "{:%I:%M}"
+
+    [lockscreen_widgets.widget.lockscreen-widget-0000000000000002]
+    box_height = 48.0
+    box_width = 688.0
+    cx = 960.0
+    cy = 1052.0
+    output = "HDMI-A-1"
+    placement_height = 1080.0
+    placement_width = 1920.0
+    rotation = 0.0
+    type = "audio_visualizer"
+
+        [lockscreen_widgets.widget.lockscreen-widget-0000000000000002.settings]
+        background = false
+        bands = 80
+        centered = false
+        mirrored = true
+        show_when_idle = true
+
+    [lockscreen_widgets.widget.lockscreen-widget-0000000000000003]
+    box_height = 0.0
+    box_width = 0.0
+    cx = 960.0
+    cy = 286.0
+    output = "HDMI-A-1"
+    placement_height = 1080.0
+    placement_width = 1920.0
+    rotation = 0.0
+    type = "weather"
+
+        [lockscreen_widgets.widget.lockscreen-widget-0000000000000003.settings]
+        background = false
+        color = "primary"
+
+    [lockscreen_widgets.widget.lockscreen-widget-0000000000000004]
+    box_height = 96.0
+    box_width = 176.0
+    cx = 1816.0
+    cy = 1006.0
+    output = "HDMI-A-1"
+    placement_height = 1080.0
+    placement_width = 1920.0
+    rotation = 0.0
+    type = "sysmon"
+
+        [lockscreen_widgets.widget.lockscreen-widget-0000000000000004.settings]
+        background = false
+        stat = "cpu_usage"
+        stat2 = "ram_pct"
+
+[osd.kinds]
+media = false
+
+[plugins]
+enabled = [ "apex077/eyecare", "yuuto/arch-updater" ]
+
+[shell]
+avatar_path = "/home/noct-conf/.hyprconf/hypr/.cache/shell-ninja.jpg"
+screen_time_enabled = true
+time_format = "{:%I:%M}"
+
+    [shell.launcher]
+    app_grid = false
+    categories = false
+    compact = true
+
+        [shell.launcher.providers.emoji]
+        global = true
+
+    [shell.panel]
+    borders = false
+    clipboard_placement = "attached"
+    floating_layer = "top"
+    floating_offset = 10
+    launcher_placement = "attached"
+    open_near_click_clipboard = true
+    open_near_click_launcher = true
+    open_near_click_session = true
+    open_near_click_wallpaper = true
+    polkit_placement = "attached"
+    session_placement = "floating"
+    session_position = "center"
+    transparency_mode = "glass"
+    wallpaper_placement = "attached"
+
+    [shell.screenshot]
+    confirm_region = true
+    directory = "/home/noct-conf/Pictures/Screenshots"
+
+    [shell.session]
+    grid_columns = 2
+    show_shortcuts = false
+
+        [[shell.session.actions]]
+        action = "lock"
+        countdown_seconds = 0.0
+        enabled = true
+        shortcut = "1"
+        variant = "ghost"
+
+        [[shell.session.actions]]
+        action = "logout"
+        countdown_seconds = 3.0
+        enabled = true
+        shortcut = "2"
+        variant = "ghost"
+
+        [[shell.session.actions]]
+        action = "reboot"
+        countdown_seconds = 3.0
+        enabled = true
+        shortcut = "3"
+        variant = "ghost"
+
+        [[shell.session.actions]]
+        action = "shutdown"
+        countdown_seconds = 3.0
+        enabled = true
+        shortcut = "4"
+        variant = "destructive"
+
+[theme]
+builtin = "Catppuccin"
+community_palette = "Everforest"
+mode = "dark"
+source = "wallpaper"
+wallpaper_scheme = "m3-content"
+
+    [theme.templates]
+    builtin_ids = [ "alacritty", "btop", "cava", "gtk3", "gtk4", "hyprland", "kcolorscheme", "kitty", "qt", "starship" ]
+    enable_community_templates = false
+
+[wallpaper]
+directory = "/home/noct-conf/.hyprconf/hypr/Wallpaper"
+fill_color = "primary"
+transition_duration = 600
+transition_on_startup = true
+
+    [wallpaper.default]
+    path = "/home/noct-conf/.hyprconf/hypr/Wallpaper/8.png"
+
+    [wallpaper.last]
+    path = "/home/noct-conf/.hyprconf/hypr/Wallpaper/8.png"
+
+    [wallpaper.monitors.HDMI-A-1]
+    path = "/home/noct-conf/.hyprconf/hypr/Wallpaper/8.png"
+
+[widget.clock]
+anchor = true
+format = "{:%I:%M %p}"
+timezone = "Asia/Dhaka"
+vertical_format = ""
+
+[widget.control-center]
+glyph = "settings"
+
+[widget.date]
+format = "{:%d - %m - %y}"
+
+[widget.input_volume]
+font_weight = 800
+
+[widget.launcher]
+glyph = "apps-filled"
+
+[widget.media]
+hide_when_no_media = true
+title_scroll = "always"
+
+[widget.network]
+show_label = false
+
+[widget.session]
+color = "on_error"
+font_weight = 800
+
+[widget.volume]
+font_weight = 800
+
+[widget.weather]
+show_condition = false
+
+[widget.widget]
+color = "on_primary"
+glyph = "pacman"
+hide_on_empty = true
+icon_color = "on_primary"
+type = "yuuto/arch-updater:widget"
+
+[widget.workspaces]
+active_pill_size = 2.0499999999999998
+anchor = true
+inactive_pill_size = 1.0
+max_label_chars = 5
+occupied_color = "primary"
+scale = 1.1000000000000001

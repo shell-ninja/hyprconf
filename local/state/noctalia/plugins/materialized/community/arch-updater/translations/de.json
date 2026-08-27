@@ -1,0 +1,224 @@
+{
+  "action_back": "Zurück",
+  "action_check": "Updates prüfen",
+  "action_dismiss": "Verwerfen",
+  "action_open_log": "Log öffnen",
+  "action_open_news": "News öffnen",
+  "action_polkit_install": "Ask once",
+  "action_run_terminal": "In Terminal erneut versuchen",
+  "action_update": "Aktualisieren",
+  "activity": {
+    "days_ago": {
+      "one": "vor 1 Tag",
+      "other": "vor {count} Tagen"
+    },
+    "hours_ago": {
+      "one": "vor 1 Stunde",
+      "other": "vor {count} Stunden"
+    },
+    "just_now": "gerade eben",
+    "minutes_ago": {
+      "one": "vor 1 Minute",
+      "other": "vor {count} Minuten"
+    },
+    "never_updated": "Noch nie aktualisiert",
+    "pending_at": {
+      "one": "1 ausstehendes Update",
+      "other": "{count} ausstehende Updates"
+    },
+    "title": "Aktivität",
+    "updated": "Aktualisiert",
+    "updated_days_ago": {
+      "one": "Vor 1 Tag aktualisiert",
+      "other": "Vor {count} Tagen aktualisiert"
+    },
+    "updated_today": "Heute aktualisiert"
+  },
+  "caption_checked": "geprüft {time}",
+  "changelog_empty": "Kein Changelog verfügbar",
+  "changelog_title": "Was ist neu",
+  "caption_ignored": {
+    "one": "1 Paket ignoriert",
+    "other": "{count} Pakete ignoriert"
+  },
+  "err_check_timeout": "Zeitüberschreitung beim Prüfen auf Updates",
+  "err_no_checkupdates": "checkupdates nicht gefunden, pacman-contrib installieren und PATH prüfen",
+  "err_no_pkexec": "pkexec nicht gefunden, Polkit ist nicht installiert",
+  "err_no_terminal": "Kein Terminal-Emulator gefunden, in den Plugin-Einstellungen festlegen",
+  "err_no_xdg_open": "xdg-open nicht gefunden, Paketseite kann nicht geöffnet werden",
+  "err_polkit_install": "Polkit regeln können nicht installiert werden, Details im Systemlog prüfen",
+  "err_run_failed": "Update fehlgeschlagen (exit {code}), versuche es erneut im Terminal oder prüfe die Log-Datei",
+  "err_terminal_closed": "Das Terminal-Fenster wurde geschlossen, bevor das Update fertig war. Versuche es erneut im Terminal oder prüfe die Log-Datei",
+  "err_spawn": "checkupdates konnte nicht gestartet werden",
+  "history_rollback_tag": "Rollback",
+  "history_title": "Verlauf aktualisieren",
+  "hover_hint": "Zeigt beim Überfahren eines Pakets die vollständigen Versionen",
+  "ignored_tag_settings": "einstellungen",
+  "ignored_tag_system": "pacman.conf",
+  "ignored_tip_settings": "durch die Ignorierliste in den Plugin-Einstellungen ignoriert, zum bearbeiten klicken.",
+  "ignored_tip_system": "durch IgnorePkg in pacman.conf ignoriert, zum bearbeiten klicken.",
+  "ignored_title": "Ignorierte Pakete",
+  "launcher": {
+    "check_subtitle": "Pacman, AUR und Flatpak auf Updates prüfen",
+    "news_subtitle": "Arch-Linux-News-Seite öffnen",
+    "update_subtitle": "Terminal öffnen und Update ausführen"
+  },
+  "log_title": "Update-Log",
+  "log_waiting": "Warte auf die polkiit password prompt und auf die erste Log-Ausgabe…",
+  "more_packages": "+{count} weitere",
+  "news_unread": {
+    "one": "1 ungelesener Arch-News-Beitrag: „{title}“",
+    "other": "{count} ungelesene Arch-News-Beiträge, zuletzt: „{title}“"
+  },
+  "notify_updates": {
+    "one": "1 Paket zu aktualisieren",
+    "other": "{count} Pakete zu aktualisieren"
+  },
+  "reboot_recommended": "Neustart empfohlen, der laufende Kernel ist nicht mehr installiert",
+  "run": {
+    "press_key": "Beliebige Taste zum Schließen drücken"
+  },
+  "settings": {
+    "activity_history_length": {
+      "description": "Wie viele der letzten Prüfungen für das Aktivitätsdiagramm aufbewahrt werden.",
+      "label": "Länge des Aktivitätsverlaufs"
+    },
+    "assume_yes": {
+      "description": "Übergibt --noconfirm / -y, damit Paketmanager nicht nach Bestätigung fragen. Aus bedeutet, du bestätigst jedes Paket im Terminal-Fenster selbst.",
+      "label": "Automatisch mit Ja bestätigen"
+    },
+    "aur_check_cmd": {
+      "description": "Wird nur verwendet, wenn oben „Eigener Befehl“ gewählt ist. Muss pro Paket eine Zeile im Format 'name oldver -> newver' ausgeben, wie 'yay -Qua' es tut.",
+      "label": "Eigener AUR-Prüfbefehl"
+    },
+    "aur_helper": {
+      "description": "Welcher AUR-Helfer AUR-Pakete prüft und aktualisiert. „Automatisch erkennen“ versucht zuerst yay, dann paru. „Eigener Befehl“ verwendet den unten angegebenen Prüfbefehl.",
+      "label": "AUR-Helfer",
+      "options": {
+        "auto": "Automatisch erkennen (yay, dann paru)",
+        "custom": "Eigener Befehl",
+        "off": "Aus, nur Pacman",
+        "paru": "paru",
+        "yay": "yay"
+      }
+    },
+    "auto_check_hours": {
+      "description": "Prüft automatisch alle N Stunden auf Updates. 0 (Standard) prüft nie von selbst.",
+      "label": "Intervall für automatische Prüfung (Stunden)"
+    },
+    "check_arch_news": {
+      "description": "Ruft den Arch-Linux-News-Feed ab und markiert ungelesene Beiträge im Panel.",
+      "label": "Arch-Linux-News prüfen"
+    },
+    "check_reboot_needed": {
+      "description": "Prüft, ob die Dateien des aktuell laufenden Kernels noch vorhanden sind. Fehlen sie, wurde ein neuerer Kernel installiert, und erst ein Neustart wechselt darauf.",
+      "label": "Auf nötigen Neustart prüfen"
+    },
+    "flatpak_enabled": {
+      "description": "Prüft zusätzlich (und führt beim Aktualisieren) 'flatpak update' aus. Wird automatisch übersprungen, wenn Flatpak nicht installiert ist.",
+      "label": "Flatpak einbeziehen"
+    },
+    "glyph": {
+      "description": "Das für das Widget in der Bar angezeigte Symbol.",
+      "label": "Bar-Symbol"
+    },
+    "hide_on_empty": {
+      "description": "Blendet das Widget vollständig aus, wenn keine Updates ausstehen und kein Neustart empfohlen wird. Aus (Standard) zeigt das Symbol immer.",
+      "label": "Ausblenden, wenn nichts anliegt"
+    },
+    "hide_polkit_hint": {
+      "description": "Blendet den Hinweis aus, polkit zu installieren.",
+      "label": "Hinweis zu Polkit ausblenden"
+    },
+    "ignore_packages": {
+      "description": "Paketnamen, die aus der Zählung ausgeschlossen und beim Update zusätzlich als --ignore übergeben werden, ergänzend zu pacman.confs eigenem IgnorePkg.",
+      "label": "Pakete ignorieren"
+    },
+    "notify_on_updates": {
+      "description": "Sendet eine Desktop-Benachrichtigung, wenn eine Prüfung aktualisierbare Pakete findet.",
+      "label": "Bei gefundenen Updates benachrichtigen"
+    },
+    "rollback_auto_ignore": {
+      "description": "Ignoriert Pakete automatisch, die nach einem Rollback noch installiert sind, bis sie wieder aktualisiert werden.",
+      "label": "Pakete nach einem Rollback ignorieren"
+    },
+    "show_activity_graph": {
+      "description": "Zeichnet die Anzahl ausstehender Updates über die letzten Prüfungen sowie den letzten Update-Zeitpunkt auf und zeigt sie als kleines Diagramm im Panel. Deaktiviert stoppt auch die Aufzeichnung.",
+      "label": "Aktivitätsdiagramm anzeigen"
+    },
+    "show_changelog_after_update": {
+      "description": "Öffnet den Changelog im Panel automatisch, sobald ein Update erfolgreich abgeschlossen wurde.",
+      "label": "Changelog nach dem Update anzeigen"
+    },
+    "show_count": {
+      "description": "Zeigt die Anzahl ausstehender Updates neben dem Bar-Symbol.",
+      "label": "Anzahl der Updates anzeigen"
+    },
+    "show_download_size": {
+      "description": "Schätzt die gesamte Downloadgröße der ausstehenden Pacman-Pakete mit 'pacman -Si'. AUR- und Flatpak-Größen sind nicht enthalten.",
+      "label": "Downloadgröße anzeigen"
+    },
+    "terminal": {
+      "description": "Terminal-Befehl für den Update-Lauf, z. B. kitty oder ghostty. Leer (Standard) verwendet Noctalias eigene Terminal-Erkennung ($TERMINAL, dann die gängigen Emulatoren).",
+      "label": "Terminal"
+    },
+    "update_cmd": {
+      "description": "Vollständige Überschreibung des im Terminal ausgeführten Befehls beim Aktualisieren. Leer (Standard) baut ihn aus AUR-Helfer, Ignorierliste, Flatpak und „Automatisch mit Ja bestätigen“ oben zusammen.",
+      "label": "Eigener Update-Befehl"
+    },
+    "update_mode": {
+      "description": "Wie Updates installiert werden. Hintergrund (nicht interaktiv) verwendet den AUR-Helfer und --noconfirm, Terminal öffnet ein Terminal-Fenster, in dem du die Updates selbst bestätigen kannst.",
+      "label": "Update modus",
+      "options": {
+        "background": "Im hintergrund (nicht interaktiv & RISKANT)",
+        "terminal": "In einem Terminal-Fenster"
+      }
+    }
+  },
+  "size_gib": "≈ {value} GiB Downloadgröße",
+  "size_mib": "≈ {value} MiB Downloadgröße",
+  "source": {
+    "aur": "AUR",
+    "aur_named": "AUR ({helper})",
+    "flatpak": "Flatpak",
+    "pacman": "Pacman"
+  },
+  "status_checking": "Prüfe auf Updates…",
+  "status_checking_step": "Prüfe {step}…",
+  "status_clean": "System ist aktuell",
+  "status_error": "Prüfung fehlgeschlagen",
+  "status_idle": "Noch nicht geprüft",
+  "status_missing": "checkupdates fehlt, pacman-contrib installieren",
+  "status_ready": {
+    "one": "1 Paket zu aktualisieren",
+    "other": "{count} Pakete zu aktualisieren"
+  },
+  "status_rolling_back": "Rollback läuft…",
+  "status_running": "Update läuft in einem Terminal…",
+  "status_running_terminal": "Update läuft in einem Terminal-Fenster…",
+  "tip_changelog": "Zeigt, was sich in den einzelnen Versionen geändert hat",
+  "tip_check": "Jetzt auf Updates prüfen",
+  "tip_close": "Schließen",
+  "tip_copy": "Name und Versionen kopieren",
+  "tip_history_segment": "klicke, um die Pakete anzuzeigen",
+  "tip_open_page": "Paketseite öffnen",
+  "tip_polkit_install": "Polkit-Regeln installieren, damit Updates im Hintergrund laufen",
+  "tip_rollback": "Rollback zurück zur version {version}, zusammen mit abhängigen Paketen.",
+  "tip_rollback_run": "alle Pakete auf die Versionen zurücksetzen, die vor dem Rollback installiert waren",
+  "tip_run_terminal": "Öffnet ein Terminal-Fenster, in dem du die Updates selbst bestätigen kannst",
+  "tip_update": "Update in einem Terminal-Fenster ausführen",
+  "tip_update_terminal": "in einem terminal-Fenster ausführen, in dem prompts und die PKGBUILD ausgabe angezeigt werden",
+  "title": "Arch Updater",
+  "tooltip_checked": "Geprüft",
+  "tooltip_hints": "Klick: Panel · rechts: jetzt prüfen",
+  "tooltip_news": "Arch News",
+  "tooltip_news_value": {
+    "one": "1 ungelesen",
+    "other": "{count} ungelesen"
+  },
+  "tooltip_pending": "Ausstehend",
+  "tooltip_reboot_key": "Neustart",
+  "tooltip_reboot_value": "empfohlen",
+  "tooltip_status": "Status",
+  "up_to_date": "Aktuell: {sources}"
+}

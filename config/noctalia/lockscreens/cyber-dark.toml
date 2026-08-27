@@ -1,0 +1,52 @@
+# ==============================================================================
+# Noctalia Lockscreen Preset: Cyber Obsidian & Dark
+# Deep obsidian contrast with high-blur background, crisp translucent
+# container, glowing inputs, and compact layout.
+# ==============================================================================
+
+[lockscreen]
+enabled             = true
+wallpaper           = ""
+blurred_desktop     = true
+blur_intensity      = 0.95
+tint_intensity      = 0.65
+lock_before_suspend = true
+allow_empty_password= false
+fingerprint         = false
+
+[lockscreen_widgets]
+enabled         = true
+schema_version  = 2
+widget_order    = [ "lockscreen-login-box@HDMI-A-1" ]
+
+    [lockscreen_widgets.grid]
+    cell_size      = 16
+    major_interval = 4
+    visible        = false
+
+    [lockscreen_widgets.widget."lockscreen-login-box@HDMI-A-1"]
+    type             = "login_box"
+    output           = "HDMI-A-1"
+    placement_width  = 1920.0
+    placement_height = 1080.0
+    cx               = 960.0
+    cy               = 540.0
+    box_width        = 680.0
+    box_height       = 220.0
+    rotation         = 0.0
+
+        [lockscreen_widgets.widget."lockscreen-login-box@HDMI-A-1".settings]
+        layout                 = "regular"
+        background_color       = "surface"
+        background_opacity     = 0.92
+        background_radius      = 16.0
+        input_opacity          = 1.0
+        input_radius           = 10.0
+        center_password_text   = true
+        show_weather           = true
+        show_media             = true
+        show_session_buttons   = true
+        show_keyboard_layout   = true
+        show_caps_lock         = true
+        show_login_button      = true
+        show_unlock_hint       = true

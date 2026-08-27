@@ -1,0 +1,13 @@
+[catalog.spicetify]
+name = "Spicetify"
+category = "audio"
+
+[templates.spicetify]
+input_path = "spicetify.ini"
+output_path = "$XDG_CONFIG_HOME/spicetify/Themes/Comfy/color.ini"
+post_hook = "bash '{{ config_dir }}/apply.sh'"
+
+[templates.spicetify_colorful]
+input_path = "spicetify_colorful.ini"
+output_path = "$XDG_CONFIG_HOME/spicetify/Themes/Colorful/color.ini"
+post_hook = "bash '{{ config_dir }}/apply.sh'"

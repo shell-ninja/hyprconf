@@ -1,0 +1,8 @@
+[catalog.velo]
+name = "velo"
+category = "launcher"
+
+[templates.velo]
+input_path = "palette.json"
+output_path = "$XDG_CONFIG_HOME/velo/palettes/current-noctalia-override.json"
+post_hook = "bash '{{ config_dir }}/apply.sh' {{ mode }}"

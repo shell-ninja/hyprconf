@@ -1,0 +1,43 @@
+{
+  "Applications": {
+    "/usr/share/applications/antigravity-ide.desktop": 7,
+    "/usr/share/applications/brave-origin.desktop": 9,
+    "/usr/share/applications/claude-desktop.desktop": 1,
+    "/usr/share/applications/com.github.wwmm.easyeffects.desktop": 1,
+    "/usr/share/applications/com.obsproject.Studio.desktop": 1,
+    "/usr/share/applications/dev.noctalia.Noctalia.desktop": 1,
+    "/usr/share/applications/nwg-look.desktop": 3,
+    "/usr/share/applications/qt6ct.desktop": 1,
+    "/usr/share/applications/thunar.desktop": 2,
+    "desktop-action:53:/usr/share/applications/dev.noctalia.Noctalia.desktop:Settings": 1
+  },
+  "dmenu.bar_layouts": {
+    "bar-left\tVertical left sidebar": 21,
+    "dual-tone-top\tDual-tone top bar": 6,
+    "full-top\tFull-width top bar": 29,
+    "minimal-bottom\tMinimal bottom bar": 12,
+    "rounded-top\tFloating pill bar (top)": 3
+  },
+  "dmenu.commands": {
+    "Bar Layouts\tChange Noctalia bar layout": 3,
+    "Bar: dual-tone-top\tDual-tone top bar": 1,
+    "Bar: full-top\tFull-width top bar": 1,
+    "Bar: minimal-bottom\tMinimal bottom bar": 2,
+    "Bar: rounded-top\tFloating pill bar at top": 3,
+    "Launcher Styles\tChange launcher presentation": 1,
+    "Launcher: compact-list\tCompact list": 1,
+    "Launcher: grid\tIcon grid": 1,
+    "Launcher: spotlight-glass\tSpotlight modal": 2,
+    "Noctalia Settings\tOpen Noctalia GUI settings": 1,
+    "Reload Hyprland\tReload compositor config": 1,
+    "Wallpaper Next\tSwitch to random wallpaper": 1,
+    "Wallpaper Panel\tOpen Noctalia wallpaper picker": 3,
+    "Wallpaper Panel\tOpen wallpaper picker": 1
+  },
+  "dmenu.lock_layouts": {
+    "cyber-dark\tCyber obsidian dark layout": 1,
+    "glass-card-center\tGlassmorphic center card": 1,
+    "media-hub\tMedia & studio hub": 1,
+    "minimal-capsule\tMinimal pill capsule": 1
+  }
+}

@@ -1,0 +1,118 @@
+{
+  "action_check": "Güncellemeleri kontrol et",
+  "action_dismiss": "Kapat",
+  "action_open_news": "Haberleri aç",
+  "action_update": "Güncelle",
+  "caption_checked": "kontrol süresi {time}",
+  "caption_ignored": {
+    "one": "1 paket yoksayıldı",
+    "other": "{count} paket yoksayıldı"
+  },
+  "err_aur_failed": "AUR kontrolü başarısız, detaylar için sistem loglarına bak",
+  "err_check_failed": "checkupdates başarısız, detaylar için sistem log'larını kontrol et",
+  "err_check_timeout": "Güncellemeler kontrol edilirken zaman aşımına uğrandı",
+  "err_flatpak_failed": "Flatpak kontrolü başarısız, detaylar için sistem log'larını kontrol et",
+  "err_no_checkupdates": "checkupdates bulunamadı, pacman-contrib'i yükle ve PATH'i kontrol et",
+  "err_no_terminal": "Terminal emülatörü bulunamadı, eklenti ayarlarından ekle",
+  "err_no_xdg_open": "xdg-open bulunamadı, paket sayfası açılamıyor",
+  "err_spawn": "checkupdates çalıştırılamadı",
+  "hover_hint": "Bir paketin full versiyonları için fareyle üzerine gelin",
+  "launcher": {
+    "check_subtitle": "pacman, AUR, ve Flatpak'i güncellemeler için kontrol et",
+    "news_subtitle": "Arch Linux bültenini aç",
+    "update_subtitle": "Terminali aç ve güncellemeleri başlat"
+  },
+  "more_packages": "+{count} tane daha",
+  "news_unread": {
+    "one": "Okunmamış 1 Arch haberi mevcut: \"{title}\"",
+    "other": "Okunmamış {couınt} Arch haberleri mevcut, sonuncusu: \"{title}\""
+  },
+  "notify_updates": {
+    "one": "Güncellenecek 1 paket mevcut",
+    "other": "Güncellenecek {count} paket mevcut"
+  },
+  "reboot_recommended": "Yeniden başlatma önerilir, mevcutta çalışan kernel artık yüklü değil",
+  "run": {
+    "press_key": "Kapatmak için bir tuşa basın"
+  },
+  "settings": {
+    "assume_yes": {
+      "description": "Paket yöneticilerinin onay istememesi için --noconfirm / -y bayraklarını ekle. Ayar kapalıysa tek tek terminal ekranından onaylamanız gerekir.",
+      "label": "Otomatikman evetle cevapla"
+    },
+    "aur_check_cmd": {
+      "description": "Yalnızca yukarıdaki AUR yardımcısı 'Özel komut'ken kullanılır. Paket başına, 'yay -Qua' komutunun yaptığı gibi, tek satır 'isim eski-ver. -> yeni-ver.' yazdırması zorunludur.",
+      "label": "Özel AUR kontrol komutu"
+    },
+    "aur_helper": {
+      "description": "AUR paketlerini kontrol eden ve güncelleyen AUR yardımcısı. 'Otomatik tespit' önce yay'ı, sonra da paru'yu dener. 'Özel komut' ise aşağıya kendi kontrol komutunuzu girmenizi sağlar.",
+      "label": "AUR yardımcısı",
+      "options": {
+        "auto": "Otomatik tespit (önce yay sonra paru)",
+        "custom": "Özel komut",
+        "off": "Kapalı, sadece pacman",
+        "paru": "paru",
+        "yay": "yay"
+      }
+    },
+    "auto_check_hours": {
+      "description": "Her N saatte bir güncellemeleri otomatikman kontrol et. 0 (varsayılan) hiçbir zaman kendisi kontrol etmez.",
+      "label": "Otomatik kontrol aralığı (saat)"
+    },
+    "check_arch_news": {
+      "label": "Arch Linux bültenini kontrol et"
+    },
+    "check_reboot_needed": {
+      "label": "Yeniden başlatma gerekliliğini kontrol et"
+    },
+    "flatpak_enabled": {
+      "label": "Flatpak'i dahil et"
+    },
+    "glyph": {
+      "description": "Çubukta gösterilen bileşen simgesi.",
+      "label": "Çubuk simgesi"
+    },
+    "hide_on_empty": {
+      "label": "Gösterilecek birşey yokken gizle"
+    },
+    "ignore_packages": {
+      "label": "Paketleri görmezden gel"
+    },
+    "notify_on_updates": {
+      "description": "Güncellenmeyi bekleyen paketler bulunduğunda bir bildirim gönder.",
+      "label": "Güncelleme bulunduğunda bildirim ver"
+    },
+    "show_count": {
+      "description": "Çubuk simgesinin yanında bekleyen güncelleme sayısını göster.",
+      "label": "Güncelleme adedini göster"
+    },
+    "show_download_size": {
+      "label": "İndirme boyutunu göster"
+    },
+    "terminal": {
+      "label": "Terminal"
+    }
+  },
+  "size_gib": "≈ {value} GiB indirilecek",
+  "size_mib": "≈ {value} MiB indirilecek",
+  "source": {
+    "aur": "AUR",
+    "aur_named": "AUR ({helper})",
+    "flatpak": "Flatpak",
+    "pacman": "Pacman"
+  },
+  "status_checking": "Güncellemeler kontrol ediliyor…",
+  "status_checking_step": "{step} kontrol adımı…",
+  "status_clean": "Sistem güncel",
+  "tooltip_checked": "Kontrol edildi",
+  "tooltip_news": "Arch bülteni",
+  "tooltip_news_value": {
+    "one": "1 okunmayan",
+    "other": "{count} okunmayan"
+  },
+  "tooltip_pending": "Bekleyen",
+  "tooltip_reboot_key": "Yeniden başlat",
+  "tooltip_reboot_value": "önerilir",
+  "tooltip_status": "Durum",
+  "up_to_date": "Güncel: {sources}"
+}

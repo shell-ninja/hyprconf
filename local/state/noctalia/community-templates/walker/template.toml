@@ -1,0 +1,8 @@
+[catalog.walker]
+name = "Walker"
+category = "launcher"
+
+[templates.walker]
+input_path = "walker.css"
+output_path = "$XDG_CONFIG_HOME/walker/themes/noctalia/style.css"
+post_hook = "bash '{{ config_dir }}/apply.sh'"

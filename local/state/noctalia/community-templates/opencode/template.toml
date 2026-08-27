@@ -1,0 +1,7 @@
+[catalog.opencode]
+name = "Opencode"
+category = "ai"
+
+[templates.opencode]
+input_path = 'opencode.json'
+output_path = '$XDG_CONFIG_HOME/opencode/themes/matugen.json'

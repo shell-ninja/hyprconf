@@ -1,0 +1,43 @@
+{
+  "Applications": [
+    "/usr/share/applications/antigravity-ide.desktop",
+    "desktop-action:53:/usr/share/applications/dev.noctalia.Noctalia.desktop:Settings",
+    "/usr/share/applications/dev.noctalia.Noctalia.desktop",
+    "/usr/share/applications/nwg-look.desktop",
+    "/usr/share/applications/thunar.desktop",
+    "/usr/share/applications/com.obsproject.Studio.desktop",
+    "/usr/share/applications/qt6ct.desktop",
+    "/usr/share/applications/brave-origin.desktop",
+    "/usr/share/applications/claude-desktop.desktop",
+    "/usr/share/applications/com.github.wwmm.easyeffects.desktop"
+  ],
+  "dmenu.bar_layouts": [
+    "bar-left\tVertical left sidebar",
+    "full-top\tFull-width top bar",
+    "minimal-bottom\tMinimal bottom bar",
+    "rounded-top\tFloating pill bar (top)",
+    "dual-tone-top\tDual-tone top bar"
+  ],
+  "dmenu.commands": [
+    "Launcher: grid\tIcon grid",
+    "Launcher: spotlight-glass\tSpotlight modal",
+    "Launcher: compact-list\tCompact list",
+    "Bar: minimal-bottom\tMinimal bottom bar",
+    "Wallpaper Panel\tOpen wallpaper picker",
+    "Wallpaper Panel\tOpen Noctalia wallpaper picker",
+    "Bar: full-top\tFull-width top bar",
+    "Bar: rounded-top\tFloating pill bar at top",
+    "Bar: dual-tone-top\tDual-tone top bar",
+    "Bar Layouts\tChange Noctalia bar layout",
+    "Wallpaper Next\tSwitch to random wallpaper",
+    "Reload Hyprland\tReload compositor config",
+    "Noctalia Settings\tOpen Noctalia GUI settings",
+    "Launcher Styles\tChange launcher presentation"
+  ],
+  "dmenu.lock_layouts": [
+    "minimal-capsule\tMinimal pill capsule",
+    "cyber-dark\tCyber obsidian dark layout",
+    "media-hub\tMedia & studio hub",
+    "glass-card-center\tGlassmorphic center card"
+  ]
+}

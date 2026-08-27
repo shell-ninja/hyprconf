@@ -1,0 +1,38 @@
+{
+  "action_update": "Mettre à jour",
+  "caption_ignored": {
+    "one": "1 paquet ignoré",
+    "other": "{count} paquets ignorés"
+  },
+  "notify_updates": {
+    "one": "1 paquet à mettre à jour",
+    "other": "{count} paquets à mettre à jour"
+  },
+  "reboot_recommended": "Un redémarrage est recommandé, le kernel en cous d'exécution n'est plus installé",
+  "settings": {
+    "aur_helper": {
+      "options": {
+        "paru": "paru",
+        "yay": "yay"
+      }
+    },
+    "flatpak_enabled": {
+      "label": "Inclure Flatpak"
+    },
+    "ignore_packages": {
+      "label": "Ignorer des paquets"
+    },
+    "notify_on_updates": {
+      "description": "Envoie une notification lorsqu'il y a des paquets à mettre à niveau"
+    },
+    "show_count": {
+      "label": "Afficher le nombre de mises à jour"
+    },
+    "show_download_size": {
+      "label": "Afficher la taille de téléchargement"
+    },
+    "terminal": {
+      "label": "Terminal"
+    }
+  }
+}

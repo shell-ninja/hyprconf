@@ -1,0 +1,8 @@
+[catalog.libreoffice]
+name = "LibreOffice"
+category = "editor"
+
+[templates.libreoffice]
+input_path = "Theme_Colors.xcu"
+output_path = "$XDG_STATE_HOME/noctalia/libreoffice-theme-staging/Theme_Colors.xcu"
+post_hook = "bash '{{ config_dir }}/apply.sh'"

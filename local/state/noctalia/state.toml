@@ -1,0 +1,6 @@
+[security_migrations]
+calendar_credentials_v1 = true
+
+[wallpaper_panel]
+flatten = true
+sort = "name_asc"

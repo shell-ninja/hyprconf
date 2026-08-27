@@ -1,0 +1,28 @@
+{
+  "notifications": {
+    "eyecare-break-body": "Focus on an object 20 feet away for {seconds} seconds.",
+    "eyecare-break-finished-body": "Your eyes are rested. You can return to your screen.",
+    "eyecare-break-finished-title": "Break finished",
+    "eyecare-break-title": "Time for a break",
+    "eyecare-reset-body": "Timer has been reset.",
+    "eyecare-reset-title": "Eye-Care"
+  },
+  "settings": {
+    "eyecare-active-duration": {
+      "description": "Active screen time before triggering a break (minutes)",
+      "label": "Active Duration"
+    },
+    "eyecare-break-duration": {
+      "description": "Required duration for eye-care breaks (seconds)",
+      "label": "Break Duration"
+    },
+    "eyecare-notifications": {
+      "description": "Show system-level notifications for reminders",
+      "label": "Enable Notifications"
+    },
+    "eyecare-sound": {
+      "description": "Play notification sound when breaks start or finish",
+      "label": "Enable Audio Feedback"
+    }
+  }
+}

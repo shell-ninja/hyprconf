@@ -1,0 +1,8 @@
+[catalog.snappy-switcher]
+name = "snappy-switcher"
+category = "system"
+
+[templates.snappy-switcher]
+input_path = "noctalia.ini"
+output_path = "$XDG_CONFIG_HOME/snappy-switcher/themes/noctalia.ini"
+post_hook = "bash '{{ config_dir }}/apply.sh'"

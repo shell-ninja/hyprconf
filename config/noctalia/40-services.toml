@@ -1,0 +1,13 @@
+# ==============================================================================
+# Noctalia Services Configuration
+# Notifications, Location, Weather, and System Services
+# ==============================================================================
+
+[notification]
+enable_daemon = true
+
+[location]
+custom_schedule = false
+
+[weather]
+unit = "celsius"

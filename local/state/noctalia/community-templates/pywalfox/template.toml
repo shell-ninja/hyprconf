@@ -1,0 +1,8 @@
+[catalog.pywalfox]
+name = "Pywalfox"
+category = "browser"
+
+[templates.pywalfox]
+input_path = "pywalfox.json"
+output_path = "$XDG_CACHE_HOME/wal/colors.json"
+post_hook = "bash '{{ config_dir }}/apply.sh' {{ mode }}"

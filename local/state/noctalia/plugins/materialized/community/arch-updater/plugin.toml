@@ -1,0 +1,208 @@
+id = "yuuto/arch-updater"
+name = "Arch Updater"
+version = "2.0.1"
+plugin_api = 9
+author = "yuuto"
+license = "MIT"
+icon = "package"
+description = "Check pacman, AUR and Flatpak updates, then upgrade in a terminal or in the background, with run history and rollback."
+dependencies = ["pacman-contrib", "awk", "cat", "date", "flatpak", "grep", "head", "install", "kill", "less", "pacman", "paru", "pkexec", "rm", "sed", "sh", "sudo", "tail", "tee", "test", "uname", "wc", "xdg-open", "yay"]
+tags = ["arch", "bar", "panel", "launcher", "system", "utility"]
+
+# ── General ──────────────────────────────────────────────────────────────────
+
+[[setting]]
+key = "aur_helper"
+type = "select"
+label_key = "settings.aur_helper.label"
+description_key = "settings.aur_helper.description"
+default = "auto"
+options = [
+  { value = "auto", label_key = "settings.aur_helper.options.auto" },
+  { value = "yay", label_key = "settings.aur_helper.options.yay" },
+  { value = "paru", label_key = "settings.aur_helper.options.paru" },
+  { value = "custom", label_key = "settings.aur_helper.options.custom" },
+  { value = "off", label_key = "settings.aur_helper.options.off" },
+]
+
+[[setting]]
+key = "aur_check_cmd"
+type = "string"
+label_key = "settings.aur_check_cmd.label"
+description_key = "settings.aur_check_cmd.description"
+default = ""
+visible_when = { key = "aur_helper", values = ["custom"] }
+
+[[setting]]
+key = "flatpak_enabled"
+type = "bool"
+label_key = "settings.flatpak_enabled.label"
+description_key = "settings.flatpak_enabled.description"
+default = true
+
+[[setting]]
+key = "ignore_packages"
+type = "string_list"
+label_key = "settings.ignore_packages.label"
+description_key = "settings.ignore_packages.description"
+default = []
+
+[[setting]]
+key = "auto_check_hours"
+type = "int"
+label_key = "settings.auto_check_hours.label"
+description_key = "settings.auto_check_hours.description"
+default = 0
+min = 0
+max = 168
+
+[[setting]]
+key = "notify_on_updates"
+type = "bool"
+label_key = "settings.notify_on_updates.label"
+description_key = "settings.notify_on_updates.description"
+default = true
+
+# ── Extras ───────────────────────────────────────────────────────────────────
+
+[[setting]]
+key = "show_download_size"
+type = "bool"
+label_key = "settings.show_download_size.label"
+description_key = "settings.show_download_size.description"
+default = true
+
+[[setting]]
+key = "check_arch_news"
+type = "bool"
+label_key = "settings.check_arch_news.label"
+description_key = "settings.check_arch_news.description"
+default = true
+
+[[setting]]
+key = "check_reboot_needed"
+type = "bool"
+label_key = "settings.check_reboot_needed.label"
+description_key = "settings.check_reboot_needed.description"
+default = true
+
+[[setting]]
+key = "show_activity_graph"
+type = "bool"
+label_key = "settings.show_activity_graph.label"
+description_key = "settings.show_activity_graph.description"
+default = false
+
+[[setting]]
+key = "activity_history_length"
+type = "int"
+label_key = "settings.activity_history_length.label"
+description_key = "settings.activity_history_length.description"
+default = 10
+min = 3
+max = 30
+visible_when = { key = "show_activity_graph", values = ["true"] }
+
+# ── Update run ───────────────────────────────────────────────────────────────
+
+[[setting]]
+key = "update_mode"
+type = "select"
+label_key = "settings.update_mode.label"
+description_key = "settings.update_mode.description"
+default = "terminal"
+options = [
+  { value = "terminal", label_key = "settings.update_mode.options.terminal" },
+  { value = "background", label_key = "settings.update_mode.options.background" },
+]
+
+[[setting]]
+key = "show_changelog_after_update"
+type = "bool"
+label_key = "settings.show_changelog_after_update.label"
+description_key = "settings.show_changelog_after_update.description"
+default = true
+
+[[setting]]
+key = "rollback_auto_ignore"
+type = "bool"
+label_key = "settings.rollback_auto_ignore.label"
+description_key = "settings.rollback_auto_ignore.description"
+default = false
+
+[[setting]]
+key = "hide_polkit_hint"
+type = "bool"
+label_key = "settings.hide_polkit_hint.label"
+description_key = "settings.hide_polkit_hint.description"
+default = false
+
+[[setting]]
+key = "log_lines"
+type = "int"
+label_key = "settings.log_lines.label"
+description_key = "settings.log_lines.description"
+default = 14
+min = 6
+max = 30
+
+[[setting]]
+key = "terminal"
+type = "string"
+label_key = "settings.terminal.label"
+description_key = "settings.terminal.description"
+default = ""
+advanced = true
+
+[[setting]]
+key = "update_cmd"
+type = "string"
+label_key = "settings.update_cmd.label"
+description_key = "settings.update_cmd.description"
+default = ""
+advanced = true
+
+[[service]]
+id = "service"
+entry = "service.luau"
+
+[[panel]]
+id = "panel"
+entry = "panel.luau"
+width = 420
+height = 540
+placement = "attached"
+position = "auto"
+open_near_click = true
+
+[[widget]]
+id = "widget"
+entry = "widget.luau"
+
+  [[widget.setting]]
+  key = "glyph"
+  type = "glyph"
+  label_key = "settings.glyph.label"
+  description_key = "settings.glyph.description"
+  default = "package"
+
+  [[widget.setting]]
+  key = "show_count"
+  type = "bool"
+  label_key = "settings.show_count.label"
+  description_key = "settings.show_count.description"
+  default = true
+
+  [[widget.setting]]
+  key = "hide_on_empty"
+  type = "bool"
+  label_key = "settings.hide_on_empty.label"
+  description_key = "settings.hide_on_empty.description"
+  default = false
+
+[[launcher_provider]]
+id = "launcher"
+entry = "launcher.luau"
+prefix = "arch"
+glyph = "package"
+include_in_global_search = false

@@ -1,0 +1,13 @@
+[catalog.heroiclauncher]
+name = "Heroic Launcher"
+category = "gaming"
+
+[templates.heroiclauncher]
+input_path = 'heroic.css'
+output_path = '$XDG_CONFIG_HOME/heroic/themes/matugen.css'
+requires_path = '~/.config/heroic'
+
+[templates.heroiclauncher-flatpak]
+input_path = 'heroic.css'
+output_path = '~/.var/app/com.heroicgameslauncher.hgl/config/heroic/themes/matugen.css'
+requires_path = '~/.var/app/com.heroicgameslauncher.hgl'

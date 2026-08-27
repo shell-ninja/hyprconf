@@ -13,7 +13,7 @@
   <property name="last-side-pane" type="string" value="THUNAR_SIDEPANE_TYPE_SHORTCUTS"/>
   <property name="last-toolbar-items" type="string" value="menu:0,back:1,forward:1,open-parent:1,open-home:0,new-tab:0,new-window:0,toggle-split-view:0,undo:0,redo:0,zoom-out:0,zoom-in:0,zoom-reset:0,view-as-icons:0,view-as-detailed-list:0,view-as-compact-list:0,view-switcher:1,location-bar:1,reload:0,uca-action-1775749247482186-1:1,search:1"/>
   <property name="last-details-view-zoom-level" type="string" value="THUNAR_ZOOM_LEVEL_100_PERCENT"/>
-  <property name="last-details-view-column-widths" type="string" value="50,50,138,50,50,50,50,50,592,50,50,67,50,67"/>
+  <property name="last-details-view-column-widths" type="string" value="50,50,112,50,50,50,50,50,407,50,50,70,50,157"/>
   <property name="last-menubar-visible" type="bool" value="true"/>
   <property name="last-statusbar-visible" type="bool" value="false"/>
   <property name="misc-expandable-folders" type="bool" value="true"/>

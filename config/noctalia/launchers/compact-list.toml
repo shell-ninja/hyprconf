@@ -1,0 +1,64 @@
+# ==============================================================================
+# Noctalia Launcher Theme: Compact List
+# Matches Rofi style-3 (Compact fast vertical list launcher)
+# ==============================================================================
+
+[shell.panel]
+launcher_placement         = "floating"
+launcher_position          = "center"
+transparency_mode          = "soft"
+borders                    = true
+shadow                     = true
+floating_offset            = 12
+
+[shell.launcher]
+categories                 = false
+show_icons                 = true
+show_app_origin_indicator  = false
+compact                    = true
+app_grid                   = false
+show_app_actions           = false
+sort_by_usage              = true
+provider_prefix            = "/"
+auto_paste                 = "auto"
+
+[shell.launcher.providers.calculator]
+prefix = "calc"
+global = true
+
+[shell.launcher.providers.emoji]
+prefix = "emo"
+
+[shell.launcher.providers.session]
+prefix = "session"
+global = false
+
+[shell.launcher.providers.wallpaper]
+prefix = "wall"
+
+[shell.launcher.providers.windows]
+prefix = "win"
+
+[shell.launcher.dmenu.entry.commands]
+command = "printf 'Lock Screen Now\tLock desktop via Noctalia\nLock: glass-card-center\tGlassmorphic center card\nLock: minimal-capsule\tMinimal pill capsule\nLock: media-hub\tMedia & studio hub\nLock: bento-split\tBento dual-widget\nLock: cyber-dark\tCyber obsidian dark\nReload Hyprland\tReload compositor\nWallpaper Panel\tOpen wallpaper picker\nBar: rounded-top\tFloating pill top bar\nBar: dual-tone-top\tDual-tone top bar\nBar: full-top\tFull-width top bar\nBar: minimal-bottom\tMinimal bottom bar\nBar: bar-left\tVertical left bar\nLauncher: compact-list\tCompact list\nLauncher: spotlight-glass\tSpotlight modal\nLauncher: grid\tIcon grid\nLauncher: sidebar-attached\tSidebar drawer\nNoctalia Settings\tOpen settings\n'" 
+label   = "Commands"
+prefix  = "cmd"
+glyph   = "terminal"
+global  = false
+exec    = "bash -c 'case \"$1\" in \"Lock Screen Now\") noctalia msg session lock ;; \"Lock: \"*) ~/.hyprconf/hypr/scripts/noctalia-lockscreen.sh \"$1\" ;; \"Reload Hyprland\") hyprctl reload ;; \"Wallpaper Panel\") noctalia msg panel-toggle wallpaper ;; \"Bar: \"*) ~/.hyprconf/hypr/scripts/noctalia-bar.sh \"$1\" ;; \"Launcher: \"*) ~/.hyprconf/hypr/scripts/noctalia-launcher.sh \"$1\" ;; \"Noctalia Settings\") noctalia msg settings-open ;; esac' -- {selection}"
+
+[shell.launcher.dmenu.entry.lock_layouts]
+command = "printf 'glass-card-center\tGlassmorphic center card\nminimal-capsule\tMinimal pill capsule\nmedia-hub\tMedia & studio hub\nbento-split\tBento dual-widget layout\ncyber-dark\tCyber obsidian dark layout\n'"
+label   = "Lockscreen Layout"
+prefix  = "lock"
+glyph   = "lock"
+global  = false
+exec    = "~/.hyprconf/hypr/scripts/noctalia-lockscreen.sh {selection}"
+
+[shell.launcher.dmenu.entry.bar_layouts]
+command = "printf 'rounded-top\tFloating pill bar (top)\ndual-tone-top\tDual-tone top bar\nfull-top\tFull-width top bar\nminimal-bottom\tMinimal bottom bar\nbar-left\tVertical left sidebar\n'"
+label   = "Bar Layout"
+prefix  = "bar"
+glyph   = "monitor"
+global  = false
+exec    = "~/.hyprconf/hypr/scripts/noctalia-bar.sh {selection}"

@@ -9,12 +9,15 @@ done
 
 sleep 0.4
 
-# Start notification daemon
-if [[ -n "$(command -v swaync)" ]]; then
-    swaync &
-elif [[ -n "$(command -v dunst)" ]]; then
-    dunst &
+# Start notification daemon if Noctalia is not running
+if ! pgrep -x "noctalia" >/dev/null 2>&1; then
+    if [[ -n "$(command -v swaync)" ]]; then
+        swaync &
+    elif [[ -n "$(command -v dunst)" ]]; then
+        dunst &
+    fi
 fi
 hyprctl reload
 
 exit 0
+

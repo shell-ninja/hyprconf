@@ -1,0 +1,15 @@
+[catalog.zathura]
+name = "Zathura"
+category = "misc"
+
+[templates.zathura]
+input_path = "zathurarc"
+output_path = "$XDG_CONFIG_HOME/zathura/noctaliarc"
+post_hook = "bash '{{ config_dir }}/apply.sh'"
+requires_path = "~/.config/zathura"
+
+[templates.zathura-flatpak]
+input_path = "zathurarc"
+output_path = "~/.var/app/org.pwmt.zathura/config/zathura/noctaliarc"
+post_hook = "bash '{{ config_dir }}/apply.sh'"
+requires_path = "~/.var/app/org.pwmt.zathura"
