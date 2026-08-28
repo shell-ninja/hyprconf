@@ -1,13 +1,22 @@
 #!/usr/bin/env python3
 # =============================================================================
-#  hypr-settings-gui.py — GTK4 / libadwaita GUI for hypr-settings.sh
+#  hypr-settings-gui.py — GTK4 / libadwaita GUI for the Hyprland Lua config
+#  living in ~/.config/hypr/configs (symlink target of ~/.hyprconf/hypr/configs).
 #
-#  A faithful GUI port of Shell Ninja's hypr-settings.sh:
-#    - Same config targets, same sed/regex patterns, same collect-then-apply
-#      flow, same backup behaviour. No hyprctl reload (Hyprland picks up
-#      Lua config changes on its own).
+#  Sidebar-navigated settings app covering:
+#    - Appearance   (configs.lua: border, rounding, gaps, blur, opacity, shadow)
+#    - Display      (monitor.lua: resolution, refresh rate, scale, position)
+#    - Animations   (animation.lua: global toggle, per-animation speed/curve,
+#                     bezier control points via sliders)
+#    - Input        (settings.lua: pointer sensitivity, touchpad toggles)
+#    - Environment  (environment.lua: add/edit/remove hl.env() variables)
+#    - Keybinds     (keybinds.lua: add/edit/remove hl.bind() statements)
 #
-#  Depends: python3-gobject, libadwaita-1
+#  Kitty and GTK3/4 CSS are still updated in the background whenever opacity
+#  changes (same as before) but are no longer shown in the UI.
+#
+#  Depends: python3-gobject, libadwaita-1 (>= 1.4 for Adw.NavigationSplitView,
+#           Adw.SwitchRow, Adw.EntryRow, Adw.ExpanderRow)
 #           sudo pacman -S python-gobject libadwaita
 #
 #  Usage:   python3 hypr-settings-gui.py
@@ -18,6 +27,7 @@ import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 
+import os
 import re
 import shutil
 import subprocess
@@ -26,26 +36,34 @@ from pathlib import Path
 
 from gi.repository import Adw, Gio, GLib, Gtk
 
-# ─── Config file paths — identical to hypr-settings.sh ───────────────────────
-HYPR_LUA = Path.home() / ".config" / "hypr" / "configs" / "configs.lua"
+# ─── Config file paths ────────────────────────────────────────────────────
+CONFIGS_DIR = Path.home() / ".config" / "hypr" / "configs"
+
+CONFIGS_LUA = CONFIGS_DIR / "configs.lua"
+MONITOR_LUA = CONFIGS_DIR / "monitor.lua"
+ANIMATION_LUA = CONFIGS_DIR / "animation.lua"
+SETTINGS_LUA = CONFIGS_DIR / "settings.lua"
+ENVIRONMENT_LUA = CONFIGS_DIR / "environment.lua"
+KEYBINDS_LUA = CONFIGS_DIR / "keybinds.lua"
+
+# Updated in the background, never shown in the UI.
 KITTY_CONF = Path.home() / ".config" / "kitty" / "kitty.conf"
 GTK3_CSS = Path.home() / ".config" / "gtk-3.0" / "gtk.css"
 GTK4_CSS = Path.home() / ".config" / "gtk-4.0" / "gtk.css"
 
 BACKUP_DIR = (
-    Path(__import__("os").environ.get("XDG_CACHE_HOME", str(Path.home() / ".cache")))
+    Path(os.environ.get("XDG_CACHE_HOME", str(Path.home() / ".cache")))
     / "hypr-settings"
     / "backups"
 )
 
 
 # =============================================================================
-#  Core logic — ported 1:1 from hypr-settings.sh
+#  Low-level Lua text helpers
 # =============================================================================
 
 
 def backup(src: Path):
-    """Mirror of _backup(): copy file to BACKUP_DIR with a timestamp suffix."""
     if not src.is_file():
         return
     BACKUP_DIR.mkdir(parents=True, exist_ok=True)
@@ -54,32 +72,63 @@ def backup(src: Path):
 
 
 def lua_set(path: Path, key: str, value: str):
-    """
-    Mirror of _lua_set(): applies the same three sed -E patterns against a
-    Lua config, in the same order. Each is a no-op if its pattern doesn't
-    match. Operates on numeric (int/float) values only, same as the original.
-    """
+    """Set a numeric (possibly negative/float) top-level, dot-access, or
+    local Lua variable, mirroring the original script's sed patterns."""
     if not path.is_file():
         return
     text = path.read_text()
     k = re.escape(key)
+    num = r"-?[0-9]+(?:\.[0-9]+)?"
     patterns = [
-        # bare table key:      rounding = 8
-        (rf"^(\s*{k}\s*=\s*)[0-9]+(\.[0-9]+)?", rf"\g<1>{value}"),
-        # dot-access:          decoration.rounding = 8
-        (rf"^(\s*[a-zA-Z_]+\.{k}\s*=\s*)[0-9]+(\.[0-9]+)?", rf"\g<1>{value}"),
-        # local variable:      local rounding = 8
-        (rf"^(\s*local {k}\s*=\s*)[0-9]+(\.[0-9]+)?", rf"\g<1>{value}"),
+        (rf"^(\s*{k}\s*=\s*){num}", rf"\g<1>{value}"),
+        (rf"^(\s*[a-zA-Z_]+\.{k}\s*=\s*){num}", rf"\g<1>{value}"),
+        (rf"^(\s*local\s+{k}\s*=\s*){num}", rf"\g<1>{value}"),
     ]
     for pattern, repl in patterns:
         text = re.sub(pattern, repl, text, flags=re.MULTILINE)
     path.write_text(text)
 
 
+def lua_get(path: Path, key: str):
+    """Read back a numeric value set by lua_set(). Returns a string or None."""
+    if not path.is_file():
+        return None
+    text = path.read_text()
+    k = re.escape(key)
+    num = r"(-?[0-9]+(?:\.[0-9]+)?)"
+    patterns = [
+        rf"^\s*{k}\s*=\s*{num}",
+        rf"^\s*[a-zA-Z_]+\.{k}\s*=\s*{num}",
+        rf"^\s*local\s+{k}\s*=\s*{num}",
+    ]
+    for p in patterns:
+        m = re.search(p, text, re.MULTILINE)
+        if m:
+            return m.group(1)
+    return None
+
+
+def lua_set_bool(path: Path, key: str, value: bool):
+    if not path.is_file():
+        return
+    text = path.read_text()
+    text = re.sub(
+        rf"(\b{re.escape(key)}\s*=\s*)(true|false)",
+        rf"\g<1>{'true' if value else 'false'}",
+        text,
+    )
+    path.write_text(text)
+
+
+def lua_get_bool(path: Path, key: str, default=None):
+    if not path.is_file():
+        return default
+    text = path.read_text()
+    m = re.search(rf"\b{re.escape(key)}\s*=\s*(true|false)", text)
+    return (m.group(1) == "true") if m else default
+
+
 def raw_sub(path: Path, pattern: str, repl: str, flags=re.MULTILINE):
-    """One-off sed -E substitution, mirroring the extra sed lines in the
-    original script that aren't covered by _lua_set (e.g. bare `border =`,
-    `size =`, `passes =`, `range =`, active/inactive opacity key names)."""
     if not path.is_file():
         return
     text = path.read_text()
@@ -87,12 +136,47 @@ def raw_sub(path: Path, pattern: str, repl: str, flags=re.MULTILINE):
     path.write_text(text)
 
 
-class ApplyResult:
-    """Collects status lines the same way _status() printed them, so the UI
-    can show a results log after Apply."""
+def get_field(block_text: str, field: str, quoted: bool = False):
+    """Read one field's value out of an already-extracted `{ ... }` block."""
+    if quoted:
+        m = re.search(rf'{re.escape(field)}\s*=\s*"([^"]*)"', block_text)
+    else:
+        m = re.search(rf"{re.escape(field)}\s*=\s*(-?[0-9]+(?:\.[0-9]+)?)", block_text)
+    return m.group(1) if m else None
 
+
+def apply_block_fields(text: str, header_regex: str, fields):
+    """
+    Find the first `<header>....})` block (non-greedy DOTALL — safe as long
+    as the file uses trailing commas and only the block's own closing brace
+    is immediately followed by ')'), then set each (field, value, quoted)
+    inside just that block. Returns (new_text, found_bool).
+    """
+    m = re.search(header_regex + r".*?\}\)", text, re.DOTALL)
+    if not m:
+        return text, False
+    block = m.group(0)
+    for field, value, quoted in fields:
+        if quoted:
+            block = re.sub(
+                rf'({re.escape(field)}\s*=\s*")[^"]*(")',
+                rf"\g<1>{value}\g<2>",
+                block,
+                count=1,
+            )
+        else:
+            block = re.sub(
+                rf"({re.escape(field)}\s*=\s*)-?[0-9]+(?:\.[0-9]+)?",
+                rf"\g<1>{value}",
+                block,
+                count=1,
+            )
+    return text[: m.start()] + block + text[m.end() :], True
+
+
+class ApplyResult:
     def __init__(self):
-        self.lines: list[tuple[str, str]] = []  # (level, message)
+        self.lines: list[tuple[str, str]] = []
 
     def ok(self, msg):
         self.lines.append(("ok", msg))
@@ -104,13 +188,216 @@ class ApplyResult:
         self.lines.append(("err", msg))
 
 
+# =============================================================================
+#  Reading current values (fixes the "always shows defaults" bug — every
+#  control below is seeded from these instead of a hard-coded number)
+# =============================================================================
+
+
+def read_appearance():
+    return {
+        "border": float(lua_get(CONFIGS_LUA, "border") or 2),
+        "rounding": float(lua_get(CONFIGS_LUA, "rounding") or 8),
+        "inner_gap": float(lua_get(CONFIGS_LUA, "inner_gap") or 4),
+        "outer_gap": float(lua_get(CONFIGS_LUA, "outer_gap") or 8),
+        "blur_size": float(lua_get(CONFIGS_LUA, "blur_size") or 4),
+        "blur_pass": float(lua_get(CONFIGS_LUA, "blur_pass") or 3),
+        "opacity_act": float(lua_get(CONFIGS_LUA, "opacity_act") or 0.95),
+        "opacity_deact": float(lua_get(CONFIGS_LUA, "opacity_deact") or 0.75),
+        "shadow_range": float(lua_get(CONFIGS_LUA, "shadow_range") or 12),
+    }
+
+
+def read_input():
+    return {
+        "sensitivity": float(lua_get(SETTINGS_LUA, "sensitivity") or 0.0),
+        "natural_scroll": lua_get_bool(SETTINGS_LUA, "natural_scroll", True),
+        "tap_to_click": lua_get_bool(SETTINGS_LUA, "tap_to_click", True),
+        "disable_while_typing": lua_get_bool(SETTINGS_LUA, "disable_while_typing", True),
+        "left_handed": lua_get_bool(SETTINGS_LUA, "left_handed", False),
+        "numlock_by_default": lua_get_bool(SETTINGS_LUA, "numlock_by_default", True),
+    }
+
+
+def parse_monitors():
+    if not MONITOR_LUA.is_file():
+        return []
+    text = MONITOR_LUA.read_text()
+    monitors = []
+    for m in re.finditer(r"hl\.monitor\(\{.*?\}\)", text, re.DOTALL):
+        block = m.group(0)
+        output = get_field(block, "output", quoted=True)
+        if not output:
+            continue
+        monitors.append(
+            {
+                "output": output,
+                "mode": get_field(block, "mode", quoted=True) or "",
+                "position": get_field(block, "position", quoted=True) or "auto",
+                "scale": float(get_field(block, "scale") or 1.0),
+            }
+        )
+    return monitors
+
+
+def parse_curves():
+    if not ANIMATION_LUA.is_file():
+        return {}
+    text = ANIMATION_LUA.read_text()
+    curves = {}
+    for m in re.finditer(r'hl\.curve\(\s*"([^"]+)"\s*,\s*\{.*?\}\)', text, re.DOTALL):
+        name = m.group(1)
+        pts = re.findall(r"\{\s*(-?[0-9.]+)\s*,\s*(-?[0-9.]+)\s*\}", m.group(0))
+        if len(pts) >= 2:
+            curves[name] = (
+                (float(pts[0][0]), float(pts[0][1])),
+                (float(pts[1][0]), float(pts[1][1])),
+            )
+    return curves
+
+
+def parse_animations():
+    if not ANIMATION_LUA.is_file():
+        return []
+    text = ANIMATION_LUA.read_text()
+    anims = []
+    for m in re.finditer(
+        r'hl\.animation\(\{\s*leaf\s*=\s*"([^"]+)".*?\}\)', text, re.DOTALL
+    ):
+        block = m.group(0)
+        speed = get_field(block, "speed")
+        bezier = get_field(block, "bezier", quoted=True)
+        anims.append(
+            {
+                "leaf": m.group(1),
+                "speed": float(speed) if speed else 1.0,
+                "bezier": bezier or "",
+            }
+        )
+    return anims
+
+
+def parse_anim_global_enabled():
+    if not ANIMATION_LUA.is_file():
+        return True
+    text = ANIMATION_LUA.read_text()
+    m = re.search(r"hl\.config\(\{\s*animations\s*=\s*\{.*?\}\)", text, re.DOTALL)
+    if not m:
+        return True
+    val = get_field(m.group(0), "enabled")
+    return val != "0"
+
+
+def parse_env_vars():
+    if not ENVIRONMENT_LUA.is_file():
+        return []
+    out = []
+    for line in ENVIRONMENT_LUA.read_text().splitlines():
+        s = line.strip()
+        if s.startswith("--"):
+            continue
+        m = re.match(r'hl\.env\(\s*"([^"]+)"\s*,\s*"([^"]*)"\s*\)', s)
+        if m:
+            out.append((m.group(1), m.group(2)))
+    return out
+
+
+def split_top_level(s: str):
+    """Split a Lua argument list on top-level commas, respecting nested
+    brackets and string literals."""
+    parts, buf, depth, in_str, str_ch = [], [], 0, False, ""
+    i = 0
+    while i < len(s):
+        c = s[i]
+        if in_str:
+            buf.append(c)
+            if c == "\\" and i + 1 < len(s):
+                buf.append(s[i + 1])
+                i += 2
+                continue
+            if c == str_ch:
+                in_str = False
+            i += 1
+            continue
+        if c in "\"'":
+            in_str, str_ch = True, c
+            buf.append(c)
+        elif c in "({[":
+            depth += 1
+            buf.append(c)
+        elif c in ")}]":
+            depth -= 1
+            buf.append(c)
+        elif c == "," and depth == 0:
+            parts.append("".join(buf).strip())
+            buf = []
+        else:
+            buf.append(c)
+        i += 1
+    if buf:
+        parts.append("".join(buf).strip())
+    return parts
+
+
+def iter_keybind_statements():
+    """Extract every *active* (non-commented) `hl.bind(...)` statement from
+    keybinds.lua as raw, paren-balanced Lua source (handles multi-line
+    statements), along with a human-readable preview."""
+    if not KEYBINDS_LUA.is_file():
+        return []
+    text = KEYBINDS_LUA.read_text()
+    results = []
+    for m in re.finditer(r"hl\.bind\s*\(", text):
+        start = m.start()
+        line_start = text.rfind("\n", 0, start) + 1
+        if "--" in text[line_start:start]:
+            continue  # commented out
+        depth, in_str, str_ch = 0, False, ""
+        j = m.end() - 1  # position of the opening '('
+        n = len(text)
+        while j < n:
+            c = text[j]
+            if in_str:
+                if c == "\\":
+                    j += 2
+                    continue
+                if c == str_ch:
+                    in_str = False
+            else:
+                if c in "\"'":
+                    in_str, str_ch = True, c
+                elif c == "(":
+                    depth += 1
+                elif c == ")":
+                    depth -= 1
+                    if depth == 0:
+                        j += 1
+                        break
+            j += 1
+        raw = text[start:j]
+        inner = raw[raw.index("(") + 1 : -1]
+        args = split_top_level(inner)
+        combo = args[0] if args else ""
+        action = args[1] if len(args) > 1 else ""
+        results.append({"raw": raw, "combo": combo, "action": action})
+    return results
+
+
+# =============================================================================
+#  Apply — writes every pending change to disk
+# =============================================================================
+
+
 def apply_all(pending: dict, result: ApplyResult):
-    """
-    Mirror of _apply_all(): backs up every file that will be touched, then
-    writes every pending setting to disk. `pending` uses the same keys as
-    the bash PENDING array: border_size, roundness, inner_gap, outer_gap,
-    blur (tuple), opacity (tuple), shadow.
-    """
+    _apply_appearance(pending, result)
+    _apply_monitor(pending, result)
+    _apply_animations(pending, result)
+    _apply_input(pending, result)
+    _apply_environment(pending, result)
+    _apply_keybinds(pending, result)
+
+
+def _apply_appearance(pending, result):
     need_hypr = any(
         k in pending
         for k in (
@@ -127,84 +414,64 @@ def apply_all(pending: dict, result: ApplyResult):
     need_gtk = "opacity" in pending
 
     if need_hypr:
-        backup(HYPR_LUA)
+        backup(CONFIGS_LUA)
     if need_kitty:
         backup(KITTY_CONF)
     if need_gtk:
         backup(GTK3_CSS)
         backup(GTK4_CSS)
 
-    # ── border size ──────────────────────────────────────────────────────
     if "border_size" in pending:
         val = str(pending["border_size"])
-        if HYPR_LUA.is_file():
-            lua_set(HYPR_LUA, "border", val)
-            raw_sub(HYPR_LUA, r"^(border\s*=\s*)[0-9]+", rf"\g<1>{val}")
+        if CONFIGS_LUA.is_file():
+            lua_set(CONFIGS_LUA, "border", val)
+            result.ok(f"border-size      → {val}")
         else:
-            result.err("Hyprland Lua config not found — border size skipped")
-        result.ok(f"border-size      → {val}")
+            result.err("configs.lua not found — border size skipped")
 
-    # ── roundness ────────────────────────────────────────────────────────
     if "roundness" in pending:
         val = str(pending["roundness"])
-        if HYPR_LUA.is_file():
-            lua_set(HYPR_LUA, "rounding", val)
+        if CONFIGS_LUA.is_file():
+            lua_set(CONFIGS_LUA, "rounding", val)
+            result.ok(f"rounding         → {val}")
         else:
-            result.err("Hyprland Lua config not found — roundness skipped")
-        result.ok(f"rounding         → {val}")
+            result.err("configs.lua not found — roundness skipped")
 
-    # ── inner gap ────────────────────────────────────────────────────────
     if "inner_gap" in pending:
         val = str(pending["inner_gap"])
-        if HYPR_LUA.is_file():
-            lua_set(HYPR_LUA, "inner_gap", val)
+        if CONFIGS_LUA.is_file():
+            lua_set(CONFIGS_LUA, "inner_gap", val)
             result.ok(f"inner-gap        → {val}")
         else:
-            result.err("Hyprland Lua config not found — inner gap skipped")
+            result.err("configs.lua not found — inner gap skipped")
 
-    # ── outer gap ────────────────────────────────────────────────────────
     if "outer_gap" in pending:
         val = str(pending["outer_gap"])
-        if HYPR_LUA.is_file():
-            lua_set(HYPR_LUA, "outer_gap", val)
+        if CONFIGS_LUA.is_file():
+            lua_set(CONFIGS_LUA, "outer_gap", val)
             result.ok(f"outer-gap        → {val}")
         else:
-            result.err("Hyprland Lua config not found — outer gap skipped")
+            result.err("configs.lua not found — outer gap skipped")
 
-    # ── blur ─────────────────────────────────────────────────────────────
     if "blur" in pending:
         bsize, bpass = pending["blur"]
         bsize, bpass = str(bsize), str(bpass)
-        if HYPR_LUA.is_file():
-            lua_set(HYPR_LUA, "blur_size", bsize)
-            lua_set(HYPR_LUA, "blur_passes", bpass)
-            raw_sub(HYPR_LUA, r"^(\s*size\s*=\s*)[0-9]+", rf"\g<1>{bsize}")
-            raw_sub(HYPR_LUA, r"^(\s*passes\s*=\s*)[0-9]+", rf"\g<1>{bpass}")
+        if CONFIGS_LUA.is_file():
+            lua_set(CONFIGS_LUA, "blur_size", bsize)
+            lua_set(CONFIGS_LUA, "blur_pass", bpass)
             result.ok(f"blur             → size:{bsize}  passes:{bpass}")
         else:
-            result.err("Hyprland Lua config not found — blur skipped")
+            result.err("configs.lua not found — blur skipped")
 
-    # ── opacity ──────────────────────────────────────────────────────────
     if "opacity" in pending:
         act, deact = pending["opacity"]
         act, deact = str(act), str(deact)
-
-        if HYPR_LUA.is_file():
-            lua_set(HYPR_LUA, "opacity_act", act)
-            lua_set(HYPR_LUA, "opacity_deact", deact)
-            raw_sub(
-                HYPR_LUA,
-                r"^(\s*active_opacity\s*=\s*)[0-9]+(\.[0-9]+)?",
-                rf"\g<1>{act}",
-            )
-            raw_sub(
-                HYPR_LUA,
-                r"^(\s*inactive_opacity\s*=\s*)[0-9]+(\.[0-9]+)?",
-                rf"\g<1>{deact}",
-            )
-            result.ok(f"Hyprland  active:{act}  inactive:{deact}")
+        if CONFIGS_LUA.is_file():
+            lua_set(CONFIGS_LUA, "opacity_act", act)
+            lua_set(CONFIGS_LUA, "opacity_deact", deact)
+            result.ok(f"opacity          → active:{act}  inactive:{deact}")
         else:
-            result.err("Hyprland Lua config not found — opacity skipped")
+            result.err("configs.lua not found — opacity skipped")
 
         if KITTY_CONF.is_file():
             raw_sub(
@@ -216,9 +483,7 @@ def apply_all(pending: dict, result: ApplyResult):
                 )
             except Exception:
                 pass
-            result.ok(f"Kitty     background_opacity → {act}  (live reloaded)")
-        else:
-            result.skip("Kitty     config not found, skipped")
+            result.ok("Kitty background_opacity updated (live reloaded)")
 
         if GTK3_CSS.is_file():
             raw_sub(
@@ -226,9 +491,7 @@ def apply_all(pending: dict, result: ApplyResult):
                 r"rgba\(([0-9]+),\s*([0-9]+),\s*([0-9]+),\s*[0-9.]+\)",
                 rf"rgba(\1, \2, \3, {act})",
             )
-            result.ok(f"GTK3      rgba alpha → {act}")
-        else:
-            result.skip("GTK3      css not found, skipped")
+            result.ok("GTK3 css alpha updated")
 
         if GTK4_CSS.is_file():
             raw_sub(
@@ -236,19 +499,195 @@ def apply_all(pending: dict, result: ApplyResult):
                 r"alpha\(@[a-zA-Z]+,\s*[0-9.]+\)",
                 rf"alpha(@background, {act})",
             )
-            result.ok(f"GTK4      alpha → {act}")
-        else:
-            result.skip("GTK4      css not found, skipped")
+            result.ok("GTK4 css alpha updated")
 
-    # ── shadow ───────────────────────────────────────────────────────────
     if "shadow" in pending:
         val = str(pending["shadow"])
-        if HYPR_LUA.is_file():
-            lua_set(HYPR_LUA, "shadow_range", val)
-            raw_sub(HYPR_LUA, r"^(\s*range\s*=\s*)[0-9]+(\.[0-9]+)?", rf"\g<1>{val}")
+        if CONFIGS_LUA.is_file():
+            lua_set(CONFIGS_LUA, "shadow_range", val)
             result.ok(f"shadow-range     → {val}")
         else:
-            result.err("Hyprland Lua config not found — shadow skipped")
+            result.err("configs.lua not found — shadow skipped")
+
+
+def _apply_monitor(pending, result):
+    monitors = pending.get("monitor")
+    if not monitors:
+        return
+    if not MONITOR_LUA.is_file():
+        result.err("monitor.lua not found — display changes skipped")
+        return
+    backup(MONITOR_LUA)
+    text = MONITOR_LUA.read_text()
+    for output, cfg in monitors.items():
+        header = rf'hl\.monitor\(\{{\s*output\s*=\s*"{re.escape(output)}"'
+        fields = [
+            ("mode", cfg["mode"], True),
+            ("scale", cfg["scale"], False),
+            ("position", cfg["position"], True),
+        ]
+        text, found = apply_block_fields(text, header, fields)
+        if found:
+            result.ok(f"monitor {output:<10} → {cfg['mode']}  scale {cfg['scale']}  @ {cfg['position']}")
+        else:
+            result.err(f"monitor {output} block not found — skipped")
+    MONITOR_LUA.write_text(text)
+
+
+def _apply_animations(pending, result):
+    if not any(k in pending for k in ("anim_global", "anim_leaf", "curve")):
+        return
+    if not ANIMATION_LUA.is_file():
+        result.err("animation.lua not found — animation changes skipped")
+        return
+    backup(ANIMATION_LUA)
+    text = ANIMATION_LUA.read_text()
+
+    if "anim_global" in pending:
+        text, found = apply_block_fields(
+            text,
+            r"hl\.config\(\{\s*animations\s*=\s*\{",
+            [("enabled", pending["anim_global"], False)],
+        )
+        if found:
+            result.ok(f"animations enabled → {pending['anim_global']}")
+
+    for leaf, cfg in pending.get("anim_leaf", {}).items():
+        header = rf'hl\.animation\(\{{\s*leaf\s*=\s*"{re.escape(leaf)}"'
+        fields = [("speed", cfg["speed"], False), ("bezier", cfg["bezier"], True)]
+        text, found = apply_block_fields(text, header, fields)
+        if found:
+            result.ok(f"animation {leaf:<16} → speed {cfg['speed']}  curve {cfg['bezier']}")
+        else:
+            result.err(f"animation leaf {leaf} not found — skipped")
+
+    for name, (p1, p2) in pending.get("curve", {}).items():
+        m = re.search(
+            rf'hl\.curve\(\s*"{re.escape(name)}"\s*,\s*\{{.*?\}}\)', text, re.DOTALL
+        )
+        if not m:
+            result.err(f"curve {name} not found — skipped")
+            continue
+        new_block = (
+            f'hl.curve("{name}", {{\n'
+            f'    type = "bezier",\n'
+            f"    points = {{\n"
+            f"        {{ {p1[0]}, {p1[1]} }},\n"
+            f"        {{ {p2[0]}, {p2[1]} }},\n"
+            f"    }},\n"
+            f"}})"
+        )
+        text = text[: m.start()] + new_block + text[m.end() :]
+        result.ok(f"curve {name:<16} → ({p1[0]}, {p1[1]}) / ({p2[0]}, {p2[1]})")
+
+    ANIMATION_LUA.write_text(text)
+
+
+def _apply_input(pending, result):
+    if "input_sensitivity" not in pending and "input_bool" not in pending:
+        return
+    if not SETTINGS_LUA.is_file():
+        result.err("settings.lua not found — input changes skipped")
+        return
+    backup(SETTINGS_LUA)
+
+    if "input_sensitivity" in pending:
+        val = pending["input_sensitivity"]
+        lua_set(SETTINGS_LUA, "sensitivity", str(val))
+        result.ok(f"mouse sensitivity → {val}")
+
+    for key, val in pending.get("input_bool", {}).items():
+        lua_set_bool(SETTINGS_LUA, key, val)
+        result.ok(f"{key:<20} → {val}")
+
+
+def _apply_environment(pending, result):
+    edits = pending.get("env_edit", {})
+    removes = pending.get("env_remove", set())
+    adds = pending.get("env_add", [])
+    if not (edits or removes or adds):
+        return
+    if not ENVIRONMENT_LUA.is_file():
+        result.err("environment.lua not found — environment changes skipped")
+        return
+    backup(ENVIRONMENT_LUA)
+    text = ENVIRONMENT_LUA.read_text()
+
+    for key, val in edits.items():
+        text, n = re.subn(
+            rf'(hl\.env\(\s*"{re.escape(key)}"\s*,\s*")[^"]*(")',
+            rf"\g<1>{val}\g<2>",
+            text,
+            count=1,
+        )
+        if n:
+            result.ok(f"env {key} → {val}")
+        else:
+            result.err(f"env {key} not found — edit skipped")
+
+    for key in removes:
+        text, n = re.subn(
+            rf'^.*hl\.env\(\s*"{re.escape(key)}"\s*,.*\n?', "", text, flags=re.MULTILINE
+        )
+        if n:
+            result.ok(f"env {key} removed")
+        else:
+            result.err(f"env {key} not found — removal skipped")
+
+    if adds:
+        lines = text.splitlines(keepends=True)
+        insert_at = len(lines)
+        for i, line in enumerate(lines):
+            if re.match(r'^\s*hl\.env\(', line):
+                insert_at = i + 1
+        new_lines = [f'hl.env("{k}", "{v}")\n' for k, v in adds]
+        lines[insert_at:insert_at] = new_lines
+        text = "".join(lines)
+        for k, v in adds:
+            result.ok(f"env {k} added → {v}")
+
+    ENVIRONMENT_LUA.write_text(text)
+
+
+def _apply_keybinds(pending, result):
+    edits = pending.get("keybind_edit", {})
+    removes = pending.get("keybind_remove", set())
+    adds = pending.get("keybind_add", [])
+    if not (edits or removes or adds):
+        return
+    if not KEYBINDS_LUA.is_file():
+        result.err("keybinds.lua not found — keybind changes skipped")
+        return
+    backup(KEYBINDS_LUA)
+    text = KEYBINDS_LUA.read_text()
+
+    for original, new_raw in edits.items():
+        idx = text.find(original)
+        if idx == -1:
+            result.err("a keybind edit could not be located — skipped")
+            continue
+        text = text[:idx] + new_raw + text[idx + len(original) :]
+        result.ok("keybind updated")
+
+    for original in removes:
+        idx = text.find(original)
+        if idx == -1:
+            result.err("a keybind removal could not be located — skipped")
+            continue
+        line_start = text.rfind("\n", 0, idx) + 1
+        line_end = text.find("\n", idx)
+        line_end = line_end + 1 if line_end != -1 else len(text)
+        text = text[:line_start] + text[line_end:]
+        result.ok("keybind removed")
+
+    if adds:
+        if not text.endswith("\n"):
+            text += "\n"
+        text += "\n".join(adds) + "\n"
+        for raw in adds:
+            result.ok(f"keybind added → {raw.splitlines()[0][:60]}")
+
+    KEYBINDS_LUA.write_text(text)
 
 
 # =============================================================================
@@ -256,13 +695,10 @@ def apply_all(pending: dict, result: ApplyResult):
 # =============================================================================
 
 
-def make_spin_row(title: str, subtitle: str, lower, upper, step, digits, value):
+def make_spin_row(title, subtitle, lower, upper, step, digits, value):
     row = Adw.ActionRow(title=title, subtitle=subtitle)
     adj = Gtk.Adjustment(
-        value=value,
-        lower=lower,
-        upper=upper,
-        step_increment=step,
+        value=value, lower=lower, upper=upper, step_increment=step,
         page_increment=step * 5,
     )
     spin = Gtk.SpinButton(adjustment=adj, digits=digits, valign=Gtk.Align.CENTER)
@@ -272,16 +708,29 @@ def make_spin_row(title: str, subtitle: str, lower, upper, step, digits, value):
     return row, spin
 
 
-def make_group(title: str, description: str = None):
-    g = Adw.PreferencesGroup(title=title)
+def make_scale_row(title, lower, upper, step, digits, value):
+    row = Adw.ActionRow(title=title)
+    scale = Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL, lower, upper, step)
+    scale.set_value(value)
+    scale.set_digits(digits)
+    scale.set_draw_value(True)
+    scale.set_hexpand(True)
+    scale.set_size_request(220, -1)
+    scale.set_valign(Gtk.Align.CENTER)
+    row.add_suffix(scale)
+    return row, scale
+
+
+def make_group(title=None, description=None):
+    g = Adw.PreferencesGroup()
+    if title:
+        g.set_title(title)
     if description:
         g.set_description(description)
     return g
 
 
-def file_status_icon(path: Path) -> Gtk.Image:
-    """Small icon indicating whether a target file exists, since the bash
-    script silently skips missing files — the GUI should say so up front."""
+def file_status_icon(path: Path):
     if path.is_file():
         icon = Gtk.Image.new_from_icon_name("emblem-ok-symbolic")
         icon.set_tooltip_text(f"Found: {path}")
@@ -293,8 +742,17 @@ def file_status_icon(path: Path) -> Gtk.Image:
     return icon
 
 
+def wrap_page(*groups):
+    scrolled = Gtk.ScrolledWindow(vexpand=True, hexpand=True)
+    page = Adw.PreferencesPage()
+    for g in groups:
+        page.add(g)
+    scrolled.set_child(page)
+    return scrolled
+
+
 # =============================================================================
-#  Application
+#  Application window
 # =============================================================================
 
 
@@ -303,18 +761,55 @@ class HyprSettingsWindow(Adw.ApplicationWindow):
         super().__init__(
             application=app,
             title="Hyprland Settings",
-            default_width=560,
+            default_width=920,
             default_height=680,
         )
 
         self.pending: dict[str, object] = {}
-        self.dirty_rows: set[str] = set()
+        self.monitor_widgets: dict[str, dict] = {}
+        self.anim_leaf_widgets: dict[str, dict] = {}
+        self.curve_widgets: dict[str, dict] = {}
+        self.env_rows: dict[str, Adw.EntryRow] = {}
+        self.keybind_rows: dict[str, dict] = {}
 
-        toolbar_view = Adw.ToolbarView()
-        self.set_content(toolbar_view)
+        split = Adw.NavigationSplitView()
+        self.set_content(split)
+
+        # ── Sidebar ──────────────────────────────────────────────────────
+        sidebar_page = Adw.NavigationPage(title="Hyprland Settings")
+        split.set_sidebar(sidebar_page)
+        sidebar_tv = Adw.ToolbarView()
+        sidebar_page.set_child(sidebar_tv)
+        sidebar_tv.add_top_bar(Adw.HeaderBar(show_end_title_buttons=False))
+
+        self.nav_list = Gtk.ListBox()
+        self.nav_list.add_css_class("navigation-sidebar")
+        sidebar_tv.set_content(self.nav_list)
+
+        self.sections = [
+            ("files", "Overview", "document-properties-symbolic"),
+            ("appearance", "Appearance", "applications-graphics-symbolic"),
+            ("monitor", "Display", "video-display-symbolic"),
+            ("animations", "Animations", "preferences-desktop-effects-symbolic"),
+            ("input", "Input", "input-mouse-symbolic"),
+            ("environment", "Environment", "utilities-terminal-symbolic"),
+            ("keybinds", "Keybinds", "input-keyboard-symbolic"),
+        ]
+        for key, label, icon in self.sections:
+            row = Adw.ActionRow(title=label)
+            row.add_prefix(Gtk.Image.new_from_icon_name(icon))
+            row.set_name(key)
+            self.nav_list.append(row)
+        self.nav_list.connect("row-selected", self.on_nav_selected)
+
+        # ── Content ──────────────────────────────────────────────────────
+        content_page = Adw.NavigationPage(title="Settings")
+        split.set_content(content_page)
+        content_tv = Adw.ToolbarView()
+        content_page.set_child(content_tv)
 
         header = Adw.HeaderBar()
-        toolbar_view.add_top_bar(header)
+        content_tv.add_top_bar(header)
 
         self.discard_btn = Gtk.Button(label="Discard")
         self.discard_btn.connect("clicked", self.on_discard)
@@ -327,155 +822,145 @@ class HyprSettingsWindow(Adw.ApplicationWindow):
         self.apply_btn.set_sensitive(False)
         header.pack_end(self.apply_btn)
 
-        # Toast overlay wraps the scrollable content
         self.toast_overlay = Adw.ToastOverlay()
-        toolbar_view.set_content(self.toast_overlay)
+        content_tv.set_content(self.toast_overlay)
 
-        scrolled = Gtk.ScrolledWindow(vexpand=True)
-        self.toast_overlay.set_child(scrolled)
+        self.stack = Gtk.Stack()
+        self.toast_overlay.set_child(self.stack)
 
-        page = Adw.PreferencesPage()
-        scrolled.set_child(page)
+        self.stack.add_named(self._build_files_page(), "files")
+        self.stack.add_named(self._build_appearance_page(), "appearance")
+        self.stack.add_named(self._build_monitor_page(), "monitor")
+        self.stack.add_named(self._build_animations_page(), "animations")
+        self.stack.add_named(self._build_input_page(), "input")
+        self.stack.add_named(self._build_environment_page(), "environment")
+        self.stack.add_named(self._build_keybinds_page(), "keybinds")
 
-        # ── File status group ───────────────────────────────────────────
+        self.nav_list.select_row(self.nav_list.get_row_at_index(0))
+
+        self.connect("close-request", self.on_close_request)
+
+    def on_nav_selected(self, _listbox, row):
+        if row is not None:
+            self.stack.set_visible_child_name(row.get_name())
+
+    # ── Overview page ────────────────────────────────────────────────────
+
+    def _build_files_page(self):
         g = make_group(
             "Config files",
-            "Files this app can write to. Missing files are "
-            "skipped, same as the original script.",
+            "Hyprland Lua files this app edits. Missing files are skipped. "
+            "Kitty and GTK theme files are also kept in sync in the "
+            "background whenever opacity changes.",
         )
-        page.add(g)
         for label, path in [
-            ("Hyprland config", HYPR_LUA),
-            ("Kitty config", KITTY_CONF),
-            ("GTK 3 css", GTK3_CSS),
-            ("GTK 4 css", GTK4_CSS),
+            ("Appearance (configs.lua)", CONFIGS_LUA),
+            ("Display (monitor.lua)", MONITOR_LUA),
+            ("Animations (animation.lua)", ANIMATION_LUA),
+            ("Input (settings.lua)", SETTINGS_LUA),
+            ("Environment (environment.lua)", ENVIRONMENT_LUA),
+            ("Keybinds (keybinds.lua)", KEYBINDS_LUA),
         ]:
             row = Adw.ActionRow(title=label, subtitle=str(path))
             row.add_suffix(file_status_icon(path))
             g.add(row)
+        return wrap_page(g)
 
-        # ── Window decoration ───────────────────────────────────────────
-        g = make_group("Window Decoration")
-        page.add(g)
+    # ── Appearance page ──────────────────────────────────────────────────
 
+    def _build_appearance_page(self):
+        cur = read_appearance()
+
+        g1 = make_group("Window Decoration")
         row, self.spin_border = make_spin_row(
-            "Border size", "Width of window borders, in pixels", 0, 20, 1, 0, 2
+            "Border size", "Width of window borders, in pixels",
+            0, 20, 1, 0, cur["border"],
         )
-        g.add(row)
+        g1.add(row)
         self.spin_border.connect(
             "value-changed", lambda w: self.mark("border_size", int(w.get_value()))
         )
 
         row, self.spin_round = make_spin_row(
-            "Corner rounding", "Corner radius, in pixels", 0, 30, 1, 0, 8
+            "Corner rounding", "Corner radius, in pixels",
+            0, 30, 1, 0, cur["rounding"],
         )
-        g.add(row)
+        g1.add(row)
         self.spin_round.connect(
             "value-changed", lambda w: self.mark("roundness", int(w.get_value()))
         )
 
-        # ── Gaps ─────────────────────────────────────────────────────────
-        g = make_group("Gaps")
-        page.add(g)
-
+        g2 = make_group("Gaps")
         row, self.spin_inner = make_spin_row(
-            "Inner gap", "Gap between tiled windows, in pixels", 0, 40, 1, 0, 4
+            "Inner gap", "Gap between tiled windows, in pixels",
+            0, 40, 1, 0, cur["inner_gap"],
         )
-        g.add(row)
+        g2.add(row)
         self.spin_inner.connect(
             "value-changed", lambda w: self.mark("inner_gap", int(w.get_value()))
         )
 
         row, self.spin_outer = make_spin_row(
-            "Outer gap",
-            "Gap between windows and screen edge, in pixels",
-            0,
-            60,
-            1,
-            0,
-            8,
+            "Outer gap", "Gap between windows and screen edge, in pixels",
+            0, 60, 1, 0, cur["outer_gap"],
         )
-        g.add(row)
+        g2.add(row)
         self.spin_outer.connect(
             "value-changed", lambda w: self.mark("outer_gap", int(w.get_value()))
         )
 
-        # ── Blur ─────────────────────────────────────────────────────────
-        g = make_group("Blur", "Recommended: size 2–8, passes 2–4.")
-        page.add(g)
-
+        g3 = make_group("Blur", "Recommended: size 2–8, passes 2–4.")
         row, self.spin_blur_size = make_spin_row(
-            "Blur size", "Spread radius of the blur kernel", 0, 20, 1, 0, 4
+            "Blur size", "Spread radius of the blur kernel",
+            0, 20, 1, 0, cur["blur_size"],
         )
-        g.add(row)
+        g3.add(row)
         self.spin_blur_size.connect("value-changed", lambda w: self.mark_blur())
 
         row, self.spin_blur_passes = make_spin_row(
-            "Blur passes", "More passes = smoother blur, higher GPU cost", 1, 8, 1, 0, 3
+            "Blur passes", "More passes = smoother blur, higher GPU cost",
+            1, 8, 1, 0, cur["blur_pass"],
         )
-        g.add(row)
+        g3.add(row)
         self.spin_blur_passes.connect("value-changed", lambda w: self.mark_blur())
 
-        # ── Opacity ──────────────────────────────────────────────────────
-        g = make_group("Opacity", "Also applied to Kitty background, GTK3, and GTK4.")
-        page.add(g)
-
+        g4 = make_group("Opacity", "Also applied to Kitty background, GTK3, and GTK4.")
         row, self.spin_opacity_act = make_spin_row(
-            "Active window opacity",
-            "Opacity of the focused window",
-            0.0,
-            1.0,
-            0.05,
-            2,
-            0.95,
+            "Active window opacity", "Opacity of the focused window",
+            0.0, 1.0, 0.05, 2, cur["opacity_act"],
         )
-        g.add(row)
+        g4.add(row)
         self.spin_opacity_act.connect("value-changed", lambda w: self.mark_opacity())
 
         row, self.spin_opacity_deact = make_spin_row(
-            "Inactive window opacity",
-            "Opacity of unfocused windows",
-            0.0,
-            1.0,
-            0.05,
-            2,
-            0.75,
+            "Inactive window opacity", "Opacity of unfocused windows",
+            0.0, 1.0, 0.05, 2, cur["opacity_deact"],
         )
-        g.add(row)
+        g4.add(row)
         self.spin_opacity_deact.connect("value-changed", lambda w: self.mark_opacity())
 
-        # ── Shadow ───────────────────────────────────────────────────────
-        g = make_group("Shadow")
-        page.add(g)
-
+        g5 = make_group("Shadow")
         self.switch_shadow = Adw.SwitchRow(
             title="Enable drop shadow",
             subtitle="Off sets shadow range to 0",
-            active=True,
         )
-        g.add(self.switch_shadow)
+        self.switch_shadow.set_active(cur["shadow_range"] > 0)
+        g5.add(self.switch_shadow)
         self.switch_shadow.connect("notify::active", self.on_shadow_toggled)
 
         row, self.spin_shadow = make_spin_row(
-            "Shadow range",
-            "Drop shadow radius, in pixels. 0 disables shadows.",
-            0,
-            60,
-            1,
-            0,
-            12,
+            "Shadow range", "Drop shadow radius, in pixels. 0 disables shadows.",
+            0, 60, 1, 0, cur["shadow_range"] if cur["shadow_range"] > 0 else 12,
         )
-        g.add(row)
+        g5.add(row)
+        self.spin_shadow.set_sensitive(cur["shadow_range"] > 0)
         self.spin_shadow.connect("value-changed", self.on_shadow_range_changed)
 
-        # ── Results group (hidden until first Apply) ────────────────────
         self.results_group = make_group("Last apply")
         self.results_group.set_visible(False)
-        page.add(self.results_group)
+        self._result_rows = []
 
-        self.connect("close-request", self.on_close_request)
-
-    # ── Pending-change tracking ─────────────────────────────────────────
+        return wrap_page(g1, g2, g3, g4, g5, self.results_group)
 
     def mark(self, key, value):
         self.pending[key] = value
@@ -504,12 +989,407 @@ class HyprSettingsWindow(Adw.ApplicationWindow):
         if self.switch_shadow.get_active():
             self.mark("shadow", int(w.get_value()))
 
+    # ── Display (monitor) page ──────────────────────────────────────────
+
+    def _build_monitor_page(self):
+        monitors = parse_monitors()
+        if not monitors:
+            g = make_group("Display", "No hl.monitor() blocks found in monitor.lua.")
+            return wrap_page(g)
+
+        groups = []
+        for mon in monitors:
+            output = mon["output"]
+            g = make_group(output)
+            widgets = {}
+
+            mode_match = re.match(r"^(\d+)x(\d+)@([\d.]+)$", mon["mode"])
+            if mode_match:
+                w, h, hz = mode_match.groups()
+                digits = 2 if "." in hz else 0
+                row, spin_w = make_spin_row("Width", "px", 320, 15360, 10, 0, int(w))
+                g.add(row)
+                row, spin_h = make_spin_row("Height", "px", 240, 8640, 10, 0, int(h))
+                g.add(row)
+                row, spin_hz = make_spin_row(
+                    "Refresh rate", "Hz", 24, 360, 1, digits, float(hz)
+                )
+                g.add(row)
+                widgets["spin_w"] = spin_w
+                widgets["spin_h"] = spin_h
+                widgets["spin_hz"] = spin_hz
+
+                def on_mode_change(_w, output=output, widgets=widgets):
+                    ww = int(widgets["spin_w"].get_value())
+                    hh = int(widgets["spin_h"].get_value())
+                    hz = widgets["spin_hz"].get_value()
+                    hz_str = (f"{hz:.2f}").rstrip("0").rstrip(".")
+                    self.mark_monitor(output, "mode", f"{ww}x{hh}@{hz_str}")
+
+                spin_w.connect("value-changed", on_mode_change)
+                spin_h.connect("value-changed", on_mode_change)
+                spin_hz.connect("value-changed", on_mode_change)
+            else:
+                row = Adw.ActionRow(title="Mode", subtitle="e.g. 1920x1080@75, or 'preferred'")
+                entry = Gtk.Entry(text=mon["mode"], valign=Gtk.Align.CENTER)
+                row.add_suffix(entry)
+                g.add(row)
+                widgets["mode_entry"] = entry
+                entry.connect(
+                    "changed",
+                    lambda w, output=output: self.mark_monitor(output, "mode", w.get_text()),
+                )
+
+            row, spin_scale = make_scale_row("Scale", 0.5, 3.0, 0.05, 2, mon["scale"])
+            g.add(row)
+            widgets["spin_scale"] = spin_scale
+            spin_scale.connect(
+                "value-changed",
+                lambda w, output=output: self.mark_monitor(
+                    output, "scale", round(w.get_value(), 2)
+                ),
+            )
+
+            row = Adw.ActionRow(title="Position", subtitle='"auto" or "X,Y"')
+            pos_entry = Gtk.Entry(text=mon["position"], valign=Gtk.Align.CENTER)
+            row.add_suffix(pos_entry)
+            g.add(row)
+            widgets["pos_entry"] = pos_entry
+            pos_entry.connect(
+                "changed",
+                lambda w, output=output: self.mark_monitor(output, "position", w.get_text()),
+            )
+
+            self.monitor_widgets[output] = {
+                "mode": mon["mode"],
+                "scale": mon["scale"],
+                "position": mon["position"],
+            }
+            groups.append(g)
+
+        return wrap_page(*groups)
+
+    def mark_monitor(self, output, field, value):
+        state = self.monitor_widgets.setdefault(
+            output, {"mode": "", "scale": 1.0, "position": "auto"}
+        )
+        state[field] = value
+        self.pending.setdefault("monitor", {})[output] = dict(state)
+        self._refresh_buttons()
+
+    # ── Animations page ──────────────────────────────────────────────────
+
+    def _build_animations_page(self):
+        groups = []
+
+        g0 = make_group("Global")
+        self.switch_anim = Adw.SwitchRow(title="Enable animations")
+        self.switch_anim.set_active(parse_anim_global_enabled())
+        g0.add(self.switch_anim)
+        self.switch_anim.connect(
+            "notify::active",
+            lambda w, _p: self.mark("anim_global", 1 if w.get_active() else 0),
+        )
+        groups.append(g0)
+
+        curves = parse_curves()
+        curve_names = list(curves.keys()) or ["linear"]
+
+        anims = parse_animations()
+        if anims:
+            g1 = make_group("Animations", "Speed is in Hyprland's 1–10 unit, not seconds.")
+            for a in anims:
+                leaf = a["leaf"]
+                row = Adw.ActionRow(title=leaf)
+
+                speed_box = Gtk.SpinButton(
+                    adjustment=Gtk.Adjustment(
+                        value=a["speed"], lower=0.5, upper=30, step_increment=0.5
+                    ),
+                    digits=1,
+                    valign=Gtk.Align.CENTER,
+                )
+                row.add_suffix(speed_box)
+
+                dropdown = Gtk.DropDown.new_from_strings(curve_names)
+                if a["bezier"] in curve_names:
+                    dropdown.set_selected(curve_names.index(a["bezier"]))
+                dropdown.set_valign(Gtk.Align.CENTER)
+                row.add_suffix(dropdown)
+
+                self.anim_leaf_widgets[leaf] = {
+                    "speed": speed_box, "bezier": dropdown, "names": curve_names,
+                }
+
+                def on_leaf_change(_w, leaf=leaf):
+                    widgets = self.anim_leaf_widgets[leaf]
+                    idx = widgets["bezier"].get_selected()
+                    bezier_name = widgets["names"][idx] if idx < len(widgets["names"]) else ""
+                    self.pending.setdefault("anim_leaf", {})[leaf] = {
+                        "speed": round(widgets["speed"].get_value(), 2),
+                        "bezier": bezier_name,
+                    }
+                    self._refresh_buttons()
+
+                speed_box.connect("value-changed", on_leaf_change)
+                dropdown.connect("notify::selected", lambda w, p, cb=on_leaf_change: cb(w))
+
+                g1.add(row)
+            groups.append(g1)
+
+        if curves:
+            g2 = make_group(
+                "Bezier curves",
+                "Control points as (x, y) pairs. X is typically 0–1; Y can exceed "
+                "1 for overshoot/bounce curves.",
+            )
+            for name, (p1, p2) in curves.items():
+                exp = Adw.ExpanderRow(title=name)
+                sliders = {}
+                for label, axis, val in [
+                    ("Point 1 – X", "p1x", p1[0]),
+                    ("Point 1 – Y", "p1y", p1[1]),
+                    ("Point 2 – X", "p2x", p2[0]),
+                    ("Point 2 – Y", "p2y", p2[1]),
+                ]:
+                    lo, hi = (0.0, 1.0) if axis.endswith("x") else (-0.5, 1.5)
+                    row, scale = make_scale_row(label, lo, hi, 0.01, 2, val)
+                    exp.add_row(row)
+                    sliders[axis] = scale
+                self.curve_widgets[name] = sliders
+
+                def on_curve_change(_w, name=name):
+                    s = self.curve_widgets[name]
+                    p1 = (round(s["p1x"].get_value(), 2), round(s["p1y"].get_value(), 2))
+                    p2 = (round(s["p2x"].get_value(), 2), round(s["p2y"].get_value(), 2))
+                    self.pending.setdefault("curve", {})[name] = (p1, p2)
+                    self._refresh_buttons()
+
+                for scale in sliders.values():
+                    scale.connect("value-changed", on_curve_change)
+                g2.add(exp)
+            groups.append(g2)
+
+        if not anims and not curves:
+            groups.append(make_group("Animations", "animation.lua not found."))
+
+        return wrap_page(*groups)
+
+    # ── Input page ───────────────────────────────────────────────────────
+
+    def _build_input_page(self):
+        cur = read_input()
+        g1 = make_group("Pointer")
+        row, self.scale_sensitivity = make_scale_row(
+            "Mouse sensitivity", -1.0, 1.0, 0.05, 2, cur["sensitivity"]
+        )
+        g1.add(row)
+        self.scale_sensitivity.connect(
+            "value-changed",
+            lambda w: self.mark("input_sensitivity", round(w.get_value(), 2)),
+        )
+
+        g2 = make_group("Touchpad")
+        self.input_switches = {}
+        for key, label in [
+            ("natural_scroll", "Natural scrolling"),
+            ("tap_to_click", "Tap to click"),
+            ("disable_while_typing", "Disable while typing"),
+            ("left_handed", "Left-handed mode"),
+            ("numlock_by_default", "Numlock on by default"),
+        ]:
+            sw = Adw.SwitchRow(title=label)
+            sw.set_active(bool(cur[key]))
+            g2.add(sw)
+            self.input_switches[key] = sw
+            sw.connect(
+                "notify::active",
+                lambda w, _p, key=key: self.mark_input_bool(key, w.get_active()),
+            )
+
+        return wrap_page(g1, g2)
+
+    def mark_input_bool(self, key, value):
+        self.pending.setdefault("input_bool", {})[key] = value
+        self._refresh_buttons()
+
+    # ── Environment page ─────────────────────────────────────────────────
+
+    def _build_environment_page(self):
+        self.env_group = make_group(
+            "Environment variables", "Applied via hl.env(KEY, VALUE) in environment.lua."
+        )
+        for key, value in parse_env_vars():
+            self._add_env_row(key, value)
+
+        add_group = make_group("Add variable")
+        self.env_key_entry = Adw.EntryRow(title="Key")
+        self.env_val_entry = Adw.EntryRow(title="Value")
+        add_btn_row = Adw.ActionRow()
+        add_btn = Gtk.Button(label="Add", valign=Gtk.Align.CENTER)
+        add_btn.add_css_class("suggested-action")
+        add_btn.connect("clicked", self.on_add_env)
+        add_btn_row.add_suffix(add_btn)
+        add_group.add(self.env_key_entry)
+        add_group.add(self.env_val_entry)
+        add_group.add(add_btn_row)
+
+        return wrap_page(self.env_group, add_group)
+
+    def _add_env_row(self, key, value):
+        row = Adw.EntryRow(title=key, text=value)
+        del_btn = Gtk.Button(icon_name="user-trash-symbolic", valign=Gtk.Align.CENTER)
+        del_btn.add_css_class("flat")
+        del_btn.connect("clicked", lambda _b, key=key: self.on_remove_env(key))
+        row.add_suffix(del_btn)
+        row.connect(
+            "notify::text",
+            lambda w, _p, key=key: self.mark_env_edit(key, w.get_text()),
+        )
+        self.env_group.add(row)
+        self.env_rows[key] = row
+
+    def mark_env_edit(self, key, value):
+        if key in self.pending.get("env_remove", set()):
+            return
+        self.pending.setdefault("env_edit", {})[key] = value
+        self._refresh_buttons()
+
+    def on_remove_env(self, key):
+        self.pending.setdefault("env_remove", set()).add(key)
+        self.pending.get("env_edit", {}).pop(key, None)
+        row = self.env_rows.pop(key, None)
+        if row is not None:
+            self.env_group.remove(row)
+        self._refresh_buttons()
+        self.toast_overlay.add_toast(Adw.Toast(title=f"{key} will be removed on Apply", timeout=2))
+
+    def on_add_env(self, _btn):
+        key = self.env_key_entry.get_text().strip()
+        val = self.env_val_entry.get_text().strip()
+        if not key:
+            return
+        self.pending.setdefault("env_add", []).append((key, val))
+        self._add_env_row(key, val)
+        self.env_rows[key].set_sensitive(False)  # new rows are edited via the add list, not inline
+        self.env_key_entry.set_text("")
+        self.env_val_entry.set_text("")
+        self._refresh_buttons()
+
+    # ── Keybinds page ────────────────────────────────────────────────────
+
+    def _build_keybinds_page(self):
+        self.keybind_group = make_group(
+            "Keybinds", "Raw Lua statements from keybinds.lua — edited as text for reliability."
+        )
+        for kb in iter_keybind_statements():
+            self._add_keybind_row(kb["raw"], kb["combo"], kb["action"])
+
+        add_group = make_group("Add keybind")
+        self.kb_combo_entry = Adw.EntryRow(title='Key combo, e.g. mainMod .. " + Y"')
+        self.kb_cmd_entry = Adw.EntryRow(title="Shell command")
+        row = Adw.ActionRow()
+        self.kb_locked = Gtk.CheckButton(label="Locked")
+        self.kb_repeating = Gtk.CheckButton(label="Repeating")
+        row.add_suffix(self.kb_locked)
+        row.add_suffix(self.kb_repeating)
+        add_btn = Gtk.Button(label="Add", valign=Gtk.Align.CENTER)
+        add_btn.add_css_class("suggested-action")
+        add_btn.connect("clicked", self.on_add_keybind)
+        row.add_suffix(add_btn)
+        add_group.add(self.kb_combo_entry)
+        add_group.add(self.kb_cmd_entry)
+        add_group.add(row)
+
+        return wrap_page(self.keybind_group, add_group)
+
+    def _add_keybind_row(self, raw, combo, action):
+        title = combo.strip('"') if combo else "(bind)"
+        exp = Adw.ExpanderRow(title=title[:60], subtitle=action[:80])
+
+        tv = Gtk.TextView(wrap_mode=Gtk.WrapMode.WORD_CHAR)
+        tv.get_buffer().set_text(raw)
+        tv.set_top_margin(6)
+        tv.set_bottom_margin(6)
+        tv.set_left_margin(6)
+        tv.set_right_margin(6)
+        scroller = Gtk.ScrolledWindow(min_content_height=80, max_content_height=200)
+        scroller.set_child(tv)
+
+        btn_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+        btn_row.set_margin_top(6)
+        btn_row.set_margin_bottom(6)
+        btn_row.set_margin_start(6)
+        btn_row.set_margin_end(6)
+        save_btn = Gtk.Button(label="Save changes")
+        save_btn.add_css_class("suggested-action")
+        remove_btn = Gtk.Button(label="Remove")
+        remove_btn.add_css_class("destructive-action")
+        btn_row.append(save_btn)
+        btn_row.append(remove_btn)
+
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        box.append(scroller)
+        box.append(btn_row)
+
+        inner_row = Gtk.ListBoxRow(selectable=False, activatable=False)
+        inner_row.set_child(box)
+        exp.add_row(inner_row)
+
+        state = {"raw": raw, "textview": tv, "exp": exp}
+        self.keybind_rows[raw] = state
+
+        save_btn.connect("clicked", lambda _b, raw=raw: self.on_save_keybind(raw))
+        remove_btn.connect("clicked", lambda _b, raw=raw: self.on_remove_keybind(raw))
+
+        self.keybind_group.add(exp)
+
+    def on_save_keybind(self, original_raw):
+        state = self.keybind_rows.get(original_raw)
+        if not state:
+            return
+        buf = state["textview"].get_buffer()
+        new_text = buf.get_text(buf.get_start_iter(), buf.get_end_iter(), True).strip()
+        if new_text and new_text != original_raw:
+            self.pending.setdefault("keybind_edit", {})[original_raw] = new_text
+            self._refresh_buttons()
+            self.toast_overlay.add_toast(Adw.Toast(title="Keybind change staged", timeout=2))
+
+    def on_remove_keybind(self, original_raw):
+        self.pending.setdefault("keybind_remove", set()).add(original_raw)
+        self.pending.get("keybind_edit", {}).pop(original_raw, None)
+        state = self.keybind_rows.pop(original_raw, None)
+        if state:
+            self.keybind_group.remove(state["exp"])
+        self._refresh_buttons()
+        self.toast_overlay.add_toast(Adw.Toast(title="Keybind will be removed on Apply", timeout=2))
+
+    def on_add_keybind(self, _btn):
+        combo = self.kb_combo_entry.get_text().strip()
+        cmd = self.kb_cmd_entry.get_text().strip()
+        if not combo or not cmd:
+            return
+        opts = []
+        if self.kb_locked.get_active():
+            opts.append("locked = true")
+        if self.kb_repeating.get_active():
+            opts.append("repeating = true")
+        opts_str = f", {{ {', '.join(opts)} }}" if opts else ""
+        raw = f'hl.bind({combo}, hl.dsp.exec_cmd("{cmd}"){opts_str})'
+        self.pending.setdefault("keybind_add", []).append(raw)
+        self._add_keybind_row(raw, combo, f'hl.dsp.exec_cmd("{cmd}")')
+        self.kb_combo_entry.set_text("")
+        self.kb_cmd_entry.set_text("")
+        self.kb_locked.set_active(False)
+        self.kb_repeating.set_active(False)
+        self._refresh_buttons()
+
+    # ── Apply / Discard ─────────────────────────────────────────────────
+
     def _refresh_buttons(self):
         has_pending = bool(self.pending)
         self.apply_btn.set_sensitive(has_pending)
         self.discard_btn.set_sensitive(has_pending)
-
-    # ── Apply / Discard ─────────────────────────────────────────────────
 
     def on_apply(self, _btn):
         result = ApplyResult()
@@ -534,11 +1414,7 @@ class HyprSettingsWindow(Adw.ApplicationWindow):
         self.toast_overlay.add_toast(Adw.Toast(title="Changes discarded", timeout=2))
 
     def _show_results(self, result: ApplyResult):
-        # Clear old rows
-        child = self.results_group.get_first_child()
-        # PreferencesGroup doesn't give an easy "clear all rows" API, so
-        # rebuild the group's rows by removing known ones.
-        for row in list(getattr(self, "_result_rows", [])):
+        for row in list(self._result_rows):
             self.results_group.remove(row)
         self._result_rows = []
 
@@ -557,11 +1433,11 @@ class HyprSettingsWindow(Adw.ApplicationWindow):
             self.results_group.add(row)
             self._result_rows.append(row)
 
-        self.results_group.set_visible(True)
+        self.results_group.set_visible(bool(result.lines))
 
     def on_close_request(self, _win):
         if not self.pending:
-            return False  # allow close
+            return False
 
         dialog = Adw.MessageDialog(
             transient_for=self,
@@ -578,7 +1454,7 @@ class HyprSettingsWindow(Adw.ApplicationWindow):
         dialog.set_close_response("cancel")
         dialog.connect("response", self._on_close_response)
         dialog.present()
-        return True  # block default close until dialog resolves
+        return True
 
     def _on_close_response(self, _dialog, response):
         if response == "apply":
@@ -589,7 +1465,6 @@ class HyprSettingsWindow(Adw.ApplicationWindow):
         elif response == "discard":
             self.pending.clear()
             self.destroy()
-        # "cancel" → do nothing, window stays open
 
 
 class HyprSettingsApp(Adw.Application):
