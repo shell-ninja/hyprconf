@@ -31,6 +31,7 @@ import os
 import re
 import shutil
 import subprocess
+import json
 from datetime import datetime
 from pathlib import Path
 
@@ -157,20 +158,12 @@ def apply_block_fields(text: str, header_regex: str, fields):
         return text, False
     block = m.group(0)
     for field, value, quoted in fields:
-        if quoted:
-            block = re.sub(
-                rf'({re.escape(field)}\s*=\s*")[^"]*(")',
-                rf"\g<1>{value}\g<2>",
-                block,
-                count=1,
-            )
-        else:
-            block = re.sub(
-                rf"({re.escape(field)}\s*=\s*)-?[0-9]+(?:\.[0-9]+)?",
-                rf"\g<1>{value}",
-                block,
-                count=1,
-            )
+        # Matches the field's CURRENT value whether it's on disk as a quoted
+        # string or a bare number, so a field can switch forms (e.g. Hyprland's
+        # `scale = "auto"` vs `scale = 1.25`) and still be found and replaced.
+        pattern = rf'({re.escape(field)}\s*=\s*)(?:"[^"]*"|-?[0-9]+(?:\.[0-9]+)?)'
+        repl = rf'\g<1>"{value}"' if quoted else rf"\g<1>{value}"
+        block = re.sub(pattern, repl, block, count=1)
     return text[: m.start()] + block + text[m.end() :], True
 
 
@@ -219,6 +212,18 @@ def read_input():
     }
 
 
+def _get_monitor_scale(block: str):
+    """Hyprland's `scale` is either the string "auto" or a bare float —
+    read whichever form is present. Returns "auto" or a float."""
+    m = re.search(r'scale\s*=\s*"([^"]*)"', block)
+    if m:
+        return m.group(1) or "auto"
+    m = re.search(r"scale\s*=\s*(-?[0-9]+(?:\.[0-9]+)?)", block)
+    if m:
+        return float(m.group(1))
+    return "auto"
+
+
 def parse_monitors():
     if not MONITOR_LUA.is_file():
         return []
@@ -226,18 +231,84 @@ def parse_monitors():
     monitors = []
     for m in re.finditer(r"hl\.monitor\(\{.*?\}\)", text, re.DOTALL):
         block = m.group(0)
-        output = get_field(block, "output", quoted=True)
-        if not output:
+        # `output` may legitimately be "" (Hyprland's catch-all default
+        # monitor block) — only skip if the key is missing entirely.
+        out_match = re.search(r'output\s*=\s*"([^"]*)"', block)
+        if out_match is None:
             continue
+        output = out_match.group(1)
         monitors.append(
             {
                 "output": output,
-                "mode": get_field(block, "mode", quoted=True) or "",
+                "mode": get_field(block, "mode", quoted=True) or "preferred",
                 "position": get_field(block, "position", quoted=True) or "auto",
-                "scale": float(get_field(block, "scale") or 1.0),
+                "scale": _get_monitor_scale(block),
             }
         )
     return monitors
+
+
+# Static fallback used only when the live compositor can't be queried
+# (e.g. running this app outside a Hyprland session).
+FALLBACK_RESOLUTIONS = [
+    (7680, 4320), (3840, 2160), (3440, 1440), (2560, 1600), (2560, 1440),
+    (2560, 1080), (1920, 1200), (1920, 1080), (1680, 1050), (1600, 900),
+    (1440, 900), (1366, 768), (1280, 1024), (1280, 800), (1280, 720),
+    (1024, 768),
+]
+FALLBACK_REFRESH = [
+    360.0, 240.0, 180.0, 165.0, 144.0, 120.0, 100.0, 90.0, 75.0,
+    60.0, 59.94, 50.0, 48.0, 30.0,
+]
+
+
+def _query_hyprctl_modes(output_name: str):
+    """Best-effort list of (width, height, hz) tuples from the running
+    compositor. Returns [] on any failure (hyprctl missing, not in a
+    Hyprland session, timeout, bad JSON) so callers can fall back cleanly."""
+    try:
+        proc = subprocess.run(
+            ["hyprctl", "monitors", "-j"], capture_output=True, text=True, timeout=2
+        )
+        if proc.returncode != 0 or not proc.stdout.strip():
+            return []
+        data = json.loads(proc.stdout)
+    except Exception:
+        return []
+    modes = []
+    for mon in data:
+        if output_name and mon.get("name") != output_name:
+            continue
+        for m in mon.get("availableModes", []) or []:
+            mm = re.match(r"(\d+)x(\d+)@([\d.]+)", str(m))
+            if mm:
+                modes.append((int(mm.group(1)), int(mm.group(2)), float(mm.group(3))))
+    return modes
+
+
+def get_resolution_options(output_name: str):
+    """Returns (resolutions, refresh_by_res): resolutions is a list of
+    (w, h) tuples sorted largest-first; refresh_by_res maps (w, h) to a
+    Hz-descending list. Prefers live data from `hyprctl monitors -j`,
+    falling back to a static common list when that's unavailable."""
+    modes = _query_hyprctl_modes(output_name)
+    if modes:
+        res_set = sorted({(w, h) for w, h, _ in modes}, key=lambda wh: -(wh[0] * wh[1]))
+        refresh_by_res: dict = {}
+        for w, h, r in modes:
+            refresh_by_res.setdefault((w, h), set()).add(r)
+        refresh_by_res = {k: sorted(v, reverse=True) for k, v in refresh_by_res.items()}
+        return res_set, refresh_by_res
+    refresh_by_res = {wh: list(FALLBACK_REFRESH) for wh in FALLBACK_RESOLUTIONS}
+    return list(FALLBACK_RESOLUTIONS), refresh_by_res
+
+
+def fmt_hz(v: float) -> str:
+    return f"{int(v)} Hz" if float(v).is_integer() else f"{v:g} Hz"
+
+
+def fmt_hz_value(v: float) -> str:
+    return f"{v:.2f}".rstrip("0").rstrip(".")
 
 
 def parse_curves():
@@ -521,9 +592,11 @@ def _apply_monitor(pending, result):
     text = MONITOR_LUA.read_text()
     for output, cfg in monitors.items():
         header = rf'hl\.monitor\(\{{\s*output\s*=\s*"{re.escape(output)}"'
+        scale_val = cfg["scale"]
+        scale_quoted = not isinstance(scale_val, (int, float))
         fields = [
             ("mode", cfg["mode"], True),
-            ("scale", cfg["scale"], False),
+            ("scale", scale_val, scale_quoted),
             ("position", cfg["position"], True),
         ]
         text, found = apply_block_fields(text, header, fields)
@@ -1000,55 +1073,132 @@ class HyprSettingsWindow(Adw.ApplicationWindow):
         groups = []
         for mon in monitors:
             output = mon["output"]
-            g = make_group(output)
+            title = output if output else "Default monitor (catch-all)"
+            g = make_group(
+                title,
+                None if output else "Matches any monitor without its own hl.monitor() block above it.",
+            )
             widgets = {}
 
-            mode_match = re.match(r"^(\d+)x(\d+)@([\d.]+)$", mon["mode"])
-            if mode_match:
-                w, h, hz = mode_match.groups()
-                digits = 2 if "." in hz else 0
-                row, spin_w = make_spin_row("Width", "px", 320, 15360, 10, 0, int(w))
-                g.add(row)
-                row, spin_h = make_spin_row("Height", "px", 240, 8640, 10, 0, int(h))
-                g.add(row)
-                row, spin_hz = make_spin_row(
-                    "Refresh rate", "Hz", 24, 360, 1, digits, float(hz)
-                )
-                g.add(row)
-                widgets["spin_w"] = spin_w
-                widgets["spin_h"] = spin_h
-                widgets["spin_hz"] = spin_hz
+            resolutions, refresh_by_res = get_resolution_options(output)
 
-                def on_mode_change(_w, output=output, widgets=widgets):
-                    ww = int(widgets["spin_w"].get_value())
-                    hh = int(widgets["spin_h"].get_value())
-                    hz = widgets["spin_hz"].get_value()
-                    hz_str = (f"{hz:.2f}").rstrip("0").rstrip(".")
-                    self.mark_monitor(output, "mode", f"{ww}x{hh}@{hz_str}")
+            is_preferred = mon["mode"].strip().lower() == "preferred"
+            cur_w = cur_h = cur_hz = None
+            if not is_preferred:
+                mm = re.match(r"^(\d+)x(\d+)@([\d.]+)$", mon["mode"])
+                if mm:
+                    cur_w, cur_h, cur_hz = int(mm.group(1)), int(mm.group(2)), float(mm.group(3))
+                else:
+                    is_preferred = True  # unrecognised string — treat like "preferred"
 
-                spin_w.connect("value-changed", on_mode_change)
-                spin_h.connect("value-changed", on_mode_change)
-                spin_hz.connect("value-changed", on_mode_change)
-            else:
-                row = Adw.ActionRow(title="Mode", subtitle="e.g. 1920x1080@75, or 'preferred'")
-                entry = Gtk.Entry(text=mon["mode"], valign=Gtk.Align.CENTER)
-                row.add_suffix(entry)
-                g.add(row)
-                widgets["mode_entry"] = entry
-                entry.connect(
-                    "changed",
-                    lambda w, output=output: self.mark_monitor(output, "mode", w.get_text()),
-                )
+            if cur_w is not None and (cur_w, cur_h) not in resolutions:
+                resolutions.append((cur_w, cur_h))
+                resolutions.sort(key=lambda wh: -(wh[0] * wh[1]))
+            if cur_w is not None:
+                rates = refresh_by_res.setdefault((cur_w, cur_h), list(FALLBACK_REFRESH))
+                if cur_hz not in rates:
+                    rates.append(cur_hz)
+                    rates.sort(reverse=True)
 
-            row, spin_scale = make_scale_row("Scale", 0.5, 3.0, 0.05, 2, mon["scale"])
+            res_labels = ["Preferred"] + [f"{w} × {h}" for w, h in resolutions]
+            row = Adw.ActionRow(title="Resolution")
+            res_dropdown = Gtk.DropDown.new_from_strings(res_labels)
+            res_dropdown.set_valign(Gtk.Align.CENTER)
+            row.add_suffix(res_dropdown)
             g.add(row)
-            widgets["spin_scale"] = spin_scale
-            spin_scale.connect(
-                "value-changed",
-                lambda w, output=output: self.mark_monitor(
-                    output, "scale", round(w.get_value(), 2)
-                ),
+
+            refresh_row = Adw.ActionRow(title="Refresh rate")
+            hz_dropdown = Gtk.DropDown.new_from_strings(["60 Hz"])
+            hz_dropdown.set_valign(Gtk.Align.CENTER)
+            refresh_row.add_suffix(hz_dropdown)
+            g.add(refresh_row)
+
+            widgets["res_dropdown"] = res_dropdown
+            widgets["hz_dropdown"] = hz_dropdown
+            widgets["refresh_row"] = refresh_row
+            widgets["resolutions"] = resolutions
+            widgets["refresh_by_res"] = refresh_by_res
+            widgets["current_rates"] = []
+
+            def set_refresh_options(w, h, widgets=widgets, preferred_hz=None):
+                rates = widgets["refresh_by_res"].get((w, h)) or list(FALLBACK_REFRESH)
+                widgets["current_rates"] = rates
+                widgets["hz_dropdown"].set_model(Gtk.StringList.new([fmt_hz(r) for r in rates]))
+                if preferred_hz is not None and preferred_hz in rates:
+                    idx = rates.index(preferred_hz)
+                elif 60.0 in rates:
+                    idx = rates.index(60.0)
+                else:
+                    idx = 0
+                widgets["hz_dropdown"].set_selected(idx)
+                return idx
+
+            if is_preferred:
+                res_dropdown.set_selected(0)
+                refresh_row.set_visible(False)
+                default_wh = resolutions[0] if resolutions else (1920, 1080)
+                set_refresh_options(*default_wh)
+            else:
+                res_dropdown.set_selected(resolutions.index((cur_w, cur_h)) + 1)
+                refresh_row.set_visible(True)
+                set_refresh_options(cur_w, cur_h, preferred_hz=cur_hz)
+
+            def on_resolution_change(_w, output=output, widgets=widgets):
+                idx = widgets["res_dropdown"].get_selected()
+                if idx == 0:
+                    widgets["refresh_row"].set_visible(False)
+                    self.mark_monitor(output, "mode", "preferred")
+                    return
+                w, h = widgets["resolutions"][idx - 1]
+                widgets["refresh_row"].set_visible(True)
+                hz_idx = set_refresh_options(w, h, widgets)
+                hz_val = widgets["current_rates"][hz_idx]
+                self.mark_monitor(output, "mode", f"{w}x{h}@{fmt_hz_value(hz_val)}")
+
+            def on_refresh_change(_w, output=output, widgets=widgets):
+                res_idx = widgets["res_dropdown"].get_selected()
+                if res_idx == 0:
+                    return
+                w, h = widgets["resolutions"][res_idx - 1]
+                hz_idx = widgets["hz_dropdown"].get_selected()
+                rates = widgets["current_rates"]
+                if hz_idx < 0 or hz_idx >= len(rates):
+                    return
+                self.mark_monitor(output, "mode", f"{w}x{h}@{fmt_hz_value(rates[hz_idx])}")
+
+            res_dropdown.connect(
+                "notify::selected", lambda w, p, cb=on_resolution_change: cb(w)
             )
+            hz_dropdown.connect(
+                "notify::selected", lambda w, p, cb=on_refresh_change: cb(w)
+            )
+
+            is_auto = mon["scale"] == "auto"
+            numeric_scale = mon["scale"] if isinstance(mon["scale"], float) else 1.0
+
+            auto_row = Adw.SwitchRow(
+                title="Automatic scaling", subtitle='Off lets you set an exact scale factor'
+            )
+            auto_row.set_active(is_auto)
+            g.add(auto_row)
+
+            row, spin_scale = make_spin_row(
+                "Custom scale", "Used when automatic scaling is off",
+                0.5, 3.0, 0.05, 2, numeric_scale,
+            )
+            spin_scale.set_sensitive(not is_auto)
+            g.add(row)
+            widgets["auto_row"] = auto_row
+            widgets["spin_scale"] = spin_scale
+
+            def on_scale_change(_w, output=output, widgets=widgets):
+                auto = widgets["auto_row"].get_active()
+                widgets["spin_scale"].set_sensitive(not auto)
+                value = "auto" if auto else round(widgets["spin_scale"].get_value(), 2)
+                self.mark_monitor(output, "scale", value)
+
+            auto_row.connect("notify::active", lambda w, p, cb=on_scale_change: cb(w))
+            spin_scale.connect("value-changed", on_scale_change)
 
             row = Adw.ActionRow(title="Position", subtitle='"auto" or "X,Y"')
             pos_entry = Gtk.Entry(text=mon["position"], valign=Gtk.Align.CENTER)
