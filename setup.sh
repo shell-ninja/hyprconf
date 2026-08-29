@@ -13,10 +13,41 @@ cyan="\e[1;36m"
 orange="\x1b[38;5;214m"
 end="\e[1;0m"
 
+# ─── Gum Theme Configuration ───────────────────────────────────────────
+export GUM_STYLE_BORDER="rounded"
+export GUM_STYLE_BORDER_FOREGROUND="#89b4fa"
+export GUM_STYLE_FOREGROUND="#89b4fa"
+
+# Confirm dialogs
+export GUM_CONFIRM_PROMPT_FOREGROUND="#89b4fa"
+export GUM_CONFIRM_AFFIRMATIVE_BACKGROUND="#89b4fa"
+export GUM_CONFIRM_AFFIRMATIVE_FOREGROUND="#11111b"
+export GUM_CONFIRM_NEGATIVE_BACKGROUND="#313244"
+export GUM_CONFIRM_NEGATIVE_FOREGROUND="#cdd6f4"
+
+# Choose menus
+export GUM_CHOOSE_CURSOR=" ➜ "
+export GUM_CHOOSE_CURSOR_FOREGROUND="#89b4fa"
+export GUM_CHOOSE_SELECTED_FOREGROUND="#a6e3a1"
+export GUM_CHOOSE_HEADER_FOREGROUND="#f9e2af"
+export GUM_CHOOSE_ITEM_FOREGROUND="#cdd6f4"
+
+# Spinners
+export GUM_SPIN_SPINNER="dot"
+export GUM_SPIN_SPINNER_FOREGROUND="#89b4fa"
+export GUM_SPIN_TITLE_FOREGROUND="#cdd6f4"
+
+# Text inputs
+export GUM_INPUT_PROMPT_FOREGROUND="#89b4fa"
+export GUM_INPUT_CURSOR_FOREGROUND="#89b4fa"
+export GUM_INPUT_WIDTH=60
+
 if command -v gum &> /dev/null; then
 display_text() {
     gum style \
         --border rounded \
+        --border-foreground "#89b4fa" \
+        --foreground "#89b4fa" \
         --align center \
         --width 60 \
         --margin "1" \

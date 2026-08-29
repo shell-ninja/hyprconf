@@ -18,7 +18,7 @@ start_noctalia() {
         noctalia -d &
         disown
     fi
-    notify-send -t 2000 -i "preferences-desktop-theme" "Desktop Shell" "Switched to Noctalia Shell"
+    # notify-send -t 2000 -i "preferences-desktop-theme" "Desktop Shell" "Switched to Noctalia Shell"
 }
 
 start_waybar() {
