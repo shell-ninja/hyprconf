@@ -43,3 +43,4 @@ max_label_chars = 5
 scale = 1.2
 show_labels = true
 style = "minimal"
+hide_when_empty = false

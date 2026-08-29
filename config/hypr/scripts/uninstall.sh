@@ -72,32 +72,10 @@ others=(
     hyprcursor
     hypridle
     hyprlock
+    noctalia
     waybar
-    # kitty
-    # nwg-look
     swaync
 )
-
-# Config directories to remove/backup
-# DOTFILES=(
-#     btop
-#     dunst
-#     fastfetch
-#     fish
-#     gtk-3.0
-#     gtk-4.0
-#     hypr
-#     kitty
-#     Kvantum
-#     nvim
-#     nwg-look
-#     qt5ct
-#     qt6ct
-#     rofi
-#     waybar
-#     xsettingsd
-#     yazi
-# )
 
 BACKUP_DIR="$HOME/.hyprconf-backup-$(date +%d-%m-%Y)"
 WALLPAPER_DIR="$HOME/.dotfiles/config/hypr/Wallpaper"

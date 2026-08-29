@@ -110,10 +110,10 @@ hl.workspace_rule({
 hl.window_rule({ match = { class = "^(dev\\.noctalia\\.Noctalia)$" }, float = true, size = "monitor_w*0.6 monitor_h*0.75", center = true })
 
 -- Layer rules
-hl.layer_rule({ match = { namespace = "^rofi$" }, blur = true })
+-- hl.layer_rule({ match = { namespace = "^rofi$" }, blur = true })
 hl.layer_rule({ match = { namespace = "^notifications$" }, blur = true })
 hl.layer_rule({ match = { namespace = "^gtk-layer-shell$" }, blur = true })
-hl.layer_rule({ match = { namespace = "^waybar$" }, blur = true })
+-- hl.layer_rule({ match = { namespace = "^waybar$" }, blur = true })
 
 -- Noctalia Shell layer rules
 hl.layer_rule({
@@ -123,3 +123,11 @@ hl.layer_rule({
     blur = true,
     blur_popups = true,
 })
+
+
+-- Define persistent workspaces
+hl.workspace_rule({ workspace = "1", persistent = true})
+hl.workspace_rule({ workspace = "2", persistent = true})
+hl.workspace_rule({ workspace = "3", persistent = true})
+hl.workspace_rule({ workspace = "4", persistent = true})
+hl.workspace_rule({ workspace = "5", persistent = true})
