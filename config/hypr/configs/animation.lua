@@ -37,8 +37,8 @@ hl.curve("md3_accel", {
 hl.curve("elegant_bounce", {
     type = "bezier",
     points = {
-        { 0.55, 1.07 },
-        { 0.28, 1.12 },
+        { 0.4, 1.07 },
+        { 0.28, 1.15 },
     },
 })
 
@@ -66,7 +66,7 @@ hl.curve("linear", {
 hl.animation({
     leaf = "windowsIn",
     enabled = 1,
-    speed = 5,
+    speed = 4.0,
     bezier = "elegant_bounce",
     style = "slide down",
 })

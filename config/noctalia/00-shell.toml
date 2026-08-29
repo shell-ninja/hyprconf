@@ -4,7 +4,7 @@
 # ==============================================================================
 
 [shell]
-avatar_path = "/home/noct-conf/.hyprconf/hypr/.cache/shell-ninja.jpg"
+avatar_path = "/home/shell-ninja/.hyprconf/hypr/.cache/shell-ninja.jpg"
 button_borders = true
 card_borders = true
 clipboard_auto_paste = "auto"
@@ -60,11 +60,19 @@ Bar: minimal-bottom
 Bar: bar-left
 Noctalia Settings
 '"""
-        exec = "bash -c 'case \"$1\" in \"Reload Hyprland\") hyprctl reload ;; \"Wallpaper Panel\") noctalia msg panel-toggle wallpaper ;; \"Bar: \"*) ~/.hyprconf/hypr/scripts/noctalia-bar.sh \"$1\" ;; \"Launcher: \"*) ~/.hyprconf/hypr/scripts/noctalia-launcher.sh \"$1\" ;; \"Noctalia Settings\") noctalia msg settings-open ;; esac' -- {selection}"
+        exec = "bash -c 'case \"$1\" in \"Reload Hyprland\") hyprctl reload ;; \"Wallpaper Panel\") noctalia msg panel-toggle wallpaper ;; \"Bar: \"*) /home/shell-ninja/.hyprconf/hypr/scripts/noctalia-bar.sh \"$1\" ;; \"Launcher: \"*) /home/shell-ninja/.hyprconf/hypr/scripts/noctalia-launcher.sh \"$1\" ;; \"Noctalia Settings\") noctalia msg settings-open ;; esac' -- {selection}"
         global = false
         glyph = "terminal"
         label = "Commands"
         prefix = "cmd"
+
+        [shell.launcher.dmenu.entry.keybinds]
+        command = "~/.hyprconf/hypr/scripts/keybinds.sh --list"
+        exec = "~/.hyprconf/hypr/scripts/keybinds.sh {selection}"
+        global = false
+        glyph = "keyboard"
+        label = "Keybinds"
+        prefix = "keybinds"
 
         [shell.launcher.dmenu.entry.ssh]
         command = "awk '/^Host /{print $2}' ~/.ssh/config 2>/dev/null || true"
@@ -119,7 +127,7 @@ Noctalia Settings
     [shell.screenshot]
     confirm_region = true
     copy_to_clipboard = true
-    directory = "/home/noct-conf/Pictures/Screenshots"
+    directory = "~/Pictures/Screenshots"
     freeze_screen = true
     pipe_command = ""
     pipe_to_command = false

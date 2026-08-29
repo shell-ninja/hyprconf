@@ -17,7 +17,7 @@ hl.config({
 
         resize_on_border = false,
         allow_tearing    = false,
-        layout           = "dwindle",
+        layout           = "scrolling",
     },
 
     decoration = {
@@ -66,5 +66,13 @@ hl.config({
 hl.config({
     master = {
         new_status = "master",
+    },
+})
+
+-- Scrolling layout
+-- See https://wiki.hypr.land/Configuring/Layouts/Scrolling-Layout/
+hl.config({
+    scrolling = {
+        column_width = 0.5,
     },
 })

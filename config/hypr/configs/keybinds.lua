@@ -42,7 +42,7 @@ hl.bind(mainMod .. " + V", hl.dsp.window.float({ action = "toggle" }))
 hl.bind(mainMod .. " + ALT + V", hl.dsp.exec_cmd("hyprctl dispatch workspaceopt allfloat"))
 hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen())
 hl.bind(mainMod .. " + D", hl.dsp.exec_cmd(scripts_dir .. "/menu.sh || pkill rofi"))
-hl.bind(mainMod .. " + Space", hl.dsp.exec_cmd(scripts_dir .. "/menu.sh"))
+hl.bind(mainMod .. " + Space", hl.dsp.exec_cmd(ipc .. "panel-open launcher \">\""))
 -- hl.bind(mainMod .. " + ALT + D",
 --     hl.dsp.exec_cmd("if pgrep -x noctalia >/dev/null; then " ..
 --         scripts_dir .. "/noctalia-launcher.sh; else " .. scripts_dir .. "/rofi_theme.sh; fi"))
@@ -71,7 +71,7 @@ hl.bind(alt .. " + B", hl.dsp.exec_cmd(scripts_dir .. "/default_browser.sh --res
 hl.bind(mainMod .. " + CTRL + W",
     hl.dsp.exec_cmd(scripts_dir .. "/noctalia-bar.sh"))
 hl.bind(mainMod .. " + ALT + B", hl.dsp.exec_cmd(scripts_dir .. "/shell.sh"))
-hl.bind(mainMod .. " + comma", hl.dsp.exec_cmd(ipc .. "settings-toggle"))
+hl.bind(mainMod .. " + SHIFT + comma", hl.dsp.exec_cmd(ipc .. "settings-toggle"))
 hl.bind(mainMod .. " + SHIFT + S", hl.dsp.exec_cmd(ipc .. "panel-toggle control-center"))
 hl.bind(mainMod .. " + CTRL + R", hl.dsp.exec_cmd("hyprctl reload && notify-send 'Done' 'Hyprland reload'"))
 hl.bind(ctrl .. " + U", hl.dsp.exec_cmd(scripts_dir .. "/systemupdate.sh --update"))
@@ -158,6 +158,10 @@ end
 -- Scroll through workspaces with mouse wheel
 hl.bind(mainMod .. " + mouse_down", hl.dsp.focus({ workspace = "e+1" }))
 hl.bind(mainMod .. " + mouse_up", hl.dsp.focus({ workspace = "e-1" }))
+
+-- ── Resize windows column ────────────────────────────------──────────────────
+hl.bind(mainMod .. " + period", hl.dsp.layout("move +col"))
+hl.bind(mainMod .. " + comma", hl.dsp.layout("swapcol l"))
 
 -- ── Mouse move / resize windows ──────────────────────────────────────────────
 hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(), { mouse = true })

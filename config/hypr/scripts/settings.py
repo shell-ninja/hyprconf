@@ -41,6 +41,7 @@ from gi.repository import Adw, Gio, GLib, Gtk
 CONFIGS_DIR = Path.home() / ".config" / "hypr" / "configs"
 
 CONFIGS_LUA = CONFIGS_DIR / "configs.lua"
+DECORATION_LUA = CONFIGS_DIR / "decoration.lua"
 MONITOR_LUA = CONFIGS_DIR / "monitor.lua"
 ANIMATION_LUA = CONFIGS_DIR / "animation.lua"
 SETTINGS_LUA = CONFIGS_DIR / "settings.lua"
@@ -188,6 +189,23 @@ class ApplyResult:
 
 
 def read_appearance():
+    layout = "scrolling"
+    col_width = 1.0
+    if DECORATION_LUA.is_file():
+        text = DECORATION_LUA.read_text()
+        m_layout = re.search(r'layout\s*=\s*"([^"]+)"', text)
+        if m_layout:
+            layout = m_layout.group(1)
+        m_col = re.search(
+            r"scrolling\s*=\s*\{.*?column_width\s*=\s*([0-9.]+)", text, re.DOTALL
+        )
+        if m_col:
+            col_width = float(m_col.group(1))
+        else:
+            m_col2 = re.search(r"column_width\s*=\s*([0-9.]+)", text)
+            if m_col2:
+                col_width = float(m_col2.group(1))
+
     return {
         "border": float(lua_get(CONFIGS_LUA, "border") or 2),
         "rounding": float(lua_get(CONFIGS_LUA, "rounding") or 8),
@@ -198,6 +216,8 @@ def read_appearance():
         "opacity_act": float(lua_get(CONFIGS_LUA, "opacity_act") or 0.95),
         "opacity_deact": float(lua_get(CONFIGS_LUA, "opacity_deact") or 0.75),
         "shadow_range": float(lua_get(CONFIGS_LUA, "shadow_range") or 12),
+        "layout": layout,
+        "column_width": col_width,
     }
 
 
@@ -466,6 +486,10 @@ def apply_all(pending: dict, result: ApplyResult):
     _apply_input(pending, result)
     _apply_environment(pending, result)
     _apply_keybinds(pending, result)
+    try:
+        subprocess.run(["hyprctl", "reload"], capture_output=True, timeout=2)
+    except Exception:
+        pass
 
 
 def _apply_appearance(pending, result):
@@ -481,16 +505,67 @@ def _apply_appearance(pending, result):
             "shadow",
         )
     )
+    need_decoration = any(k in pending for k in ("layout", "column_width"))
     need_kitty = "opacity" in pending
     need_gtk = "opacity" in pending
 
     if need_hypr:
         backup(CONFIGS_LUA)
+    if need_decoration:
+        backup(DECORATION_LUA)
     if need_kitty:
         backup(KITTY_CONF)
     if need_gtk:
         backup(GTK3_CSS)
         backup(GTK4_CSS)
+
+    if "layout" in pending:
+        val = str(pending["layout"])
+        if DECORATION_LUA.is_file():
+            text = DECORATION_LUA.read_text()
+            text, found = apply_block_fields(
+                text,
+                r"general\s*=\s*\{",
+                [("layout", val, True)],
+            )
+            if not found:
+                text, n = re.subn(
+                    r'(layout\s*=\s*)"[^"]*"', rf'\g<1>"{val}"', text, count=1
+                )
+                found = n > 0
+            if found:
+                DECORATION_LUA.write_text(text)
+                result.ok(f"layout           → {val}")
+            else:
+                result.err("layout field not found in decoration.lua")
+        else:
+            result.err("decoration.lua not found — layout skipped")
+
+    if "column_width" in pending:
+        val = float(pending["column_width"])
+        if DECORATION_LUA.is_file():
+            text = DECORATION_LUA.read_text()
+            if "scrolling" in text:
+                text, found = apply_block_fields(
+                    text,
+                    r"scrolling\s*=\s*\{",
+                    [("column_width", val, False)],
+                )
+                if not found:
+                    text, n = re.subn(
+                        r'(column_width\s*=\s*)[0-9.]+', rf'\g<1>{val}', text, count=1
+                    )
+                    found = n > 0
+            else:
+                text += f'\n-- Scrolling layout\nhl.config({{\n    scrolling = {{\n        column_width = {val},\n    }},\n}})\n'
+                found = True
+            if found:
+                DECORATION_LUA.write_text(text)
+                result.ok(f"column_width     → {val}")
+            else:
+                result.err("column_width field not found in decoration.lua")
+        else:
+            result.err("decoration.lua not found — column_width skipped")
 
     if "border_size" in pending:
         val = str(pending["border_size"])
@@ -928,6 +1003,7 @@ class HyprSettingsWindow(Adw.ApplicationWindow):
         )
         for label, path in [
             ("Appearance (configs.lua)", CONFIGS_LUA),
+            ("Decoration (decoration.lua)", DECORATION_LUA),
             ("Display (monitor.lua)", MONITOR_LUA),
             ("Animations (animation.lua)", ANIMATION_LUA),
             ("Input (settings.lua)", SETTINGS_LUA),
@@ -943,6 +1019,42 @@ class HyprSettingsWindow(Adw.ApplicationWindow):
 
     def _build_appearance_page(self):
         cur = read_appearance()
+
+        g0 = make_group("Layout", "Tiling layout and scrolling configuration.")
+        layout_keys = ["scrolling", "dwindle", "master", "monocle"]
+        layout_labels = ["Scrolling", "Dwindle", "Master", "Monocle"]
+
+        row_layout = Adw.ActionRow(title="Window layout", subtitle="Active tiling layout")
+        self.dropdown_layout = Gtk.DropDown.new_from_strings(layout_labels)
+        self.dropdown_layout.set_valign(Gtk.Align.CENTER)
+
+        cur_layout = cur.get("layout", "scrolling")
+        if cur_layout in layout_keys:
+            self.dropdown_layout.set_selected(layout_keys.index(cur_layout))
+        else:
+            self.dropdown_layout.set_selected(0)
+
+        row_layout.add_suffix(self.dropdown_layout)
+        g0.add(row_layout)
+
+        row_col, self.spin_col_width = make_spin_row(
+            "Column width", "Default column width for scrolling layout (0.1 – 1.0, 1.0 = full width)",
+            0.1, 1.0, 0.05, 2, cur.get("column_width", 1.0),
+        )
+        g0.add(row_col)
+
+        def on_layout_selected(w, _p):
+            idx = w.get_selected()
+            if 0 <= idx < len(layout_keys):
+                chosen = layout_keys[idx]
+                self.mark("layout", chosen)
+                self.spin_col_width.set_sensitive(chosen == "scrolling")
+
+        self.dropdown_layout.connect("notify::selected", on_layout_selected)
+        self.spin_col_width.set_sensitive(cur_layout == "scrolling")
+        self.spin_col_width.connect(
+            "value-changed", lambda w: self.mark("column_width", round(w.get_value(), 2))
+        )
 
         g1 = make_group("Window Decoration")
         row, self.spin_border = make_spin_row(
@@ -1033,7 +1145,7 @@ class HyprSettingsWindow(Adw.ApplicationWindow):
         self.results_group.set_visible(False)
         self._result_rows = []
 
-        return wrap_page(g1, g2, g3, g4, g5, self.results_group)
+        return wrap_page(g0, g1, g2, g3, g4, g5, self.results_group)
 
     def mark(self, key, value):
         self.pending[key] = value

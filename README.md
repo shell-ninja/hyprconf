@@ -1,247 +1,338 @@
 <a id="top"></a>
 
 <h1 align="center">Minimal Hyprland Configuration</h1>
-<h3 align="center">By</h3>
+<h3 align="center">Crafted with precision by</h3>
 <h2 align="center">Shell Ninja</h2>
 <br>
 
-This Hyprland configuration is kind of minila looking, but also little bit gorgeous I guess. Why don't you check it out?
+<p align="center">
+  A sleek, modern, and highly modular <b>Lua-based Hyprland</b> desktop environment integrated with the <b>Noctalia Desktop Shell</b>, dynamic <b>Pywal</b> / <b>Material You</b> wallpaper color generation, dedicated <b>GTK Settings & Wallpaper GUIs</b>, and seamless workflow utilities.
+</p>
 
 > [!NOTE]
-> This repo only contains the dotfiles. It won't install any packages and themes. Don't run the setup script before installing necessary packages. <br>
-> Visit [this](https://github.com/shell-ninja/hyprconf-install) repository and run the installation script.
+> This repository contains dotfiles and desktop configurations. To install all required dependencies, packages, and fonts automatically on Arch Linux, visit the [hyprconf-install](https://github.com/shell-ninja/hyprconf-install) repository and run the installer.
 
 <br>
 
 <div align="center">
 
-<br>
-
 <a href="#screenshots"><kbd> <br> Screenshots <br> </kbd></a>&ensp;&ensp;
-<a href="#update"><kbd> <br> Update <br> </kbd></a>&ensp;&ensp;
-<a href="#config"><kbd> <br> Configuration <br> </kbd></a>&ensp;&ensp;
-<a href="#keybinds"><kbd> <br> keyboard Shortcuts <br> </kbd></a>&ensp;&ensp;
-<a href="#contrib"><kbd> <br> Contrubution <br> </kbd></a>&ensp;&ensp;
-
-<!-- <a href="https://t.me/+OxKQy7Y6XWxjOTQ9"><kbd> <br> Telegram <br> </kbd></a> -->
+<a href="#features"><kbd> <br> Features <br> </kbd></a>&ensp;&ensp;
+<a href="#config-structure"><kbd> <br> Configuration <br> </kbd></a>&ensp;&ensp;
+<a href="#keybinds"><kbd> <br> Shortcuts <br> </kbd></a>&ensp;&ensp;
+<a href="#update"><kbd> <br> Update <br> </kbd></a>&ensp;&ensp;
+<a href="#contrib"><kbd> <br> Contributing <br> </kbd></a>
 
 </div>
 
-> [!NOTE]
-> This is a rolling release configuration. It means, I often make changes, fix bugs and add features. If you want to update to the latest changes, just use this keyboard shortcut to update: `SUPER + CTRL + U`
+<br>
+
+> [!TIP]
+> This is a rolling-release configuration with active improvements and refinements. You can effortlessly update your dotfiles at any time using the keyboard shortcut `CTRL + U` or the update command below.
 
 <br>
 
 <div align="right">
-  <br>
-  <a href="#top"><kbd> <br> 🡅 <br> </kbd></a>
+  <a href="#top"><kbd> <br> 🡅 Top <br> </kbd></a>
 </div>
 
 <a id="screenshots"></a>
 
 ## <img src="https://readme-typing-svg.herokuapp.com?font=Lexend+Giga&size=25&pause=1000&color=90EE90&vCenter=true&width=435&height=25&lines=SCREENSHOTS" width="450"/>
 
-<details close>
-<summary>Overall</summary>
+<details open>
+<summary><b>Desktop & Theming</b></summary>
 <p align="center">
-   <img aligh="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/theme/1.png?raw=true" />
-   <img aligh="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/theme/2.png?raw=true" /> <br>
-
-   <img aligh="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/theme/3.png?raw=true" />
-   <img aligh="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/theme/4.png?raw=true" />
-
-   <img aligh="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/theme/5.png?raw=true" />
-   <img aligh="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/theme/6.png?raw=true" />
-</p> <br>
-</details>
-
-<details close>
-<summary>Menu</summary>
-<p align="center">
-   <img aligh="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/menu/1.png?raw=true" />
-   <img aligh="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/menu/2.png?raw=true" /> <br>
-
-   <img aligh="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/menu/4.png?raw=true" />
-   <img aligh="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/menu/3.png?raw=true" />
-    <br>
-
-   <img aligh="center" width="99%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/clipboard.png?raw=true" />
-</p> <br>
-</details>
-
-<details close>
-<summary>Power Menu</summary>
-<p align="center">
-   <img aligh="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/power/1.png?raw=true" />
-   <img aligh="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/power/2.png?raw=true" /> <br>
-</p> <br>
-</details>
-
-<details close>
-<summary>Wallpaper</summary>
-<p align="center">
-   <img aligh="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/wallpaper/1.png?raw=true" />
-   <img aligh="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/wallpaper/2.png?raw=true" /> <br>
-</p> <br>
-</details>
-
-<details close>
-<summary>Lock Screen</summary>
-<p align="center">
-   <img aligh="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/lockscreen/lock-1.png?raw=true" />
-   <img aligh="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/lockscreen/lock-2.png?raw=true" />
-        <br>
-   <img aligh="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/lockscreen/lock-3.png?raw=true" />
-   <img aligh="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/lockscreen/selecttheme.png?raw=true" />
+   <img align="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/theme/1.png?raw=true" alt="Desktop Theme 1" />
+   <img align="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/theme/2.png?raw=true" alt="Desktop Theme 2" /> <br>
+   <img align="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/theme/3.png?raw=true" alt="Desktop Theme 3" />
+   <img align="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/theme/4.png?raw=true" alt="Desktop Theme 4" /> <br>
+   <img align="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/theme/5.png?raw=true" alt="Desktop Theme 5" />
+   <img align="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/theme/6.png?raw=true" alt="Desktop Theme 6" />
 </p>
 </details>
 
 <details close>
-<summary>Login Screen (sddm)</summary>
+<summary><b>Launchers, Menus & Panels</b></summary>
 <p align="center">
-   <img aligh="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/sddm/sddm1.jpg?raw=true" />
-   <img aligh="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/sddm/sddm2.jpg?raw=true" />
+   <img align="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/menu/1.png?raw=true" alt="Launcher 1" />
+   <img align="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/menu/2.png?raw=true" alt="Launcher 2" /> <br>
+   <img align="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/menu/4.png?raw=true" alt="Launcher 3" />
+   <img align="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/menu/3.png?raw=true" alt="Launcher 4" /> <br>
+   <img align="center" width="99%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/clipboard.png?raw=true" alt="Clipboard Manager" />
+</p>
+</details>
+
+<details close>
+<summary><b>Power Menu & Session Controls</b></summary>
+<p align="center">
+   <img align="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/power/1.png?raw=true" alt="Power Menu 1" />
+   <img align="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/power/2.png?raw=true" alt="Power Menu 2" />
+</p>
+</details>
+
+<details close>
+<summary><b>Wallpaper Management</b></summary>
+<p align="center">
+   <img align="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/wallpaper/1.png?raw=true" alt="Wallpaper 1" />
+   <img align="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/wallpaper/2.png?raw=true" alt="Wallpaper 2" />
+</p>
+</details>
+
+<details close>
+<summary><b>Lock Screen & Display Manager (SDDM)</b></summary>
+<p align="center">
+   <img align="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/lockscreen/lock-1.png?raw=true" alt="Lockscreen 1" />
+   <img align="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/lockscreen/lock-2.png?raw=true" alt="Lockscreen 2" /> <br>
+   <img align="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/sddm/sddm1.jpg?raw=true" alt="SDDM 1" />
+   <img align="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/sddm/sddm2.jpg?raw=true" alt="SDDM 2" />
 </p>
 </details>
 
 <br>
 
 <div align="right">
-  <br>
-  <a href="#top"><kbd> <br> 🡅 <br> </kbd></a>
+  <a href="#top"><kbd> <br> 🡅 Top <br> </kbd></a>
 </div>
 
 <a id="features"></a>
 
 ## <img src="https://readme-typing-svg.herokuapp.com?font=Lexend+Giga&size=25&pause=1000&color=90EE90&vCenter=true&width=435&height=25&lines=FEATURES" width="450"/>
 
-- Dynamic Wallpaper changing script
-- Change colors according to the changed wallpaper (pywal)
-- Select and Open apps using Rofi app launcher
-- Gorgeous looking Waybar styles
-- Rofi app launcher styles
-- Wlogout power menu
-- Locking with Hyprlock
-- Set your user image in Hyprlock ( a script `~/.config/hypr/add_user.sh` to set your user image )
-- Hypridle to handle auto lock and suspend when no action is runnin
-- Hyprsunset to use nightlight, `SUPER` + F1 to increase, `SUPER` + F2 to decrease and `SUPER` + F3 to set to default
+- **Modular Lua Configuration**: Fully structured Hyprland setup written in Lua (`hyprland.lua`), dividing rules, keybindings, animations, decorations, environment, monitors, and startup execution into clean modules.
+- **Noctalia Desktop Shell**: Modern Wayland desktop shell providing a status bar, unified control center, quick settings, notifications, session management, and media overlays.
+  - **Dynamic Bar Switching**: Switch between multiple bar layouts (`full-top`, `minimal-bottom`, `bar-left`) with `SUPER + CTRL + W`.
+  - **Dmenu & Launcher Providers**: Interactive app launcher (`SUPER + Space`), clipboard manager (`SUPER + ALT + C`), emoji picker (`SUPER + SHIFT + D`), SSH connections, calculator, and system commands.
+  - **Desktop Shell Switcher**: Toggle instantly between Noctalia and classic Waybar/SwayNC (`SUPER + ALT + B`).
+- **Dynamic Theming & Color Generation**: Automatic palette extraction from active wallpapers using Pywal and Material You color generation (`noctalia-colors.sh`), synchronizing colors across Hyprland borders, Noctalia Shell, terminal, and GUI elements.
+- **Hyprland Settings Apps**:
+  - **GTK Settings GUI** (`settings.py` / `SUPER + S`): Toggle and tweak animations, blur, rounding, borders, shadows, layout modes, and visual preferences with instant live reload.
+  - **Interactive TUI Settings** (`settings.sh`): Command-line configuration dashboard for terminal workflows.
+- **Visual Wallpaper Selector GUI** (`WallpaperSelect.py` / `SUPER + SHIFT + W`): Interactive GTK-based thumbnail grid with live preview, wallpaper switching, and palette regeneration.
+- **Pyprland Plugins & Productivity**:
+  - **Dropdown Scratchpad Terminal**: Slide-down scratchpad terminal toggleable via `SUPER + A`.
+  - **Minimized Window Tray**: Toggle and manage minimized workspaces via `SUPER + N` / `SUPER + SHIFT + N`.
+  - **Screen Magnifier**: Smooth viewport zoom controller (`SUPER + Z` / `SUPER + SHIFT + Z`).
+- **Keybinds Visualizer & Dispatcher** (`keybinds.sh` / `SUPER + SHIFT + H`): Interactive fuzzy-searchable cheatsheet and direct action dispatcher.
+- **Night Light & Eye Care**: Integrated `hyprsunset` screen temperature controller with smooth adjustments (`nightlight.sh`).
+- **Unified Audio, Brightness & Media OSD**: Hardware and media key bindings with on-screen visual feedback and player control.
+- **SDDM & Lock Screen Theming**: Customized SDDM login screen themes and user avatar setup (`sddm_avatar.sh`, `sddm_theme.sh`), paired with Noctalia / Hyprlock lock screen integrations.
 
 <br>
 
-<a id="config"></a>
-
 <div align="right">
-  <br>
-  <a href="#top"><kbd> <br> 🡅 <br> </kbd></a>
+  <a href="#top"><kbd> <br> 🡅 Top <br> </kbd></a>
 </div>
 
-> [!TIP]
->
-> ### Hyprland
->
-> To configure hyprland settings, you can visit to `~/.config/hypr` directory. Inside it, you will find`configs` dir, holding all the configuration files; `scripts` dir for all the scripts.
-> Wallpapers are stored in the `~/.config/hypr/Wallpaper/` directory. Just copy your favourite wallpapers into this directory.
->
-> ### Rofi
->
-> All the Rofi configs are inside the `~/.config/rofi` dir. Inside this, you will find <i>menu</i>, <i>power_option</i> and <i>theme</i> dir. Inside each directory, all the necessary configs are available.
->
-> ### Waybar
->
-> Visit to `~/.config/waybar` directory.
-> You will find <i>configs</i> dir holding all the configurations.
-> A <i>style</i> dir holding all the <b>css</b> files.
-> A <i>moduled</i> dir for all the modules.
->
-> ### Fastfetch
->
-> Fastfetch config files will be stored in your `~/.local/share/fastfetch` directory.
-> Visit there and change the presets according to your need.
-> If you haven't choose from the shells while running the installation script, just add these lines in your <b>`.bashrc, .zshrc or config.fish`</b> configs. <br><b> `fastfetch --config hypr` </b><br> <b>hypr</b> is the preset name. You will find presets inside your `~/.local/share/fastfetch/presets` directory
+<a id="config-structure"></a>
 
-<br>
+## <img src="https://readme-typing-svg.herokuapp.com?font=Lexend+Giga&size=25&pause=1000&color=90EE90&vCenter=true&width=435&height=25&lines=CONFIGURATION" width="450"/>
 
-<a id="update"></a>
+All configurations reside in the `~/.hyprconf` directory and are symlinked into `~/.config`:
 
-<div align="right">
-  <br>
-  <a href="#top"><kbd> <br> 🡅 <br> </kbd></a>
-</div>
-
-## <img src="https://readme-typing-svg.herokuapp.com?font=Lexend+Giga&size=25&pause=1000&color=90EE90&vCenter=true&width=435&height=25&lines=UPDATE" width="450"/>
-
-<h4>To Update into the latest commit. jusr run this command in your tarminal..</h4>
-
-```shell
-bash -c "$(wget -q  https://raw.githubusercontent.com/shell-ninja/hyprconf/main/update.sh -O -)"
+```
+~/.hyprconf/
+├── hypr/                       # Hyprland core configuration & scripts
+│   ├── hyprland.lua            # Main entry point & module loader
+│   ├── noctalia.lua            # Dynamic Noctalia color bridge for Hyprland
+│   ├── hypridle.conf           # Idle & auto-lock configuration
+│   ├── configs/                # Modular Lua configs
+│   │   ├── animation.lua       # Window animations & bezier curves
+│   │   ├── decoration.lua      # Blur, rounding, shadow, & opacity settings
+│   │   ├── environment.lua     # Environment variables (NVIDIA, Wayland, Qt)
+│   │   ├── exec.lua            # Autostart daemons & startup scripts
+│   │   ├── keybinds.lua        # Keyboard shortcuts & dispatchers
+│   │   ├── monitor.lua         # Display resolution, scaling & layout
+│   │   ├── settings.lua        # General Hyprland input, gestures & layout rules
+│   │   ├── tags.lua            # Window tagging rules
+│   │   └── wrules.lua          # Window rules & layer effects (Noctalia, PiP, dialogs)
+│   ├── scripts/                # Helper utilities, GUI apps & dispatchers
+│   │   ├── settings.py         # GTK Hyprland settings menu GUI
+│   │   ├── WallpaperSelect.py  # GTK visual wallpaper selector
+│   │   ├── keybinds.sh         # Interactive keybinds viewer & launcher
+│   │   ├── noctalia-bar.sh     # Noctalia bar preset switcher
+│   │   ├── noctalia-colors.sh  # Pywal & Material You color generator
+│   │   ├── shell.sh            # Desktop shell switcher (Noctalia <-> Waybar)
+│   │   ├── brightness.sh       # Backlight control helper
+│   │   ├── volumecontrol.sh    # Audio volume & mute helper
+│   │   ├── nightlight.sh       # Hyprsunset night light toggle
+│   │   └── screenshot.sh       # Screenshot utility (Grimblast / Satty)
+│   └── Wallpaper/              # Wallpaper collection & cache
+├── noctalia/                   # Noctalia Shell TOML configuration
+│   ├── 00-shell.toml           # Global shell settings, launcher & session rules
+│   ├── 10-theme.toml           # Dynamic color definitions & typography
+│   ├── 20-bar.toml             # Active status bar widget layout
+│   ├── 40-services.toml        # Notification, audio, battery & network daemons
+│   ├── 50-lockscreen.toml      # Lock screen layout & clock configuration
+│   └── bars/                   # Pre-configured bar presets (full-top, minimal-bottom, bar-left)
+├── btop/                       # Resource monitor theme & layout
+├── fastfetch/                  # Fastfetch system info presets
+├── fish/                       # Fish shell functions, aliases & prompt
+├── kitty/                      # Terminal emulator styling & keymaps
+├── pypr/                       # Pyprland plugins (scratchpads, zoom, minimized)
+├── nvim/                       # Neovim text editor configuration
+├── satty/                      # Screenshot annotation tool styling
+├── yazi/                       # Terminal file manager configuration & keymaps
+└── nwg-look/, qt5ct/, qt6ct/   # GTK and Qt visual customization tools
 ```
 
-- Hurrah! Now reboot your system, select Hyprland from your login manager, log into your Hyprland and enjoy it.
-<hr>
-
 <br>
 
-<a id="keybinds"></a>
-
 <div align="right">
-  <br>
-  <a href="#top"><kbd> <br> 🡅 <br> </kbd></a>
+  <a href="#top"><kbd> <br> 🡅 Top <br> </kbd></a>
 </div>
+
+<a id="keybinds"></a>
 
 ## <img src="https://readme-typing-svg.herokuapp.com?font=Lexend+Giga&size=25&pause=1000&color=90EE90&vCenter=true&width=435&height=25&lines=KEYBOARD-SHORTCUTS" width="450"/>
 
 > [!IMPORTANT]
->
-> After installation, just press the `SUPER + Shift + h`. It will show you all the keybinds.
+> Press <kbd>SUPER</kbd> + <kbd>SHIFT</kbd> + <kbd>H</kbd> at any time to open the interactive **Keybinds Search & Dispatcher**.
+
+### 🚀 Applications & Launchers
+
+| Shortcut | Action |
+| :--- | :--- |
+| <kbd>SUPER</kbd> + <kbd>Return</kbd> | Open Main Terminal (`Kitty`) |
+| <kbd>SUPER</kbd> + <kbd>SHIFT</kbd> + <kbd>Return</kbd> | Open Floating Terminal (`Kitty`) |
+| <kbd>SUPER</kbd> + <kbd>Space</kbd> | Open **Noctalia Launcher** |
+| <kbd>SUPER</kbd> + <kbd>D</kbd> | Open Application Menu (`Rofi` fallback) |
+| <kbd>SUPER</kbd> + <kbd>ALT</kbd> + <kbd>C</kbd> | Open **Clipboard Manager** |
+| <kbd>SUPER</kbd> + <kbd>SHIFT</kbd> + <kbd>D</kbd> | Open **Emoji Picker** |
+| <kbd>SUPER</kbd> + <kbd>E</kbd> | Open File Manager (`Dolphin` / `Thunar`) |
+| <kbd>SUPER</kbd> + <kbd>SHIFT</kbd> + <kbd>E</kbd> | Open Terminal File Manager (`Yazi`) |
+| <kbd>SUPER</kbd> + <kbd>B</kbd> | Open Default Web Browser |
+| <kbd>SUPER</kbd> + <kbd>SHIFT</kbd> + <kbd>B</kbd> | Open Browser in Incognito Mode |
+| <kbd>SUPER</kbd> + <kbd>C</kbd> | Open Code Editor (`VS Code` / `VSCodium`) |
+
+---
+
+### 🎛️ Noctalia Shell, Controls & Desktop Settings
+
+| Shortcut | Action |
+| :--- | :--- |
+| <kbd>SUPER</kbd> + <kbd>S</kbd> | Open **Hyprland Settings GUI** |
+| <kbd>SUPER</kbd> + <kbd>SHIFT</kbd> + <kbd>S</kbd> | Toggle **Noctalia Control Center** |
+| <kbd>SUPER</kbd> + <kbd>SHIFT</kbd> + <kbd>,</kbd> | Toggle Noctalia Settings Window |
+| <kbd>SUPER</kbd> + <kbd>CTRL</kbd> + <kbd>W</kbd> | Switch **Noctalia Bar Layout** (`full-top`, `minimal-bottom`, `bar-left`) |
+| <kbd>SUPER</kbd> + <kbd>ALT</kbd> + <kbd>B</kbd> | Switch Desktop Shell (**Noctalia** ⟷ **Waybar / SwayNC**) |
+| <kbd>SUPER</kbd> + <kbd>X</kbd> | Open Session / Power Menu |
+| <kbd>SUPER</kbd> + <kbd>SHIFT</kbd> + <kbd>L</kbd> | Lock Screen |
+| <kbd>Print</kbd> | Take Screenshot via Launcher Palette |
+| <kbd>SUPER</kbd> + <kbd>F1</kbd> | Toggle Window Animations On/Off |
+| <kbd>SUPER</kbd> + <kbd>CTRL</kbd> + <kbd>R</kbd> | Reload Hyprland Configuration |
+| <kbd>SUPER</kbd> + <kbd>SHIFT</kbd> + <kbd>R</kbd> | Restart Startup Services |
+| <kbd>CTRL</kbd> + <kbd>U</kbd> | Run Automated System & Dotfiles Update |
+
+---
+
+### 🖼️ Wallpaper & Colorscheme
+
+| Shortcut | Action |
+| :--- | :--- |
+| <kbd>SUPER</kbd> + <kbd>W</kbd> | Change Wallpaper (Random from collection) |
+| <kbd>SUPER</kbd> + <kbd>SHIFT</kbd> + <kbd>W</kbd> | Open **Visual Wallpaper Selector GUI** |
+| <kbd>SUPER</kbd> + <kbd>CTRL</kbd> + <kbd>P</kbd> | Regenerate Color Scheme from Current Wallpaper |
+
+---
+
+### 🪟 Window & Layout Management
+
+| Shortcut | Action |
+| :--- | :--- |
+| <kbd>SUPER</kbd> + <kbd>Q</kbd> | Close Active Window |
+| <kbd>SUPER</kbd> + <kbd>V</kbd> | Toggle Floating Mode (Active Window) |
+| <kbd>SUPER</kbd> + <kbd>ALT</kbd> + <kbd>V</kbd> | Toggle All Windows to Float |
+| <kbd>SUPER</kbd> + <kbd>F</kbd> | Toggle Fullscreen Mode |
+| <kbd>SUPER</kbd> + <kbd>P</kbd> | Toggle Pseudo-Tiling |
+| <kbd>SUPER</kbd> + <kbd>G</kbd> | Toggle Window Group |
+| <kbd>SUPER</kbd> + <kbd>Tab</kbd> | Open Window Switcher |
+| <kbd>ALT</kbd> + <kbd>Tab</kbd> | Cycle Next Window |
+| <kbd>SUPER</kbd> + <kbd>H</kbd> / <kbd>J</kbd> / <kbd>K</kbd> / <kbd>L</kbd> | Move Window Focus (Left / Down / Up / Right) |
+| <kbd>SUPER</kbd> + <kbd>Arrow Keys</kbd> | Move Window Focus |
+| <kbd>SUPER</kbd> + <kbd>CTRL</kbd> + <kbd>H</kbd> / <kbd>J</kbd> / <kbd>K</kbd> / <kbd>L</kbd> | Move Active Window Position |
+| <kbd>SUPER</kbd> + <kbd>ALT</kbd> + <kbd>H</kbd> / <kbd>J</kbd> / <kbd>K</kbd> / <kbd>L</kbd> | Resize Active Window (Vim keys) |
+| <kbd>SUPER</kbd> + <kbd>LMB Drag</kbd> | Move Window with Mouse |
+| <kbd>SUPER</kbd> + <kbd>RMB Drag</kbd> | Resize Window with Mouse |
+| <kbd>SUPER</kbd> + <kbd>1..0</kbd> | Switch to Workspace 1–10 |
+| <kbd>SUPER</kbd> + <kbd>SHIFT</kbd> + <kbd>1..0</kbd> | Move Active Window to Workspace 1–10 |
+| <kbd>SUPER</kbd> + <kbd>ALT</kbd> + <kbd>1..0</kbd> | Move Active Window Silently to Workspace |
+| <kbd>SUPER</kbd> + <kbd>Mouse Scroll</kbd> | Cycle Workspaces |
+
+---
+
+### 🧩 Pyprland Plugins & Scratchpads
+
+| Shortcut | Action |
+| :--- | :--- |
+| <kbd>SUPER</kbd> + <kbd>A</kbd> | Toggle Dropdown Scratchpad Terminal |
+| <kbd>SUPER</kbd> + <kbd>N</kbd> | Toggle Minimized Window Workspace |
+| <kbd>SUPER</kbd> + <kbd>SHIFT</kbd> + <kbd>N</kbd> | Toggle Special Minimized Workspace |
+| <kbd>SUPER</kbd> + <kbd>Z</kbd> | Reset Screen Zoom / Magnifier |
+| <kbd>SUPER</kbd> + <kbd>SHIFT</kbd> + <kbd>Z</kbd> | Zoom Screen In (`+0.5`) |
+
+---
+
+### 🔊 Audio, Brightness & Media Controls
+
+| Shortcut | Action |
+| :--- | :--- |
+| <kbd>F9</kbd> / <kbd>XF86AudioMute</kbd> | Toggle Audio Mute |
+| <kbd>F10</kbd> / <kbd>XF86AudioLowerVolume</kbd> | Decrease Audio Volume |
+| <kbd>F11</kbd> / <kbd>XF86AudioRaiseVolume</kbd> | Increase Audio Volume |
+| <kbd>XF86AudioMicMute</kbd> | Toggle Microphone Mute |
+| <kbd>XF86AudioPlay</kbd> / <kbd>Pause</kbd> | Play / Pause Media |
+| <kbd>XF86AudioNext</kbd> | Next Track |
+| <kbd>XF86AudioPrev</kbd> | Previous Track |
+| <kbd>F4</kbd> / <kbd>XF86MonBrightnessUp</kbd> | Increase Screen Brightness |
+| <kbd>F3</kbd> / <kbd>XF86MonBrightnessDown</kbd> | Decrease Screen Brightness |
 
 <br>
 
-<a id="contrib"></a>
+<div align="right">
+  <a href="#top"><kbd> <br> 🡅 Top <br> </kbd></a>
+</div>
+
+<a id="update"></a>
+
+## <img src="https://readme-typing-svg.herokuapp.com?font=Lexend+Giga&size=25&pause=1000&color=90EE90&vCenter=true&width=435&height=25&lines=UPDATE" width="450"/>
+
+To update your installation to the latest commit, simply press <kbd>CTRL</kbd> + <kbd>U</kbd> or run:
+
+```bash
+bash -c "$(wget -qO- https://raw.githubusercontent.com/shell-ninja/hyprconf/main/update.sh)"
+```
+
+The script will back up your local configuration, pull the latest changes, update symlinks, and reload your desktop session.
+
+<br>
 
 <div align="right">
-  <br>
-  <a href="#top"><kbd> <br> 🡅 <br> </kbd></a>
+  <a href="#top"><kbd> <br> 🡅 Top <br> </kbd></a>
 </div>
+
+<a id="contrib"></a>
 
 ## <img src="https://readme-typing-svg.herokuapp.com?font=Lexend+Giga&size=25&pause=1000&color=90EE90&vCenter=true&width=435&height=25&lines=CONTRIBUTING" width="450"/>
 
-<h4> If you want to add your ideas in this project, just do some steps. </h4>
+Contributions, bug reports, and suggestions are welcome!
 
-1. Fork this repository. Make sure to uncheck the `Copy the main branch only`. This will also copy other branches ( if available ).
-2. Now clone the forked repository in you machine. <br> Example command:
+1. Fork the repository (uncheck *Copy the main branch only* to include all branches).
+2. Clone your fork:
+   ```bash
+   git clone --depth=1 --branch=development https://github.com/your_user_name/hyprconf.git
+   ```
+3. Create a feature branch:
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+4. Commit your changes following standard conventional commit conventions:
+   ```bash
+   git commit -m "feat: Add new feature description"
+   ```
+5. Push to your branch and open a Pull Request targeting the `development` branch.
 
-```shell
-git clone --depth=1 --branch=development https://github.com/your_user_name/hyprconf.git
-```
+## Reference & Acknowledgements
 
-3. Create a branch by your user_name. <br> Example command:
-
-```shell
-git checkout -b your_user_name
-```
-
-4. Now add your ideas and commit to github. <br> Make sure to commit with a detailed test message. For example:
-
-```shell
-git commit -m "fix: Fixed a but in the "example.sh script"
-```
-
-```shell
-git commit -m "add: Added this feature. This will happen if the user do this."
-```
-
-```shell
-git commit -m "delete: Deleted this. It was creating this example problem"
-```
-
-4. While pushing the new commits, make sure to push it to your branch. <br> For example:
-
-```shell
-git push origin your_branch_name
-```
-
-5. Now you can create a pull request in the main repository.<br> But make sure to create the pull request in the `development` branch, no the `main` branch.
-
-## Reference
-
-#### I would like to thank [JaKooLit](https://github.com/JaKooLit). I was inspired from his Hyprland installation scripts and prepared my script. I took and modified some of his scripts and used here.
+- Inspired by [JaKooLit](https://github.com/JaKooLit)'s Hyprland installation scripts and configurations.
+- Built on top of the [Hyprland](https://hyprland.org/) ecosystem and [Noctalia](https://github.com/noctalia-dev/noctalia) Shell.

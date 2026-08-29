@@ -15,7 +15,7 @@ unit = "celsius"
 
 [shell.launcher.dmenu.entry.screenshot]
 command = "printf 'Full Screen\tCapture Entire Screen\nSelected Area\tPick a region with mouse\n'"
-exec = "~/.hyprconf/hypr/scripts/screenshot.sh {selection}"
+exec = "/home/shell-ninja/.hyprconf/hypr/scripts/screenshot.sh {selection}"
 prefix = "screenshot"   
 
 [desktop_widgets]
@@ -73,10 +73,10 @@ main_axis_padding = 20
 margin_edge = 10
 
 [hooks]
-logging_out = "~/.hyprconf/hypr/scripts/notification.sh logout"
-rebooting = "~/.hyprconf/hypr/scripts/notification.sh logout"
-shutting_down = "~/.hyprconf/hypr/scripts/notification.sh logout"
-started = "~/.hyprconf/hypr/scripts/notification.sh sys"
+logging_out = "/home/shell-ninja/.hyprconf/hypr/scripts/notification.sh logout"
+rebooting = "/home/shell-ninja/.hyprconf/hypr/scripts/notification.sh logout"
+shutting_down = "/home/shell-ninja/.hyprconf/hypr/scripts/notification.sh logout"
+started = "/home/shell-ninja/.hyprconf/hypr/scripts/notification.sh sys"
 
 [hot_corners]
 enabled = true
