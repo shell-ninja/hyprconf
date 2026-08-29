@@ -32,9 +32,9 @@ float_center("org.kde.gwenview")
 float_center("localsend")
 float_center("com.gabm.satty")
 float_center("org.gnome.Nautilus")
-float_center("codium")
-float_center("codium-url-handler")
-float_center("VSCodium")
+-- float_center("codium")
+-- float_center("codium-url-handler")
+-- float_center("VSCodium")
 float_center("com.heroicgameslauncher.hgl")
 float_center("[Ss]team")
 float_center("xdg-desktop-portal-gtk")
@@ -126,8 +126,9 @@ hl.layer_rule({
 
 
 -- Define persistent workspaces
-hl.workspace_rule({ workspace = "1", persistent = true})
-hl.workspace_rule({ workspace = "2", persistent = true})
-hl.workspace_rule({ workspace = "3", persistent = true})
-hl.workspace_rule({ workspace = "4", persistent = true})
-hl.workspace_rule({ workspace = "5", persistent = true})
+hl.workspace_rule({ workspace = "1", persistent = true })
+hl.workspace_rule({ workspace = "2", persistent = true })
+hl.workspace_rule({ workspace = "3", persistent = true })
+hl.workspace_rule({ workspace = "4", persistent = true })
+hl.workspace_rule({ workspace = "5", persistent = true })
+
