@@ -87,4 +87,3 @@ fi
 "$scripts_dir/noctalia-colors.sh" "$target_wallpaper"
 
 # Generate blur, thumbnail, and quad image cache for lockscreens and widgets
-"$scripts_dir/wallcache.sh" &

@@ -140,7 +140,6 @@ dirs=(
     systemd
     xfce4
     xsettingsd
-    yazi
     dolphinrc
     kwalletmanagerrc
     kwalletrc
@@ -563,9 +562,8 @@ select_noctalia_lockscreen_config
 # Generate colors and cache files for default shell-ninja wallpaper
 msg act "Generating colors and cache files..."
 if command -v gum &> /dev/null; then
-    gum spin --title="Generating color scheme & wallpaper cache..." -- bash -c '"$HOME/.hyprconf/hypr/scripts/wallcache.sh" &>/dev/null && "$HOME/.hyprconf/hypr/scripts/noctalia-colors.sh" "'"$wallpaper"'" &>/dev/null'
+    gum spin --title="Generating color scheme & wallpaper cache..." -- bash -c '"$HOME/.hyprconf/hypr/scripts/noctalia-colors.sh" "'"$wallpaper"'" &>/dev/null'
 else
-    "$HOME/.hyprconf/hypr/scripts/wallcache.sh" &> /dev/null
     "$HOME/.hyprconf/hypr/scripts/noctalia-colors.sh" "$wallpaper" &> /dev/null
 fi
 
