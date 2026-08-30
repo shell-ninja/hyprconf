@@ -9,6 +9,7 @@ scripts_dir="$HOME/.hyprconf/hypr/scripts"
 _known_browsers=(
     firefox
     brave
+    brave-origin
     chromium
     google-chrome-stable
     vivaldi

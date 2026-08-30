@@ -577,7 +577,7 @@ fi
 
 # Set default themes, icon, and cursor if tools are available
 if command -v gsettings &> /dev/null; then
-    gsettings set org.gnome.desktop.interface gtk-theme "FlatColor" &> /dev/null || true
+    gsettings set org.gnome.desktop.interface gtk-theme "adw-gtk3" &> /dev/null || true
     gsettings set org.gnome.desktop.interface color-scheme "prefer-dark" &> /dev/null || true
     gsettings set org.gnome.desktop.interface icon-theme "TokyoNight" &> /dev/null || true
     gsettings set org.gnome.desktop.interface cursor-theme "Bibata-Modern-Ice" &> /dev/null || true
