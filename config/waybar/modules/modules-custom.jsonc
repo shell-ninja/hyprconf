@@ -48,7 +48,7 @@
         "return-type": "json",
         // "format": " {}",
         "format": " {}", // for arch linux only
-        "on-click": "~/.config/hypr/scripts/systemupdate.sh --update",
+        "on-click": "~/.config/hypr/scripts/pkgupdate-gui.py",
         "interval": 86400,
         "tooltip": true
     },
