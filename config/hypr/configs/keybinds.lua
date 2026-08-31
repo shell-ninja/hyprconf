@@ -69,7 +69,7 @@ hl.bind(mainMod .. " + CTRL + W", hl.dsp.exec_cmd(scripts_dir .. "/waybar-layout
 hl.bind(mainMod .. " + CTRL + E", hl.dsp.exec_cmd(scripts_dir .. "/edit-dotfiles.sh"))
 hl.bind(mainMod .. " + ALT + B", hl.dsp.exec_cmd(scripts_dir .. "/shell.sh"))
 hl.bind(mainMod .. " + CTRL + R", hl.dsp.exec_cmd("hyprctl reload && notify-send 'Done' 'Hyprland reload'"))
-hl.bind(ctrl .. " + U", hl.dsp.exec_cmd(scripts_dir .. "/systemupdate.sh --update"))
+hl.bind(ctrl .. " + U", hl.dsp.exec_cmd(scripts_dir .. "/pkgupdate-gui.py"))
 hl.bind(mainMod .. " + CTRL + U", hl.dsp.exec_cmd("kitty --title browser sh -c '" .. scripts_dir .. "/hyprconf.sh'"))
 hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd(scripts_dir .. "/startup.sh &> /dev/null"))
 -- hl.bind(mainMod .. " + S", hl.dsp.exec_cmd("kitty --title browser sh -c '" .. scripts_dir .. "/settings.sh'"))
