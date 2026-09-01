@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Hyprconf Settings
+Exec=/home/shell-ninja/.hyprconf/hypr/scripts/settings.py
+Icon=/home/shell-ninja/.hyprconf/hypr/icons/settings.svg
+Terminal=false
+Categories=Utility;   

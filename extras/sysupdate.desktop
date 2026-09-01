@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Package Update
+Exec=/home/shell-ninja/.hyprconf/hypr/scripts/pkgupdate-gui.py
+Icon=/home/shell-ninja/.hyprconf/hypr/icons/pkgupdt.svg
+Terminal=false
+Categories=Utility;   
