@@ -27,11 +27,11 @@ import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 
+import json
 import os
 import re
 import shutil
 import subprocess
-import json
 from datetime import datetime
 from pathlib import Path
 
@@ -58,6 +58,18 @@ BACKUP_DIR = (
     / "hypr-settings"
     / "backups"
 )
+
+# ─── Dotfiles repo (Dotfiles Update section) ──────────────────────────────
+DOTFILES_REPO_OWNER = "shell-ninja"
+DOTFILES_REPO_NAME = "hyprconf"
+DOTFILES_BRANCH = "noct"  # change later once the branch is finalized
+
+CACHE_HOME = Path(os.environ.get("XDG_CACHE_HOME", str(Path.home() / ".cache")))
+DOTFILES_CACHE_DIR = CACHE_HOME / "hypr-settings" / "dotfiles"
+DOTFILES_CLONE_DIR = DOTFILES_CACHE_DIR / DOTFILES_REPO_NAME
+DOTFILES_TARBALL = DOTFILES_CACHE_DIR / f"{DOTFILES_REPO_NAME}.tar.gz"
+
+KITTY_BIN = shutil.which("kitty") or "kitty"
 
 
 # =============================================================================
@@ -180,6 +192,68 @@ class ApplyResult:
 
     def err(self, msg):
         self.lines.append(("err", msg))
+
+
+# =============================================================================
+#  Dotfiles Update — fetch the repo tarball with curl into ~/.cache, extract
+#  it, then hand off to the repo's own setup.sh inside a kitty window.
+# =============================================================================
+
+
+def build_dotfiles_update_script() -> str:
+    """
+    Returns a bash script (as a string) that:
+      1. Downloads the current DOTFILES_BRANCH tarball via curl into
+         DOTFILES_CACHE_DIR (no git required).
+      2. Extracts it, replacing any previous checkout.
+      3. Runs the repo's own setup.sh.
+    Meant to be launched inside a kitty window so the user sees setup.sh's
+    own prompts/output live, exactly like running it by hand.
+    """
+    owner = DOTFILES_REPO_OWNER
+    repo = DOTFILES_REPO_NAME
+    branch = DOTFILES_BRANCH
+    cache_dir = str(DOTFILES_CACHE_DIR)
+    clone_dir = str(DOTFILES_CLONE_DIR)
+    tarball = str(DOTFILES_TARBALL)
+    tarball_url = f"https://github.com/{owner}/{repo}/archive/refs/heads/{branch}.tar.gz"
+
+    return f"""set -e
+mkdir -p {cache_dir!r}
+echo "==> Fetching {owner}/{repo}@{branch}"
+curl -fL --progress-bar -o {tarball!r} {tarball_url!r}
+
+echo "==> Extracting"
+rm -rf {clone_dir!r}
+mkdir -p {clone_dir!r}
+tar -xzf {tarball!r} -C {clone_dir!r} --strip-components=1
+rm -f {tarball!r}
+
+cd {clone_dir!r}
+chmod +x setup.sh
+echo "==> Running setup.sh"
+echo
+./setup.sh
+
+echo
+echo "Done. Press Enter to close."
+read
+"""
+
+
+def launch_dotfiles_update():
+    """Writes the update script to a temp file in the cache dir and opens
+    it inside a new kitty window, so setup.sh's own interactive prompts and
+    output are visible to the user exactly as if they'd run it by hand."""
+    DOTFILES_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    script_path = DOTFILES_CACHE_DIR / "run-update.sh"
+    script_path.write_text(build_dotfiles_update_script())
+    script_path.chmod(0o755)
+
+    subprocess.Popen(
+        [KITTY_BIN, "--title", "Dotfiles Update", "bash", str(script_path)],
+        start_new_session=True,
+    )
 
 
 # =============================================================================
@@ -942,6 +1016,7 @@ class HyprSettingsWindow(Adw.ApplicationWindow):
             ("input", "Input", "input-mouse-symbolic"),
             ("environment", "Environment", "utilities-terminal-symbolic"),
             ("keybinds", "Keybinds", "input-keyboard-symbolic"),
+            ("dotfiles-update", "Dotfiles Update", "software-update-available-symbolic"),
         ]
         for key, label, icon in self.sections:
             row = Adw.ActionRow(title=label)
@@ -983,6 +1058,7 @@ class HyprSettingsWindow(Adw.ApplicationWindow):
         self.stack.add_named(self._build_input_page(), "input")
         self.stack.add_named(self._build_environment_page(), "environment")
         self.stack.add_named(self._build_keybinds_page(), "keybinds")
+        self.stack.add_named(self._build_dotfiles_update_page(), "dotfiles-update")
 
         self.nav_list.select_row(self.nav_list.get_row_at_index(0))
 
@@ -1645,6 +1721,67 @@ class HyprSettingsWindow(Adw.ApplicationWindow):
         self.kb_locked.set_active(False)
         self.kb_repeating.set_active(False)
         self._refresh_buttons()
+
+    # ── Dotfiles Update page ────────────────────────────────────────────
+
+    def _build_dotfiles_update_page(self):
+        repo_url = f"https://github.com/{DOTFILES_REPO_OWNER}/{DOTFILES_REPO_NAME}"
+
+        g = make_group(
+            "Dotfiles Update",
+            "Downloads the latest dotfiles from GitHub and runs the repo's "
+            "own setup.sh to apply them. This does not touch the individual "
+            "settings on the other pages — it's a full re-sync from upstream.",
+        )
+
+        repo_row = Adw.ActionRow(title="Repository", subtitle=repo_url)
+        repo_row.add_prefix(Gtk.Image.new_from_icon_name("folder-remote-symbolic"))
+        g.add(repo_row)
+
+        branch_row = Adw.ActionRow(title="Branch", subtitle=DOTFILES_BRANCH)
+        branch_row.add_prefix(Gtk.Image.new_from_icon_name("emblem-shared-symbolic"))
+        g.add(branch_row)
+
+        cache_row = Adw.ActionRow(
+            title="Cache location", subtitle=str(DOTFILES_CACHE_DIR)
+        )
+        cache_row.add_prefix(Gtk.Image.new_from_icon_name("folder-symbolic"))
+        g.add(cache_row)
+
+        action_row = Adw.ActionRow(
+            title="Update now",
+            subtitle="Fetches the branch via curl, extracts it, then runs "
+            "setup.sh in a new kitty window.",
+        )
+        action_row.add_prefix(Gtk.Image.new_from_icon_name("software-update-available-symbolic"))
+        update_btn = Gtk.Button(label="Update Dotfiles", valign=Gtk.Align.CENTER)
+        update_btn.add_css_class("suggested-action")
+        update_btn.connect("clicked", self.on_update_dotfiles)
+        action_row.add_suffix(update_btn)
+        g.add(action_row)
+
+        return wrap_page(g)
+
+    def on_update_dotfiles(self, _btn):
+        if not shutil.which("curl"):
+            self.toast_overlay.add_toast(
+                Adw.Toast(title="curl not found — install curl and try again", timeout=4)
+            )
+            return
+        if not shutil.which("kitty"):
+            self.toast_overlay.add_toast(
+                Adw.Toast(title="kitty not found — install kitty and try again", timeout=4)
+            )
+            return
+        try:
+            launch_dotfiles_update()
+            self.toast_overlay.add_toast(
+                Adw.Toast(title="Opening kitty to run setup.sh…", timeout=3)
+            )
+        except Exception as e:
+            self.toast_overlay.add_toast(
+                Adw.Toast(title=f"Couldn't start update: {e}", timeout=4)
+            )
 
     # ── Apply / Discard ─────────────────────────────────────────────────
 
