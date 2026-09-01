@@ -47,13 +47,11 @@ hl.window_rule({ match = { class = "^([Tt]hunar)$", title = "^(Confirm to replac
 -- settings app
 hl.window_rule({ match = { class = "^(dev.shellninja.hypr-settings)$", title = "^(Hyprland Settings)$" }, float = true, center = true })
 
--- pkgupdate GUI
+-- pkgupdate GUI and welcome app
 float_center("dev.shellninja.pkgupdate")
-hl.window_rule({ match = { class = "^(dev.shellninja.pkgupdate)$" }, float = true, center = true, size =
-"monitor_w*0.48 monitor_h*0.80" })
-hl.window_rule({ match = { title = "^(System Update)$" }, float = true, center = true, size =
-"monitor_w*0.48 monitor_h*0.80" })
-
+hl.window_rule({ match = { class = "^(dev.shellninja.pkgupdate)$" }, float = true, center = true, size = "monitor_w*0.48 monitor_h*0.80" })
+hl.window_rule({ match = { class = "^(dev.shellninja.welcome)$" }, float = true, center = true, size = "monitor_w*0.40 monitor_h*0.80" })
+hl.window_rule({ match = { title = "^(System Update)$" }, float = true, center = true, size = "monitor_w*0.48 monitor_h*0.80" })
 -- Kitty titles
 hl.window_rule({ match = { class = "^(kitty)$", title = "^(update|floating|yazi|monitor|browser)$" }, float = true })
 hl.window_rule({ match = { class = "^(kitty)$", title = "^(yazi|update|browser)$" }, center = true })
