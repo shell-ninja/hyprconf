@@ -2,7 +2,7 @@
 
 scripts_dir="$HOME/.hyprconf/hypr/scripts"
 wallpaper="$HOME/.hyprconf/hypr/.cache/current_wallpaper.png"
-monitor_config="$HOME/.hyprconf/hypr/configs/monitor.conf"
+welcome_app="$scripts_dir/welcome.py"
 
 # Transition config
 FPS=120
@@ -17,6 +17,11 @@ elif command -v swww &> /dev/null; then
     ENGINE=swww
 fi
 
+
+if [[ -f "$welcome_app" ]]; then
+    python3 "$welcome_app" --autostart &
+fi
+
 if [[ -f "$wallpaper" ]]; then
     ${ENGINE}-daemon &
     ${ENGINE} img $wallpaper $AWWW_PARAMS
@@ -29,6 +34,10 @@ if [[ -d "/usr/share/openbangla-keyboard" ]]; then
     fcitx5 &> /dev/null
 fi
 
+
 "$scripts_dir/notification.sh" sys
+"$scripts_dir/systemupdates.sh" --check
+
+sleep 1
 
 "$scripts_dir/default_browser.sh"
