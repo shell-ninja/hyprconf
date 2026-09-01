@@ -18,6 +18,7 @@ from gi.repository import Adw, Gdk, Gio, GLib, Gtk, Pango
 
 STATE_FILE = Path.home() / ".hyprconf" / "hypr" / "welcome-app.json"
 SCRIPTS_DIR = Path(__file__).resolve().parent
+LOGO_PATH = SCRIPTS_DIR.parent / ".cache" / "shell-ninja.png"
 
 
 def load_state():
@@ -67,6 +68,13 @@ CSS = """
     color: @accent_color;
     margin-bottom: 8px;
 }
+
+.welcome-logo {
+    margin-bottom: 8px;
+    border: 3px solid alpha(@accent_color, 0.4);
+    box-shadow: 0 4px 18px alpha(black, 0.25);
+    border-radius: 9999px;
+}
 """
 
 KEYBINDS = [
@@ -96,6 +104,12 @@ APPS = [
         "desc": "Customize borders, animations, display resolution, input devices, and keybindings.",
         "shortcut": ["SUPER", "S"],
     },
+]
+
+LINKS = [
+    ("emblem-documents-symbolic", "Hyprland Wiki", "wiki.hypr.land", "https://wiki.hypr.land/"),
+    ("emblem-documents-symbolic", "Noctalia Docs", "docs.noctalia.dev", "https://docs.noctalia.dev/"),
+    ("folder-remote-symbolic", "Hyprconf on GitHub", "shell-ninja/hyprconf", "https://github.com/shell-ninja/hyprconf/tree/noct"),
 ]
 
 
@@ -141,18 +155,57 @@ def build_page_wrap(inner, valign=Gtk.Align.CENTER):
     return scroller
 
 
+def get_logo_paintable():
+    candidate_paths = [
+        LOGO_PATH,
+        Path.home() / ".hyprconf" / "hypr" / ".cache" / "shell-ninja.png",
+        Path.home() / ".config" / "hypr" / ".cache" / "shell-ninja.png",
+    ]
+    for path in candidate_paths:
+        if path.is_file():
+            try:
+                return Gdk.Texture.new_from_filename(str(path))
+            except Exception:
+                pass
+    return None
+
+
 def page_welcome():
-    status = Adw.StatusPage()
-    status.set_icon_name("preferences-desktop-display-symbolic")
-    status.set_title("Welcome to Hyprconf")
-    status.set_description(
-        "A customized Hyprland desktop environment with dynamic wallpaper theming, "
+    hero_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+    hero_box.set_halign(Gtk.Align.CENTER)
+    hero_box.set_margin_top(8)
+    hero_box.set_margin_bottom(12)
+
+    logo = get_logo_paintable()
+    avatar = Adw.Avatar(size=160)
+    avatar.set_halign(Gtk.Align.CENTER)
+    avatar.add_css_class("welcome-logo")
+    if logo:
+        avatar.set_custom_image(logo)
+    else:
+        avatar.set_icon_name("preferences-desktop-display-symbolic")
+    hero_box.append(avatar)
+
+    title_label = Gtk.Label(label="Welcome to Hyprconf")
+    title_label.add_css_class("title-1")
+    title_label.set_justify(Gtk.Justification.CENTER)
+    title_label.set_wrap(True)
+    hero_box.append(title_label)
+
+    desc_label = Gtk.Label(
+        label="A customized Hyprland desktop environment with dynamic wallpaper theming, "
         "curated keyboard shortcuts, and built-in system tools."
     )
+    desc_label.add_css_class("body")
+    desc_label.add_css_class("dim-label")
+    desc_label.set_justify(Gtk.Justification.CENTER)
+    desc_label.set_wrap(True)
+    desc_label.set_max_width_chars(50)
+    hero_box.append(desc_label)
 
     group = Adw.PreferencesGroup()
     group.set_title("Overview")
-    group.set_margin_top(18)
+    group.set_margin_top(8)
 
     row1 = Adw.ActionRow(
         title="Dynamic Theming",
@@ -175,8 +228,8 @@ def page_welcome():
     row3.add_prefix(Gtk.Image.new_from_icon_name("software-update-available-symbolic"))
     group.add(row3)
 
-    container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=16)
-    container.append(status)
+    container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=14)
+    container.append(hero_box)
     container.append(group)
 
     return build_page_wrap(container, valign=Gtk.Align.START)
@@ -201,7 +254,7 @@ def page_keybinds():
 
 
 def page_apps():
-    container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+    container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=16)
 
     group = Adw.PreferencesGroup()
     group.set_title("Built-in Applications")
@@ -222,6 +275,26 @@ def page_apps():
         group.add(row)
 
     container.append(group)
+
+    links_group = Adw.PreferencesGroup()
+    links_group.set_title("References")
+    links_group.set_description("Helpful documentation and project links.")
+    links_group.set_margin_top(8)
+
+    for icon, title, subtitle, uri in LINKS:
+        row = Adw.ActionRow(title=title, subtitle=subtitle)
+        img = Gtk.Image.new_from_icon_name(icon)
+        row.add_prefix(img)
+
+        link_btn = Gtk.LinkButton.new_with_label(uri, "Visit")
+        link_btn.set_valign(Gtk.Align.CENTER)
+        link_btn.add_css_class("flat")
+
+        row.add_suffix(link_btn)
+        row.set_activatable_widget(link_btn)
+        links_group.add(row)
+
+    container.append(links_group)
     return build_page_wrap(container, valign=Gtk.Align.START)
 
 
