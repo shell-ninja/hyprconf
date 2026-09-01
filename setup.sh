@@ -85,6 +85,7 @@ msg() {
 hypr_dir="$HOME/.hyprconf/hypr"
 scripts_dir="$hypr_dir/scripts"
 fonts_dir="$HOME/.local/share/fonts"
+applications_dir="$HOME/.local/share/applications"
 
 msg act "Setting up the pre-installed Hyprland configuration..."
 
@@ -303,6 +304,21 @@ fi
 if [[ -f "$dir/extras/hyprland.desktop" ]]; then
     sudo cp "$dir/extras/hyprland.desktop" "$wayland_session_dir/"
     msg dn "Hyprland desktop entry copied to $wayland_session_dir"
+fi
+
+# Desktop application entries setup
+msg act "Installing application desktop entries..."
+mkdir -p "$applications_dir"
+desktop_files=("Hyprconf.desktop" "sysupdate.desktop")
+for file in "${desktop_files[@]}"; do
+    if [[ -f "$dir/extras/$file" ]]; then
+        cp "$dir/extras/$file" "$applications_dir/"
+        sed -i "s|/home/shell-ninja|$HOME|g; s|/home/[^/]*|$HOME|g" "$applications_dir/$file"
+        msg dn "Installed $file to $applications_dir"
+    fi
+done
+if command -v update-desktop-database &> /dev/null; then
+    update-desktop-database "$applications_dir" &> /dev/null || true
 fi
 
 # Function to restore temporary backups

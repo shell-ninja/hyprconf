@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="256" height="256">
+  <defs>
+    <!-- Background Plate Gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1e1e2e"/>
+      <stop offset="100%" stop-color="#11111b"/>
+    </linearGradient>
+    
+    <!-- Update Arrow Gradient (Catppuccin Green to Teal) -->
+    <linearGradient id="arrowGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#a6e3a1"/>
+      <stop offset="100%" stop-color="#94e2d5"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Transparent Background / Base Squircle -->
+  <rect x="5" y="5" width="90" height="90" rx="22" fill="url(#bgGrad)" stroke="#313244" stroke-width="2" />
+
+  <!-- Isometric Box (Package) -->
+  <!-- Top Face (Catppuccin Sky) -->
+  <path d="M 50 45 L 67 55 L 50 65 L 33 55 Z" fill="#89dceb" />
+  
+  <!-- Left Face (Catppuccin Blue) -->
+  <path d="M 33 55 L 50 65 L 50 85 L 33 75 Z" fill="#89b4fa" />
+  
+  <!-- Right Face (Catppuccin Sapphire) -->
+  <path d="M 67 55 L 50 65 L 50 85 L 67 75 Z" fill="#74c7ec" />
+
+  <!-- Downward Update Arrow -->
+  <path d="M 42 21 L 58 21 L 58 37 L 68 37 L 50 55 L 32 37 L 42 37 Z" fill="url(#arrowGrad)" opacity="0.95" />
+</svg>
