@@ -66,7 +66,7 @@ hl.curve("linear", {
 hl.animation({
     leaf = "windowsIn",
     enabled = 1,
-    speed = 4.0,
+    speed = 5.5,
     bezier = "elegant_bounce",
     style = "slide down",
 })
@@ -74,7 +74,7 @@ hl.animation({
 hl.animation({
     leaf = "windowsOut",
     enabled = 1,
-    speed = 4,
+    speed = 5.5,
     bezier = "md3_accel",
     style = "slide up",
 })
@@ -115,7 +115,7 @@ hl.animation({
 hl.animation({
     leaf = "workspaces",
     enabled = 1,
-    speed = 5,
+    speed = 5.5,
     bezier = "fluent_decel",
     style = "slidevert",
 })

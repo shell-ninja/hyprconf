@@ -1,122 +1,226 @@
 # ==============================================================================
-# Noctalia Services Configuration
-# Notifications, Location, Weather, and System Services
+# Noctalia Services Configuration: Notifications, Audio, Hardware, System Monitors & Hooks
 # ==============================================================================
 
-[notification]
-enable_daemon = true
+[audio]
+enable_overdrive = false
+enable_sounds = false
+notification_sound = ""
+sound_volume = 0.5
+volume_change_sound = ""
 
-[location]
-address = "Munshiganj, Bangladesh"
-custom_schedule = false
 
-[weather]
-unit = "celsius"
+[battery]
+warning_threshold = 10
 
-[shell.launcher.dmenu.entry.screenshot]
-command = "printf 'Full Screen\tCapture Entire Screen\nSelected Area\tPick a region with mouse\n'"
-exec = "/home/shell-ninja/.hyprconf/hypr/scripts/screenshot.sh {selection}"
-prefix = "screenshot"   
 
-[desktop_widgets]
-schema_version = 2
-widget_order = [ "desktop-widget-0000000000000002", "desktop-widget-0000000000000003" ]
+[brightness]
+enable_ddcutil = true
+ignore_mmids = []
+minimum_brightness = 0.29999998211860657
+sync_all_monitors = true
 
-    [desktop_widgets.grid]
-    cell_size = 64
-    major_interval = 4
-    visible = true
 
-    [desktop_widgets.widget.desktop-widget-0000000000000002]
-    box_height = 64.0
-    box_width = 320.0
-    cx = 1568.0
-    cy = 1020.0
-    output = "HDMI-A-1"
-    placement_height = 1080.0
-    placement_width = 1920.0
-    rotation = 0.0
-    type = "audio_visualizer"
+[calendar]
+enabled = true
+refresh_minutes = 15
 
-        [desktop_widgets.widget.desktop-widget-0000000000000002.settings]
-        background = false
-        background_padding = 18
-        background_radius = 0
-        bands = 80
-        centered = false
-        mirrored = true
-        show_when_idle = true
-
-    [desktop_widgets.widget.desktop-widget-0000000000000003]
-    box_height = 64.0
-    box_width = 320.0
-    cx = 352.0
-    cy = 1020.0
-    output = "HDMI-A-1"
-    placement_height = 1080.0
-    placement_width = 1920.0
-    rotation = 0.0
-    type = "audio_visualizer"
-
-        [desktop_widgets.widget.desktop-widget-0000000000000003.settings]
-        background = false
-        bands = 80
-        centered = false
-        mirrored = true
-        show_when_idle = true
-
-[dock]
-cross_axis_padding = 3
-icon_size = 25
-item_spacing = 0
-main_axis_padding = 20
-margin_edge = 10
 
 [hooks]
-logging_out = "/home/shell-ninja/.hyprconf/hypr/scripts/notification.sh logout"
-rebooting = "/home/shell-ninja/.hyprconf/hypr/scripts/notification.sh logout"
-shutting_down = "/home/shell-ninja/.hyprconf/hypr/scripts/notification.sh logout"
-started = "/home/shell-ninja/.hyprconf/hypr/scripts/notification.sh sys"
+battery_charging = []
+battery_discharging = []
+battery_percentage_changed = []
+battery_plugged = []
+bluetooth_disabled = []
+bluetooth_enabled = []
+colors_changed = []
+logging_out = [ "~/.hyprconf/hypr/scripts/notification.sh logout" ]
+power_profile_changed = []
+rebooting = [ "~/.hyprconf/hypr/scripts/notification.sh logout" ]
+session_locked = []
+session_unlocked = []
+shutting_down = [ "~/.hyprconf/hypr/scripts/notification.sh logout" ]
+started = [ "~/.hyprconf/hypr/scripts/notification.sh sys" ]
+theme_mode_changed = []
+wallpaper_changed = [ "~/.hyprconf/hypr/scripts/Wallpaper.sh set" ]
+wifi_disabled = []
+wifi_enabled = []
+
 
 [hot_corners]
+delay_ms = 0
 enabled = true
 
+    [hot_corners.bottom_left]
+    action = "none"
+    command = ""
+
+    [hot_corners.bottom_right]
+    action = "none"
+    command = ""
+
     [hot_corners.top_left]
-    action = "control_center"
+    action = "none"
+    command = ""
 
-[lockscreen_widgets]
-enabled = false
-schema_version = 2
-widget_order = [ "lockscreen-login-box@HDMI-A-1" ]
+    [hot_corners.top_right]
+    action = "none"
+    command = ""
 
-    [lockscreen_widgets.grid]
-    cell_size = 16
-    major_interval = 4
-    visible = true
 
-    [lockscreen_widgets.widget."lockscreen-login-box@HDMI-A-1"]
-    box_height = 196.0
-    box_width = 810.0
-    cx = 960.0
-    cy = 898.0
-    output = "HDMI-A-1"
-    placement_height = 1080.0
-    placement_width = 1920.0
-    rotation = 0.0
-    type = "login_box"
+[idle]
+behavior_order = [ "lock", "screen-off", "lock-and-suspend" ]
+pre_action_fade_seconds = 2.0
 
-        [lockscreen_widgets.widget."lockscreen-login-box@HDMI-A-1".settings]
-        background_color = "surface_variant"
-        background_opacity = 0.88
-        background_radius = 12.0
-        center_password_text = false
-        input_opacity = 1.0
-        input_radius = 6.0
-        layout = "regular"
-        show_caps_lock = true
-        show_keyboard_layout = true
-        show_login_button = true
-        show_media = true
-        show_session_buttons = true
-        show_unlock_hint = true
-        show_weather = true
+    [idle.behavior.lock]
+    action = "lock"
+    command = ""
+    enabled = false
+    locked_timeout = 0.0
+    resume_command = ""
+    timeout = 600.0
+
+    [idle.behavior.lock-and-suspend]
+    action = "lock_and_suspend"
+    command = ""
+    enabled = false
+    locked_timeout = 0.0
+    resume_command = ""
+    timeout = 900.0
+
+    [idle.behavior.screen-off]
+    action = "screen_off"
+    command = ""
+    enabled = false
+    locked_timeout = 0.0
+    resume_command = ""
+    timeout = 660.0
+
+
+[location]
+address = ""
+auto_locate = false
+custom_schedule = false
+sunrise = ""
+sunset = ""
+
+
+[nightlight]
+enabled = true
+force = true
+temperature_day = 6500
+temperature_night = 5000
+
+
+[notification]
+background_opacity = 0.97000002861022949
+border = true
+collapse_on_dismiss = true
+enable_daemon = true
+history_retention_hours = 1
+layer = "top"
+max_visible = 0
+monitors = []
+offset_x = 10
+offset_y = 8
+position = "bottom_right"
+scale = 1.0
+show_actions = true
+show_app_name = true
+
+
+[osd]
+background_opacity = 0.97000002861022949
+border = true
+enabled = true
+monitors = []
+offset_x = 20
+offset_y = 8
+orientation = "horizontal"
+position = "top_center"
+position_vertical = "top_center"
+scale = 1.0
+
+    [osd.kinds]
+    bluetooth = true
+    brightness = true
+    caffeine = true
+    dnd = true
+    keyboard_backlight = true
+    keyboard_layout = true
+    lock_keys = true
+    media = false
+    nightlight = true
+    power_profile = true
+    privacy = true
+    volume = true
+    volume_input = true
+    volume_output = true
+    wifi = true
+
+
+[plugins]
+auto_update = "all"
+enabled = [ "apex077/eyecare", "noctalia/mpvpaper", "yuuto/arch-updater" ]
+
+    [[plugins.source]]
+    enabled = true
+    kind = "git"
+    location = "https://github.com/noctalia-dev/official-plugins"
+    name = "official"
+
+    [[plugins.source]]
+    enabled = true
+    kind = "git"
+    location = "https://github.com/noctalia-dev/community-plugins"
+    name = "community"
+
+
+[plugin_settings."noctalia/mpvpaper"]
+video_directory = "~/.hyprconf/hypr/Wallpaper"
+
+
+[system.monitor]
+cpu_freq_activity_threshold = 2.5
+cpu_freq_critical_threshold = 4.5
+cpu_poll_seconds = 2.0
+cpu_temp_activity_threshold = 60.0
+cpu_temp_critical_threshold = 85.0
+cpu_temp_sensor_path = ""
+cpu_usage_activity_threshold = 50.0
+cpu_usage_critical_threshold = 90.0
+disk_free_activity_threshold = 80.0
+disk_free_critical_threshold = 95.0
+disk_free_pct_activity_threshold = 80.0
+disk_free_pct_critical_threshold = 95.0
+disk_poll_seconds = 10.0
+disk_used_activity_threshold = 80.0
+disk_used_critical_threshold = 95.0
+disk_used_pct_activity_threshold = 80.0
+disk_used_pct_critical_threshold = 95.0
+enabled = true
+gpu_poll_seconds = 5.0
+gpu_temp_activity_threshold = 60.0
+gpu_temp_critical_threshold = 85.0
+gpu_usage_activity_threshold = 50.0
+gpu_usage_critical_threshold = 95.0
+gpu_vram_activity_threshold = 50.0
+gpu_vram_critical_threshold = 90.0
+memory_poll_seconds = 2.0
+net_rx_activity_threshold = 1.0
+net_rx_critical_threshold = 50.0
+net_tx_activity_threshold = 1.0
+net_tx_critical_threshold = 50.0
+network_poll_seconds = 3.0
+ram_pct_activity_threshold = 60.0
+ram_pct_critical_threshold = 90.0
+swap_pct_activity_threshold = 20.0
+swap_pct_critical_threshold = 80.0
+
+
+[weather]
+effects = true
+enabled = true
+refresh_minutes = 30
+unit = "celsius"
+

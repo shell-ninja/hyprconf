@@ -1,0 +1,33 @@
+# ==============================================================================
+# Noctalia Desktop Widgets Configuration
+# ==============================================================================
+
+[desktop_widgets]
+enabled = true
+schema_version = 2
+widget_order = [ "desktop-widget-0000000000000003" ]
+
+    [desktop_widgets.grid]
+    cell_size = 64
+    major_interval = 4
+    visible = false
+
+    [desktop_widgets.widget.desktop-widget-0000000000000003]
+    box_height = 64.0
+    box_width = 960.0
+    cx = 960.0
+    cy = 1047.0703125
+    enabled = true
+    output = "HDMI-A-1"
+    placement_height = 1080.0
+    placement_width = 1920.0
+    rotation = 0.0
+    type = "audio_visualizer"
+
+        [desktop_widgets.widget.desktop-widget-0000000000000003.settings]
+        background = false
+        bands = 32
+        centered = false
+        mirrored = true
+        show_when_idle = false
+

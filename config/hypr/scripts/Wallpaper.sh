@@ -84,6 +84,4 @@ if pgrep -x "noctalia" >/dev/null 2>&1 && [[ -z "$NOCTALIA_WALLPAPER_PATH" ]]; t
 fi
 
 # Apply dynamic colors to Kitty, Hyprland, etc.
-"$scripts_dir/noctalia-colors.sh" "$target_wallpaper"
-
-# Generate blur, thumbnail, and quad image cache for lockscreens and widgets
+"$scripts_dir/noctalia-colors.py" "$target_wallpaper"

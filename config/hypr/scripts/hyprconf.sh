@@ -8,7 +8,7 @@ end="\x1b[0m"
 
 clear
 
-repo="https://github.com/shell-ninja/hyprconf/archive/refs/heads/main.zip"
+repo="https://github.com/shell-ninja/hyprconf/archive/refs/heads/noct.zip"
 target_dir="$HOME/.cache/hyrconf"
 zip_path="$target_dir.zip"
 
@@ -26,8 +26,8 @@ _upd() {
    sleep 1
 
    if [[ -f "$zip_path" ]]; then
-        unzip "$zip_path" "hyprconf-main/*" -d "$target_dir" > /dev/null
-        mv "$target_dir/hyprconf-main/"* "$target_dir" && rmdir "$target_dir/hyprconf-main"
+        unzip "$zip_path" "hyprconf-noct/*" -d "$target_dir" > /dev/null
+        mv "$target_dir/hyprconf-noct/"* "$target_dir" && rmdir "$target_dir/hyprconf-noct"
         rm "$zip_path"
     fi
 

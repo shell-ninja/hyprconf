@@ -31,37 +31,24 @@ get_volume_label() {
     fi
 }
 
-notify_user() {
-    local vol icon label
-    vol=$(get_volume)
-    label=$(get_volume_label)
-    icon=$(get_icon)
-    notify-send -e \
-        -h string:x-canonical-private-synchronous:volume_notif \
-        -u low -i "$icon" "Volume: $label"
-}
 
 inc_volume() {
     # Unmute first if muted, then increase
     is_muted && pamixer -u
     pamixer -i 5
-    notify_user
 }
 
 dec_volume() {
     # Unmute first if muted, then decrease
     is_muted && pamixer -u
     pamixer -d 5
-    notify_user
 }
 
 toggle_mute() {
     if is_muted; then
         pamixer -u
-        notify-send -e -i "$iDIR/unmuted-speaker.svg" "Volume Switched ON"
     else
         pamixer -m
-        notify-send -e -i "$iDIR/muted-speaker.svg" "Volume Switched OFF"
     fi
 }
 
@@ -97,22 +84,18 @@ notify_mic_user() {
 inc_mic_volume() {
     is_mic_muted && pamixer --default-source -u
     pamixer --default-source -i 5
-    notify_mic_user
 }
 
 dec_mic_volume() {
     is_mic_muted && pamixer --default-source -u
     pamixer --default-source -d 5
-    notify_mic_user
 }
 
 toggle_mic() {
     if is_mic_muted; then
         pamixer --default-source -u
-        notify-send -e -u low -i "$iDIR/unmuted-mic.svg" "Microphone Switched ON"
     else
         pamixer --default-source -m
-        notify-send -e -u low -i "$iDIR/muted-mic.svg" "Microphone Switched OFF"
     fi
 }
 

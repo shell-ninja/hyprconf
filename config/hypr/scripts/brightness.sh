@@ -26,15 +26,6 @@ else
     }
 fi
 
-# Notify using dunst
-# notify_user() {
-# 	notify-send -a -r -h string:x-dunst-stack-tag:brightness_notif -i "$icon" "Brightness: $current%"
-# }
-
-# Notify using swaync
-notify_user() {
-	notify-send -e -h string:x-canonical-private-synchronous:brightness_notif -h int:value:$current -u low -i "$icon" "Brightness : $current%"
-}
 
 # Change brightness
 change_backlight() {
@@ -68,7 +59,6 @@ change_backlight() {
         current=$new
         icon="$iDIR/brightness-${current}.png"
 
-        notify_user
     fi
 }
 

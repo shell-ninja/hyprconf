@@ -1,108 +1,61 @@
 # ==============================================================================
-# Noctalia Shell Configuration: Global Shell Settings
+# Noctalia Shell Configuration: Core Shell, Panels & Session Settings
 # Synchronized with Hyprconf dotfiles
 # ==============================================================================
 
 [shell]
-avatar_path = "/home/shell-ninja/.hyprconf/hypr/.cache/shell-ninja.jpg"
+app_icon_color = "primary"
+app_icon_colorize = true
+avatar_path = "/home/shell-ninja/.hyprconf/hypr/.cache/shell-ninja.png"
 button_borders = true
 card_borders = true
 clipboard_auto_paste = "auto"
 clipboard_confirm_clear_history = true
 clipboard_enabled = true
 clipboard_history_max_entries = 150
+clipboard_image_action_command = ""
 clipboard_keep_from_closed_apps = true
-corner_radius_scale = 1.3999999999999999
+corner_radius_scale = 1.5
 date_format = "%A, %d %B"
+disable_mipmaps = false
+external_ip_enabled = false
 font_family = "JetBrainsMono Nerd Font"
 input_borders = true
+launch_apps_as_systemd_services = false
+launch_apps_custom_command = ""
+niri_overview_type_to_launch_enabled = false
+offline_mode = false
+password_style = "default"
 polkit_agent = false
 popup_borders = true
 popup_shadows = true
+screen_time_enabled = true
 settings_show_advanced = true
 settings_window_translucent = true
+setup_wizard_enabled = true
 shared_gl_context = true
 show_location = true
+telemetry_enabled = false
 time_format = "{:%I:%M}"
 
     [shell.animation]
     enabled = true
-    speed = 1.0
+    speed = 0.65000003576278687
 
-    [shell.launcher]
-    app_grid = true
-    auto_paste = "auto"
-    categories = true
-    compact = false
-    provider_prefix = ">"
-    show_app_actions = true
-    show_app_origin_indicator = true
-    show_icons = true
-    sort_by_usage = true
+    [shell.greeter_sync]
+    auto_sync = false
 
-        [shell.launcher.dmenu.entry.bar_layouts]
-        command = """printf '
-full-top
-minimal-bottom
-bar-left
-'"""
-        exec = "~/.hyprconf/hypr/scripts/noctalia-bar.sh {selection}"
-        global = false
-        glyph = "monitor"
-        label = "Bar Layout"
-        prefix = "bar"
+    [shell.keyboard_layout]
 
-        [shell.launcher.dmenu.entry.commands]
-        command = """printf 'Reload Hyprland	Reload compositor
-Wallpaper Panel	Open wallpaper picker
-Bar: full-top
-Bar: minimal-bottom
-Bar: bar-left
-Noctalia Settings
-'"""
-        exec = "bash -c 'case \"$1\" in \"Reload Hyprland\") hyprctl reload ;; \"Wallpaper Panel\") noctalia msg panel-toggle wallpaper ;; \"Bar: \"*) /home/shell-ninja/.hyprconf/hypr/scripts/noctalia-bar.sh \"$1\" ;; \"Launcher: \"*) /home/shell-ninja/.hyprconf/hypr/scripts/noctalia-launcher.sh \"$1\" ;; \"Noctalia Settings\") noctalia msg settings-open ;; esac' -- {selection}"
-        global = false
-        glyph = "terminal"
-        label = "Commands"
-        prefix = "cmd"
-
-        [shell.launcher.dmenu.entry.keybinds]
-        command = "~/.hyprconf/hypr/scripts/keybinds.sh --list"
-        exec = "~/.hyprconf/hypr/scripts/keybinds.sh {selection}"
-        global = false
-        glyph = "keyboard"
-        label = "Keybinds"
-        prefix = "keybinds"
-
-        [shell.launcher.dmenu.entry.ssh]
-        command = "awk '/^Host /{print $2}' ~/.ssh/config 2>/dev/null || true"
-        exec = "kitty -e ssh {selection}"
-        global = false
-        glyph = "server"
-        prefix = "ssh"
-
-        [shell.launcher.providers.calculator]
-        global = true
-        prefix = "calc"
-
-        [shell.launcher.providers.emoji]
-        prefix = "emo"
-
-        [shell.launcher.providers.session]
-        global = false
-        prefix = "session"
-
-        [shell.launcher.providers.wallpaper]
-        prefix = "wall"
-
-        [shell.launcher.providers.windows]
-        prefix = "win"
+    [shell.mpris]
+    blacklist = []
 
     [shell.panel]
     borders = false
     clipboard_placement = "attached"
     clipboard_position = "center"
     control_center_placement = "attached"
+    control_center_position = "auto"
     floating_layer = "top"
     floating_offset = 10
     launcher_placement = "attached"
@@ -113,12 +66,19 @@ Noctalia Settings
     open_near_click_launcher = true
     open_near_click_session = true
     open_near_click_wallpaper = true
-    polkit_placement = "floating"
+    polkit_placement = "attached"
     polkit_position = "center"
-    session_placement = "attached"
+    session_placement = "floating"
+    session_position = "center"
     shadow = true
     transparency_mode = "glass"
-    wallpaper_placement = "floating"
+    wallpaper_placement = "attached"
+    wallpaper_position = "auto"
+
+    [shell.privacy]
+    cam_filter_regex = ""
+    mic_filter_regex = ""
+    screen_filter_regex = ""
 
     [shell.screen_corners]
     enabled = true
@@ -127,7 +87,8 @@ Noctalia Settings
     [shell.screenshot]
     confirm_region = true
     copy_to_clipboard = true
-    directory = "~/Pictures/Screenshots"
+    directory = "/home/shell-ninja/Pictures/Screenshots"
+    filename_pattern = ""
     freeze_screen = true
     pipe_command = ""
     pipe_to_command = false
@@ -137,36 +98,156 @@ Noctalia Settings
 
     [shell.session]
     grid = true
-    grid_columns = 1
+    grid_columns = 2
+    show_shortcuts = false
+
+        [shell.session.power]
 
         [[shell.session.actions]]
         action = "lock"
+        command = ""
         countdown_seconds = 0.0
         enabled = true
+        glyph = ""
+        label = ""
         shortcut = "1"
-        variant = "default"
+        variant = "ghost"
 
         [[shell.session.actions]]
         action = "logout"
-        countdown_seconds = 0.0
+        command = ""
+        countdown_seconds = 3.0
         enabled = true
+        glyph = ""
+        label = ""
         shortcut = "2"
-        variant = "default"
+        variant = "ghost"
 
         [[shell.session.actions]]
         action = "reboot"
-        countdown_seconds = 0.0
+        command = ""
+        countdown_seconds = 3.0
         enabled = true
-        shortcut = "4"
-        variant = "default"
+        glyph = ""
+        label = ""
+        shortcut = "3"
+        variant = "ghost"
 
         [[shell.session.actions]]
         action = "shutdown"
-        countdown_seconds = 0.0
+        command = ""
+        countdown_seconds = 3.0
         enabled = true
-        shortcut = "5"
+        glyph = ""
+        label = ""
+        shortcut = "4"
         variant = "destructive"
 
     [shell.shadow]
-    alpha = 0.55000000000000004
+    alpha = 0.55000001192092896
     direction = "down"
+
+
+[accessibility]
+high_contrast = false
+ui_scale = 1.0
+
+
+[backdrop]
+blur_intensity = 0.5
+enabled = false
+tint_intensity = 0.30000001192092896
+
+
+[control_center]
+hidden_tabs = []
+show_session_button = true
+show_shortcut_labels = true
+sidebar = "compact"
+sidebar_section = "compact"
+width = 700
+
+    [control_center.calendar]
+    event_date_format = "%A %e %B"
+    event_time_format = "%H:%M"
+    show_events_card = true
+    show_week_numbers = false
+
+    [[control_center.shortcuts]]
+    type = "wifi"
+
+    [[control_center.shortcuts]]
+    type = "bluetooth"
+
+    [[control_center.shortcuts]]
+    type = "caffeine"
+
+    [[control_center.shortcuts]]
+    type = "nightlight"
+
+    [[control_center.shortcuts]]
+    type = "notification"
+
+    [[control_center.shortcuts]]
+    type = "power_profile"
+
+
+[dock]
+active_monitor_only = false
+active_opacity = 1.0
+active_scale = 1.0
+auto_hide = false
+background_opacity = 0.87999999523162842
+border = "outline"
+border_width = 0.0
+concave_edge_corners = true
+cross_axis_padding = 3
+enabled = false
+icon_size = 25
+inactive_opacity = 0.85000002384185791
+inactive_scale = 0.85000002384185791
+item_spacing = 0
+launcher_custom_image = ""
+launcher_custom_image_colorize = false
+launcher_icon = "grid-dots"
+launcher_position = "none"
+layer = "top"
+magnification = true
+magnification_scale = 1.4500000476837158
+main_axis_padding = 20
+margin_edge = 10
+margin_ends = 0
+monitors = []
+pinned = []
+position = "bottom"
+radius = 16
+radius_bottom_left = 16
+radius_bottom_right = 16
+radius_top_left = 16
+radius_top_right = 16
+reserve_space = true
+shadow = true
+show_dots = false
+show_instance_count = true
+show_running = true
+smart_auto_hide = false
+
+
+[keybinds]
+cancel = [ "Escape" ]
+copy = [ "Ctrl+c" ]
+delete = [ "Delete" ]
+down = [ "Down" ]
+left = [ "Left" ]
+right = [ "Right" ]
+save = [ "Ctrl+s" ]
+tab_next = [ "Tab" ]
+tab_previous = [ "Shift+ISO_Left_Tab" ]
+up = [ "Up" ]
+validate = [ "Return", "KP_Enter", "space" ]
+
+
+[storage]
+key_file = ""
+key_source = "secret-service"
+

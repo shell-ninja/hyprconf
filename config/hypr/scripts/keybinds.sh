@@ -37,6 +37,7 @@ ALT + B  󰶻  Reset Default Browser
 SUPER + W  󰶻  Change Wallpaper (Random)
 SUPER + SHIFT + W  󰶻  Open Wallpaper Selector
 SUPER + CTRL + SHIFT + W  󰶻  Open Wallpaper Selector
+SUPER + ALT + W  󰶻  Open Video Wallpaper Selector
 SUPER + CTRL + W  󰶻  Switch Noctalia Bar Layout
 SUPER + ALT + B  󰶻  Switch Desktop Shell (Noctalia / Waybar)
 SUPER + SHIFT + ,  󰶻  Toggle Noctalia Settings
@@ -108,6 +109,7 @@ execute_action() {
         *"Reset Default Browser"*) "$scripts_dir/default_browser.sh" --reset & ;;
         *"Change Wallpaper (Random)"*) "$scripts_dir/Wallpaper.sh" & ;;
         *"Open Wallpaper Selector"*) "$scripts_dir/WallpaperSelect.py" & ;;
+        *"Open Video Wallpaper Selector"*) noctalia msg panel-toggle noctalia/mpvpaper:picker ;;
         *"Switch Noctalia Bar Layout"*) "$scripts_dir/noctalia-bar.sh" & ;;
         *"Switch Desktop Shell"*) "$scripts_dir/shell.sh" & ;;
         *"Toggle Noctalia Settings"*) noctalia msg settings-toggle ;;

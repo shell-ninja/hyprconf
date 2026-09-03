@@ -25,6 +25,7 @@ local brightnessCTRL  = scripts_dir .. "/brightness.sh"
 hl.bind(mainMod .. " + W", hl.dsp.exec_cmd(wallpaper))
 hl.bind(mainMod .. " + SHIFT + W", hl.dsp.exec_cmd(wallpaperSelect))
 hl.bind(mainMod .. " + CTRL + SHIFT + W", hl.dsp.exec_cmd(wallpaperSelect))
+hl.bind(mainMod .. " + ALT + W", hl.dsp.exec_cmd(ipc .. "panel-toggle noctalia/mpvpaper:picker"))
 
 -- ── Screenshots / Secure mode ─────────────────────────────────────────────────
 hl.bind("print", hl.dsp.exec_cmd(ipc .. "panel-open launcher \">screenshot\""))
@@ -45,7 +46,6 @@ hl.bind(mainMod .. " + D", hl.dsp.exec_cmd(scripts_dir .. "/menu.sh || pkill rof
 hl.bind(mainMod .. " + Space", hl.dsp.exec_cmd(ipc .. "panel-open launcher \">\""))
 hl.bind(mainMod .. " + ALT + C",
     hl.dsp.exec_cmd(ipc .. "panel-toggle clipboard"))
--- hl.bind(mainMod .. " + ALT + W", hl.dsp.exec_cmd(scripts_dir .. "/cliphist.sh w"))
 hl.bind(mainMod .. " + SHIFT + D", hl.dsp.exec_cmd(ipc .. "panel-open launcher \">emo\""))
 hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
 hl.bind(mainMod .. " + SHIFT + P", hl.dsp.window.pseudo())
@@ -59,7 +59,6 @@ hl.bind(mainMod .. " + C", hl.dsp.exec_cmd("code || codium"))
 hl.bind(mainMod .. " + B", hl.dsp.exec_cmd(scripts_dir .. "/browser.sh op"))
 hl.bind(mainMod .. " + SHIFT + B", hl.dsp.exec_cmd("brave --incognito"))
 hl.bind(alt .. " + B", hl.dsp.exec_cmd(scripts_dir .. "/default_browser.sh --reset"))
-
 -- ── Layout / config ───────────────────────────────────────────────────────────
 hl.bind(mainMod .. " + CTRL + W",
     hl.dsp.exec_cmd(scripts_dir .. "/noctalia-bar.sh"))
@@ -68,7 +67,6 @@ hl.bind(mainMod .. " + SHIFT + comma", hl.dsp.exec_cmd(ipc .. "settings-toggle")
 hl.bind(mainMod .. " + SHIFT + S", hl.dsp.exec_cmd(ipc .. "panel-toggle control-center"))
 hl.bind(mainMod .. " + CTRL + R", hl.dsp.exec_cmd("hyprctl reload && notify-send 'Done' 'Hyprland reload'"))
 hl.bind(ctrl .. " + U", hl.dsp.exec_cmd(scripts_dir .. "/pkgupdate-gui.py"))
--- hl.bind(mainMod .. " + CTRL + U", hl.dsp.exec_cmd("kitty --title browser sh -c '" .. scripts_dir .. "/hyprconf.sh'"))
 hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd(scripts_dir .. "/startup.sh &> /dev/null"))
 hl.bind(mainMod .. " + S", hl.dsp.exec_cmd(scripts_dir .. "/settings.py"))
 hl.bind(mainMod .. " + F1", hl.dsp.exec_cmd(scripts_dir .. "/animations_toggle.sh"))

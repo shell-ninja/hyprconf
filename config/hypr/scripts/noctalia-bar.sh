@@ -10,7 +10,9 @@ set -euo pipefail
 
 noctalia_dir="$HOME/.config/noctalia"
 bars_dir="$noctalia_dir/bars"
+widgets_dir="$noctalia_dir/widgets"
 active_bar="$noctalia_dir/20-bar.toml"
+active_widgets="$noctalia_dir/70-widgets.toml"
 
 if [[ ! -d "$bars_dir" ]]; then
     notify-send "Noctalia Error" "Bars directory not found: $bars_dir"
@@ -21,12 +23,24 @@ fi
 if [[ -n "${1:-}" ]]; then
     # Strip "Bar: " prefix if passed from noctalia launcher selection
     layout_name="${1#Bar: }"
-    selected_file="$bars_dir/${layout_name}.toml"
-    if [[ ! -f "$selected_file" ]]; then
+    selected_bar="$bars_dir/${layout_name}.toml"
+    selected_widgets="$widgets_dir/${layout_name}.toml"
+
+    if [[ ! -f "$selected_bar" ]]; then
         notify-send "Noctalia Error" "Preset not found: ${layout_name}"
         exit 1
     fi
-    cp "$selected_file" "$active_bar"
+
+    # Apply bar configuration
+    cp "$selected_bar" "$active_bar"
+
+    # Apply matching widget configuration
+    if [[ -f "$selected_widgets" ]]; then
+        cp "$selected_widgets" "$active_widgets"
+    elif [[ -f "$widgets_dir/${layout_name}-widgets.toml" ]]; then
+        cp "$widgets_dir/${layout_name}-widgets.toml" "$active_widgets"
+    fi
+
     # Reload noctalia config so the bar change takes effect immediately
     noctalia msg config-reload &>/dev/null || true
     notify-send -t 2000 -i "preferences-desktop-theme" "Bar Layout" "Applied: ${layout_name}"
@@ -49,5 +63,8 @@ fi
 # Last resort: apply first available and notify
 choice="${layouts[0]}"
 cp "$bars_dir/${choice}.toml" "$active_bar"
+if [[ -f "$widgets_dir/${choice}.toml" ]]; then
+    cp "$widgets_dir/${choice}.toml" "$active_widgets"
+fi
 notify-send -t 3000 -i "preferences-desktop-theme" "Bar Layout" "Noctalia not running. Applied default: ${choice}"
 exit 0

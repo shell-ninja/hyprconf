@@ -24,62 +24,70 @@ error_notification() {
 
 scripts_dir="$HOME/.config/hypr/scripts"
 
+# Notify user when more than 10 packages are pending (no auto-dismiss, no auto-removal warning)
+large_update_notification() {
+    local upd="$1"
+    local body="$2"
+    notify-send \
+        --urgency=critical \
+        --expire-time=0 \
+        --icon="$update_sign" \
+        "⚠ Large Update: $upd packages pending" \
+        "${body}"$'\n\n'"Press CTRL + U to update packages."
+}
+
 # function to check the package manager
 check_update() {
     if [ -n "$(command -v pacman)" ]; then
-        # Function to check for updates
+        # Detect AUR helper
         aurhlpr=$(command -v yay || command -v paru)
 
         check_for_updates() {
             aur=$(${aurhlpr} -Qua | wc -l)
             ofc=$(checkupdates | wc -l)
-
-            # Calculate total available updates
-            upd=$(( ofc + aur ))
-
-            echo "$upd"
+            echo $(( ofc + aur ))
         }
 
-        # tooltip in waybar
         aur=$(${aurhlpr} -Qua | wc -l)
         ofc=$(checkupdates | wc -l)
-
-        # Initial check for updates
         upd=$(check_for_updates)
 
-        # Show tooltip
-        if [ $upd -eq 0 ] ; then
-            echo "{\"text\":\"$upd\", \"tooltip\":\"  Packages are up to date\"}"
+        if [ "$upd" -eq 0 ]; then
+            echo "{\"text\":\"$upd\", \"tooltip\":\"  Packages are up to date\"}"
         else
             echo "{\"text\":\"$upd\", \"tooltip\":\"󱓽 Official $ofc\n󱓾 AUR $aur\n\nPress CTRL + U to update\"}"
-            # update_notification "$update_sign" "Updates Available: $upd" "Main: $ofc\nAur: $aur"
+            # Notify if more than 10 packages are pending
+            if [ "$upd" -gt 10 ]; then
+                large_update_notification "$upd" \
+                    "Official: $ofc  |  AUR: $aur"$'\n'"Note: No packages will be auto-removed."
+            fi
         fi
 
     elif [ -n "$(command -v dnf)" ]; then
-        # Calculate total available updates fedora
         upd=$(dnf check-update -q | grep -vE 'Last metadata expiration|^$' | wc -l)
 
-        # Show tooltip
-        if [ $upd -eq 0 ] ; then
-            echo "{\"text\":\"$upd\", \"tooltip\":\"  Packages are up to date\"}"
+        if [ "$upd" -eq 0 ]; then
+            echo "{\"text\":\"$upd\", \"tooltip\":\"  Packages are up to date\"}"
         else
             echo "{\"text\":\"$upd\", \"tooltip\":\"󱓽 Updates Available: $upd\n\npress ctrl + u to update\"}"
-            # update_notification "$update_sign" "Updates Available" "$upd packages"
+            if [ "$upd" -gt 10 ]; then
+                large_update_notification "$upd" \
+                    "DNF: $upd packages pending."$'\n'"Note: No packages will be auto-removed."
+            fi
         fi
 
     elif [ -n "$(command -v zypper)" ]; then
-        # count the number of available updates
         ofc=$(zypper lu --best-effort | grep -c 'v  |')
-
-        # Calculate total available updates
         upd=$(( ofc ))
 
-        # Show tooltip
-        if [ $upd -eq 0 ] ; then
-            echo "{\"text\":\"$upd\", \"tooltip\":\"  Packages are up to date\"}"
+        if [ "$upd" -eq 0 ]; then
+            echo "{\"text\":\"$upd\", \"tooltip\":\"  Packages are up to date\"}"
         else
             echo "{\"text\":\"$upd\", \"tooltip\":\"󱓽 Updates Available: $upd\n\nPress CTRL + U to update\"}"
-            # update_notification "$update_sign" "Updates Available" "$upd packages"
+            if [ "$upd" -gt 10 ]; then
+                large_update_notification "$upd" \
+                    "Zypper: $upd packages pending."$'\n'"Note: No packages will be auto-removed."
+            fi
         fi
     fi
 }
@@ -152,7 +160,6 @@ package_update() {
         fi
     fi
 
-    "$scripts_dir/waybar-reload.sh" --reload
 }
 
 case $1 in

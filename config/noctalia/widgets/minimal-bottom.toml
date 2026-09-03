@@ -1,0 +1,220 @@
+# ==============================================================================
+# Noctalia Widget Settings: Minimal-Bottom Widgets
+# ==============================================================================
+
+[widget.active_window]
+icon_size = 14.0
+max_length = 100
+min_length = 80.0
+title_scroll = "none"
+type = "active_window"
+
+
+[widget.audio_visualizer]
+bands = 8
+capsule_radius = "auto"
+centered = false
+color_1 = "on_primary"
+color_2 = "on_primary"
+type = "audio_visualizer"
+width = 100
+
+
+[widget.clock]
+anchor = true
+color = "on_primary"
+font_scale = 1.1000000000000001
+format = "{:%I:%M %p}"
+scale = 1.1000000000000001
+timezone = "Asia/Dhaka"
+tooltip_format = "{:%A, %B %d, %Y}"
+type = "clock"
+vertical_format = ""
+
+
+[widget.control-center]
+glyph = "settings"
+type = "control-center"
+
+
+[widget.cpu]
+stat = "cpu_usage"
+type = "sysmon"
+
+
+[widget.date]
+format = "{:%d - %m - %y}"
+type = "clock"
+
+
+[widget.input_volume]
+device = "input"
+type = "volume"
+
+
+[widget.keyboard_layout]
+hide_when_single_layout = false
+type = "keyboard_layout"
+
+
+[widget.launcher]
+glyph = "apps-filled"
+type = "launcher"
+
+
+[widget.lock_keys]
+display = "short"
+hide_when_off = false
+show_caps_lock = true
+show_num_lock = true
+show_scroll_lock = false
+type = "lock_keys"
+
+
+[widget.media]
+art_size = 16.0
+enabled = false
+hide_when_no_media = true
+max_length = 220.0
+min_length = 80.0
+title_scroll = "always"
+type = "media"
+
+
+[widget.mpvpaper]
+type = "noctalia/mpvpaper:mpvpaper"
+
+
+[widget.mpvpaper_2]
+type = "noctalia/mpvpaper:mpvpaper"
+
+
+[widget.mpvpaper_3]
+type = "noctalia/mpvpaper:mpvpaper"
+
+
+[widget.mpvpaper_4]
+type = "noctalia/mpvpaper:mpvpaper"
+
+
+[widget.network]
+enabled = false
+show_label = false
+type = "network"
+
+
+[widget.network_rx]
+stat = "net_rx"
+type = "sysmon"
+
+
+[widget.network_tx]
+stat = "net_tx"
+type = "sysmon"
+
+
+[widget.output_volume]
+device = "output"
+type = "volume"
+
+
+[widget.ram]
+glyph = "brand-speedtest"
+stat = "ram_used"
+type = "sysmon"
+
+
+[widget.session]
+font_weight = 800
+type = "session"
+
+
+[widget.spacer]
+interactive = false
+type = "spacer"
+
+
+[widget.spacer_2]
+capsule_padding = 0
+capsule_radius = "auto"
+length = 30
+type = "spacer"
+
+
+[widget.temp]
+stat = "cpu_temp"
+type = "sysmon"
+
+
+[widget.tray]
+color = "on_primary"
+icon_color = "on_primary"
+type = "tray"
+
+
+[widget.volume]
+font_weight = 800
+type = "volume"
+
+
+[widget.wallpaper]
+color = "on_primary"
+glyph = "wallpaper-selector"
+type = "wallpaper"
+
+
+[widget.widget]
+color = "on_primary"
+glyph = "pacman"
+hide_on_empty = true
+icon_color = "on_primary"
+type = "yuuto/arch-updater:widget"
+
+
+[widget.widget_2]
+glyph = "ghost-3-filled"
+type = "yuuto/arch-updater:widget"
+
+
+[widget.widget_3]
+color = "primary"
+glyph = "ghost-3-filled"
+icon_color = "primary"
+scale = 1.1000000000000001
+type = "yuuto/arch-updater:widget"
+
+
+[widget.widget_4]
+glyph = "ghost-3"
+type = "yuuto/arch-updater:widget"
+
+
+[widget.widget_5]
+glyph = "ghost-3-filled"
+type = "yuuto/arch-updater:widget"
+
+
+[widget.workspaces]
+active_pill_size = 2.0499999999999998
+empty_color = "on_primary"
+focused_color = "on_primary"
+hide_when_empty = false
+inactive_pill_size = 1.0
+label_source = "id"
+max_label_chars = 5
+occupied_color = "surface"
+scale = 1.1000000000000001
+show_labels = true
+style = "regular"
+type = "workspaces"
+
+
+[widget.privacy]
+hide_inactive = true
+icon_spacing = 6
+type = "privacy"
+
+
+[widget.weather]
+show_condition = false
+type = "weather"

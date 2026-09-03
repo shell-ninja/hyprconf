@@ -9,12 +9,16 @@ Features:
   centre, flanking wallpapers lean away (sheared), shrink and fade with
   distance, and everything eases smoothly between selections
 - Bottom search bar with '>wallpaper' placeholder and instant filtering
-- Colours (accents, glow, chrome) follow Noctalia's currently active colour
-  scheme (~/.config/noctalia/colors.json) - preset or wallpaper-generated
+- Colours (accents, glow, chrome) follow the system's adw-gtk3/libadwaita
+  GTK theme first (~/.config/gtk-4.0/gtk.css, ~/.config/gtk-3.0/gtk.css, or
+  the active theme's own stylesheet), so the panel matches GTK app chrome -
+  falling back to Noctalia's colour scheme (~/.config/noctalia/colors.json)
+  for any role adw-gtk has no equivalent for
 - Escape restores original wallpaper; Enter/Click confirms and applies dynamic colors
 """
 
 import os
+import re
 import sys
 import glob
 import json
@@ -44,12 +48,12 @@ COLORS_SCRIPT = os.path.join(SCRIPTS_DIR, "noctalia-colors.sh")
 # On-disk thumbnail cache so repeat launches don't re-decode full-resolution
 # wallpapers - only the (much smaller/cheaper) cached thumbnail is read.
 THUMB_CACHE_DIR = os.path.expanduser("~/.cache/noctalia-wallpaper-panel/thumbnails")
-THUMB_W, THUMB_H = 336, 192  # 2x the base card size, for sharpness on the centre card
+THUMB_W, THUMB_H = 376, 216  # 2x the base card size, for sharpness on the centre card
 
 # ---- Cover flow layout tuning ----------------------------------------------
-CARD_W, CARD_H = 168, 96      # base (centre) thumbnail size in px
+CARD_W, CARD_H = 188, 108     # base (centre) thumbnail size in px
 CARD_RADIUS = 12              # thumbnail corner radius
-SPACING = 128                 # horizontal distance between card centres
+SPACING = 144                 # horizontal distance between card centres
 SCALE_STEP = 0.14             # size falloff per step away from centre
 MIN_SCALE = 0.46
 OPACITY_STEP = 0.20           # fade falloff per step away from centre
@@ -103,6 +107,183 @@ def load_noctalia_palette():
                     palette[key] = value
     except Exception:
         pass  # keep the bundled default
+    return palette
+
+
+# ---- adw-gtk3 / libadwaita colour source -----------------------------------
+# adw-gtk3 (and native libadwaita GTK4 apps) resolve their look from a set of
+# named `@define-color` variables. Ricing tools (matugen, wallust, etc.)
+# re-colour the theme by writing overrides into the user's own gtk.css files,
+# which GTK loads *after* the theme's own stylesheet - so those overrides win.
+# We read the same files GTK does, in the same priority order, so this panel
+# tracks whatever the adw-gtk theme is currently showing.
+ADW_GTK_USER_CSS = [
+    os.path.expanduser("~/.config/gtk-4.0/gtk.css"),
+    os.path.expanduser("~/.config/gtk-3.0/gtk.css"),
+]
+
+SYSTEM_THEME_DIRS = [
+    os.path.expanduser("~/.local/share/themes"),
+    os.path.expanduser("~/.themes"),
+    "/usr/share/themes",
+]
+
+_DEFINE_COLOR_RE = re.compile(r'@define-color\s+([A-Za-z0-9_\-]+)\s+([^;]+);')
+_IMPORT_RE = re.compile(r'@import\s+url\(\s*["\']?([^"\')]+)["\']?\s*\)\s*;?')
+_COMMENT_RE = re.compile(r'/\*.*?\*/', re.DOTALL)
+
+# Best-effort mapping from libadwaita/adw-gtk3 role names onto the Material-
+# style roles this panel already uses. Adwaita has no Material tertiary/
+# surface-variant split, so several roles share candidates; first match in
+# the parsed theme wins, and anything unmatched keeps the Noctalia value.
+ADW_ROLE_CANDIDATES = {
+    "mPrimary":          ["accent_color", "accent_bg_color"],
+    "mOnPrimary":        ["accent_fg_color"],
+    "mSecondary":        ["accent_bg_color", "accent_color"],
+    "mOnSecondary":      ["accent_fg_color"],
+    "mTertiary":         ["accent_color"],
+    "mOnTertiary":       ["accent_fg_color"],
+    "mError":            ["destructive_color", "destructive_bg_color", "error_color"],
+    "mOnError":          ["destructive_fg_color", "error_fg_color"],
+    "mSurface":          ["window_bg_color"],
+    "mOnSurface":        ["window_fg_color"],
+    "mSurfaceVariant":   ["view_bg_color", "card_bg_color"],
+    "mOnSurfaceVariant": ["view_fg_color", "card_fg_color"],
+    "mOutline":          ["border_color", "headerbar_border_color", "shade_color"],
+    "mShadow":           ["shade_color"],
+    "mHover":            ["accent_bg_color", "accent_color"],
+    "mOnHover":          ["accent_fg_color"],
+}
+
+
+def _resolve_color_value(value, known, depth=0):
+    """Resolve a raw @define-color RHS down to a '#rrggbb' string, chasing
+    @name references and unwrapping alpha()/shade()/mix() to their first
+    colour argument. Returns None for anything we can't safely resolve
+    (rgb()/hsl()/gradients etc.) rather than guessing."""
+    if depth > 8 or not value:
+        return None
+    value = value.strip()
+    if value.startswith("@"):
+        return _resolve_color_value(known.get(value[1:].strip()), known, depth + 1)
+    m = re.match(r'^(?:alpha|shade|mix|lighter|darker)\(\s*([^,)]+)', value)
+    if m:
+        return _resolve_color_value(m.group(1), known, depth + 1)
+    if re.match(r'^#[0-9a-fA-F]{3,8}$', value):
+        return value
+    return None
+
+
+def parse_gtk_css_colors(path, _seen=None):
+    """Parse @define-color declarations (following @import) out of a GTK CSS
+    file into a flat {name: '#rrggbb'} dict, in document order so later
+    redefinitions win, matching GTK's own cascade."""
+    if _seen is None:
+        _seen = set()
+    real_path = os.path.realpath(path)
+    if real_path in _seen or not os.path.isfile(real_path):
+        return {}
+    _seen.add(real_path)
+
+    try:
+        with open(real_path, "r", errors="ignore") as f:
+            text = _COMMENT_RE.sub("", f.read())
+    except OSError:
+        return {}
+
+    colors = {}
+    base_dir = os.path.dirname(real_path)
+    for m in _IMPORT_RE.finditer(text):
+        imp_path = m.group(1)
+        if not os.path.isabs(imp_path):
+            imp_path = os.path.join(base_dir, imp_path)
+        colors.update(parse_gtk_css_colors(imp_path, _seen))
+
+    for m in _DEFINE_COLOR_RE.finditer(text):
+        name, raw_value = m.group(1), m.group(2)
+        resolved = _resolve_color_value(raw_value, colors)
+        if resolved:
+            colors[name] = resolved
+    return colors
+
+
+def _gsettings_get(schema, key):
+    try:
+        out = subprocess.run(
+            ["gsettings", "get", schema, key],
+            capture_output=True, text=True, timeout=1.5,
+        )
+        if out.returncode == 0:
+            return out.stdout.strip().strip("'\"")
+    except Exception:
+        pass
+    return None
+
+
+def _prefers_dark():
+    scheme = _gsettings_get("org.gnome.desktop.interface", "color-scheme")
+    if scheme:
+        return "dark" in scheme
+    return True  # this rice (and DEFAULT_PALETTE) assumes a dark theme
+
+
+def _find_system_adw_theme_css():
+    """Locate the active GTK theme's own stylesheet, as a fallback for when
+    there's no user gtk.css override - covers a stock adw-gtk3(-dark) install."""
+    theme_name = _gsettings_get("org.gnome.desktop.interface", "gtk-theme") or "adw-gtk3"
+    variant_names = [theme_name]
+    if _prefers_dark() and not theme_name.endswith("-dark"):
+        variant_names.insert(0, theme_name + "-dark")
+    for base in SYSTEM_THEME_DIRS:
+        for name in variant_names:
+            for gtk_ver in ("gtk-4.0", "gtk-3.0"):
+                candidate = os.path.join(base, name, gtk_ver, "gtk.css")
+                if os.path.isfile(candidate):
+                    return candidate
+    return None
+
+
+def load_adw_gtk_colors():
+    """Merge colour definitions from every adw-gtk stylesheet we can find,
+    lowest priority first: the active system theme, then the user's gtk-3.0
+    override, then gtk-4.0 (highest priority - most re-colouring tools and
+    libadwaita apps target GTK4 first)."""
+    raw = {}
+    system_css = _find_system_adw_theme_css()
+    if system_css:
+        raw.update(parse_gtk_css_colors(system_css))
+    for path in reversed(ADW_GTK_USER_CSS):  # gtk-3.0, then gtk-4.0 on top
+        raw.update(parse_gtk_css_colors(path))
+    return raw
+
+
+def adw_colors_to_material(raw):
+    """Map a parsed adw-gtk colour dict onto this panel's Material-style
+    palette roles, using ADW_ROLE_CANDIDATES. Only roles we actually found
+    a colour for are returned."""
+    out = {}
+    for role, candidates in ADW_ROLE_CANDIDATES.items():
+        for name in candidates:
+            value = raw.get(name)
+            if value:
+                out[role] = value
+                break
+    return out
+
+
+def load_palette():
+    """Build the panel's active colour palette. Noctalia's live scheme is
+    the base layer (it covers every role, including ones Adwaita has no
+    analogue for), then whatever the adw-gtk theme defines is layered on
+    top - that's the primary, authoritative colour source, and it's also
+    what keeps this panel visually matched with Noctalia Shell, since both
+    are normally recoloured from the same wallpaper by the same pipeline."""
+    palette = load_noctalia_palette()
+    try:
+        adw_material = adw_colors_to_material(load_adw_gtk_colors())
+        palette.update(adw_material)
+    except Exception:
+        pass  # keep the Noctalia-only palette
     return palette
 
 
@@ -196,12 +377,7 @@ class CoverFlow(Gtk.DrawingArea):
         self.on_preview = on_preview
         self.on_activate = on_activate
 
-        self.color_selected = _hex_to_rgb(palette["mPrimary"])
-        self.color_hover = _hex_to_rgb(palette.get("mHover") or palette["mSecondary"])
-        self.color_title = _hex_to_rgb(palette["mOnSurface"])
-        self.color_muted = _hex_to_rgb(palette["mOnSurfaceVariant"])
-        self.color_surface_variant = _hex_to_rgb(palette["mSurfaceVariant"])
-        self.color_outline = _hex_to_rgb(palette["mOutline"])
+        self.update_palette(palette, redraw=False)
 
         self.items = []             # file paths currently shown
         self.selected_index = 0     # authoritative index (keyboard/hover/click target)
@@ -216,7 +392,7 @@ class CoverFlow(Gtk.DrawingArea):
         os.makedirs(THUMB_CACHE_DIR, exist_ok=True)
         self._executor = concurrent.futures.ThreadPoolExecutor(max_workers=4, thread_name_prefix="thumb-load")
 
-        self.set_size_request(-1, 190)
+        self.set_size_request(-1, 212)
         self.set_can_focus(False)
 
         self.add_events(
@@ -230,6 +406,19 @@ class CoverFlow(Gtk.DrawingArea):
         self.connect("button-press-event", self.on_button_press)
         self.connect("leave-notify-event", self.on_leave)
         self.connect("scroll-event", self.on_scroll)
+
+    # -- theming ----------------------------------------------------------
+    def update_palette(self, palette, redraw=True):
+        """(Re)derive the cached colour tuples from a palette dict. Used at
+        construction time and again for live theme hot-reload."""
+        self.color_selected = _hex_to_rgb(palette["mPrimary"])
+        self.color_hover = _hex_to_rgb(palette.get("mHover") or palette["mSecondary"])
+        self.color_title = _hex_to_rgb(palette["mOnSurface"])
+        self.color_muted = _hex_to_rgb(palette["mOnSurfaceVariant"])
+        self.color_surface_variant = _hex_to_rgb(palette["mSurfaceVariant"])
+        self.color_outline = _hex_to_rgb(palette["mOutline"])
+        if redraw:
+            self.queue_draw()
 
     # -- data -----------------------------------------------------------
     def set_items(self, items, keep_path=None):
@@ -473,14 +662,13 @@ class CoverFlow(Gtk.DrawingArea):
 
     # -- events ---------------------------------------------------------
     def on_motion(self, widget, event):
+        # Hover only highlights a card's border - it no longer moves the
+        # carousel or swaps the preview. Selection changes come from
+        # scrolling, clicking, or the arrow keys instead.
         idx = self._hit_test(event.x, event.y)
         if idx != self.hover_index:
             self.hover_index = idx
             self.queue_draw()
-        if idx is not None and idx != self.selected_index:
-            self.set_selected(idx)
-            if self.on_preview:
-                self.on_preview(self.items[idx])
         return False
 
     def on_leave(self, widget, event):
@@ -528,8 +716,9 @@ class WallpaperPanel(Gtk.Window):
         # Detect wallpaper engine (awww or swww)
         self.engine = "awww" if self.cmd_exists("awww") else ("swww" if self.cmd_exists("swww") else None)
 
-        # Load Noctalia's current colour scheme (preset or wallpaper-generated)
-        self.palette = load_noctalia_palette()
+        # Load the active colour palette: adw-gtk theme colours layered over
+        # Noctalia's current scheme (see load_palette() docstring)
+        self.palette = load_palette()
 
         # Load wallpapers
         self.wallpapers = self.scan_wallpapers()
@@ -543,7 +732,7 @@ class WallpaperPanel(Gtk.Window):
         GtkLayerShell.set_margin(self, GtkLayerShell.Edge.BOTTOM, 24)
         GtkLayerShell.set_namespace(self, "noctalia-wallpaper-panel")
 
-        self.set_default_size(940, 250)
+        self.set_default_size(980, 268)
         self.set_resizable(False)
 
         # Apply CSS
@@ -558,6 +747,10 @@ class WallpaperPanel(Gtk.Window):
 
         # Seed the cover flow, focused on whatever wallpaper is currently active
         self.coverflow.set_items(self.filtered_wallpapers, keep_path=self.original_wallpaper)
+
+        # Watch the theme source files so colours update live instead of
+        # needing the panel closed and reopened
+        self.start_theme_watch()
 
     def cmd_exists(self, cmd):
         return subprocess.call(f"type {cmd}", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE) == 0
@@ -582,10 +775,61 @@ class WallpaperPanel(Gtk.Window):
         return walls
 
     def apply_css(self):
-        screen = Gdk.Screen.get_default()
-        provider = Gtk.CssProvider()
-        provider.load_from_data(build_css(self.palette))
-        Gtk.StyleContext.add_provider_for_screen(screen, provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+        # Reuse one provider across calls (rather than adding a new one each
+        # time) so a theme hot-reload updates styles in place instead of
+        # stacking redundant providers on the screen.
+        if getattr(self, "_css_provider", None) is None:
+            self._css_provider = Gtk.CssProvider()
+            screen = Gdk.Screen.get_default()
+            Gtk.StyleContext.add_provider_for_screen(
+                screen, self._css_provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+            )
+        self._css_provider.load_from_data(build_css(self.palette))
+
+    # -- live theme hot-reload --------------------------------------------
+    # Polling instead of Gio.FileMonitor: inotify-based watches can miss
+    # atomic replace-via-rename writes (and symlinked dotfiles) depending on
+    # the theming tool and filesystem, which is why colours weren't updating
+    # live before. Checking mtime+size once a second is a few stat() calls -
+    # effectively free - and can't miss a change no matter how it's written.
+    THEME_POLL_INTERVAL_MS = 1000
+
+    def start_theme_watch(self):
+        self._theme_watch_paths = [NOCTALIA_COLORS_FILE] + list(ADW_GTK_USER_CSS)
+        self._theme_watch_state = {p: self._path_fingerprint(p) for p in self._theme_watch_paths}
+        self._theme_watch_source = GLib.timeout_add(self.THEME_POLL_INTERVAL_MS, self._poll_theme_files)
+
+    @staticmethod
+    def _path_fingerprint(path):
+        try:
+            st = os.stat(path)
+            return (st.st_mtime_ns, st.st_size)
+        except OSError:
+            return None
+
+    def _poll_theme_files(self):
+        changed = False
+        for path in self._theme_watch_paths:
+            fp = self._path_fingerprint(path)
+            if fp != self._theme_watch_state.get(path):
+                self._theme_watch_state[path] = fp
+                changed = True
+        if changed:
+            self._reload_theme()
+        return True  # keep polling
+
+    def _reload_theme(self):
+        self.palette = load_palette()
+        self.apply_css()
+        self.coverflow.update_palette(self.palette)
+
+    def stop_theme_watch(self):
+        if getattr(self, "_theme_watch_source", None) is not None:
+            try:
+                GLib.source_remove(self._theme_watch_source)
+            except Exception:
+                pass
+            self._theme_watch_source = None
 
     def build_ui(self):
         main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
@@ -708,6 +952,7 @@ class WallpaperPanel(Gtk.Window):
             self.coverflow._executor.shutdown(wait=False, cancel_futures=True)
         except Exception:
             pass
+        self.stop_theme_watch()
         # If user closed without confirming, restore the original wallpaper
         if not self.confirmed and self.original_wallpaper and self.active_wallpaper != self.original_wallpaper:
             if self.engine:

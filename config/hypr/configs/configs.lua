@@ -5,7 +5,7 @@
 opacity_act   = 0.9
 opacity_deact = 0.85
 blur_size     = 3
-blur_pass     = 4
+blur_pass     = 3
 shadow_range  = 0
 rounding      = 16
 border        = 2

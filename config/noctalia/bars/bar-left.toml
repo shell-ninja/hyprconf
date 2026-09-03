@@ -1,117 +1,51 @@
-[bar.default]
-auto_hide = false
-background_opacity = 0.99999997764825821
-border = "outline"
-border_width = 0.0
-capsule = false
-capsule_fill = "surface_variant"
-capsule_opacity = 0.92000000000000004
-capsule_radius = 15.0
-capsule_thickness = 0.80000000000000004
-center = [ "workspaces" ]
-color = "primary"
-contact_shadow = false
-enabled = true
-end = [ "tray", "network", "group:g1", "volume", "session" ]
-hover_highlight = true
-icon_color = "primary"
-layer = "top"
-margin_edge = 0
-margin_ends = 0
-margin_opposite_edge = 0
-padding = 20
-position = "left"
-radius = 10
-reserve_space = true
-scale = 1.0500000081956387
-shadow = false
-show_on_workspace_switch = true
-smart_auto_hide = false
-start = [ "launcher", "date", "clock", "weather", "notifications" ]
-thickness = 35
-widget_spacing = 25
+# ==============================================================================
+# Noctalia Bar Configuration: Left Vertical Bar Layout
+# ==============================================================================
 
-    [[bar.default.capsule_group]]
-    accordion = false
-    accordion_direction = "end"
+[bar]
+order = [ "default" ]
+
+    [bar.default]
+    auto_hide = false
+    background_opacity = 1.0
+    border = "outline"
+    border_width = 0.0
+    capsule = false
+    capsule_fill = "surface_variant"
+    capsule_group = []
+    capsule_opacity = 0.92000001668930054
+    capsule_padding = 6.0
+    capsule_radius = 15.0
+    capsule_thickness = 0.80000001192092896
+    center = [ "workspaces" ]
+    color = "primary"
+    concave_edge_corners = true
+    contact_shadow = false
     enabled = true
-    fill = "surface_variant"
-    id = "g1"
-    members = [ "caffeine", "nightlight", "clipboard" ]
-    opacity = 0.92000001668930054
-    padding = 6.0
-    radius = 15.0
+    end = [ "tray", "network", "caffeine", "nightlight", "clipboard", "volume", "session" ]
+    font_scale = 1.0
+    font_weight = 500
+    hover_highlight = true
+    icon_color = "primary"
+    layer = "top"
+    margin_edge = 0
+    margin_ends = 0
+    margin_opposite_edge = 0
+    padding = 20
+    panel_overlap = 1
+    position = "left"
+    radius = 10
+    radius_bottom_left = 10
+    radius_bottom_right = 10
+    radius_top_left = 10
+    radius_top_right = 10
+    reserve_space = true
+    scale = 1.0499999523162842
+    shadow = false
+    show_on_workspace_switch = true
+    smart_auto_hide = false
+    start = [ "launcher", "date", "clock", "weather", "notifications" ]
+    thickness = 35
+    widget_spacing = 25
 
-[widget.clock]
-anchor = true
-format = "{:%I:%M %p}"
-timezone = "Asia/Dhaka"
-tooltip_format = "{:%A, %B %d, %Y}"
-vertical_format = ""
-
-[widget.control-center]
-glyph = "settings"
-
-[widget.date]
-format = "{:%d - %m - %y}"
-
-[widget.input_volume]
-font_weight = 800
-
-[widget.launcher]
-custom_image_colorize = true
-glyph = "apps-filled"
-
-[widget.media]
-hide_when_no_media = true
-title_scroll = "always"
-
-[widget.network]
-show_label = false
-
-[widget.privacy]
-hide_inactive = true
-icon_spacing = 6
-type = "privacy"
-
-[widget.session]
-color = "on_error"
-font_weight = 800
-
-[widget.tray]
-detached_panel = false
-drawer = true
-drawer_columns = 3
-drawer_item_size = 20
-hidden = [ "org.kde.StatusNotifierItem-1-1" ]
-hide_passive = true
-pinned = []
-
-[widget.volume]
-font_weight = 800
-
-[widget.wallpaper]
-glyph = "photo"
-
-[widget.weather]
-show_condition = false
-
-[widget.workspaces]
-active_pill_size = 2.0499999999999998
-anchor = true
-change_color_on_hover = true
-empty_color = "surface_variant"
-focused_color = "primary"
-focused_output_only = false
-hide_when_empty = false
-inactive_pill_size = 1.0
-label_source = "id"
-labels_only_when_occupied = true
-max_label_chars = 5
-occupied_color = "primary"
-pill_scale = 1.0
-scale = 1.1000000000000001
-show_all_outputs = false
-show_labels = true
-style = "focus_hint"
-urgent_color = "error"
+        [bar.default.dead_zone]

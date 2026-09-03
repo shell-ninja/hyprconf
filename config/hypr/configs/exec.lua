@@ -12,7 +12,5 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("blueman-applet &")
 
     hl.exec_cmd(scripts_dir .. "/polkit.sh")
-    -- hl.exec_cmd("wl-paste --type text  --watch cliphist store")
-    -- hl.exec_cmd("wl-paste --type image --watch cliphist store")
     hl.exec_cmd("pypr &")
 end)

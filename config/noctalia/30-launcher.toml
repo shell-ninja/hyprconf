@@ -1,0 +1,94 @@
+# ==============================================================================
+# Noctalia Launcher Configuration: DMenu Entries, Providers & App Grid
+# Synchronized with Hyprconf dotfiles & Launcher Scripts
+# ==============================================================================
+
+    [shell.launcher]
+    app_grid = true
+    auto_paste = "auto"
+    categories = false
+    compact = false
+    fetch_exchange_rates = true
+    pinned = []
+    provider_prefix = ">"
+    show_app_actions = true
+    show_app_origin_indicator = true
+    show_icons = true
+    sort_by_usage = true
+
+        [shell.launcher.dmenu.entry.bar_layouts]
+        command = """printf '
+full-top
+minimal-bottom
+bar-left
+'"""
+        exec = "~/.hyprconf/hypr/scripts/noctalia-bar.sh {selection}"
+        freeform = false
+        global = false
+        glyph = "monitor"
+        label = "Bar Layout"
+        prefix = "bar"
+
+        [shell.launcher.dmenu.entry.commands]
+        command = """printf 'Reload Hyprland	Reload compositor
+Wallpaper Panel	Open wallpaper picker
+Bar: full-top
+Bar: minimal-bottom
+Bar: bar-left
+Noctalia Settings
+'"""
+        exec = "bash -c 'case \"$1\" in \"Reload Hyprland\") hyprctl reload ;; \"Wallpaper Panel\") noctalia msg panel-toggle wallpaper ;; \"Bar: \"*) ~/.hyprconf/hypr/scripts/noctalia-bar.sh \"$1\" ;; \"Launcher: \"*) ~/.hyprconf/hypr/scripts/noctalia-launcher.sh \"$1\" ;; \"Noctalia Settings\") noctalia msg settings-open ;; esac' -- {selection}"
+        freeform = false
+        global = false
+        glyph = "terminal"
+        label = "Commands"
+        prefix = "cmd"
+
+        [shell.launcher.dmenu.entry.keybinds]
+        command = "~/.hyprconf/hypr/scripts/keybinds.sh --list"
+        exec = "~/.hyprconf/hypr/scripts/keybinds.sh {selection}"
+        freeform = false
+        global = false
+        glyph = "keyboard"
+        label = "Keybinds"
+        prefix = "keybinds"
+
+        [shell.launcher.dmenu.entry.screenshot]
+        command = """printf 'Full Screen	Capture Entire Screen
+Selected Area	Pick a region with mouse
+'"""
+        exec = "~/.hyprconf/hypr/scripts/screenshot.sh {selection}"
+        freeform = false
+        global = false
+        glyph = ""
+        label = ""
+        prefix = "screenshot"
+
+        [shell.launcher.dmenu.entry.ssh]
+        command = "awk '/^Host /{print $2}' ~/.ssh/config 2>/dev/null || true"
+        exec = "kitty -e ssh {selection}"
+        freeform = false
+        global = false
+        glyph = "server"
+        label = ""
+        prefix = "ssh"
+
+        [shell.launcher.providers.calculator]
+        global = true
+        prefix = "calc"
+
+        [shell.launcher.providers.emoji]
+        global = true
+        prefix = "emo"
+
+        [shell.launcher.providers.session]
+        global = false
+        prefix = "session"
+
+        [shell.launcher.providers.wallpaper]
+        global = true
+        prefix = "wall"
+
+        [shell.launcher.providers.windows]
+        prefix = "win"
+

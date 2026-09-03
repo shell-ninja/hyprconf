@@ -1,31 +1,40 @@
 # ==============================================================================
-# Noctalia Shell Configuration: Theming & Palettes
-# Synchronized with Hyprconf dotfiles & Pywal
+# Noctalia Theme Configuration: Palettes, Wallpapers & Application Templates
+# Synchronized with Hyprconf dotfiles & Pywal / Noctalia Wallpapers
 # ==============================================================================
 
 [theme]
-builtin = "Catppuccin"
-community_palette = "Everforest"
+builtin = "Gruvbox"
+community_palette = "spiderman"
+custom_palette = "scary-house-vib"
 mode = "dark"
+pure_black_dark = false
 source = "wallpaper"
 wallpaper_scheme = "vibrant"
 
     [theme.templates]
     builtin_ids = [ "alacritty", "btop", "cava", "gtk3", "gtk4", "hyprland", "kcolorscheme", "kitty", "qt", "starship" ]
     community_ids = [ "antigravity", "neovim", "vscode", "fastfetch", "obs", "bat", "lazygit" ]
+    enable_builtin_templates = true
     enable_community_templates = true
+
 
 [wallpaper]
 directory = "~/.hyprconf/hypr/Wallpaper"
+directory_dark = ""
+directory_light = ""
+edge_smoothness = 0.30000001192092896
+enabled = true
 fill_color = "primary"
-transition_duration = 600
+fill_mode = "crop"
+per_monitor_directories = false
+transition = [ "fade", "wipe", "disc", "stripes", "zoom", "honeycomb" ]
+transition_duration = 600.0
 transition_on_startup = true
 
-    [wallpaper.default]
-    path = "~/.hyprconf/hypr/Wallpaper/future_town.jpg"
+    [wallpaper.automation]
+    enabled = false
+    interval_seconds = 1800
+    order = "random"
+    recursive = true
 
-    [wallpaper.last]
-    path = "~/.hyprconf/hypr/Wallpaper/future_town.jpg"
-
-    [wallpaper.monitors.HDMI-A-1]
-    path = "~/.hyprconf/hypr/Wallpaper/future_town.jpg"

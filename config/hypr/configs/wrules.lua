@@ -29,7 +29,7 @@ float_center("org.kde.kcalc")
 float_center("org.telegram.desktop")
 float_center("org.kde.partitionmanager")
 float_center("org.kde.gwenview")
-float_center("localsend")
+float_center("org.localsend.localsend_app")
 float_center("com.gabm.satty")
 float_center("org.gnome.Nautilus")
 float_center("com.heroicgameslauncher.hgl")
@@ -113,10 +113,8 @@ hl.workspace_rule({
 hl.window_rule({ match = { class = "^(dev\\.noctalia\\.Noctalia)$" }, float = true, size = "monitor_w*0.6 monitor_h*0.75", center = true })
 
 -- Layer rules
--- hl.layer_rule({ match = { namespace = "^rofi$" }, blur = true })
 hl.layer_rule({ match = { namespace = "^notifications$" }, blur = true })
 hl.layer_rule({ match = { namespace = "^gtk-layer-shell$" }, blur = true })
--- hl.layer_rule({ match = { namespace = "^waybar$" }, blur = true })
 
 -- Noctalia Shell layer rules
 hl.layer_rule({

@@ -1,46 +1,91 @@
-[bar.default]
-auto_hide = false
-background_opacity = 0.0
-border = "on_hover"
-border_width = 0.0
-capsule = true
-capsule_fill = "surface_variant"
-capsule_opacity = 0.92000000000000004
-capsule_radius = 8
-capsule_thickness = 0.84999999999999998
-center = []
-color = "primary"
-enabled = true
-end = [ "notifications", "network", "output_volume", "clock", "power_profile" ]
-hover_highlight = true
-icon_color = "primary"
-layer = "top"
-margin_edge = 10
-margin_ends = 20
-margin_opposite_edge = 10
-padding = 26
-position = "bottom"
-radius = 18
-reserve_space = true
-scale = 1.0
-shadow = true
-show_on_workspace_switch = true
-smart_auto_hide = false
-start = [ "workspaces" ]
-thickness = 36
-widget_spacing = 10
+# ==============================================================================
+# Noctalia Bar Configuration: Minimal Bottom Floating Bar Layout
+# ==============================================================================
 
-[widget.clock]
-format = "{:%H:%M}"
-tooltip_format = "{:%A, %B %d, %Y}"
+[bar]
+order = [ "default" ]
 
-[widget.network]
-show_label = false
+    [bar.default]
+    auto_hide = false
+    background_opacity = 0.0
+    border = "on_hover"
+    border_width = 0.0
+    capsule = true
+    capsule_border = "primary"
+    capsule_fill = "primary"
+    capsule_foreground = "on_primary"
+    capsule_opacity = 1.0
+    capsule_padding = 12.0
+    capsule_radius = 8.0
+    capsule_thickness = 0.75
+    center = []
+    color = "primary"
+    concave_edge_corners = true
+    contact_shadow = false
+    enabled = true
+    end = [ "tray", "group:g1", "group:g2", "clock" ]
+    font_scale = 1.0
+    font_weight = 500
+    hover_highlight = true
+    icon_color = "primary"
+    layer = "top"
+    margin_edge = 10
+    margin_ends = 20
+    margin_opposite_edge = 10
+    padding = 26
+    panel_overlap = 1
+    position = "bottom"
+    radius = 18
+    radius_bottom_left = 18
+    radius_bottom_right = 18
+    radius_top_left = 18
+    radius_top_right = 18
+    reserve_space = true
+    scale = 1.0
+    shadow = true
+    show_on_workspace_switch = true
+    smart_auto_hide = false
+    start = [ "workspaces", "group:g3" ]
+    thickness = 36
+    widget_spacing = 10
 
-[widget.workspaces]
-label_source = "id"
-max_label_chars = 5
-scale = 1.2
-show_labels = true
-style = "minimal"
-hide_when_empty = false
+        [bar.default.dead_zone]
+
+        [[bar.default.capsule_group]]
+        accordion = false
+        accordion_direction = "end"
+        border = "primary"
+        enabled = true
+        fill = "primary"
+        foreground = "on_primary"
+        id = "g1"
+        members = [ "output_volume", "input_volume" ]
+        opacity = 1.0
+        padding = 6.0
+        radius = 8.0
+
+        [[bar.default.capsule_group]]
+        accordion = false
+        accordion_direction = "end"
+        border = "on_primary"
+        enabled = true
+        fill = "primary"
+        foreground = "on_primary"
+        id = "g2"
+        members = [ "caffeine", "nightlight", "clipboard" ]
+        opacity = 1.0
+        padding = 6.0
+        radius = 8.0
+
+        [[bar.default.capsule_group]]
+        accordion = true
+        accordion_direction = "start"
+        border = "primary"
+        enabled = true
+        fill = "primary"
+        foreground = "on_primary"
+        id = "g3"
+        members = [ "cpu", "ram" ]
+        opacity = 1.0
+        padding = 12.0
+        radius = 8.0
