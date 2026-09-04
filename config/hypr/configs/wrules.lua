@@ -19,12 +19,12 @@ float_center("qt5ct")
 float_center("qt6ct")
 float_center("file-roller")
 float_center("org.gnome.FileRoller")
+float_center("hyprland-share-picker")
 float_center("[Kk]vantummanager")
 float_center("[Ll]xappearance")
 float_center("eog")
 float_center("[Tt]hunar")
 float_center("[Gg]nome-disks")
-float_center("com.obsproject.Studio")
 float_center("org.kde.kcalc")
 float_center("org.telegram.desktop")
 float_center("org.kde.partitionmanager")
@@ -49,9 +49,27 @@ hl.window_rule({ match = { class = "^(dev.shellninja.hypr-settings)$", title = "
 
 -- pkgupdate GUI and welcome app
 float_center("dev.shellninja.pkgupdate")
-hl.window_rule({ match = { class = "^(dev.shellninja.pkgupdate)$" }, float = true, center = true, size = "monitor_w*0.48 monitor_h*0.80" })
-hl.window_rule({ match = { class = "^(dev.shellninja.welcome)$" }, float = true, center = true, size = "monitor_w*0.40 monitor_h*0.80" })
-hl.window_rule({ match = { title = "^(System Update)$" }, float = true, center = true, size = "monitor_w*0.48 monitor_h*0.80" })
+hl.window_rule({
+    match = { class = "^(dev.shellninja.pkgupdate)$" },
+    float = true,
+    center = true,
+    size =
+    "monitor_w*0.48 monitor_h*0.80"
+})
+hl.window_rule({
+    match = { class = "^(dev.shellninja.welcome)$" },
+    float = true,
+    center = true,
+    size =
+    "monitor_w*0.40 monitor_h*0.80"
+})
+hl.window_rule({
+    match = { title = "^(System Update)$" },
+    float = true,
+    center = true,
+    size =
+    "monitor_w*0.48 monitor_h*0.80"
+})
 
 -- Kitty titles
 hl.window_rule({ match = { class = "^(kitty)$", title = "^(update|floating|yazi|monitor|browser)$" }, float = true })
@@ -78,6 +96,7 @@ hl.window_rule({ match = { class = "^(org.kde.kcalc)$" }, size = "monitor_w*0.3 
 hl.window_rule({ match = { class = "^(xfce-polkit)$" }, size = "monitor_w*0.3 monitor_h*0.2" })
 hl.window_rule({ match = { class = "^(localsend)$" }, size = "monitor_w*0.4 monitor_h*0.4" })
 hl.window_rule({ match = { class = "^(com.gabm.satty)$" }, size = "monitor_w*0.6 monitor_h*0.6" })
+hl.window_rule({ match = { class = "^(hyprland-share-picker)$" }, size = "monitor_w*0.3 monitor_h*0.2" })
 
 -- ── Opacity Rules ─────────────────────────────────────────────────────────────
 -- Syntax: opacity = "active inactive [fullscreen]"
@@ -132,4 +151,3 @@ hl.workspace_rule({ workspace = "2", persistent = true })
 hl.workspace_rule({ workspace = "3", persistent = true })
 hl.workspace_rule({ workspace = "4", persistent = true })
 hl.workspace_rule({ workspace = "5", persistent = true })
-
