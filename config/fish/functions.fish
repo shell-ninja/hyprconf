@@ -511,14 +511,6 @@ function push
     set -l pstatus $status
 
     if test $pstatus -eq 0
-        set -l sound "$HOME/.config/fish/fah.mp3"
-        if test -f "$sound"
-            if command -v pw-play >/dev/null 2>&1; pw-play "$sound" >/dev/null 2>&1 &
-            else if command -v paplay >/dev/null 2>&1; paplay "$sound" >/dev/null 2>&1 &
-            else if command -v aplay >/dev/null 2>&1; aplay "$sound" >/dev/null 2>&1 &
-            else if command -v ffplay >/dev/null 2>&1; ffplay -nodisp -autoexit "$sound" >/dev/null 2>&1 &
-            end
-        end
         printf ":: Pushed successfully!\n"
     else
         printf "!! Sorry, push failed. Please check for errors.\n"
@@ -803,80 +795,4 @@ function change_style
         printf "\e[1;31m  [!] Invalid choice. Exiting.\e[0m\n"
         return 1
     end
-end
-
-# play audio
-function play
-    set -l sound "$HOME/.config/fish/fah.mp3"
-    if test -f "$sound"
-        if command -v pw-play >/dev/null 2>&1; pw-play "$sound"
-        else if command -v paplay >/dev/null 2>&1; paplay "$sound"
-        else if command -v aplay >/dev/null 2>&1; aplay "$sound"
-        else if command -v ffplay >/dev/null 2>&1; ffplay -nodisp -autoexit "$sound"
-        else; printf "No audio player found to play %s\n" "$sound"
-        end
-    else
-        printf "Sound file not found: %s\n" "$sound"
-    end
-end
-
-# vite react project creator
-function vite
-    printf "Project name: \n"
-    set -l PROJ_NAME ""
-    if command -v gum >/dev/null 2>&1
-        set PROJ_NAME (gum input --placeholder "my-app")
-    else
-        read -P "my-app: " PROJ_NAME
-    end
-
-    if test -z "$PROJ_NAME"
-        printf "❌ Missing project name\n"
-        return 1
-    end
-
-    set -l PKG_MAN ""
-    for pm in npm pnpm yarn bun
-        if command -v "$pm" >/dev/null 2>&1
-            set PKG_MAN "$pm"
-            break
-        end
-    end
-
-    if test -z "$PKG_MAN"
-        printf "❌ No package manager found\n"
-        return 1
-    end
-    printf "🚀 Using %s\n" "$PKG_MAN"
-
-    switch "$PKG_MAN"
-        case npm
-            npm create vite@latest "$PROJ_NAME" -y -- --template react --no-interactive
-        case pnpm
-            pnpm create vite "$PROJ_NAME" --template react --no-interactive
-        case yarn
-            yarn create vite "$PROJ_NAME" --template react --no-interactive
-        case bun
-            bun create vite "$PROJ_NAME" --template react --no-interactive
-    end
-    or begin
-        printf "❌ Project creation failed\n"
-        return 1
-    end
-
-    cd "$PROJ_NAME"; or return 1
-    printf "📦 Installing dependencies...\n"
-    $PKG_MAN install; or begin
-        printf "❌ Install failed\n"
-        return 1
-    end
-
-    mkdir -p .vscode
-    printf '{\n  "version": "2.0.0",\n  "tasks": [\n    {\n      "label": "dev",\n      "type": "shell",\n      "command": "npm run dev",\n      "isBackground": true,\n      "runOptions": {\n        "runOn": "folderOpen"\n      },\n      "problemMatcher": []\n    }\n  ]\n}\n' > .vscode/tasks.json
-
-    printf "🧠 Opening in VS Code...\n"
-    command -v code >/dev/null 2>&1; and code .
-
-    printf "🌐 Dev server will auto-start inside VS Code terminal\n"
-    printf "✅ Done!\n"
 end
