@@ -6,7 +6,7 @@
 [shell]
 app_icon_color = "primary"
 app_icon_colorize = true
-avatar_path = "/home/shell-ninja/.hyprconf/hypr/.cache/shell-ninja.png"
+avatar_path = "~/.hyprconf/hypr/.cache/shell-ninja.png"
 button_borders = true
 card_borders = true
 clipboard_auto_paste = "auto"
@@ -87,7 +87,7 @@ time_format = "{:%I:%M}"
     [shell.screenshot]
     confirm_region = true
     copy_to_clipboard = true
-    directory = "/home/shell-ninja/Pictures/Screenshots"
+    directory = "~/Pictures/Screenshots"
     filename_pattern = ""
     freeze_screen = true
     pipe_command = ""
@@ -167,7 +167,7 @@ sidebar = "compact"
 sidebar_section = "compact"
 width = 700
 
-    [control_center.calendar]
+    [calendar]
     event_date_format = "%A %e %B"
     event_time_format = "%H:%M"
     show_events_card = true

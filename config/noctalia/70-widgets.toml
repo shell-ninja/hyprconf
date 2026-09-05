@@ -9,10 +9,8 @@ min_length = 80.0
 title_scroll = "none"
 type = "active_window"
 
-
-
 [widget.audio_visualizer]
-bands = 8
+bands = 10
 capsule_radius = "auto"
 centered = false
 color_1 = "on_primary"
@@ -20,55 +18,43 @@ color_2 = "on_primary"
 type = "audio_visualizer"
 width = 100
 
-
-
 [widget.clock]
 anchor = true
+color = "on_primary"
+font_scale = 1.1000000000000001
 format = "{:%I:%M %p}"
+scale = 1.1000000000000001
 timezone = "Asia/Dhaka"
 tooltip_format = "{:%A, %B %d, %Y}"
 type = "clock"
 vertical_format = ""
 
-
-
 [widget.control-center]
 glyph = "settings"
 type = "control-center"
 
-
-
 [widget.cpu]
+glyph = "cpu"
 stat = "cpu_usage"
 type = "sysmon"
-
-
 
 [widget.date]
 format = "{:%d - %m - %y}"
 type = "clock"
-
-
 
 [widget.input_volume]
 device = "input"
 font_weight = 800
 type = "volume"
 
-
-
 [widget.keyboard_layout]
 hide_when_single_layout = false
 type = "keyboard_layout"
-
-
 
 [widget.launcher]
 custom_image_colorize = true
 glyph = "apps-filled"
 type = "launcher"
-
-
 
 [widget.lock_keys]
 display = "short"
@@ -77,8 +63,6 @@ show_caps_lock = true
 show_num_lock = true
 show_scroll_lock = false
 type = "lock_keys"
-
-
 
 [widget.media]
 art_size = 16.0
@@ -89,78 +73,56 @@ min_length = 80.0
 title_scroll = "always"
 type = "media"
 
-
-
 [widget.mpvpaper]
 type = "noctalia/mpvpaper:mpvpaper"
-
-
 
 [widget.mpvpaper_2]
 type = "noctalia/mpvpaper:mpvpaper"
 
-
-
 [widget.mpvpaper_3]
 type = "noctalia/mpvpaper:mpvpaper"
-
-
 
 [widget.mpvpaper_4]
 type = "noctalia/mpvpaper:mpvpaper"
 
-
+[widget.mpvpaper_5]
+type = "noctalia/mpvpaper:mpvpaper"
 
 [widget.network]
 enabled = false
 show_label = false
 type = "network"
 
-
-
 [widget.network_rx]
 stat = "net_rx"
 type = "sysmon"
-
-
 
 [widget.network_tx]
 stat = "net_tx"
 type = "sysmon"
 
-
-
 [widget.output_volume]
 device = "output"
 type = "volume"
-
-
 
 [widget.privacy]
 hide_inactive = true
 icon_spacing = 6
 type = "privacy"
 
-
-
 [widget.ram]
+glyph = "brand-speedtest"
 stat = "ram_used"
 type = "sysmon"
-
-
 
 [widget.session]
 color = "on_error"
 font_weight = 800
 type = "session"
 
-
-
 [widget.spacer]
 interactive = false
 type = "spacer"
-
-
 
 [widget.spacer_2]
 capsule_padding = 0
@@ -168,44 +130,34 @@ capsule_radius = "auto"
 length = 30
 type = "spacer"
 
-
-
 [widget.temp]
 stat = "cpu_temp"
 type = "sysmon"
 
-
-
 [widget.tray]
+color = "on_primary"
 detached_panel = false
 drawer = true
 drawer_columns = 3
 drawer_item_size = 20
 hidden = [ "org.kde.StatusNotifierItem-1-1" ]
 hide_passive = true
+icon_color = "on_primary"
 pinned = []
 type = "tray"
-
-
 
 [widget.volume]
 font_weight = 800
 type = "volume"
-
-
 
 [widget.wallpaper]
 color = "on_primary"
 glyph = "wallpaper-selector"
 type = "wallpaper"
 
-
-
 [widget.weather]
 show_condition = false
 type = "weather"
-
-
 
 [widget.widget]
 color = "on_primary"
@@ -214,13 +166,9 @@ hide_on_empty = true
 icon_color = "on_primary"
 type = "yuuto/arch-updater:widget"
 
-
-
 [widget.widget_2]
 glyph = "ghost-3-filled"
 type = "yuuto/arch-updater:widget"
-
-
 
 [widget.widget_3]
 color = "primary"
@@ -229,24 +177,19 @@ icon_color = "primary"
 scale = 1.1000000000000001
 type = "yuuto/arch-updater:widget"
 
-
-
 [widget.widget_4]
 glyph = "ghost-3"
 type = "yuuto/arch-updater:widget"
 
-
-
 [widget.widget_5]
+color = "on_primary"
 glyph = "ghost-3-filled"
 type = "yuuto/arch-updater:widget"
-
-
 
 [widget.workspaces]
 active_pill_size = 2.0499999999999998
 change_color_on_hover = true
-empty_color = "surface_variant"
+empty_color = "on_primary"
 focused_color = "on_primary"
 focused_output_only = false
 hide_when_empty = false
@@ -254,7 +197,7 @@ inactive_pill_size = 1.0
 label_source = "id"
 labels_only_when_occupied = true
 max_label_chars = 5
-occupied_color = "primary"
+occupied_color = "surface"
 pill_scale = 1.0
 scale = 1.1000000000000001
 show_all_outputs = false

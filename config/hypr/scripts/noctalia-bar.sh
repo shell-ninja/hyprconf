@@ -19,6 +19,30 @@ if [[ ! -d "$bars_dir" ]]; then
     exit 1
 fi
 
+clean_state_overrides() {
+    local state_settings="$HOME/.local/state/noctalia/settings.toml"
+    if [[ -f "$state_settings" ]]; then
+        python3 -c "
+import os, re
+path = os.path.expanduser('~/.local/state/noctalia/settings.toml')
+if os.path.isfile(path):
+    with open(path, 'r') as f:
+        lines = f.readlines()
+    new_lines = []
+    skipping = False
+    for line in lines:
+        m = re.match(r'^\s*(\[+)([a-zA-Z0-9_.\"]+)(\]+)', line)
+        if m:
+            sec = m.group(2).strip('\"')
+            skipping = sec.startswith('bar') or sec.startswith('widget')
+        if not skipping:
+            new_lines.append(line)
+    with open(path, 'w') as f:
+        f.writelines(new_lines)
+" 2>/dev/null || true
+    fi
+}
+
 # ── Mode 1: Apply a named layout directly (called from launcher /bar exec) ─────
 if [[ -n "${1:-}" ]]; then
     # Strip "Bar: " prefix if passed from noctalia launcher selection
@@ -40,6 +64,9 @@ if [[ -n "${1:-}" ]]; then
     elif [[ -f "$widgets_dir/${layout_name}-widgets.toml" ]]; then
         cp "$widgets_dir/${layout_name}-widgets.toml" "$active_widgets"
     fi
+
+    # Clear conflicting state overrides so the preset's exact settings apply
+    clean_state_overrides
 
     # Reload noctalia config so the bar change takes effect immediately
     noctalia msg config-reload &>/dev/null || true
@@ -66,5 +93,7 @@ cp "$bars_dir/${choice}.toml" "$active_bar"
 if [[ -f "$widgets_dir/${choice}.toml" ]]; then
     cp "$widgets_dir/${choice}.toml" "$active_widgets"
 fi
+clean_state_overrides
 notify-send -t 3000 -i "preferences-desktop-theme" "Bar Layout" "Noctalia not running. Applied default: ${choice}"
 exit 0
+
