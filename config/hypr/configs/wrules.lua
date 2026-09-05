@@ -19,17 +19,17 @@ float_center("qt5ct")
 float_center("qt6ct")
 float_center("file-roller")
 float_center("org.gnome.FileRoller")
+float_center("hyprland-share-picker")
 float_center("[Kk]vantummanager")
 float_center("[Ll]xappearance")
 float_center("eog")
 float_center("[Tt]hunar")
 float_center("[Gg]nome-disks")
-float_center("com.obsproject.Studio")
 float_center("org.kde.kcalc")
 float_center("org.telegram.desktop")
 float_center("org.kde.partitionmanager")
 float_center("org.kde.gwenview")
-float_center("localsend")
+float_center("org.localsend.localsend_app")
 float_center("com.gabm.satty")
 float_center("org.gnome.Nautilus")
 float_center("com.heroicgameslauncher.hgl")
@@ -47,12 +47,29 @@ hl.window_rule({ match = { class = "^([Tt]hunar)$", title = "^(Confirm to replac
 -- settings app
 hl.window_rule({ match = { class = "^(dev.shellninja.hypr-settings)$", title = "^(Hyprland Settings)$" }, float = true, center = true })
 
--- pkgupdate GUI
+-- pkgupdate GUI and welcome app
 float_center("dev.shellninja.pkgupdate")
-hl.window_rule({ match = { class = "^(dev.shellninja.pkgupdate)$" }, float = true, center = true, size =
-"monitor_w*0.48 monitor_h*0.80" })
-hl.window_rule({ match = { title = "^(System Update)$" }, float = true, center = true, size =
-"monitor_w*0.48 monitor_h*0.80" })
+hl.window_rule({
+    match = { class = "^(dev.shellninja.pkgupdate)$" },
+    float = true,
+    center = true,
+    size =
+    "monitor_w*0.48 monitor_h*0.80"
+})
+hl.window_rule({
+    match = { class = "^(dev.shellninja.welcome)$" },
+    float = true,
+    center = true,
+    size =
+    "monitor_w*0.40 monitor_h*0.80"
+})
+hl.window_rule({
+    match = { title = "^(System Update)$" },
+    float = true,
+    center = true,
+    size =
+    "monitor_w*0.48 monitor_h*0.80"
+})
 
 -- Kitty titles
 hl.window_rule({ match = { class = "^(kitty)$", title = "^(update|floating|yazi|monitor|browser)$" }, float = true })
@@ -79,6 +96,7 @@ hl.window_rule({ match = { class = "^(org.kde.kcalc)$" }, size = "monitor_w*0.3 
 hl.window_rule({ match = { class = "^(xfce-polkit)$" }, size = "monitor_w*0.3 monitor_h*0.2" })
 hl.window_rule({ match = { class = "^(localsend)$" }, size = "monitor_w*0.4 monitor_h*0.4" })
 hl.window_rule({ match = { class = "^(com.gabm.satty)$" }, size = "monitor_w*0.6 monitor_h*0.6" })
+hl.window_rule({ match = { class = "^(hyprland-share-picker)$" }, size = "monitor_w*0.3 monitor_h*0.2" })
 
 -- ── Opacity Rules ─────────────────────────────────────────────────────────────
 -- Syntax: opacity = "active inactive [fullscreen]"
@@ -111,8 +129,27 @@ hl.workspace_rule({
     -- decorate = true,  -- Optional: Explicitly enable decorations if disabled globally
 })
 
+hl.window_rule({ match = { class = "^(dev\\.noctalia\\.Noctalia)$" }, float = true, size = "monitor_w*0.6 monitor_h*0.75", center = true })
+
 -- Layer rules
-hl.layer_rule({ match = { namespace = "^rofi$" }, blur = true })
+-- hl.layer_rule({ match = { namespace = "^rofi$" }, blur = true })
 hl.layer_rule({ match = { namespace = "^notifications$" }, blur = true })
 hl.layer_rule({ match = { namespace = "^gtk-layer-shell$" }, blur = true })
-hl.layer_rule({ match = { namespace = "^waybar$" }, blur = true })
+-- hl.layer_rule({ match = { namespace = "^waybar$" }, blur = true })
+
+-- Noctalia Shell layer rules
+hl.layer_rule({
+    match = { namespace = "^noctalia-(bar-.+|notification|dock|panel|attached-panel|osd|window-switcher|screen-corner)$" },
+    no_anim = true,
+    ignore_alpha = 0.5,
+    blur = true,
+    blur_popups = true,
+})
+
+
+-- Define persistent workspaces
+hl.workspace_rule({ workspace = "1", persistent = true })
+hl.workspace_rule({ workspace = "2", persistent = true })
+hl.workspace_rule({ workspace = "3", persistent = true })
+hl.workspace_rule({ workspace = "4", persistent = true })
+hl.workspace_rule({ workspace = "5", persistent = true })

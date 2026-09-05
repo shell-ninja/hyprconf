@@ -3,6 +3,7 @@
 scripts_dir="$HOME/.hyprconf/hypr/scripts"
 wallpaper="$HOME/.hyprconf/hypr/.cache/current_wallpaper.png"
 monitor_config="$HOME/.hyprconf/hypr/configs/monitor.conf"
+welcome_app="$scripts_dir/welcome.py"
 
 # Transition config
 FPS=120
@@ -15,6 +16,10 @@ if command -v awww &> /dev/null; then
     ENGINE=awww
 elif command -v swww &> /dev/null; then
     ENGINE=swww
+fi
+
+if [[ -f "$welcome_app" ]]; then
+    python3 "$welcome_app" --autostart &
 fi
 
 if [[ -f "$wallpaper" ]]; then
