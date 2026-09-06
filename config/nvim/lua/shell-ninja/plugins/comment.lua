@@ -5,35 +5,92 @@ return {
   dependencies = {
     "JoosepAlviste/nvim-ts-context-commentstring",
   },
+  keys = {
+    {
+      "<C-_>",
+      function()
+        require("Comment.api").toggle.linewise.current()
+      end,
+      mode = "n",
+      desc = "Toggle comment line (Ctrl+/)",
+    },
+    {
+      "<C-/>",
+      function()
+        require("Comment.api").toggle.linewise.current()
+      end,
+      mode = "n",
+      desc = "Toggle comment line (Ctrl+/)",
+    },
+    {
+      "<C-_>",
+      function()
+        local esc = vim.api.nvim_replace_termcodes("<ESC>", true, false, true)
+        vim.api.nvim_feedkeys(esc, "nx", false)
+        require("Comment.api").toggle.linewise(vim.fn.visualmode())
+      end,
+      mode = { "v", "x" },
+      desc = "Toggle comment visual (Ctrl+/)",
+    },
+    {
+      "<C-/>",
+      function()
+        local esc = vim.api.nvim_replace_termcodes("<ESC>", true, false, true)
+        vim.api.nvim_feedkeys(esc, "nx", false)
+        require("Comment.api").toggle.linewise(vim.fn.visualmode())
+      end,
+      mode = { "v", "x" },
+      desc = "Toggle comment visual (Ctrl+/)",
+    },
+  },
   config = function()
-    -- import comment plugin safely
-    local comment = require("Comment")
-
-    local ts_context_commentstring = require("ts_context_commentstring")
-    ts_context_commentstring.setup({
+    -- Setup ts_context_commentstring first (no autocmd needed, Comment.nvim calls pre_hook)
+    require("ts_context_commentstring").setup({
       enable_autocmd = false,
     })
 
-    local comment_integration = require("ts_context_commentstring.integrations.comment_nvim")
+    local ts_pre_hook = require("ts_context_commentstring.integrations.comment_nvim").create_pre_hook()
+    local ft = require("Comment.ft")
 
-    local ts_pre_hook = comment_integration.create_pre_hook()
+    -- Guard against Neovim 0.12+ nil parser bug where treesitter get_parser returns nil
+    -- instead of erroring, which causes Comment.nvim's internal calculate to crash with nil:children()
+    local orig_calculate = ft.calculate
+    ft.calculate = function(ctx)
+      local ok, parser = pcall(vim.treesitter.get_parser, vim.api.nvim_get_current_buf())
+      if not ok or not parser then
+        return ft.get(vim.bo.filetype, ctx.ctype)
+      end
+      return orig_calculate(ctx)
+    end
 
-    -- enable comment
-    comment.setup({
-      -- for commenting tsx, jsx, svelte, html files
-      -- wrap pre_hook to prevent [Comment.nvim] nil warning when
-      -- ts_context_commentstring returns nil (e.g. html, css filetypes)
+    require("Comment").setup({
+      -- Safe pre_hook: use treesitter commentstring for embedded languages (JSX/TSX, HTML/Vue, etc.),
+      -- and fallback directly to Comment.ft or vim.bo.commentstring for normal files (bash, python, etc.)
       pre_hook = function(ctx)
-        return ts_pre_hook(ctx) or require("Comment.utils").get_cstring(ctx, true)
+        local ok, result = pcall(ts_pre_hook, ctx)
+        if ok and result then
+          return result
+        end
+        return ft.get(vim.bo.filetype, ctx.ctype) or vim.bo.commentstring
       end,
     })
 
+    local api = require("Comment.api")
     local opts = { noremap = true, silent = true }
-    vim.keymap.set("n", "<C-_>", require("Comment.api").toggle.linewise.current, opts)
-    vim.keymap.set("n", "<C-c>", require("Comment.api").toggle.linewise.current, opts)
-    vim.keymap.set("n", "<C-/>", require("Comment.api").toggle.linewise.current, opts)
-    vim.keymap.set("v", "<C-_>", "<esc><cmd>lua require('Comment.api').toggle.linewise(vim.fn.visualmode())<cr>", opts)
-    vim.keymap.set("v", "<C-c>", "<esc><cmd>lua require('Comment.api').toggle.linewise(vim.fn.visualmode())<cr>", opts)
-    vim.keymap.set("v", "<C-/>", "<esc><cmd>lua require('Comment.api').toggle.linewise(vim.fn.visualmode())<cr>", opts)
+    local esc = vim.api.nvim_replace_termcodes("<ESC>", true, false, true)
+    local toggle_visual = function()
+      vim.api.nvim_feedkeys(esc, "nx", false)
+      api.toggle.linewise(vim.fn.visualmode())
+    end
+
+    -- Normal mode: toggle current line (works from anywhere on the line)
+    vim.keymap.set("n", "<C-_>", api.toggle.linewise.current, opts)
+    vim.keymap.set("n", "<C-/>", api.toggle.linewise.current, opts)
+
+    -- Visual mode: toggle selected lines
+    vim.keymap.set("v", "<C-_>", toggle_visual, opts)
+    vim.keymap.set("v", "<C-/>", toggle_visual, opts)
+    vim.keymap.set("x", "<C-_>", toggle_visual, opts)
+    vim.keymap.set("x", "<C-/>", toggle_visual, opts)
   end,
 }

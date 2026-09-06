@@ -1,5 +1,6 @@
 return {
   "nvim-treesitter/nvim-treesitter-textobjects",
+  branch = "master",
   -- Declared as a dependency of nvim-treesitter (treesitter.lua).
   -- Textobjects opts are configured there via the shared opts table.
   -- This spec exists to set up repeatable move keymaps after load.
