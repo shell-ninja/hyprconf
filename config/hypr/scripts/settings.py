@@ -11,6 +11,8 @@
 #    - Input        (settings.lua: pointer sensitivity, touchpad toggles)
 #    - Environment  (environment.lua: add/edit/remove hl.env() variables)
 #    - Keybinds     (keybinds.lua: add/edit/remove hl.bind() statements)
+#    - Login Avatar (SDDM face icon: pick an image, crop/resize it with
+#                     ImageMagick, and install it via an in-app sudo prompt)
 #
 #  Kitty and GTK3/4 CSS are still updated in the background whenever opacity
 #  changes (same as before) but are no longer shown in the UI.
@@ -18,6 +20,10 @@
 #  Depends: python3-gobject, libadwaita-1 (>= 1.4 for Adw.NavigationSplitView,
 #           Adw.SwitchRow, Adw.EntryRow, Adw.ExpanderRow)
 #           sudo pacman -S python-gobject libadwaita
+#           imagemagick (mogrify) — required by the Login Avatar page
+#           sudo — the Login Avatar page asks for your password in its own
+#           dialog and pipes it to `sudo -S` (no polkit agent required);
+#           falls back to a kitty + sudo terminal prompt if sudo is missing
 #
 #  Usage:   python3 hypr-settings-gui.py
 # =============================================================================
@@ -26,16 +32,19 @@ import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
+gi.require_version("Gdk", "4.0")
 
+import getpass
 import json
 import os
 import re
+import shlex
 import shutil
 import subprocess
 from datetime import datetime
 from pathlib import Path
 
-from gi.repository import Adw, Gio, GLib, Gtk
+from gi.repository import Adw, Gdk, Gio, GLib, Gtk
 
 # ─── Config file paths ────────────────────────────────────────────────────
 CONFIGS_DIR = Path.home() / ".config" / "hypr" / "configs"
@@ -58,6 +67,9 @@ BACKUP_DIR = (
     / "hypr-settings"
     / "backups"
 )
+
+# ─── SDDM avatar (Login Avatar section) ───────────────────────────────────
+SDDM_FACES_DIR = Path("/usr/share/sddm/faces")
 
 # ─── Dotfiles repo (Dotfiles Update section) ──────────────────────────────
 DOTFILES_REPO_OWNER = "shell-ninja"
@@ -254,6 +266,38 @@ def launch_dotfiles_update():
         [KITTY_BIN, "--title", "Dotfiles Update", "bash", str(script_path)],
         start_new_session=True,
     )
+
+
+# =============================================================================
+#  SDDM avatar — crop/resize a chosen image with ImageMagick and install it
+#  as the user's SDDM face icon. Mirrors sddm_avatar.sh, but run through a
+#  privileged helper script so the GUI can do it without a manual terminal.
+# =============================================================================
+
+
+def build_avatar_apply_script(username: str, src_image: str) -> str:
+    """Bash script (run as root) that backs up any existing face icon, then
+    crops `src_image` to a square, resizes it to 256x256, and installs it as
+    `<username>.face.icon`. Every path is shell-quoted since src_image comes
+    straight from a user-picked file and may contain spaces or other
+    special characters."""
+    q = shlex.quote
+    faces_dir = str(SDDM_FACES_DIR)
+    face_icon = f"{faces_dir}/{username}.face.icon"
+    backup_icon = f"{face_icon}.bkp"
+    tmp_face = f"{faces_dir}/.tmp_face_{os.getpid()}"
+
+    return f"""set -e
+mkdir -p {q(faces_dir)}
+if [ -f {q(face_icon)} ]; then
+    cp -f {q(face_icon)} {q(backup_icon)}
+fi
+cp {q(src_image)} {q(tmp_face)}
+mogrify -gravity center -crop 1:1 +repage {q(tmp_face)}
+mogrify -resize 256x256 {q(tmp_face)}
+mv -f {q(tmp_face)} {q(face_icon)}
+chmod 644 {q(face_icon)}
+"""
 
 
 # =============================================================================
@@ -974,6 +1018,44 @@ def wrap_page(*groups):
 
 
 # =============================================================================
+#  A little visual polish — kept intentionally small so it layers on top of
+#  the system theme instead of fighting it. Two keyframe animations (image
+#  fade-in when picking a new avatar, a success "glow" pulse once it's
+#  applied) plus a smooth crossfade between sidebar pages.
+# =============================================================================
+
+CUSTOM_CSS = """
+@keyframes avatar-pop-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+.avatar-pop-in {
+    animation: avatar-pop-in 350ms ease-out;
+}
+
+@keyframes avatar-success-glow {
+    0%   { box-shadow: 0 0 0 0 alpha(@success_color, 0.55); }
+    70%  { box-shadow: 0 0 0 12px alpha(@success_color, 0); }
+    100% { box-shadow: 0 0 0 0 alpha(@success_color, 0); }
+}
+.avatar-success-pulse {
+    animation: avatar-success-glow 900ms ease-out;
+    border-radius: 9999px;
+}
+"""
+
+
+def load_custom_css():
+    provider = Gtk.CssProvider()
+    provider.load_from_data(CUSTOM_CSS.encode("utf-8"))
+    display = Gdk.Display.get_default()
+    if display:
+        Gtk.StyleContext.add_provider_for_display(
+            display, provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+        )
+
+
+# =============================================================================
 #  Application window
 # =============================================================================
 
@@ -993,6 +1075,8 @@ class HyprSettingsWindow(Adw.ApplicationWindow):
         self.curve_widgets: dict[str, dict] = {}
         self.env_rows: dict[str, Adw.EntryRow] = {}
         self.keybind_rows: dict[str, dict] = {}
+        self.avatar_username = getpass.getuser()
+        self.avatar_selected_path: str | None = None
 
         split = Adw.NavigationSplitView()
         self.set_content(split)
@@ -1012,10 +1096,11 @@ class HyprSettingsWindow(Adw.ApplicationWindow):
             ("files", "Overview", "document-properties-symbolic"),
             ("appearance", "Appearance", "applications-graphics-symbolic"),
             ("monitor", "Display", "video-display-symbolic"),
-            ("animations", "Animations", "preferences-desktop-effects-symbolic"),
+            ("animations", "Animations", "view-refresh-symbolic"),
             ("input", "Input", "input-mouse-symbolic"),
             ("environment", "Environment", "utilities-terminal-symbolic"),
             ("keybinds", "Keybinds", "input-keyboard-symbolic"),
+            ("sddm-avatar", "Login Avatar", "avatar-default-symbolic"),
             ("dotfiles-update", "Dotfiles Update", "software-update-available-symbolic"),
         ]
         for key, label, icon in self.sections:
@@ -1049,6 +1134,8 @@ class HyprSettingsWindow(Adw.ApplicationWindow):
         content_tv.set_content(self.toast_overlay)
 
         self.stack = Gtk.Stack()
+        self.stack.set_transition_type(Gtk.StackTransitionType.SLIDE_LEFT_RIGHT)
+        self.stack.set_transition_duration(260)
         self.toast_overlay.set_child(self.stack)
 
         self.stack.add_named(self._build_files_page(), "files")
@@ -1058,6 +1145,7 @@ class HyprSettingsWindow(Adw.ApplicationWindow):
         self.stack.add_named(self._build_input_page(), "input")
         self.stack.add_named(self._build_environment_page(), "environment")
         self.stack.add_named(self._build_keybinds_page(), "keybinds")
+        self.stack.add_named(self._build_sddm_avatar_page(), "sddm-avatar")
         self.stack.add_named(self._build_dotfiles_update_page(), "dotfiles-update")
 
         self.nav_list.select_row(self.nav_list.get_row_at_index(0))
@@ -1722,6 +1810,347 @@ class HyprSettingsWindow(Adw.ApplicationWindow):
         self.kb_repeating.set_active(False)
         self._refresh_buttons()
 
+    # ── Login Avatar (SDDM) page ────────────────────────────────────────
+
+    def _prompt_sudo_password(self, on_password):
+        """Shows a small in-app dialog asking for the sudo password.
+
+        Calls on_password(password) if the user confirms, or
+        on_password(None) if they cancel. Doesn't rely on any external
+        polkit agent — this dialog *is* the prompt."""
+        dialog = Adw.MessageDialog(
+            transient_for=self,
+            heading="Authentication Required",
+            body="Enter your password to apply this system change.",
+        )
+        entry = Gtk.PasswordEntry(show_peek_icon=True)
+        entry.set_margin_top(8)
+        dialog.set_extra_child(entry)
+        dialog.add_response("cancel", "Cancel")
+        dialog.add_response("auth", "Authenticate")
+        dialog.set_response_appearance("auth", Adw.ResponseAppearance.SUGGESTED)
+        dialog.set_default_response("auth")
+        dialog.set_close_response("cancel")
+        # Gtk.PasswordEntry has no activates-default property (unlike plain
+        # Gtk.Entry), so Enter is wired up manually via its "activate"
+        # signal, which it does emit.
+        entry.connect("activate", lambda _e: dialog.response("auth"))
+
+        def _on_response(_d, response):
+            on_password(entry.get_text() if response == "auth" else None)
+            dialog.close()
+
+        dialog.connect("response", _on_response)
+        dialog.present()
+
+        # grab_focus() right after present() is too early — the dialog
+        # isn't mapped yet, so the entry never actually gets keyboard
+        # focus and Enter has nothing to activate. Defer it one idle
+        # cycle so it runs once the dialog is really on screen.
+        def _focus_entry():
+            entry.grab_focus()
+            return False
+
+        GLib.idle_add(_focus_entry)
+
+
+    def _run_with_sudo_password(self, sudo, bash, script_path, password, on_done):
+        if password is None:
+            on_done(False, "", "Authentication cancelled")
+            return
+        try:
+            proc = Gio.Subprocess.new(
+                [sudo, "-S", "-p", "", bash, str(script_path)],
+                Gio.SubprocessFlags.STDIN_PIPE
+                | Gio.SubprocessFlags.STDOUT_PIPE
+                | Gio.SubprocessFlags.STDERR_PIPE,
+            )
+        except GLib.Error as e:
+            on_done(False, "", str(e))
+            return
+
+        def _finish(p, result):
+            try:
+                _, out, err = p.communicate_utf8_finish(result)
+            except GLib.Error as e:
+                on_done(False, "", str(e))
+                return
+            ok = p.get_exit_status() == 0
+            if not ok and "incorrect password" in (err or "").lower():
+                err = "Incorrect password"
+            on_done(ok, out or "", err or "")
+
+        proc.communicate_utf8_async(password + "\n", None, _finish)
+
+    def _run_privileged_script(self, script_text: str, title: str, on_done):
+        """Runs `script_text` as root by asking for the sudo password in an
+        in-app dialog and piping it straight to `sudo -S` — no dependency
+        on an external polkit agent being installed or running, which is
+        what left `pkexec` hanging with no visible prompt on some setups.
+        Falls back to a kitty window with an interactive `sudo` prompt if
+        `sudo` itself isn't installed.
+
+        `on_done(ok, stdout, stderr)` is called once the run finishes.
+        There's no reliable completion signal for the kitty fallback, so
+        callers should ask the user to hit refresh instead — on_done is
+        not called in that case.
+
+        Returns "sudo", "kitty", or None (nothing usable is installed, in
+        which case on_done has already been called with ok=False).
+        """
+        cache_dir = CACHE_HOME / "hypr-settings"
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        script_path = cache_dir / "priv-helper.sh"
+        script_path.write_text(script_text)
+        script_path.chmod(0o755)
+
+        bash = shutil.which("bash") or "/bin/bash"
+        sudo = shutil.which("sudo")
+
+        if sudo:
+            self._prompt_sudo_password(
+                lambda password: self._run_with_sudo_password(
+                    sudo, bash, script_path, password, on_done
+                )
+            )
+            return "sudo"
+
+        if shutil.which("kitty"):
+            wrapper = cache_dir / "priv-helper-sudo.sh"
+            wrapper.write_text(
+                "set -e\n"
+                f"sudo bash {shlex.quote(str(script_path))}\n"
+                'echo\necho "Done. Press Enter to close."\nread\n'
+            )
+            wrapper.chmod(0o755)
+            subprocess.Popen(
+                [KITTY_BIN, "--title", title, "bash", str(wrapper)],
+                start_new_session=True,
+            )
+            return "kitty"
+
+        on_done(False, "", "Neither sudo nor kitty was found — install sudo (or kitty)")
+        return None
+
+    def _build_sddm_avatar_page(self):
+        g = make_group(
+            "SDDM Login Avatar",
+            f"Sets the face icon shown on the SDDM login screen for "
+            f"'{self.avatar_username}'. The image is cropped to a square and "
+            f"resized to 256×256 with ImageMagick, then installed to "
+            f"{SDDM_FACES_DIR} — this needs your password.",
+        )
+
+        # Current avatar preview
+        self.avatar_current_preview = Adw.Avatar(
+            size=64, text=self.avatar_username, show_initials=True
+        )
+        current_row = Adw.ActionRow(title="Current avatar")
+        current_row.add_prefix(self.avatar_current_preview)
+        refresh_btn = Gtk.Button(icon_name="view-refresh-symbolic", valign=Gtk.Align.CENTER)
+        refresh_btn.set_tooltip_text("Refresh preview from disk")
+        refresh_btn.add_css_class("flat")
+        refresh_btn.connect("clicked", lambda _b: self._load_current_avatar_preview())
+        current_row.add_suffix(refresh_btn)
+        self.avatar_current_row = current_row
+        g.add(current_row)
+
+        # Backup row — only shown once a backup actually exists on disk
+        self.avatar_backup_row = Adw.ActionRow(
+            title="Backup available",
+            subtitle="A previous avatar was backed up before the last change.",
+        )
+        self.avatar_backup_row.add_prefix(Gtk.Image.new_from_icon_name("edit-undo-symbolic"))
+        restore_btn = Gtk.Button(label="Restore Backup", valign=Gtk.Align.CENTER)
+        restore_btn.connect("clicked", self.on_restore_avatar_backup)
+        self.avatar_backup_row.add_suffix(restore_btn)
+        self.avatar_backup_row.set_visible(False)
+        g.add(self.avatar_backup_row)
+
+        # New image picker
+        self.avatar_new_preview = Adw.Avatar(
+            size=48, icon_name="image-x-generic-symbolic", show_initials=False
+        )
+        new_row = Adw.ActionRow(title="New image", subtitle="No image selected yet")
+        new_row.add_prefix(self.avatar_new_preview)
+        choose_btn = Gtk.Button(label="Choose Image…", valign=Gtk.Align.CENTER)
+        choose_btn.connect("clicked", self.on_pick_avatar_image)
+        new_row.add_suffix(choose_btn)
+        self.avatar_new_row = new_row
+        g.add(new_row)
+
+        # Apply
+        apply_row = Adw.ActionRow(
+            title="Set as SDDM Avatar",
+            subtitle="Crops to a square, resizes to 256×256, backs up the "
+            "old icon, and installs the new one.",
+        )
+        apply_row.add_prefix(Gtk.Image.new_from_icon_name("emblem-photos-symbolic"))
+        action_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        action_box.set_valign(Gtk.Align.CENTER)
+        self.avatar_spinner = Gtk.Spinner()
+        self.avatar_spinner.set_visible(False)
+        self.avatar_apply_btn = Gtk.Button(label="Set as SDDM Avatar")
+        self.avatar_apply_btn.set_sensitive(False)
+        self.avatar_apply_btn.add_css_class("suggested-action")
+        self.avatar_apply_btn.connect("clicked", self.on_apply_avatar)
+        action_box.append(self.avatar_spinner)
+        action_box.append(self.avatar_apply_btn)
+        apply_row.add_suffix(action_box)
+        g.add(apply_row)
+
+        if not shutil.which("mogrify"):
+            warn_row = Adw.ActionRow(
+                title="ImageMagick not found",
+                subtitle="Install the 'imagemagick' package to enable "
+                "cropping and resizing.",
+            )
+            icon = Gtk.Image.new_from_icon_name("dialog-warning-symbolic")
+            icon.add_css_class("warning")
+            warn_row.add_prefix(icon)
+            g.add(warn_row)
+
+        self._load_current_avatar_preview()
+
+        return wrap_page(g)
+
+    def _load_current_avatar_preview(self):
+        face_icon = SDDM_FACES_DIR / f"{self.avatar_username}.face.icon"
+        if face_icon.is_file():
+            try:
+                texture = Gdk.Texture.new_from_filename(str(face_icon))
+                self.avatar_current_preview.set_custom_image(texture)
+            except GLib.Error:
+                self.avatar_current_preview.set_custom_image(None)
+            self.avatar_current_row.set_subtitle(str(face_icon))
+        else:
+            self.avatar_current_preview.set_custom_image(None)
+            self.avatar_current_row.set_subtitle(
+                "No avatar set yet — SDDM will show the default icon"
+            )
+        backup_icon = SDDM_FACES_DIR / f"{self.avatar_username}.face.icon.bkp"
+        self.avatar_backup_row.set_visible(backup_icon.is_file())
+
+    def on_pick_avatar_image(self, _btn):
+        dialog = Gtk.FileDialog(title="Choose an avatar image")
+        img_filter = Gtk.FileFilter()
+        img_filter.set_name("Images")
+        img_filter.add_mime_type("image/png")
+        img_filter.add_mime_type("image/jpeg")
+        img_filter.add_mime_type("image/webp")
+        img_filter.add_mime_type("image/bmp")
+        img_filter.add_mime_type("image/gif")
+        filters = Gio.ListStore.new(Gtk.FileFilter)
+        filters.append(img_filter)
+        dialog.set_filters(filters)
+        dialog.set_default_filter(img_filter)
+        dialog.open(self, None, self._on_avatar_file_chosen)
+
+    def _on_avatar_file_chosen(self, dialog, result):
+        try:
+            file = dialog.open_finish(result)
+        except GLib.Error:
+            return  # cancelled — nothing to do
+        if not file:
+            return
+        path = file.get_path()
+        if not path:
+            return
+        self.avatar_selected_path = path
+        self._refresh_avatar_selection_ui(path)
+
+    def _refresh_avatar_selection_ui(self, path):
+        self.avatar_new_row.set_subtitle(path)
+        try:
+            texture = Gdk.Texture.new_from_filename(path)
+            self.avatar_new_preview.set_custom_image(texture)
+        except GLib.Error:
+            self.avatar_new_preview.set_custom_image(None)
+        self.avatar_apply_btn.set_sensitive(True)
+        self.avatar_new_preview.add_css_class("avatar-pop-in")
+        GLib.timeout_add(400, self._clear_avatar_pop_in)
+
+    def _clear_avatar_pop_in(self):
+        self.avatar_new_preview.remove_css_class("avatar-pop-in")
+        return False
+
+    def _clear_avatar_success_pulse(self):
+        self.avatar_current_preview.remove_css_class("avatar-success-pulse")
+        return False
+
+    def on_apply_avatar(self, _btn):
+        if not self.avatar_selected_path:
+            return
+        if not shutil.which("mogrify"):
+            self.toast_overlay.add_toast(
+                Adw.Toast(
+                    title="ImageMagick not found — install 'imagemagick' and try again",
+                    timeout=4,
+                )
+            )
+            return
+
+        self.avatar_apply_btn.set_sensitive(False)
+        self.avatar_spinner.set_visible(True)
+        self.avatar_spinner.start()
+        self.toast_overlay.add_toast(Adw.Toast(title="Waiting for authentication…", timeout=5))
+
+        script = build_avatar_apply_script(self.avatar_username, self.avatar_selected_path)
+
+        def done(ok, out, err):
+            self.avatar_spinner.stop()
+            self.avatar_spinner.set_visible(False)
+            self.avatar_apply_btn.set_sensitive(True)
+            if ok:
+                self.toast_overlay.add_toast(Adw.Toast(title="SDDM avatar updated", timeout=3))
+                self._load_current_avatar_preview()
+                self.avatar_current_preview.add_css_class("avatar-success-pulse")
+                GLib.timeout_add(900, self._clear_avatar_success_pulse)
+            else:
+                lines = (err or out or "Failed to set avatar").strip().splitlines()
+                self.toast_overlay.add_toast(
+                    Adw.Toast(title=lines[-1] if lines else "Failed to set avatar", timeout=4)
+                )
+
+        mode = self._run_privileged_script(script, "Set SDDM Avatar", done)
+        if mode == "kitty":
+            self.avatar_spinner.stop()
+            self.avatar_spinner.set_visible(False)
+            self.avatar_apply_btn.set_sensitive(True)
+            self.toast_overlay.add_toast(
+                Adw.Toast(
+                    title="Enter your password in the terminal, then press the refresh icon above",
+                    timeout=6,
+                )
+            )
+
+    def on_restore_avatar_backup(self, _btn):
+        face_icon = SDDM_FACES_DIR / f"{self.avatar_username}.face.icon"
+        backup_icon = SDDM_FACES_DIR / f"{self.avatar_username}.face.icon.bkp"
+        if not backup_icon.is_file():
+            return
+        q = shlex.quote
+        script = f"set -e\ncp -f {q(str(backup_icon))} {q(str(face_icon))}\n"
+
+        def done(ok, out, err):
+            if ok:
+                self.toast_overlay.add_toast(Adw.Toast(title="Backup restored", timeout=3))
+                self._load_current_avatar_preview()
+            else:
+                lines = (err or out or "Failed to restore backup").strip().splitlines()
+                self.toast_overlay.add_toast(
+                    Adw.Toast(title=lines[-1] if lines else "Failed to restore backup", timeout=4)
+                )
+
+        mode = self._run_privileged_script(script, "Restore SDDM Avatar", done)
+        if mode == "kitty":
+            self.toast_overlay.add_toast(
+                Adw.Toast(
+                    title="Enter your password in the terminal, then press the refresh icon above",
+                    timeout=6,
+                )
+            )
+
     # ── Dotfiles Update page ────────────────────────────────────────────
 
     def _build_dotfiles_update_page(self):
@@ -1875,6 +2304,7 @@ class HyprSettingsApp(Adw.Application):
         self.connect("activate", self.on_activate)
 
     def on_activate(self, app):
+        load_custom_css()
         win = HyprSettingsWindow(app)
         win.present()
 
