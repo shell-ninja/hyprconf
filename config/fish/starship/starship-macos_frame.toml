@@ -1,4 +1,6 @@
 # 5. MacOS Frame
+command_timeout = 100
+scan_timeout = 10
 format = """
 [╭─](bold #6e738d)[●](#ff5f56)[●](#ffbd2e)[●](#27c93f)[─](bold #6e738d) $os$directory
 [╰─](bold #6e738d)$character"""
