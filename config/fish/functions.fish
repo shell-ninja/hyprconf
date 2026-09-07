@@ -511,6 +511,14 @@ function push
     set -l pstatus $status
 
     if test $pstatus -eq 0
+        set -l sound "$HOME/.config/fish/fah.mp3"
+        if test -f "$sound"
+            if command -v pw-play >/dev/null 2>&1; pw-play "$sound" >/dev/null 2>&1 &
+            else if command -v paplay >/dev/null 2>&1; paplay "$sound" >/dev/null 2>&1 &
+            else if command -v aplay >/dev/null 2>&1; aplay "$sound" >/dev/null 2>&1 &
+            else if command -v ffplay >/dev/null 2>&1; ffplay -nodisp -autoexit "$sound" >/dev/null 2>&1 &
+            end
+        end
         printf ":: Pushed successfully!\n"
     else
         printf "!! Sorry, push failed. Please check for errors.\n"
@@ -797,3 +805,150 @@ function change_style
     end
 end
 
+# play audio
+function play
+    set -l sound "$HOME/.config/fish/fah.mp3"
+    if test -f "$sound"
+        if command -v pw-play >/dev/null 2>&1; pw-play "$sound"
+        else if command -v paplay >/dev/null 2>&1; paplay "$sound"
+        else if command -v aplay >/dev/null 2>&1; aplay "$sound"
+        else if command -v ffplay >/dev/null 2>&1; ffplay -nodisp -autoexit "$sound"
+        else; printf "No audio player found to play %s\n" "$sound"
+        end
+    else
+        printf "Sound file not found: %s\n" "$sound"
+    end
+end
+
+# vite react project creator
+function vite
+    printf "Project name: \n"
+    set -l PROJ_NAME ""
+    if command -v gum >/dev/null 2>&1
+        set PROJ_NAME (gum input --placeholder "my-app")
+    else
+        read -P "my-app: " PROJ_NAME
+    end
+
+    if test -z "$PROJ_NAME"
+        printf "❌ Missing project name\n"
+        return 1
+    end
+
+    set -l PKG_MAN ""
+    for pm in npm pnpm yarn bun
+        if command -v "$pm" >/dev/null 2>&1
+            set PKG_MAN "$pm"
+            break
+        end
+    end
+
+    if test -z "$PKG_MAN"
+        printf "❌ No package manager found\n"
+        return 1
+    end
+    printf "🚀 Using %s\n" "$PKG_MAN"
+
+    switch "$PKG_MAN"
+        case npm
+            npm create vite@latest "$PROJ_NAME" -y -- --template react --no-interactive
+        case pnpm
+            pnpm create vite "$PROJ_NAME" --template react --no-interactive
+        case yarn
+            yarn create vite "$PROJ_NAME" --template react --no-interactive
+        case bun
+            bun create vite "$PROJ_NAME" --template react --no-interactive
+    end
+    or begin
+        printf "❌ Project creation failed\n"
+        return 1
+    end
+
+    cd "$PROJ_NAME"; or return 1
+    printf "📦 Installing dependencies...\n"
+    $PKG_MAN install; or begin
+        printf "❌ Install failed\n"
+        return 1
+    end
+
+    mkdir -p .vscode
+    printf '{\n  "version": "2.0.0",\n  "tasks": [\n    {\n      "label": "dev",\n      "type": "shell",\n      "command": "npm run dev",\n      "isBackground": true,\n      "runOptions": {\n        "runOn": "folderOpen"\n      },\n      "problemMatcher": []\n    }\n  ]\n}\n' > .vscode/tasks.json
+
+    printf "🧠 Opening in VS Code...\n"
+    command -v code >/dev/null 2>&1; and code .
+
+    printf "🌐 Dev server will auto-start inside VS Code terminal\n"
+    printf "✅ Done!\n"
+end
+
+# Auto-cd with case-insensitive matching and multi-match selection
+function fish_command_not_found
+    set -l cmd $argv[1]
+
+    # 1. Exact directory match
+    if test -d "$cmd"
+        cd "$cmd"
+        return 0
+    end
+
+    # 2. Case-insensitive directory lookup
+    set -l parent_dir (dirname -- "$cmd")
+    set -l base_name (basename -- "$cmd")
+
+    if test -d "$parent_dir"
+        set -l lower_base (string lower -- "$base_name")
+        set -l matches
+
+        for entry in "$parent_dir"/*
+            set -l entry_name (basename -- "$entry")
+            if test (string lower -- "$entry_name") = "$lower_base" -a -d "$entry"
+                set -a matches "$entry"
+            end
+        end
+
+        # Single match found: auto cd
+        if test (count $matches) -eq 1
+            cd "$matches[1]"
+            return 0
+        # Multiple matches (e.g. downloads, Downloads, DOWNLOADS): ask user
+        else if test (count $matches) -gt 1
+            printf "\e[1;33mMultiple matches found for '%s':\e[0m\n" "$cmd"
+            if command -v fzf >/dev/null 2>&1
+                set -l choice (printf "%s\n" $matches | fzf --prompt="Select Directory > " --height=40% --layout=reverse --border)
+                if test -n "$choice"
+                    cd "$choice"
+                    return 0
+                end
+            else
+                for i in (seq (count $matches))
+                    printf "  \e[1;36m%d.\e[0m %s\n" $i "$matches[$i]"
+                end
+                read -l -P "Select number (1-"(count $matches)"): " choice
+                if string match -qr '^[0-9]+$' "$choice"; and test $choice -ge 1 -a $choice -le (count $matches)
+                    cd "$matches[$choice]"
+                    return 0
+                end
+            end
+            return 1
+        end
+    end
+
+    # Fallback for standard unknown commands
+    printf "fish: Unknown command: '%s'\n" "$cmd"
+    return 127
+end
+
+# Auto-ls (2-level tree view) on directory change (skips HOME)
+function __auto_tree_on_cd --on-variable PWD
+    status is-interactive; or return
+    
+    # Do not auto-ls when navigating to HOME
+    test "$PWD" = "$HOME"; and return
+
+    if command -v eza >/dev/null 2>&1
+        eza -T --level=2 --color=always --icons=always --group-directories-first \
+            --ignore-glob="node_modules|.git|.venv|target|vendor|.cache|.next|dist|build"
+    else
+        ls
+    end
+end
