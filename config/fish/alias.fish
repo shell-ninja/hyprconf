@@ -55,6 +55,10 @@ alias du='du -sh'
 alias mem='fn_resources __memory'
 alias disk='fn_resources __disk'
 
+## change shell ##
+alias cb='chsh -s /usr/bin/bash && exec bash'
+alias cz='chsh -s /usr/bin/zsh && exec zsh'
+
 ## fzf search ##
 alias find='nvim (fzf --preview="bat --color=always {}")'
 
@@ -77,8 +81,8 @@ end
 alias cu='fn_check_updates'
 alias dup='sudo zypper dup -y' # openSUSE
 alias update='fn_update'
-alias install='fn_install'
-alias remove='fn_uninstall'
+alias in='fn_install'
+alias un='fn_uninstall'
 
 ## git ##
 alias add='git add .'

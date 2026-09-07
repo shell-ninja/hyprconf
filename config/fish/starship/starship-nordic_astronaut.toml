@@ -1,4 +1,6 @@
 # 2. Nordic Astronaut's Dashboard
+command_timeout = 100
+scan_timeout = 10
 format = """
 [](#3B4252)\
 $os\
