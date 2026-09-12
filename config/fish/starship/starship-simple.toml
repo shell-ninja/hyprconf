@@ -14,7 +14,6 @@ $character"""
 # add_newline = true
 command_timeout = 100
 scan_timeout = 10
-palette = 'catppuccin_mocha'
 
 [username]
 style_user = 'bold green'

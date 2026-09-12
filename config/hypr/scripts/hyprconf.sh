@@ -1,7 +1,6 @@
 #!/bin/bash
 # script for updating the hyprconf from the github.
 
-
 # colors code
 color="\x1b[38;2;224;255;255m"
 end="\x1b[0m"

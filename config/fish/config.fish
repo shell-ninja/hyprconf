@@ -31,7 +31,7 @@ set -g fish_greeting
 if status is-interactive
 
     # Starship prompt configuration (cached for instant load)
-    set -gx STARSHIP_CONFIG "/home/shell-ninja/.config/fish/starship/starship-arch_purist.toml"
+    set -gx STARSHIP_CONFIG "$HOME/.config/fish/starship/starship-simple.toml"
     if command -v starship >/dev/null 2>&1
         set -l starship_cache "$HOME/.config/fish/starship_init.fish"
         if not test -f "$starship_cache"; or test (command -v starship) -nt "$starship_cache"
