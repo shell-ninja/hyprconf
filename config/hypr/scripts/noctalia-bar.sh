@@ -1,10 +1,4 @@
 #!/usr/bin/env bash
-# ==============================================================================
-# noctalia-bar.sh — Bar Layout Switcher for Noctalia Shell
-# Usage:
-#   noctalia-bar.sh              → open Noctalia launcher at /cmd picker
-#   noctalia-bar.sh <layout>     → apply <layout> directly (called by launcher)
-# ==============================================================================
 
 set -euo pipefail
 
@@ -96,4 +90,3 @@ fi
 clean_state_overrides
 notify-send -t 3000 -i "preferences-desktop-theme" "Bar Layout" "Noctalia not running. Applied default: ${choice}"
 exit 0
-

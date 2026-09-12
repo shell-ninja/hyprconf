@@ -82,6 +82,3 @@ echo "${baseName%.*}" > "$wallCache"
 if pgrep -x "noctalia" >/dev/null 2>&1 && [[ -z "$NOCTALIA_WALLPAPER_PATH" ]]; then
     noctalia msg wallpaper-set "$target_wallpaper" &>/dev/null || true
 fi
-
-# Apply dynamic colors to Kitty, Hyprland, etc.
-"$scripts_dir/noctalia-colors.py" "$target_wallpaper"

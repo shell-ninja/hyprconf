@@ -8,6 +8,7 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("hyprctl setcursor Bibata-Modern-Ice 24")
     hl.exec_cmd(scripts_dir .. "/startup.sh")
     hl.exec_cmd(scripts_dir .. "/shell.sh --noctalia")
+    hl.exec_cmd(scripts_dir .. "/pkgupdate-notifier.py")
     hl.exec_cmd("hypridle &")
     hl.exec_cmd("blueman-applet &")
 

@@ -14,9 +14,7 @@ local terminal        = "kitty"
 local file_man        = "dolphin || thunar"
 local term_file_man   = "yazi"
 local wallpaper       = scripts_dir .. "/Wallpaper.sh"
--- local wallpaperSelect = scripts_dir .. "/WallpaperSelect.sh"
 local wallpaperSelect = scripts_dir .. "/WallpaperSelect.py"
-local rofi_emoji      = scripts_dir .. "/rofi-emoji.sh"
 local help            = scripts_dir .. "/keybinds.sh"
 local volumeCTRL      = scripts_dir .. "/volumecontrol.sh"
 local brightnessCTRL  = scripts_dir .. "/brightness.sh"
@@ -42,7 +40,7 @@ hl.bind(mainMod .. " + SHIFT + E", hl.dsp.exec_cmd(terminal .. " --title " .. te
 hl.bind(mainMod .. " + V", hl.dsp.window.float({ action = "toggle" }))
 hl.bind(mainMod .. " + ALT + V", hl.dsp.exec_cmd("hyprctl dispatch workspaceopt allfloat"))
 hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen())
-hl.bind(mainMod .. " + D", hl.dsp.exec_cmd(scripts_dir .. "/menu.sh || pkill rofi"))
+hl.bind(mainMod .. " + D", hl.dsp.exec_cmd(ipc .. "panel-toggle launcher"))
 hl.bind(mainMod .. " + Space", hl.dsp.exec_cmd(ipc .. "panel-open launcher \">\""))
 hl.bind(mainMod .. " + ALT + C",
     hl.dsp.exec_cmd(ipc .. "panel-toggle clipboard"))
@@ -59,6 +57,7 @@ hl.bind(mainMod .. " + C", hl.dsp.exec_cmd("code || codium"))
 hl.bind(mainMod .. " + B", hl.dsp.exec_cmd(scripts_dir .. "/browser.sh op"))
 hl.bind(mainMod .. " + SHIFT + B", hl.dsp.exec_cmd("brave --incognito"))
 hl.bind(alt .. " + B", hl.dsp.exec_cmd(scripts_dir .. "/default_browser.sh --reset"))
+
 -- ── Layout / config ───────────────────────────────────────────────────────────
 hl.bind(mainMod .. " + CTRL + W",
     hl.dsp.exec_cmd(scripts_dir .. "/noctalia-bar.sh"))
@@ -144,15 +143,6 @@ for i = 1, 10 do
     hl.bind(mainMod .. " + ALT + " .. key, hl.dsp.window.move({ workspace = i, follow = false }))
 end
 
--- Scroll through workspaces with mouse wheel
-hl.bind(mainMod .. " + mouse_down", hl.dsp.focus({ workspace = "e+1" }))
-hl.bind(mainMod .. " + mouse_up", hl.dsp.focus({ workspace = "e-1" }))
-
--- ── Resize windows column ────────────────────────────------──────────────────
-hl.bind(mainMod .. " + period", hl.dsp.layout("move +col"))
-hl.bind(mainMod .. " + comma", hl.dsp.layout("swapcol l"))
-
--- ── Mouse move / resize windows ──────────────────────────────────────────────
 hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(), { mouse = true })
 hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
 

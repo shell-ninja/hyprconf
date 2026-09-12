@@ -583,17 +583,17 @@ else
     "$HOME/.hyprconf/hypr/scripts/noctalia-colors.sh" "$wallpaper" &> /dev/null
 fi
 
-# Enable nightlight service if systemd user daemon is active
+# Enable pkgupdate-notifier service if systemd user daemon is active
 if command -v systemctl &> /dev/null && systemctl --user is-system-running &> /dev/null; then
     systemctl --user daemon-reload &> /dev/null
-    systemctl --user enable --now hyprnightlight.timer &> /dev/null
+    systemctl --user enable --now pkgupdate-notifier.service &> /dev/null
 fi
 
 # Set default themes, icon, and cursor if tools are available
 if command -v gsettings &> /dev/null; then
     gsettings set org.gnome.desktop.interface gtk-theme "adw-gtk3" &> /dev/null || true
     gsettings set org.gnome.desktop.interface color-scheme "prefer-dark" &> /dev/null || true
-    gsettings set org.gnome.desktop.interface icon-theme "TokyoNight" &> /dev/null || true
+    gsettings set org.gnome.desktop.interface icon-theme "Kora" &> /dev/null || true
     gsettings set org.gnome.desktop.interface cursor-theme "Bibata-Modern-Ice" &> /dev/null || true
 fi
 

@@ -36,7 +36,7 @@ fi
 
 
 "$scripts_dir/notification.sh" sys
-"$scripts_dir/systemupdates.sh" --check
+"$scripts_dir/polkit.sh"
 
 sleep 1
 

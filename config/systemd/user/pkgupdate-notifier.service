@@ -1,0 +1,30 @@
+# pkgupdate-notifier.service — optional systemd --user unit
+#
+# Install:
+#   mkdir -p ~/.config/systemd/user
+#   cp pkgupdate-notifier.service ~/.config/systemd/user/
+#   cp pkgupdate-notifier.py ~/.config/hypr/scripts/
+#   systemctl --user daemon-reload
+#   systemctl --user enable --now pkgupdate-notifier.service
+#
+# Logs:
+#   journalctl --user -u pkgupdate-notifier -f
+#
+# This is an ALTERNATIVE to launching the script via Hyprland's exec-once —
+# use one or the other, not both, or you'll run two instances (the built-in
+# lock file will make the second one exit immediately, but it's tidier to
+# only run one).
+
+[Unit]
+Description=Background package-update checker and notifier
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 %h/.config/hypr/scripts/pkgupdate-notifier.py
+Restart=on-failure
+RestartSec=30
+
+[Install]
+WantedBy=graphical-session.target
