@@ -2,6 +2,9 @@
 -- Overrides for performance mode (no visual effects).
 -- Swap this file in place of configs.lua for a lightweight session.
 
+local noctalia = require("noctalia")
+local colors   = noctalia.colors
+
 opacity_act   = 1.0
 opacity_deact = 1.0
 blur_size     = 0
@@ -11,5 +14,13 @@ rounding      = 0
 border        = 0
 inner_gap     = 5
 outer_gap     = 10
-act_border    = active   -- defined in colors-hyprland.lua
-inact_border  = inactive -- defined in colors-hyprland.lua
+
+-- Border and theme colors from Noctalia
+act_border    = colors.primary
+inact_border  = colors.surface
+
+-- Noctalia palette table & backward compatibility globals
+noctalia_colors = colors
+active          = act_border
+inactive        = inact_border
+

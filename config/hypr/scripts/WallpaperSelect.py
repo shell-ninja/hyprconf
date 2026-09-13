@@ -43,7 +43,7 @@ CACHE_DIR = os.path.expanduser("~/.hyprconf/hypr/.cache")
 WALL_CACHE_FILE = os.path.join(CACHE_DIR, ".wallpaper")
 CURRENT_WALL_LINK = os.path.join(CACHE_DIR, "current_wallpaper.png")
 SCRIPTS_DIR = os.path.expanduser("~/.hyprconf/hypr/scripts")
-COLORS_SCRIPT = os.path.join(SCRIPTS_DIR, "noctalia-colors.sh")
+COLORS_SCRIPT = os.path.join(SCRIPTS_DIR, "noctalia-colors.py")
 
 # On-disk thumbnail cache so repeat launches don't re-decode full-resolution
 # wallpapers - only the (much smaller/cheaper) cached thumbnail is read.
