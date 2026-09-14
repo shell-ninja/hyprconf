@@ -36,8 +36,4 @@ fi
 
 
 "$scripts_dir/notification.sh" sys
-"$scripts_dir/polkit.sh"
-
-sleep 1
-
 "$scripts_dir/default_browser.sh"

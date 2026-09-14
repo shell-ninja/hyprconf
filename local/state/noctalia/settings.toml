@@ -76,7 +76,7 @@ enabled = true
     action = "control_center"
 
 [location]
-address = "Munshiganj, Bangladesh"
+address = ""
 
 [lockscreen_widgets]
 enabled = true

@@ -567,6 +567,55 @@ select_noctalia_lockscreen_config() {
     fi
 }
 
+# Interactive Noctalia Location / Weather Configuration
+configure_noctalia_location() {
+    local city=""
+    local country=""
+    local address=""
+
+    msg ask "Set your location for Noctalia weather & widgets:"
+    if command -v gum &> /dev/null; then
+        city=$(gum input --placeholder "Enter your City (e.g. New York)" --prompt "City: ")
+        country=$(gum input --placeholder "Enter your Country (e.g. United States)" --prompt "Country: ")
+    elif [[ -t 0 ]]; then
+        read -r -p "$(echo -e '\e[1;32mEnter your City: \e[0m')" city
+        read -r -p "$(echo -e '\e[1;32mEnter your Country: \e[0m')" country
+    fi
+
+    # Trim leading and trailing whitespace
+    city="$(echo "$city" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+    country="$(echo "$country" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+
+    if [[ -n "$city" && -n "$country" ]]; then
+        address="${city}, ${country}"
+    elif [[ -n "$city" ]]; then
+        address="${city}"
+    elif [[ -n "$country" ]]; then
+        address="${country}"
+    fi
+
+    if [[ -n "$address" ]]; then
+        msg act "Setting Noctalia location address: $address"
+        local escaped_address
+        escaped_address=$(printf '%s\n' "$address" | sed -e 's/[\/&|\"\\]/\\&/g')
+
+        for target in "$HOME/.local/state/noctalia/settings.toml" "$HOME/.hyprconf/noctalia/40-services.toml" "$HOME/.hyprconf/noctalia/settings.toml"; do
+            if [[ -f "$target" ]]; then
+                if grep -q '^\[location\]' "$target"; then
+                    if sed -n '/^\[location\]/,/^\[/p' "$target" | grep -q '^address[[:space:]]*='; then
+                        sed -i '/^\[location\]/,/^\[/ s|^address[[:space:]]*=.*|address = "'"$escaped_address"'"|' "$target"
+                    else
+                        sed -i '/^\[location\]/a address = "'"$escaped_address"'"' "$target"
+                    fi
+                fi
+            fi
+        done
+        msg dn "Noctalia location updated successfully."
+    else
+        msg skp "Skipped setting Noctalia location address."
+    fi
+}
+
 # Ensure default Hyprlock theme symlink
 ln -sf "$HOME/.hyprconf/hypr/lockscreens/hyprlock-1.conf" "$HOME/.hyprconf/hypr/hyprlock.conf"
 
@@ -574,6 +623,7 @@ ln -sf "$HOME/.hyprconf/hypr/lockscreens/hyprlock-1.conf" "$HOME/.hyprconf/hypr/
 select_noctalia_bar_config
 select_noctalia_launcher_config
 select_noctalia_lockscreen_config
+configure_noctalia_location
 
 # Generate colors and cache files for default shell-ninja wallpaper
 msg act "Generating colors and cache files..."

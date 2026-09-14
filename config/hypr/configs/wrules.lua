@@ -36,6 +36,7 @@ float_center("com.heroicgameslauncher.hgl")
 float_center("[Ss]team")
 float_center("xdg-desktop-portal-gtk")
 float_center("electron")
+float_center("Sign in - Google Accounts")
 
 -- Specific titles
 hl.window_rule({ match = { title = "^(Authentication Required)$" }, float = true, center = true })
@@ -132,16 +133,28 @@ hl.workspace_rule({
 hl.window_rule({ match = { class = "^(dev\\.noctalia\\.Noctalia)$" }, float = true, size = "monitor_w*0.6 monitor_h*0.75", center = true })
 
 -- Layer rules
-hl.layer_rule({ match = { namespace = "^notifications$" }, blur = true })
+
 hl.layer_rule({ match = { namespace = "^gtk-layer-shell$" }, blur = true })
 
 -- Noctalia Shell layer rules
+-- Note: ignore_alpha is intentionally NOT applied to the notification surface;
+-- it causes the notification to blink continuously as alpha transitions
+-- cross the threshold and trigger repeated re-renders.
 hl.layer_rule({
-    match = { namespace = "^noctalia-(bar-.+|notification|dock|panel|attached-panel|osd|window-switcher|screen-corner)$" },
+    match = { namespace = "^noctalia-(bar-.+|dock|panel|attached-panel|osd|window-switcher|screen-corner)$" },
     no_anim = true,
     ignore_alpha = 0.5,
     blur = true,
     blur_popups = true,
+})
+
+-- Notification surface: blur is intentionally disabled.
+-- With blur=true, Hyprland re-renders the behind-layer framebuffer on every
+-- surface commit (e.g. countdown timer tick). In Hyprland 0.56.2 this triggers
+-- a layersOut+layersIn cycle producing a single black frame flash on commit.
+hl.layer_rule({
+    match = { namespace = "^noctalia-notification$" },
+    no_anim = true,
 })
 
 
