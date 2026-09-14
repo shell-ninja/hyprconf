@@ -1,8 +1,0 @@
-[catalog.senpai]
-name = "senpai"
-category = "chat"
-
-[templates.senpai]
-input_path = "senpai-colors.scfg"
-output_path = "$XDG_CONFIG_HOME/senpai/themes/noctalia.scfg"
-post_hook = "bash '{{ config_dir }}/apply.sh'"

@@ -1,8 +1,0 @@
-[catalog.antigravity]
-name = "Antigravity"
-category = "ai"
-
-[templates.antigravity]
-input_path = "antigravity.json"
-output_path = "~/.gemini/config/theme.json"
-post_hook = "bash '{{ config_dir }}/apply.sh'"

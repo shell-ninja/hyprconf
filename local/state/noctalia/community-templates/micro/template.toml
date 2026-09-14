@@ -1,8 +1,0 @@
-[catalog.micro]
-name = "micro"
-category = "editor"
-
-[templates.micro]
-input_path  = "noctalia.micro"
-output_path = "$XDG_CONFIG_HOME/micro/colorschemes/noctalia.micro"
-post_hook   = "bash '{{ config_dir }}/apply.sh'"

@@ -1,8 +1,0 @@
-[catalog.pi-agent]
-name = "Pi Agent"
-category = "ai"
-
-[templates.pi-agent]
-input_path = "pi-theme.json"
-output_path = "~/.pi/agent/themes/noctalia.json"
-post_hook = "bash '{{ config_dir }}/apply.sh'"

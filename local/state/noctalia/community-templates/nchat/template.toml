@@ -1,7 +1,0 @@
-[catalog.nchat]
-name = "nchat"
-category = "chat"
-
-[templates.nchat]
-input_path = "color.conf"
-output_path = "$XDG_CONFIG_HOME/nchat/color.conf"

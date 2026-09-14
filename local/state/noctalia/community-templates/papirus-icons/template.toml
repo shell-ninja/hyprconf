@@ -1,8 +1,0 @@
-[catalog.papirus-icons]
-name = "Papirus Icon Theme"
-category = "system"
-
-[templates.papirus_icons]
-input_path = "colors"
-output_path = "colors-final"
-post_hook = "bash '{{ config_dir }}/apply.sh'"

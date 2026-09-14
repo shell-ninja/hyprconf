@@ -1,7 +1,0 @@
-[catalog.ytm-player]
-name = "YTM Player"
-category = "audio"
-
-[templates.ytm-player]
-input_path = "theme.toml"
-output_path = "$XDG_CONFIG_HOME/ytm-player/theme.toml"

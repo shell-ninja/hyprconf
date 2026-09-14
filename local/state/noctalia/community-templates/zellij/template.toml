@@ -1,8 +1,0 @@
-[catalog.zellij]
-name = "Zellij"
-category = "misc"
-
-[templates.zellij]
-input_path = "zellij.kdl"
-output_path = "$XDG_CONFIG_HOME/zellij/themes/noctalia.kdl"
-# post_hook = "touch $XDG_CONFIG_HOME/zellij/config.kdl" # trigger config auto-reload

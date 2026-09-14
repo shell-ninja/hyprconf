@@ -1,7 +1,6 @@
 -- -- -- hyprland.lua – Main configuration loader
 -- -- -- Load all separate Lua files in order
 
-require("configs.colors-hyprland")
 require("configs.configs")
 require("configs.environment")
 require("configs.monitor")

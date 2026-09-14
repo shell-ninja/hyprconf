@@ -1,7 +1,0 @@
-[catalog.hyprtoolkit]
-name = "Hyprtoolkit"
-category = "system"
-
-[templates.hyprtoolkit]
-input_path = "hyprtoolkit.conf"
-output_path = "$XDG_CONFIG_HOME/hypr/hyprtoolkit.conf"

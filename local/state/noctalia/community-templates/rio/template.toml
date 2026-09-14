@@ -1,8 +1,0 @@
-[catalog.rio]
-name = "rio"
-category = "terminal"
-
-[templates.rio]
-input_path = "rio.toml"
-output_path = "$XDG_CONFIG_HOME/rio/themes/noctalia.toml"
-post_hook   = "bash '{{ config_dir }}/apply.sh'"

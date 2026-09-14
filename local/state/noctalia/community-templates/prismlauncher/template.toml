@@ -1,7 +1,0 @@
-[catalog.prismlauncher]
-name = "Prism Launcher"
-category = "gaming"
-
-[templates.prismlauncher]
-input_path = 'prismlauncher.json'
-output_path = '$XDG_DATA_HOME/PrismLauncher/themes/Matugen/theme.json'
