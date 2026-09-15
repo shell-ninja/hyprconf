@@ -8,7 +8,6 @@
   <a href="https://hyprland.org/"><img src="https://img.shields.io/badge/Hyprland-0.42+-blue?style=flat-square&logo=hyprland&logoColor=white" alt="Hyprland"></a>
   <a href="https://www.lua.org/"><img src="https://img.shields.io/badge/Config-Lua-000080?style=flat-square&logo=lua&logoColor=white" alt="Lua"></a>
   <a href="https://github.com/noctalia-dev/noctalia"><img src="https://img.shields.io/badge/Shell-Noctalia-purple?style=flat-square" alt="Noctalia Shell"></a>
-  <a href="https://archlinux.org/"><img src="https://img.shields.io/badge/Arch_Linux-Ready-1793D1?style=flat-square&logo=archlinux&logoColor=white" alt="Arch Linux"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green?style=flat-square" alt="License"></a>
 </p>
 
