@@ -97,7 +97,7 @@ hl.animation({
 
 hl.animation({
     leaf = "borderangle",
-    enabled = 1,
+    enabled = 0,  -- Disabled: looping animation burns GPU at idle
     speed = 30,
     bezier = "linear",
     style = "loop",

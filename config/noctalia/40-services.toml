@@ -17,7 +17,7 @@ warning_threshold = 10
 [brightness]
 enable_ddcutil = true
 ignore_mmids = []
-minimum_brightness = 0.29999998211860657
+minimum_brightness = 0.0
 sync_all_monitors = true
 
 
@@ -33,7 +33,7 @@ battery_percentage_changed = []
 battery_plugged = []
 bluetooth_disabled = []
 bluetooth_enabled = []
-colors_changed = []
+colors_changed = [ "~/.hyprconf/hypr/scripts/noctalia-colors.py" ]
 logging_out = [ "~/.hyprconf/hypr/scripts/notification.sh logout" ]
 power_profile_changed = []
 rebooting = [ "~/.hyprconf/hypr/scripts/notification.sh logout" ]
