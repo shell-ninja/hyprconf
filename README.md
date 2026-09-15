@@ -46,60 +46,22 @@
 
 ## <img src="https://readme-typing-svg.herokuapp.com?font=Lexend+Giga&size=25&pause=1000&color=90EE90&vCenter=true&width=435&height=25&lines=SCREENSHOTS" width="450"/>
 
-> [!NOTE]
-> Screenshots are currently being refreshed to reflect the latest Noctalia shell release and UI updates. Previews will be added here soon!
+<details>
+<summary><b>Click to expand screenshots</b></summary>
 
-<!-- Screenshot gallery will be updated here -->
-<!--
-<details open>
-<summary><b>Desktop & Theming</b></summary>
-<p align="center">
-   <img align="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/theme/1.png?raw=true" alt="Desktop Theme 1" />
-   <img align="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/theme/2.png?raw=true" alt="Desktop Theme 2" /> <br>
-   <img align="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/theme/3.png?raw=true" alt="Desktop Theme 3" />
-   <img align="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/theme/4.png?raw=true" alt="Desktop Theme 4" /> <br>
-   <img align="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/theme/5.png?raw=true" alt="Desktop Theme 5" />
-   <img align="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/theme/6.png?raw=true" alt="Desktop Theme 6" />
-</p>
-</details>
+| Screenshot | Name | Description |
+| :---: | :--- | :--- |
+| <img src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf-noct/overall.png?raw=true" width="340" alt="Desktop Overview" /> | **Desktop Overview** | Complete Hyprland desktop environment featuring the Noctalia shell and dynamic wallpaper theming. |
+| <img src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf-noct/bar-layout.png?raw=true" width="340" alt="Status Bar Layout" /> | **Status Bar Layout** | Customized Noctalia Bar showing active workspaces, media player controls, network, battery, and system tray widgets. |
+| <img src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf-noct/controlcenter.png?raw=true" width="340" alt="Control Center" /> | **Control Center** | Quick-access control center panel for toggling Wi-Fi, Bluetooth, volume, display brightness, and notifications. |
+| <img src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf-noct/hyprconf-apps.png?raw=true" width="340" alt="Hyprconf Apps" /> | **Application Launcher** | Python GUI apps for changing hyprland settings and updating packages. |
+| <img src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf-noct/wallpaper-select1.png?raw=true" width="340" alt="Wallpaper Selector Grid" /> | **Wallpaper Selector (Grid)** | Interactive thumbnail gallery view allowing you to easily browse and choose from available wallpapers. |
+| <img src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf-noct/wallpaper-select2.png?raw=true" width="340" alt="Wallpaper Selector Preview" /> | **Wallpaper Selector (Preview)** | Wallpaper switcher menu with live preview and automatic color scheme generation. |
+| <img src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf-noct/powermenu.png?raw=true" width="340" alt="Power Menu" /> | **Power Menu** | Minimal system power menu. |
+| <img src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf-noct/lockscreen.png?raw=true" width="340" alt="Lock Screen" /> | **Lock Screen** | Minimalist lock screen. |
+| <img src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/sddm/sddm.png?raw=true" width="340" alt="SDDM Login Theme" /> | **SDDM Login Theme** | Sleek SDDM display manager theme. |
 
-<details close>
-<summary><b>Launchers, Menus & Panels</b></summary>
-<p align="center">
-   <img align="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/menu/1.png?raw=true" alt="Launcher 1" />
-   <img align="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/menu/2.png?raw=true" alt="Launcher 2" /> <br>
-   <img align="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/menu/4.png?raw=true" alt="Launcher 3" />
-   <img align="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/menu/3.png?raw=true" alt="Launcher 4" /> <br>
-   <img align="center" width="99%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/clipboard.png?raw=true" alt="Clipboard Manager" />
-</p>
 </details>
-
-<details close>
-<summary><b>Power Menu & Session Controls</b></summary>
-<p align="center">
-   <img align="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/power/1.png?raw=true" alt="Power Menu 1" />
-   <img align="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/power/2.png?raw=true" alt="Power Menu 2" />
-</p>
-</details>
-
-<details close>
-<summary><b>Wallpaper Management</b></summary>
-<p align="center">
-   <img align="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/wallpaper/1.png?raw=true" alt="Wallpaper 1" />
-   <img align="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/wallpaper/2.png?raw=true" alt="Wallpaper 2" />
-</p>
-</details>
-
-<details close>
-<summary><b>Lock Screen & Display Manager (SDDM)</b></summary>
-<p align="center">
-   <img align="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/lockscreen/lock-1.png?raw=true" alt="Lockscreen 1" />
-   <img align="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/lockscreen/lock-2.png?raw=true" alt="Lockscreen 2" /> <br>
-   <img align="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/sddm/sddm1.jpg?raw=true" alt="SDDM 1" />
-   <img align="center" width="49%" src="https://github.com/shell-ninja/Screen-Shots/blob/main/hyprconf/sddm/sddm2.jpg?raw=true" alt="SDDM 2" />
-</p>
-</details>
--->
 
 <br>
 
