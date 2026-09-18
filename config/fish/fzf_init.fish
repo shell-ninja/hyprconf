@@ -105,7 +105,7 @@ function fzf_key_bindings
   # Store current token in $dir as root for the 'find' command
   function fzf-file-widget -d "List files and folders"
     set -l commandline (__fzf_parse_commandline)
-    set -lx dir $commandline[1]
+    set -l dir $commandline[1]
     set -l fzf_query $commandline[2]
     set -l prefix $commandline[3]
 
@@ -113,10 +113,17 @@ function fzf_key_bindings
       "--reverse --walker=file,dir,follow,hidden --scheme=path" \
       "--multi $FZF_CTRL_T_OPTS --print0")
 
-    set -lx FZF_DEFAULT_COMMAND "$FZF_CTRL_T_COMMAND"
     set -lx FZF_DEFAULT_OPTS_FILE
 
-    set -l result (eval (__fzfcmd) --walker-root=$dir --query=$fzf_query | string split0)
+    set -lx FZF_DEFAULT_COMMAND
+
+    if test -n "$FZF_CTRL_T_COMMAND"
+      set -f result (eval $FZF_CTRL_T_COMMAND \| (__fzfcmd) --query=$fzf_query | string split0)
+    else
+      set -f result (eval (__fzfcmd) --walker-root=$dir --query=$fzf_query | string split0)
+    end
+
+    test -n "$result"
     and commandline -rt -- (string join -- ' ' $prefix(string escape -n -- $result))' '
 
     commandline -f repaint
@@ -343,10 +350,8 @@ function fzf_complete -w fzf -d 'fzf command completion and wildcard expansion s
 
       # Determine the tabstop length for description alignment
       set -l -- max_columns (math $COLUMNS - 40)
-      for i in $list[1..500]
-        set -l -- item (string split -f 1 -- \t $i)
-        and set -l -- len (string length -V -- $item)
-        and test "$len" -gt "$tabstop" -a "$len" -lt "$max_columns"
+      for len in (string match -r -- '^[^\\t]*(?=\\t)' $list[1..500] | string length -V)
+        test "$len" -gt "$tabstop" -a "$len" -lt "$max_columns"
         and set -- tabstop $len
       end
       set -- tabstop (math $tabstop + 4)

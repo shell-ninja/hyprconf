@@ -30,8 +30,94 @@ set -g fish_greeting
 
 if status is-interactive
 
+    #==============================================================================
+    # VIM KEYBINDINGS
+    #==============================================================================
+
+    # Enable vi key bindings
+    fish_vi_key_bindings
+
+    # Cursor shape per mode:
+    #   1 = blinking block   (normal)
+    #   2 = steady block
+    #   3 = blinking underline
+    #   4 = steady underline
+    #   5 = blinking beam    (insert)
+    #   6 = steady beam
+    set -g fish_cursor_default     block      # normal mode  — block cursor
+    set -g fish_cursor_insert      line       # insert mode  — beam/line cursor
+    set -g fish_cursor_replace_one underscore # replace char — underline cursor
+    set -g fish_cursor_visual      block      # visual mode  — block cursor
+
+    # Show current vi-mode in the right prompt
+    function fish_mode_prompt
+        switch $fish_bind_mode
+            case default
+                set_color --bold red
+                echo '[N]'
+            case insert
+                set_color --bold green
+                echo '[I]'
+            case replace_one
+                set_color --bold yellow
+                echo '[R]'
+            case visual
+                set_color --bold magenta
+                echo '[V]'
+        end
+        set_color normal
+        echo ' '
+    end
+
+    # Instantly repaint prompt and Starship character when vi mode changes
+    function __starship_bind_mode --on-variable fish_bind_mode
+        commandline -f repaint 2>/dev/null
+    end
+
+    # ── Extra vim-style bindings ──────────────────────────────────────────────
+
+    # jk / jj → escape to normal mode from insert
+    bind -M insert jf 'set fish_bind_mode default; commandline -f repaint'
+    # bind -M insert jj 'set fish_bind_mode default; commandline -f repaint'
+
+    # Ctrl+L → clear screen in both insert and normal mode
+    bind -M insert \cl 'clear; commandline -f repaint'
+    bind -M default \cl 'clear; commandline -f repaint'
+
+    # Ctrl+P / Ctrl+N → history navigation (vim-style in insert mode)
+    bind -M insert \cp up-or-search
+    bind -M insert \cn down-or-search
+
+    # Ctrl+U → delete to beginning of line (insert mode)
+    bind -M insert \cu backward-kill-line
+
+    # Ctrl+W → delete previous word (insert mode)
+    bind -M insert \cw backward-kill-word
+
+    # Ctrl+A / Ctrl+E → beginning / end of line (insert mode)
+    bind -M insert \ca beginning-of-line
+    bind -M insert \ce end-of-line
+
+    # H / L → beginning / end of line in normal mode (like 0 / $)
+    bind -M default H beginning-of-line
+    bind -M default L end-of-line
+
+    # Space+Enter → accept autosuggestion (disabled: forward-char was causing
+    # space to auto-accept autosuggestion characters)
+    # bind -M insert ' ' self-insert forward-char
+
+    # Ctrl+F → accept entire autosuggestion in insert mode
+    bind -M insert \cf forward-char
+
+    # yy → yank (copy) entire current line in normal mode
+    bind -M default yy 'commandline | xclip -selection clipboard 2>/dev/null; or commandline | wl-copy 2>/dev/null'
+
+    #==============================================================================
+    # END VIM KEYBINDINGS
+    #==============================================================================
+
     # Starship prompt configuration (cached for instant load)
-    set -gx STARSHIP_CONFIG "$HOME.config/fish/starship/starship-arch_purist.toml"
+    set -gx STARSHIP_CONFIG "$HOME/.config/starship.toml"
     if command -v starship >/dev/null 2>&1
         set -l starship_cache "$HOME/.config/fish/starship_init.fish"
         if not test -f "$starship_cache"; or test (command -v starship) -nt "$starship_cache"

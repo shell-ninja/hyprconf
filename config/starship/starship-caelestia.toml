@@ -1,0 +1,147 @@
+# ─── Caelestia ────────────────────────────────────────────────────────────────
+# Inspired by the Caelestia shell prompt & dotfiles
+# Geometric glyphs, minimal left prompt (◄ 0s ◉), right-aligned path & git status
+# ─────────────────────────────────────────────────────────────────────────────
+
+command_timeout = 100
+scan_timeout = 10
+add_newline = false
+
+format = """\
+$cmd_duration\
+$jobs\
+$sudo\
+$username\
+$character"""
+
+right_format = """\
+$directory\
+$git_branch\
+$git_status\
+$git_metrics\
+$python\
+$nodejs\
+$rust\
+$golang\
+$time\
+"""
+
+[character]
+format = "$symbol "
+success_symbol = "[◉](bold fg:subtext1)"
+error_symbol = "[○](bold fg:red)"
+vimcmd_symbol = "[■](bold fg:green)"
+vimcmd_replace_one_symbol = "[◌](bold fg:peach)"
+vimcmd_replace_symbol = "[□](bold fg:peach)"
+vimcmd_visual_symbol = "[▼](bold fg:mauve)"
+
+[cmd_duration]
+min_time = 0
+format = "[◄ $duration ](italic fg:overlay2)"
+
+[directory]
+home_symbol = "⌂"
+truncation_length = 3
+truncation_symbol = "□ "
+read_only = " ◈"
+use_os_path_sep = true
+style = "italic fg:sky"
+format = '[$path]($style)[$read_only]($read_only_style)'
+repo_root_style = 'bold fg:blue'
+repo_root_format = '[$before_root_path]($before_repo_root_style)[$repo_root]($repo_root_style)[$path]($style)[$read_only]($read_only_style) [△](bold fg:blue)'
+
+[git_branch]
+format = " [$symbol$branch]($style)"
+symbol = "△ "
+style = "italic fg:blue"
+truncation_symbol = "⋯"
+truncation_length = 15
+
+[git_status]
+style = "bold italic fg:blue"
+format = "([⎪$ahead_behind$staged$modified$untracked$renamed$deleted$conflicted$stashed⎥]($style))"
+conflicted = "[◪◦](italic fg:pink)"
+ahead = "[▴│[${count}](bold fg:text)│](italic fg:green)"
+behind = "[▿│[${count}](bold fg:text)│](italic fg:red)"
+diverged = "[◇ ▴┤[${ahead_count}](fg:text)│▿┤[${behind_count}](fg:text)│](italic fg:pink)"
+untracked = "[◌◦](italic fg:peach)"
+stashed = "[◃◈](italic fg:text)"
+modified = "[●◦](italic fg:peach)"
+staged = "[▪┤[$count](bold fg:text)│](italic fg:teal)"
+renamed = "[◎◦](italic fg:blue)"
+deleted = "[✕](italic fg:red)"
+
+[git_metrics]
+disabled = false
+format = '([▴$added]($added_style))([▿$deleted]($deleted_style))'
+added_style = 'italic fg:green'
+deleted_style = 'italic fg:red'
+
+[python]
+format = " [py](italic fg:overlay1) [${symbol}${version}]($style)"
+symbol = "⌊ "
+style = "bold fg:peach"
+
+[nodejs]
+format = " [node](italic fg:overlay1) [◫ $version]($style)"
+style = "bold fg:green"
+
+[rust]
+format = " [rs](italic fg:overlay1) [⊃ $version]($style)"
+style = "bold fg:red"
+
+[golang]
+format = " [go](italic fg:overlay1) [∩ $version]($style)"
+style = "bold fg:sky"
+
+[jobs]
+format = "[$symbol$number]($style) "
+style = "fg:text"
+symbol = "[▶](italic fg:blue)"
+
+[sudo]
+format = "[$symbol]($style)"
+style = "bold italic fg:mauve"
+symbol = "⋈┈"
+disabled = false
+
+[username]
+style_user = "bold italic fg:peach"
+style_root = "bold italic fg:red"
+format = "[⭘ $user]($style) "
+disabled = false
+show_always = false
+
+[time]
+disabled = false
+format = "[ $time]($style)"
+time_format = "%I:%M %p"
+style = "italic dimmed fg:subtext0"
+
+[palettes.catppuccin_mocha]
+rosewater = "#f5e0dc"
+flamingo = "#f2cdcd"
+pink = "#f5c2e7"
+mauve = "#cba6f7"
+red = "#f38ba8"
+maroon = "#eba0ac"
+peach = "#fab387"
+yellow = "#f9e2af"
+green = "#a6e3a1"
+teal = "#94e2d5"
+sky = "#89dceb"
+sapphire = "#74c7ec"
+blue = "#89b4fa"
+lavender = "#b4befe"
+text = "#cdd6f4"
+subtext1 = "#bac2de"
+subtext0 = "#a6adc8"
+overlay2 = "#9399b2"
+overlay1 = "#7f849c"
+overlay0 = "#6c7086"
+surface2 = "#585b70"
+surface1 = "#45475a"
+surface0 = "#313244"
+base = "#1e1e2e"
+mantle = "#181825"
+crust = "#11111b"

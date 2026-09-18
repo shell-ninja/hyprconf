@@ -739,8 +739,10 @@ end
 
 # change starship prompt style
 function change_style
-    set -l fish_config "$HOME/.config/fish/config.fish"
-    set -l starship_dir "$HOME/.config/fish/starship"
+    set -l starship_dir "$HOME/.hyprconf/starship"
+    if not test -d "$starship_dir"
+        set starship_dir "$HOME/.config/starship"
+    end
 
     if not test -d "$starship_dir"
         printf "Starship directory not found: %s\n" "$starship_dir"
@@ -787,13 +789,20 @@ function change_style
         echo
         printf "  \e[1;34m[*]\e[0m Setting prompt to: \e[1;32m%s\e[0m\n" "$selected"
 
-        # Set in current environment immediately
-        set -gx STARSHIP_CONFIG "$prompt_file"
+        # Copy selected preset to active ~/.config/starship.toml
+        cp "$prompt_file" "$HOME/.config/starship.toml"
 
-        # Safely replace the line setting STARSHIP_CONFIG in config.fish
-        if test -f "$fish_config"
-            sed -i -E "s|^([[:space:]]*set -gx STARSHIP_CONFIG).*|\1 \"$prompt_file\"|g" "$fish_config"
+        # Re-apply Noctalia palette if available
+        set -l noctalia_apply "/usr/share/noctalia/assets/templates/starship/apply.sh"
+        if test -x "$noctalia_apply"
+            "$noctalia_apply" 2>/dev/null
         end
+
+        # Set in current environment immediately
+        set -gx STARSHIP_CONFIG "$HOME/.config/starship.toml"
+
+        # Invalidate cached init script to pick up changes
+        rm -f "$HOME/.config/fish/starship_init.fish"
 
         printf "  \e[1;34m[*]\e[0m Applying changes immediately...\n"
         sleep 1; and clear
@@ -946,7 +955,7 @@ function __auto_tree_on_cd --on-variable PWD
     test "$PWD" = "$HOME"; and return
 
     if command -v eza >/dev/null 2>&1
-        eza -T --level=2 --color=always --icons=always --group-directories-first \
+        eza -T --level=1 --color=always --icons=always --group-directories-first \
             --ignore-glob="node_modules|.git|.venv|target|vendor|.cache|.next|dist|build"
     else
         ls
