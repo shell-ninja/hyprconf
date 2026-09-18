@@ -138,6 +138,7 @@ dirs=(
     qt5ct
     qt6ct
     satty
+    starship
     systemd
     xfce4
     xsettingsd
