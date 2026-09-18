@@ -1,7 +1,7 @@
 return {
     "catppuccin/nvim",
     name = "catppuccin",
-    priority = 1000,
+    priority = 900, -- Lowered below base16/matugen (1001) so Noctalia colors win
     config = function()
         local transparent = true -- set to true if you would like to enable transparency
 
@@ -63,6 +63,7 @@ return {
                 -- For more plugins integrations please scroll down (https://github.com/catppuccin/nvim#integrations)
             },
         })
-        vim.cmd("colorscheme catppuccin")
+        -- colorscheme is set by base16/matugen (lua/plugins/base16.lua) which has higher priority
+        -- vim.cmd("colorscheme catppuccin")  -- suppressed: Noctalia/matugen colors take over
     end,
 }

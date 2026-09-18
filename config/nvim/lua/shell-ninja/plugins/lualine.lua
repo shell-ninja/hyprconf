@@ -40,13 +40,13 @@ return {
         require("lualine").setup({
             options = {
                 icons_enabled = true,
-                theme = "catppuccin-mocha", -- Set theme based on environment variable
+                theme = "auto", -- Adapts to active colorscheme (Noctalia/matugen)
                 -- flavour = "mocha",
                 -- Some useful glyphs:
                 -- https://www.nerdfonts.com/cheat-sheet
                 --        
                 section_separators = { left = "", right = "" },
-                component_separators = { left = "", right = "" },
+                component_separators = { left = "", right = "" },
                 disabled_filetypes = { "alpha", "neo-tree" },
                 always_divide_middle = true,
             },
