@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # brightness.sh — Adjust monitor brightness with Noctalia OSD support.
 #
 # Usage:

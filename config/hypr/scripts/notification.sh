@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Path to the sound files
 SOUND_FILE_UPDATE="$HOME/.hyprconf/hypr/sounds/update.wav"

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 browser_cache="$HOME/.config/hypr/.cache/.browser"
 browser_num=$(grep -v -n "default" "$browser_cache" | wc -l)

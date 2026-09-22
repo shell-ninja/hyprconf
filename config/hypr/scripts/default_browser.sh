@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 browser_cache="$HOME/.hyprconf/hypr/.cache/.browser"
 scripts_dir="$HOME/.hyprconf/hypr/scripts"

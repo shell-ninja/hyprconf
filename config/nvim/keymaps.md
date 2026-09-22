@@ -42,10 +42,12 @@
 | n       | <A-f>      | Toggle file explorer on current file              |
 | n       | <leader>c  | Collapse file explorer                            |
 | n       | <leader>r  | Refresh file explorer                             |
-| n       | s          | Substitute with motion                            |
-| n       | ss         | Substitute line                                   |
-| n       | S          | Substitute to end of line                         |
-| x       | s          | Substitute in visual mode                         |
+| n       | cx         | Substitute with motion                            |
+| n       | cxx        | Substitute line                                   |
+| n       | cX         | Substitute to end of line                         |
+| x       | X          | Substitute in visual mode                         |
+| n, x, o | s          | Flash jump                                        |
+| n, x, o | S          | Flash Treesitter                                  |
 | n       | <C-k>      | Move to previous search result                    |
 | n       | <C-q>      | Send selected to quickfix list and open Trouble   |
 | n       | <C-t>      | Open Trouble                                      |
