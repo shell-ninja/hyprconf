@@ -651,7 +651,8 @@ def refresh_pill(pill, count_box, count_lbl, count, is_aur=False):
 # =============================================================================
 
 
-def make_stats_bar():
+def make_stats_bar(sources):
+    """Build a stats bar with TOTAL + one column per detected source."""
     bar = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
     bar.add_css_class("stats-bar")
     bar.set_hexpand(True)
@@ -670,15 +671,19 @@ def make_stats_bar():
         return col, num
 
     col_total, total_num = stat_col("TOTAL")
-    sep1 = Gtk.Separator(orientation=Gtk.Orientation.VERTICAL)
-    col_pac, pac_num = stat_col("PACMAN")
-    sep2 = Gtk.Separator(orientation=Gtk.Orientation.VERTICAL)
-    col_aur, aur_num = stat_col("AUR", "stat-aur")
+    bar.append(col_total)
 
-    for w in (col_total, sep1, col_pac, sep2, col_aur):
-        bar.append(w)
+    # One column per detected source
+    source_nums = {}  # key -> Gtk.Label
+    for src in sources:
+        sep = Gtk.Separator(orientation=Gtk.Orientation.VERTICAL)
+        bar.append(sep)
+        extra = "stat-aur" if src.is_aur else ""
+        col, num = stat_col(src.label.split("(")[0].strip().upper(), extra)
+        bar.append(col)
+        source_nums[src.key] = num
 
-    return bar, total_num, pac_num, aur_num
+    return bar, total_num, source_nums
 
 
 # =============================================================================
@@ -751,7 +756,7 @@ class UpdaterWindow(Adw.ApplicationWindow):
         root.append(hero)
 
         # Stats
-        self.stats_bar, self.total_num, self.pac_num, self.aur_num = make_stats_bar()
+        self.stats_bar, self.total_num, self.source_nums = make_stats_bar(self.sources)
         root.append(self.stats_bar)
 
         # Sources label
@@ -896,23 +901,21 @@ class UpdaterWindow(Adw.ApplicationWindow):
         self.toast_overlay.add_toast(Adw.Toast(title=msg, timeout=timeout))
 
     def _update_stats(self):
-        pac = self._results.get("pacman")
-        aur = self._results.get("aur")
-
         def fmt(v):
             return str(v) if v is not None else "—"
 
-        total = None
-        if pac is not None or aur is not None:
-            total = (pac or 0) + (aur or 0)
+        # Compute total across all sources
+        known = [v for v in self._results.values() if v is not None]
+        total = sum(known) if known else None
 
         self.total_num.set_label(fmt(total))
-        self.pac_num.set_label(fmt(pac))
-        self.aur_num.set_label(fmt(aur))
-
         self.total_num.remove_css_class("stat-zero")
         if total == 0:
             self.total_num.add_css_class("stat-zero")
+
+        # Update each per-source column
+        for key, num_lbl in self.source_nums.items():
+            num_lbl.set_label(fmt(self._results.get(key)))
 
     # ─────────────────────────────────────────────────────────────────────
     #  Update checking
@@ -921,8 +924,8 @@ class UpdaterWindow(Adw.ApplicationWindow):
     def start_check(self):
         self._results.clear()
         self.total_num.set_label("—")
-        self.pac_num.set_label("—")
-        self.aur_num.set_label("—")
+        for num_lbl in self.source_nums.values():
+            num_lbl.set_label("—")
         self.status_box.set_visible(False)
         self.refresh_btn.set_sensitive(False)
 
