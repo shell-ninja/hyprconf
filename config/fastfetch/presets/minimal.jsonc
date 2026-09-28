@@ -39,7 +39,6 @@
         },
         {
             "type": "packages",
-            "format": "{} (pacman)",
             "key": " ",
             "keyColor": "33",  
         },
