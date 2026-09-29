@@ -16,209 +16,447 @@
 # ╚═╝  ╚═══╝╚═╝╚═╝  ╚═══╝ ╚════╝ ╚═╝  ╚═╝                                                       
 #==============================================================================
 
-# --- copy-paste with automatic sudo elevation and file/dir mode detection ---
-function fn_copy_paste
-    if test (count $argv) -lt 2
-        printf "Usage: fn_copy_paste <source...> <destination>\n"
-        return 1
-    end
+# ----------------- Shell Ninja Color Palette (Cyber-Purple & Neon Cyan)
+set -g red      (printf "\e[1;38;2;247;118;142m")   # Crimson error
+set -g green    (printf "\e[1;38;2;166;227;161m")   # Soft emerald
+set -g yellow   (printf "\e[1;38;2;224;175;104m")   # Warm gold
+set -g blue     (printf "\e[1;38;2;122;162;247m")   # Soft azure
+set -g magenta  (printf "\e[1;38;2;232;121;249m")   # Vibrant violet-magenta
+set -g cyan     (printf "\e[1;38;2;125;207;255m")   # Neon glacier cyan
+set -g purple   (printf "\e[1;38;2;189;147;249m")   # Electric neon purple (primary accent)
+set -g lavender (printf "\e[1;38;2;203;166;247m")   # Soft lavender (secondary accent)
+set -g slate    (printf "\e[38;2;98;114;164m")      # Tokyo Night slate
+set -g muted    (printf "\e[38;2;108;112;134m")     # Dim grey
+set -g white    (printf "\e[1;37m")
+set -g bold     (printf "\e[1m")
+set -g dim      (printf "\e[2m")
+set -g end      (printf "\e[0m")
 
-    set -l destination $argv[-1]
-    # Strip trailing slash to normalise
-    set destination (string trim --right --chars=/ -- "$destination")
-    set -l items $argv[1..-2]
+# message function
+function msg -a actn
+    set -l text (string join " " $argv[2..-1])
 
-    # ---- Determine mode: file rename vs directory copy ----
-    set -l mode dir
-    if test (count $items) -eq 1; and not test -d "$destination"
-        set mode file
-    end
-    # If original argument had trailing slash, force dir mode
-    if string match -q '*/' -- $argv[-1]
-        set mode dir
-    end
-
-    # ---- Decide whether sudo is needed ----
-    set -l SUDO ""
-    if test (id -u) -ne 0
-        if test "$mode" = dir
-            if test -d "$destination"
-                if not test -w "$destination"; or not test -x "$destination"
-                    set SUDO sudo
-                end
-            else
-                set -l parent (dirname "$destination")
-                if not test -w "$parent"; or not test -x "$parent"
-                    set SUDO sudo
-                end
-            end
-        else
-            set -l dest_dir (dirname "$destination")
-            if test -e "$destination"
-                if not test -w "$destination"
-                    set SUDO sudo
-                end
-            else
-                if not test -w "$dest_dir"; or not test -x "$dest_dir"
-                    set SUDO sudo
-                end
-            end
-        end
-        # Check readability of every source item
-        for item in $items
-            if not test -r "$item"
-                set SUDO sudo
-                break
-            end
-        end
-    end
-
-    if test -n "$SUDO"
-        sudo -v 2>/dev/null; or true
-    end
-
-    # ---- Create destination if needed ----
-    if test "$mode" = dir
-        if not test -d "$destination"
-            if test -n "$SUDO"
-                $SUDO mkdir -p "$destination"; or begin
-                    printf "!! Failed to create destination directory: %s\n" "$destination"
-                    return 1
-                end
-            else
-                mkdir -p "$destination"; or begin
-                    printf "!! Failed to create destination directory: %s\n" "$destination"
-                    return 1
-                end
-            end
-        end
-    else
-        set -l dest_dir (dirname "$destination")
-        if not test -d "$dest_dir"
-            if test -n "$SUDO"
-                $SUDO mkdir -p "$dest_dir"; or begin
-                    printf "!! Failed to create parent directory: %s\n" "$dest_dir"
-                    return 1
-                end
-            else
-                mkdir -p "$dest_dir"; or begin
-                    printf "!! Failed to create parent directory: %s\n" "$dest_dir"
-                    return 1
-                end
-            end
-        end
-    end
-
-    # ---- Copy each item ----
-    for item in $items
-        set item (string trim --right --chars=/ -- "$item")
-        set -l name (basename "$item")
-
-        if test -f "$item"
-            if test "$mode" = file
-                printf "\n:: Copying file %s → %s\n" "$name" "$destination"
-                if string match -q "*.iso" "$name"
-                    if test -n "$SUDO"
-                        pv "$item" | sudo dd of="$destination" bs=4M status=none
-                    else
-                        pv "$item" | dd of="$destination" bs=4M status=none
-                    end
-                    if test $status -eq 0
-                        printf "\n:: Syncing to disk (this may take a while)...\n"
-                        if test -n "$SUDO"; sudo sync; else; sync; end
-                        printf "Sync complete.\n"
-                    end
-                else
-                    if test -n "$SUDO"
-                        pv "$item" | sudo tee "$destination" > /dev/null
-                    else
-                        pv "$item" > "$destination"
-                    end
-                end
-            else
-                printf "\n:: Copying file %s → %s\n" "$name" "$destination"
-                if string match -q "*.iso" "$name"
-                    if test -n "$SUDO"
-                        pv "$item" | sudo dd of="$destination/$name" bs=4M status=none
-                    else
-                        pv "$item" | dd of="$destination/$name" bs=4M status=none
-                    end
-                    if test $status -eq 0
-                        printf "\n:: Syncing to disk (this may take a while)...\n"
-                        if test -n "$SUDO"; sudo sync; else; sync; end
-                        printf "Sync complete.\n"
-                    else
-                        printf "!! ISO copy failed.\n"
-                    end
-                else
-                    if test -n "$SUDO"
-                        pv "$item" | sudo tee "$destination/$name" > /dev/null
-                    else
-                        pv "$item" > "$destination/$name"
-                    end
-                end
-            end
-        else if test -d "$item"
-            set -l parent (dirname "$item")
-            printf "\n:: Copying directory %s → %s\n" "$name" "$destination"
-            if test -n "$SUDO"
-                sudo tar -C "$parent" -cf - "$name" | pv -N "$name" | sudo tar -xf - -C "$destination"
-            else
-                tar -C "$parent" -cf - "$name" | pv -N "$name" | tar -xf - -C "$destination"
-            end
-        else
-            printf "!! Skipping unknown type: %s\n" "$item"
-        end
+    switch "$actn"
+        case act
+            printf "%s→%s %s\n" "$cyan" "$end" "$text"
+        case ask
+            printf "%s?%s %s\n" "$purple" "$end" "$text"
+        case dn ok
+            printf "%s✓%s %s\n" "$green" "$end" "$text"
+        case att
+            printf "%s<>%s %s\n" "$lavender" "$end" "$text"
+        case nt info
+            printf "%sℹ%s %s\n" "$blue" "$end" "$text"
+        case skp skip
+            printf "%s·[]%s %s\n" "$muted" "$end" "$text"
+        case err error
+            printf "%s✗%s %s\n" "$red" "$end" "$text"
+        case warn warning
+            printf "%s⚠%s %s\n" "$yellow" "$end" "$text"
+        case cncl cancel
+            printf "%s><%s %s\n" "$red" "$end" "$text"
+        case '*'
+            printf "%s\n" "$text"
     end
 end
 
-# remove files and directories safely
-function fn_removal
-    if test (count $argv) -eq 0
-        printf "Usage: fn_removal <file|dir> ...\n"
-        return 1
+
+# --- internal helper: ensure root/sudo privileges using gum if installed ---
+function _ensure_sudo
+    if test (id -u) -eq 0
+        return 0
+    end
+    if sudo -n true 2>/dev/null
+        return 0
     end
 
-    set -l SUDO ""
-    if test (id -u) -ne 0
-        for item in $argv
-            # Skip option flags like -r, -f, -rf, --
-            if string match -q -- "-*" "$item"
-                continue
+    if command -v gum >/dev/null 2>&1
+        set -l max_attempts 3
+        set -l attempt 1
+        while test $attempt -le $max_attempts
+            set -l pwd (gum input --password --placeholder "Enter root/sudo password" --prompt (printf "$purple Password: $end"))
+            if test $status -ne 0 -o -z "$pwd"
+                msg cncl "Authentication aborted."
+                return 1
             end
-            set -l parent (dirname -- "$item")
-            if not test -w "$parent"
-                set SUDO "sudo"
+            if echo "$pwd" | sudo -S -v 2>/dev/null
+                return 0
+            else
+                msg err (printf "Incorrect password. Try again (%d/%d)." $attempt $max_attempts)
+            end
+            set attempt (math $attempt + 1)
+        end
+        msg err "Authentication failed."
+        return 1
+    else
+        sudo -v
+        return $status
+    end
+end
+
+# --- internal helper: sync dirty pages to disk with a progress bar ---
+function _sync_progress -a need_sudo
+    set -l dirty_init (awk '/Dirty:/ {print $2}' /proc/meminfo 2>/dev/null; or echo 0)
+    test -z "$dirty_init"; and set dirty_init 0
+
+    # Start sync in background
+    if test "$need_sudo" = "1"
+        sudo sync &
+    else
+        sync &
+    end
+    set -l sync_pid $last_pid
+
+    set -l width 35
+    if test $dirty_init -lt 2048
+        if command -v gum >/dev/null 2>&1
+            gum spin --spinner dot --title "Syncing dirty pages to disk..." -- wait $sync_pid
+        else
+            wait $sync_pid 2>/dev/null
+        end
+        msg dn "Sync complete."
+        return 0
+    end
+
+    msg act "Flushing dirty pages to disk..."
+    while kill -0 $sync_pid 2>/dev/null
+        set -l dirty_curr (awk '/Dirty:/ {print $2}' /proc/meminfo 2>/dev/null; or echo 0)
+        test -z "$dirty_curr"; and set dirty_curr 0
+        set -l flushed (math "$dirty_init - $dirty_curr")
+        test $flushed -lt 0; and set flushed 0
+
+        set -l pct (math -s0 "min(100, max(0, ($flushed * 100) / $dirty_init))" 2>/dev/null; or echo 0)
+        set -l filled (math -s0 "min($width, max(0, ($pct * $width) / 100))" 2>/dev/null; or echo 0)
+        set -l empty (math "$width - $filled")
+
+        set -l bar_filled (string repeat -n $filled "█")
+        set -l bar_empty (string repeat -n $empty "░")
+        set -l mb_flushed (math -s1 "$flushed / 1024")
+        set -l mb_total (math -s1 "$dirty_init / 1024")
+        printf "\r  [%s%s%s%s%s%s] %s%3d%%%s (%sM / %sM)" "$cyan" "$bar_filled" "$end" "$muted" "$bar_empty" "$end" "$yellow" $pct "$end" $mb_flushed $mb_total
+        sleep 0.15
+    end
+    wait $sync_pid 2>/dev/null
+
+    set -l bar_full (string repeat -n $width "█")
+    set -l mb_total (math -s1 "$dirty_init / 1024")
+    printf "\r  [%s%s%s] %s100%%%s (%sM / %sM)\n" "$cyan" "$bar_full" "$end" "$yellow" "$end" $mb_total $mb_total
+    msg dn "Sync complete."
+end
+
+# --- copy-paste with automatic sudo elevation, file/dir mode detection, and ISO sync ---
+function fn_copy_paste
+    if contains -- --help $argv; or contains -- -h $argv; or contains -- --version $argv
+        command cp $argv
+        return $status
+    end
+
+    set -l opts
+    set -l targets
+    set -l after_double_dash 0
+
+    for arg in $argv
+        if test $after_double_dash -eq 1
+            set -a targets "$arg"
+        else if test "$arg" = "--"
+            set after_double_dash 1
+        else if string match -q -- "-*" "$arg"
+            set -a opts "$arg"
+        else
+            set -a targets "$arg"
+        end
+    end
+
+    if test (count $targets) -lt 2
+        command cp $argv
+        return $status
+    end
+
+    set -l sources $targets[1..-2]
+    set -l destination $targets[-1]
+
+    # Normalize trailing slash for checks if needed, but preserve knowledge of trailing slash
+    set -l has_trailing_slash 0
+    if string match -q '*/' -- "$destination"
+        set has_trailing_slash 1
+    end
+    set -l dest_clean (string trim --right --chars=/ -- "$destination")
+
+    # Detect if any source is a directory
+    set -l has_directory 0
+    for src in $sources
+        if test -d "$src"
+            set has_directory 1
+            break
+        end
+    end
+
+    # Detect if any source is an ISO file and destination is a directory
+    set -l has_iso 0
+    for src in $sources
+        if test -f "$src"; and string match -qi "*.iso" -- "$src"
+            set has_iso 1
+            break
+        end
+    end
+
+    set -l is_dest_dir 0
+    if test -d "$dest_clean"; or test $has_trailing_slash -eq 1; or test (count $sources) -gt 1
+        set is_dest_dir 1
+    end
+
+    # Check whether root access (sudo) is needed
+    set -l need_sudo 0
+    if test (id -u) -ne 0
+        # 1. Check sources readability / searchability
+        for src in $sources
+            if not test -r "$src"
+                set need_sudo 1
+                break
+            end
+            if test -d "$src"; and not test -x "$src"
+                set need_sudo 1
+                break
+            end
+            set -l owner (stat -c '%u' "$src" 2>/dev/null; or echo 1)
+            if test "$owner" -eq 0 -a ! -r "$src"
+                set need_sudo 1
                 break
             end
         end
-    end
 
-    if test -n "$SUDO"
-        sudo -v 2>/dev/null; or true
-    end
-
-    for item in $argv
-        if string match -q -- "-*" "$item"
-            continue
-        end
-
-        if test -f "$item"
-            printf ":: Removing file: %s\n" "$item"
-            if test -n "$SUDO"
-                sudo rm "$item"
+        # 2. Check destination writability
+        if test $need_sudo -eq 0
+            if test -e "$dest_clean"
+                if test -d "$dest_clean"
+                    if not test -w "$dest_clean"; or not test -x "$dest_clean"
+                        set need_sudo 1
+                    else
+                        # Check if any existing target file inside dest_clean is not writable
+                        for src in $sources
+                            set -l target_file "$dest_clean/"(basename -- "$src")
+                            if test -e "$target_file" -a ! -w "$target_file"
+                                set need_sudo 1
+                                break
+                            end
+                        end
+                    end
+                else
+                    if not test -w "$dest_clean"
+                        set need_sudo 1
+                    end
+                end
             else
-                command rm "$item"
+                # Destination does not exist yet; find nearest existing parent directory
+                set -l check_dir (dirname -- "$dest_clean")
+                while not test -d "$check_dir" -a "$check_dir" != "/"
+                    set check_dir (dirname -- "$check_dir")
+                end
+                if not test -w "$check_dir"; or not test -x "$check_dir"
+                    set need_sudo 1
+                end
             end
-        else if test -d "$item"
-            printf ":: Removing directory: %s\n" "$item"
-            if test -n "$SUDO"
-                sudo rm -rf "$item"
-            else
-                command rm -rf "$item"
+        end
+    end
+
+    # If root access is needed, ensure sudo authentication via gum / fallback
+    if test $need_sudo -eq 1
+        if not _ensure_sudo
+            return 1
+        end
+    end
+
+    # If destination had trailing slash and doesn't exist, create it
+    if test $has_trailing_slash -eq 1 -a ! -d "$dest_clean"
+        if test $need_sudo -eq 1
+            sudo mkdir -p "$destination"
+        else
+            command mkdir -p "$destination"
+        end
+    end
+
+    # Prepare command arguments: add -r if any source is a directory
+    set -l final_args
+    if test $has_directory -eq 1
+        # Add -r if not already present in options
+        if not contains -- -r $opts; and not contains -- -R $opts; and not contains -- -a $opts
+            set final_args -r $opts $targets
+        else
+            set final_args $opts $targets
+        end
+    else
+        # Only files: run cp only
+        set final_args $opts $targets
+    end
+
+    # Execute copy (using sudo if root access needed)
+    if test $need_sudo -eq 1
+        sudo cp $final_args
+    else
+        command cp $final_args
+    end
+    set -l cp_status $status
+
+    # If copying was successful and an ISO was copied to a directory, offer sync
+    if test $cp_status -eq 0 -a $has_iso -eq 1 -a $is_dest_dir -eq 1
+        set -l do_sync 0
+        if command -v gum >/dev/null 2>&1
+            if gum confirm (printf "  %s?%s ISO file copied. Do you want to sync changes to disk?" "$purple" "$end")
+                set do_sync 1
             end
         else
-            printf "[ !! ] %s does not exist or is neither a regular file nor a directory\n" "$item"
+            read -P (printf "  %s?%s ISO file copied. Do you want to sync changes to disk? [y/N]: " "$purple" "$end") -l ans
+            if string match -qi "y" "$ans"; or string match -qi "yes" "$ans"
+                set do_sync 1
+            end
+        end
+
+        if test $do_sync -eq 1
+            _sync_progress $need_sudo
+        end
+    end
+
+    return $cp_status
+end
+
+# --- remove files and directories safely with confirmation warning and root detection ---
+function fn_removal
+    if test (count $argv) -eq 0
+        msg err "Usage: rm <file|dir> ..."
+        return 1
+    end
+
+    if contains -- --help $argv; or contains -- -h $argv; or contains -- --version $argv
+        command rm $argv
+        return $status
+    end
+
+    set -l opts
+    set -l items
+    set -l after_double_dash 0
+
+    for arg in $argv
+        if test $after_double_dash -eq 1
+            set -a items "$arg"
+        else if test "$arg" = "--"
+            set after_double_dash 1
+        else if string match -q -- "-*" "$arg"
+            set -a opts "$arg"
+        else
+            set -a items "$arg"
+        end
+    end
+
+    if test (count $items) -eq 0
+        command rm $opts
+        return $status
+    end
+
+    # Provide confirmation warning before proceeding
+    echo
+    msg warn "You are about to permanently delete the following:"
+    for item in $items
+        if test -d "$item" -a ! -L "$item"
+            printf "$purple [ DIR ] $end  $item\n"
+        else if test -L "$item"
+            printf "$cyan [ LINK ] $end  $item\n"
+        else if test -e "$item"
+            printf "$greed [ FILE ] $end  $item\n"
+        else
+            printf "$muted [ UNKNOWN ] $end  $item\n"
+        end
+    end
+
+    set -l confirmed 0
+    if command -v gum >/dev/null 2>&1
+    echo
+        if gum confirm --default=false (printf "%s?%s Are you sure you want to delete these item(s)?" "$purple" "$end")
+            set confirmed 1
+        end
+    else
+    echo
+        read -P (printf "%s?%s Are you sure you want to delete these item(s)? [Y/N]: " "$purple" "$end") -l ans
+        if string match -qi "y" "$ans"; or string match -qi "yes" "$ans"
+            set confirmed 1
+        end
+    end
+
+    if test $confirmed -ne 1
+        msg cncl "Deletion aborted."
+        return 0
+    end
+
+    # Check if any item requires root access
+    set -l any_need_sudo 0
+    if test (id -u) -ne 0
+        for item in $items
+            set -l parent (dirname -- "$item")
+            if not test -w "$parent"; or not test -x "$parent"
+                set any_need_sudo 1
+                break
+            end
+            if test -e "$item" -o -L "$item"
+                set -l owner (stat -c '%u' "$item" 2>/dev/null; or echo 1)
+                if test "$owner" -eq 0 -a ! -w "$item"
+                    set any_need_sudo 1
+                    break
+                end
+            end
+            if test -d "$item" -a ! -L "$item"
+                if not test -w "$item"; or not test -r "$item"; or not test -x "$item"
+                    set any_need_sudo 1
+                    break
+                end
+            end
+        end
+    end
+
+    if test $any_need_sudo -eq 1
+        if not _ensure_sudo
+            return 1
+        end
+    end
+
+    for item in $items
+        # Determine whether this item requires sudo
+        set -l item_need_sudo 0
+        if test (id -u) -ne 0
+            set -l parent (dirname -- "$item")
+            if not test -w "$parent"; or not test -x "$parent"
+                set item_need_sudo 1
+            else if test -e "$item" -o -L "$item"
+                set -l owner (stat -c '%u' "$item" 2>/dev/null; or echo 1)
+                if test "$owner" -eq 0 -a ! -w "$item"
+                    set item_need_sudo 1
+                end
+            end
+            if test -d "$item" -a ! -L "$item"
+                if not test -w "$item"; or not test -r "$item"; or not test -x "$item"
+                    set item_need_sudo 1
+                end
+            end
+        end
+
+        if test $item_need_sudo -eq 1
+            if test -d "$item" -a ! -L "$item"
+                msg act "Removing directory: $item"
+                sudo rm -rf $opts "$item"
+            else if test -e "$item" -o -L "$item"
+                msg act "Removing file: $item"
+                sudo rm $opts "$item"
+            else
+                msg err "$item does not exist"
+            end
+        else
+            if test -d "$item" -a ! -L "$item"
+                msg act "Removing directory: $item"
+                command rm -rf $opts "$item"
+            else if test -e "$item" -o -L "$item"
+                msg act "Removing file: $item"
+                command rm $opts "$item"
+            else
+                msg err "$item does not exist"
+            end
         end
     end
 end
@@ -273,18 +511,18 @@ function fn_check_updates
                 set aur ($AUR_HELPER -Qua 2>/dev/null | wc -l)
             end
             set -l upd (math $ofc + $aur)
-            printf "[ UPDATES ]\n:: You have \e[1;32m%d\e[0m updates available.\n:: Main: %d\n:: AUR: %d\n" $upd $ofc $aur
+            msg att (printf "You have %s%d%s updates available (Main: %d, AUR: %d)" "$green" $upd "$end" $ofc $aur)
         case dnf
             set -l upd (dnf check-update -q 2>/dev/null | grep -cv '^$')
-            printf "[ UPDATES ]\n:: You have \e[1;32m%d\e[0m updates available\n" $upd
+            msg att (printf "You have %s%d%s updates available" "$green" $upd "$end")
         case zypper
             set -l upd (zypper lu --best-effort 2>/dev/null | grep -c 'v  |')
-            printf "[ UPDATES ]\n:: You have \e[1;32m%d\e[0m updates available\n" $upd
+            msg att (printf "You have %s%d%s updates available" "$green" $upd "$end")
         case apt
             set -l upd (apt list --upgradable 2>/dev/null | grep -c '\[upgradable from')
-            printf "[ UPDATES ]\n:: You have \e[1;32m%d\e[0m updates available\n" $upd
+            msg att (printf "You have %s%d%s updates available" "$green" $upd "$end")
         case '*'
-            printf "\e[1;31m Unsupported package manager for now\e[1;0m\n"
+            msg err "Unsupported package manager"
             return 1
     end
 end
@@ -306,7 +544,7 @@ function fn_update
         case apt
             sudo apt update; and sudo apt upgrade -y
         case '*'
-            printf "\e[1;31m Unsupported package manager\e[1;0m\n"
+            msg err "Unsupported package manager"
             return 1
     end
 end
@@ -314,7 +552,7 @@ end
 # package install
 function fn_install
     if test (count $argv) -eq 0
-        printf "Usage: fn_install <package...>\n"
+        msg err "Usage: fn_install <package...>"
         return 1
     end
     _detect_pkg_manager
@@ -332,7 +570,7 @@ function fn_install
         case apt
             sudo apt install -y $argv
         case '*'
-            printf "\e[1;31m Unsupported package manager\e[1;0m\n"
+            msg err "Unsupported package manager"
             return 1
     end
 end
@@ -340,7 +578,7 @@ end
 # package uninstall
 function fn_uninstall
     if test (count $argv) -eq 0
-        printf "Usage: fn_uninstall <package...>\n"
+        msg err "Usage: fn_uninstall <package...>"
         return 1
     end
     _detect_pkg_manager
@@ -358,45 +596,8 @@ function fn_uninstall
         case apt
             sudo apt remove -y $argv
         case '*'
-            printf "\e[1;31m Unsupported package manager\e[1;0m\n"
+            msg err "Unsupported package manager"
             return 1
-    end
-end
-
-# compile cpp
-function fn_compile_cpp
-    if test (count $argv) -eq 0
-        printf "Usage: fn_compile_cpp <file[.cpp]> [-o]\n"
-        return 1
-    end
-
-    if not command -v g++ >/dev/null 2>&1
-        printf "\e[1;91m[  ] - g++ not found. Please install g++ first.\e[0m\n"
-        return 1
-    end
-
-    set -l base (string replace -r '\.cpp$' '' "$argv[1]")
-    set -l source "$base.cpp"
-    if not test -f "$source"
-        printf "\e[1;91m[  ] - Source file %s not found.\e[0m\n" "$source"
-        return 1
-    end
-
-    set -l output "$base"
-    printf "\e[0;36m[ * ] - Compiling...!\e[0m\n"
-    if g++ -std=c++20 "$source" -o "$output"
-        printf "\e[1;92m[ ✓ ] - Successfully compiled.\e[0m\n"
-        if test (count $argv) -ge 2; and test "$argv[2]" = "-o"
-            printf "\e[1;92m        Output: \e[0m\n\n"
-            if string match -q '/*' "$output"; or string match -q './*' "$output"
-                "$output"
-            else
-                "./$output"
-            end
-        end
-    else
-        printf "\n\e[1;91m[  ] - Compilation failed.\e[0m\n"
-        return 1
     end
 end
 
@@ -448,13 +649,13 @@ end
 # git push shortcut
 function push
     if not git rev-parse --is-inside-work-tree >/dev/null 2>&1
-        printf "!! Not inside a Git repository.\n"
+        msg err "Not inside a Git repository."
         return 1
     end
 
     set -l branch_name (git branch --show-current 2>/dev/null)
     if test -z "$branch_name"
-        printf "!! Detached HEAD or unknown branch. Please push manually.\n"
+        msg err "Detached HEAD or unknown branch. Please push manually."
         return 1
     end
 
@@ -478,32 +679,32 @@ function push
         end
     end
 
-    test $untracked_count -gt 0; and printf "=> %s untracked files\n" "$untracked_count"
-    test $unstaged_count -gt 0; and printf "=> %s uncommitted changes\n" "$unstaged_count"
-    test $staged_count -gt 0; and printf "=> %s staged changes\n" "$staged_count"
+    test $untracked_count -gt 0; and msg nt "$untracked_count untracked files"
+    test $unstaged_count -gt 0; and msg nt "$unstaged_count uncommitted changes"
+    test $staged_count -gt 0; and msg nt "$staged_count staged changes"
 
     if test $untracked_count -eq 0 -a $unstaged_count -eq 0 -a $staged_count -eq 0
-        printf "✓ Nothing to push.\n"
+        msg dn "Nothing to push."
         return 0
     end
 
-    printf "=> %s branch\n\nWrite the commit message\n" "$branch_name"
+    msg ask "$branch_name branch — Write the commit message:"
 
-    set -l msg ""
+    set -l msg_text ""
     if command -v gum >/dev/null 2>&1
-        set msg (gum input --placeholder "Write your commit message")
+        set msg_text (gum input --placeholder "Write your commit message")
     else
-        read -P "=> " msg
+        read -P "=> " msg_text
     end
 
-    if test -z "$msg"
-        printf "!! Aborting due to empty commit message.\n"
+    if test -z "$msg_text"
+        msg err "Aborting due to empty commit message."
         return 1
     end
 
     git add .
-    if not git commit -m "$msg"
-        printf "!! Commit failed.\n"
+    if not git commit -m "$msg_text"
+        msg err "Commit failed."
         return 1
     end
 
@@ -519,9 +720,9 @@ function push
             else if command -v ffplay >/dev/null 2>&1; ffplay -nodisp -autoexit "$sound" >/dev/null 2>&1 &
             end
         end
-        printf ":: Pushed successfully!\n"
+        msg dn "Pushed successfully!"
     else
-        printf "!! Sorry, push failed. Please check for errors.\n"
+        msg err "Push failed. Please check for errors."
     end
 end
 
@@ -739,8 +940,10 @@ end
 
 # change starship prompt style
 function change_style
-    set -l fish_config "$HOME/.config/fish/config.fish"
-    set -l starship_dir "$HOME/.config/fish/starship"
+    set -l starship_dir "$HOME/.hyprconf/starship"
+    if not test -d "$starship_dir"
+        set starship_dir "$HOME/.config/starship"
+    end
 
     if not test -d "$starship_dir"
         printf "Starship directory not found: %s\n" "$starship_dir"
@@ -787,13 +990,20 @@ function change_style
         echo
         printf "  \e[1;34m[*]\e[0m Setting prompt to: \e[1;32m%s\e[0m\n" "$selected"
 
-        # Set in current environment immediately
-        set -gx STARSHIP_CONFIG "$prompt_file"
+        # Copy selected preset to active ~/.config/starship.toml
+        cp "$prompt_file" "$HOME/.config/starship.toml"
 
-        # Safely replace the line setting STARSHIP_CONFIG in config.fish
-        if test -f "$fish_config"
-            sed -i -E "s|^([[:space:]]*set -gx STARSHIP_CONFIG).*|\1 \"$prompt_file\"|g" "$fish_config"
+        # Re-apply Noctalia palette if available
+        set -l noctalia_apply "/usr/share/noctalia/assets/templates/starship/apply.sh"
+        if test -x "$noctalia_apply"
+            "$noctalia_apply" 2>/dev/null
         end
+
+        # Set in current environment immediately
+        set -gx STARSHIP_CONFIG "$HOME/.config/starship.toml"
+
+        # Invalidate cached init script to pick up changes
+        rm -f "$HOME/.config/fish/starship_init.fish"
 
         printf "  \e[1;34m[*]\e[0m Applying changes immediately...\n"
         sleep 1; and clear
@@ -803,82 +1013,6 @@ function change_style
         printf "\e[1;31m  [!] Invalid choice. Exiting.\e[0m\n"
         return 1
     end
-end
-
-# play audio
-function play
-    set -l sound "$HOME/.config/fish/fah.mp3"
-    if test -f "$sound"
-        if command -v pw-play >/dev/null 2>&1; pw-play "$sound"
-        else if command -v paplay >/dev/null 2>&1; paplay "$sound"
-        else if command -v aplay >/dev/null 2>&1; aplay "$sound"
-        else if command -v ffplay >/dev/null 2>&1; ffplay -nodisp -autoexit "$sound"
-        else; printf "No audio player found to play %s\n" "$sound"
-        end
-    else
-        printf "Sound file not found: %s\n" "$sound"
-    end
-end
-
-# vite react project creator
-function vite
-    printf "Project name: \n"
-    set -l PROJ_NAME ""
-    if command -v gum >/dev/null 2>&1
-        set PROJ_NAME (gum input --placeholder "my-app")
-    else
-        read -P "my-app: " PROJ_NAME
-    end
-
-    if test -z "$PROJ_NAME"
-        printf "❌ Missing project name\n"
-        return 1
-    end
-
-    set -l PKG_MAN ""
-    for pm in npm pnpm yarn bun
-        if command -v "$pm" >/dev/null 2>&1
-            set PKG_MAN "$pm"
-            break
-        end
-    end
-
-    if test -z "$PKG_MAN"
-        printf "❌ No package manager found\n"
-        return 1
-    end
-    printf "🚀 Using %s\n" "$PKG_MAN"
-
-    switch "$PKG_MAN"
-        case npm
-            npm create vite@latest "$PROJ_NAME" -y -- --template react --no-interactive
-        case pnpm
-            pnpm create vite "$PROJ_NAME" --template react --no-interactive
-        case yarn
-            yarn create vite "$PROJ_NAME" --template react --no-interactive
-        case bun
-            bun create vite "$PROJ_NAME" --template react --no-interactive
-    end
-    or begin
-        printf "❌ Project creation failed\n"
-        return 1
-    end
-
-    cd "$PROJ_NAME"; or return 1
-    printf "📦 Installing dependencies...\n"
-    $PKG_MAN install; or begin
-        printf "❌ Install failed\n"
-        return 1
-    end
-
-    mkdir -p .vscode
-    printf '{\n  "version": "2.0.0",\n  "tasks": [\n    {\n      "label": "dev",\n      "type": "shell",\n      "command": "npm run dev",\n      "isBackground": true,\n      "runOptions": {\n        "runOn": "folderOpen"\n      },\n      "problemMatcher": []\n    }\n  ]\n}\n' > .vscode/tasks.json
-
-    printf "🧠 Opening in VS Code...\n"
-    command -v code >/dev/null 2>&1; and code .
-
-    printf "🌐 Dev server will auto-start inside VS Code terminal\n"
-    printf "✅ Done!\n"
 end
 
 # Auto-cd with case-insensitive matching and multi-match selection
@@ -946,7 +1080,7 @@ function __auto_tree_on_cd --on-variable PWD
     test "$PWD" = "$HOME"; and return
 
     if command -v eza >/dev/null 2>&1
-        eza -T --level=2 --color=always --icons=always --group-directories-first \
+        eza -T --level=1 --color=always --icons=always --group-directories-first \
             --ignore-glob="node_modules|.git|.venv|target|vendor|.cache|.next|dist|build"
     else
         ls
