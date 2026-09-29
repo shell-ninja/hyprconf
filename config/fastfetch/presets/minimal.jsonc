@@ -11,9 +11,9 @@
     "logo": {
         "source": "~/.local/share/fastfetch/images/ryuzaki.icon",
     	"type": "kitty",
-    	"height": 11,
+    	"height": 10,
     	"padding": {
-    		"top": 1,
+    		"top": 2,
             "left": 2
     	}
     },
@@ -21,6 +21,7 @@
         "separator": "    "
     },
     "modules": [
+    "break",
     "break",
 	{
             "type": "custom",
