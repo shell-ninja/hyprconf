@@ -320,9 +320,11 @@ fi
 if [[ -f "$HOME/.local/state/dolphinstaterc" ]]; then
     mv "$HOME/.local/state/dolphinstaterc" "$HOME/.local/state/dolphinstaterc.back"
 fi
+
 if [[ -d "$HOME/.local/state/noctalia" ]]; then
     mv "$HOME/.local/state/noctalia" "$HOME/.local/state/noctalia.back"
 fi
+
 if [[ -d "$HOME/.local/share/konsole" ]]; then
     mv "$HOME/.local/share/konsole" "$HOME/.local/share/konsole.back"
 fi
@@ -333,6 +335,7 @@ if [[ -d "$dir/local/state/noctalia" ]]; then
     cp -r "$dir/local/state/noctalia" "$HOME/.local/state/"
     find "$HOME/.local/state/noctalia" -type f -exec sed -i "s|~|$HOME|g; s|/home/[^/]*|$HOME|g" {} + 2>/dev/null || true
 fi
+
 [[ -d "$dir/local/share/konsole" ]] && cp -r "$dir/local/share/konsole" "$HOME/.local/share/"
 
 # Wayland session file installation
@@ -617,9 +620,6 @@ configure_noctalia_location() {
     fi
 }
 
-# Ensure default Hyprlock theme symlink
-ln -sf "$HOME/.hyprconf/hypr/lockscreens/hyprlock-1.conf" "$HOME/.hyprconf/hypr/hyprlock.conf"
-
 # Run selection menus
 select_noctalia_bar_config
 select_noctalia_launcher_config
@@ -644,7 +644,7 @@ fi
 if command -v gsettings &> /dev/null; then
     gsettings set org.gnome.desktop.interface gtk-theme "adw-gtk3" &> /dev/null || true
     gsettings set org.gnome.desktop.interface color-scheme "prefer-dark" &> /dev/null || true
-    gsettings set org.gnome.desktop.interface icon-theme "Kora" &> /dev/null || true
+    gsettings set org.gnome.desktop.interface icon-theme "kora" &> /dev/null || true
     gsettings set org.gnome.desktop.interface cursor-theme "Bibata-Modern-Ice" &> /dev/null || true
 fi
 
