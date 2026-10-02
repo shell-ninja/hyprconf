@@ -648,10 +648,27 @@ if command -v gsettings &> /dev/null; then
     gsettings set org.gnome.desktop.interface cursor-theme "Bibata-Modern-Ice" &> /dev/null || true
 fi
 
+mkdir -p ~/.config/Kvantum
+
+# 1. Detect KDE configuration tool for kdeglobals
+if command -v kwriteconfig6 &> /dev/null; then
+    KWRITECONFIG="kwriteconfig6"
+elif command -v kwriteconfig5 &> /dev/null; then
+    KWRITECONFIG="kwriteconfig5"
+elif command -v kwriteconfig &> /dev/null; then
+    KWRITECONFIG="kwriteconfig"
+fi
+
+# 2. Set KDE Icon Theme
+if [ -n "$KWRITECONFIG" ]; then
+    "$KWRITECONFIG" --file kdeglobals --group Icons --key Theme "kora"
+fi
+
+# 3. Set Kvantum Theme (crudini works here, or fallback to kwriteconfig)
 if command -v crudini &> /dev/null; then
-    mkdir -p ~/.config/Kvantum
-    crudini --set ~/.config/Kvantum/kvantum.kvconfig General theme "Dracula" &> /dev/null || true
-    crudini --set ~/.config/kdeglobals Icons Theme "TokyoNight" &> /dev/null || true
+    crudini --set ~/.config/Kvantum/kvantum.kvconfig General theme "Dracula"
+elif [ -n "$KWRITECONFIG" ]; then
+    "$KWRITECONFIG" --file ~/.config/Kvantum/kvantum.kvconfig --group General --key theme "Dracula"
 fi
 
 # Set Dolphin / KDE default terminal to kitty
