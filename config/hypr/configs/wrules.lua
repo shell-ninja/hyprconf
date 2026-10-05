@@ -23,7 +23,6 @@ float_center("hyprland-share-picker")
 float_center("[Kk]vantummanager")
 float_center("[Ll]xappearance")
 float_center("eog")
-float_center("[Tt]hunar")
 float_center("[Gg]nome-disks")
 float_center("org.kde.kcalc")
 float_center("org.telegram.desktop")
@@ -73,8 +72,9 @@ hl.window_rule({
 })
 
 -- Kitty titles
-hl.window_rule({ match = { class = "^(kitty)$", title = "^(update|floating|yazi|monitor|browser)$" }, float = true })
-hl.window_rule({ match = { class = "^(kitty)$", title = "^(yazi|update|browser)$" }, center = true })
+hl.window_rule({ match = { class = "^(kitty)$", title = "^(main)$" }, tile = true })
+hl.window_rule({ match = { class = "^(kitty)$", title = "^(update|floating|yazi|monitor|browser|ide)$" }, float = true })
+hl.window_rule({ match = { class = "^(kitty)$", title = "^(yazi|update|browser|ide)$" }, center = true })
 
 -- Size rules
 hl.window_rule({ match = { class = "^([Kk]vantummanager)$" }, size = "monitor_w*0.55 monitor_h*0.75" })
@@ -88,6 +88,7 @@ hl.window_rule({ match = { class = "^(kitty)$", title = "^(update)$" }, size = "
 hl.window_rule({ match = { class = "^(kitty)$", title = "^(yazi)$" }, size = "monitor_w*0.6 monitor_h*0.6" })
 hl.window_rule({ match = { class = "^(kitty)$", title = "^(monitor)$" }, size = "monitor_w*0.5 monitor_h*0.55" })
 hl.window_rule({ match = { class = "^(kitty)$", title = "^(browser)$" }, size = "monitor_w*0.5 monitor_h*0.6" })
+hl.window_rule({ match = { class = "^(kitty)$", title = "^(ide)$" }, size = "monitor_w*0.35 monitor_h*0.4" })
 hl.window_rule({ match = { class = "^(kitty)$", title = "^(floating)$" }, size = "monitor_w*0.55 monitor_h*0.75" })
 hl.window_rule({ match = { class = "^(com.obsproject.Studio)$" }, size = "monitor_w*0.5 monitor_h*0.7" })
 hl.window_rule({ match = { class = "^(org.telegram.desktop)$" }, size = "monitor_w*0.6 monitor_h*0.8" })

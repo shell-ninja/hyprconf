@@ -30,7 +30,7 @@ SUPER + P  󰶻  Toggle Pseudo-Tiling
 SUPER + SHIFT + P  󰶻  Toggle Pseudo-Tiling
 SUPER + X  󰶻  Open Session / Power Menu
 SUPER + SHIFT + L  󰶻  Lock Screen
-SUPER + C  󰶻  Open Code Editor (VS Code / Codium)
+SUPER + C  󰶻  Open IDE (VS Code / Codium / Antigravity)
 SUPER + B  󰶻  Open Default Browser
 SUPER + SHIFT + B  󰶻  Open Brave (Incognito)
 ALT + B  󰶻  Reset Default Browser
@@ -103,7 +103,7 @@ execute_action() {
         *"Toggle Pseudo-Tiling"*) hyprctl dispatch pseudo ;;
         *"Open Session / Power Menu"*) noctalia msg panel-toggle session ;;
         *"Lock Screen"*) noctalia msg session lock ;;
-        *"Open Code Editor (VS Code"*) (code || codium) & ;;
+        *"Open IDE ("*|*"Open Code Editor ("*) "$scripts_dir/ide.sh" & ;;
         *"Open Default Browser"*) "$scripts_dir/browser.sh" op & ;;
         *"Open Brave (Incognito)"*) brave --incognito & ;;
         *"Reset Default Browser"*) "$scripts_dir/default_browser.sh" --reset & ;;

@@ -10,10 +10,21 @@ cyan="\e[1;36m"
 orange="\x1b[38;5;214m"
 end="\e[0m"
 
+scripts_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+[[ -f "$scripts_dir/colors.sh" ]] && source "$scripts_dir/colors.sh"
+
+primary="${primary:-#ac67e4}"
+secondary="${secondary:-#d65cd1}"
+surface="${surface:-#201628}"
+foreground="${foreground:-#f2f2f3}"
+on_secondary="${on_secondary:-#1f1825}"
+
 # Gum banner or fallback ASCII
 display_text() {
     gum style \
         --border rounded \
+        --border-foreground "$secondary" \
+        --foreground "$primary" \
         --align center \
         --width 60 \
         --margin "1" \
@@ -142,15 +153,18 @@ echo
 
 # Ask for uninstallation confirmation
 if ! gum confirm "Would you like to continue?" \
-    --prompt.foreground "#e1a5cf" \
+    --prompt.foreground "$foreground" \
     --affirmative "Continue" \
-    --selected.background "#e1a5cf" \
-    --selected.foreground "#070415" \
+    --selected.background "$primary" \
+    --selected.foreground "$on_secondary" \
+    --unselected.background "$surface" \
+    --unselected.foreground "$foreground" \
     --negative "Skip"
 then
     gum spin \
         --spinner dot \
-        --spinner.foreground "#e1a5cf" \
+        --spinner.foreground "$primary" \
+        --title.foreground "$foreground" \
         --title "Skipping the uninstallation process..." -- \
         sleep 2
     exit 0
@@ -159,10 +173,12 @@ fi
 # Ask about wallpaper backup
 msg ask "Would you like to backup your ${cyan}Wallpapers${end}?"
 if gum confirm "Choose" \
-    --prompt.foreground "#e1a5cf" \
+    --prompt.foreground "$foreground" \
     --affirmative "BackUp" \
-    --selected.background "#e1a5cf" \
-    --selected.foreground "#070415" \
+    --selected.background "$primary" \
+    --selected.foreground "$on_secondary" \
+    --unselected.background "$surface" \
+    --unselected.foreground "$foreground" \
     --negative "Remove"
 then
     mkdir -p "$HOME/Wallpapers-Backup"

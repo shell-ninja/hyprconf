@@ -42,8 +42,7 @@ hl.bind(mainMod .. " + ALT + V", hl.dsp.exec_cmd("hyprctl dispatch workspaceopt 
 hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen())
 hl.bind(mainMod .. " + D", hl.dsp.exec_cmd(ipc .. "panel-toggle launcher"))
 hl.bind(mainMod .. " + Space", hl.dsp.exec_cmd(ipc .. "panel-open launcher \">\""))
-hl.bind(mainMod .. " + ALT + C",
-    hl.dsp.exec_cmd(ipc .. "panel-toggle clipboard"))
+hl.bind(mainMod .. " + ALT + C", hl.dsp.exec_cmd(ipc .. "panel-toggle clipboard"))
 hl.bind(mainMod .. " + SHIFT + D", hl.dsp.exec_cmd(ipc .. "panel-open launcher \">emo\""))
 hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
 hl.bind(mainMod .. " + SHIFT + P", hl.dsp.window.pseudo())
@@ -53,7 +52,7 @@ hl.bind(mainMod .. " + X", hl.dsp.exec_cmd(ipc .. "panel-toggle session"))
 hl.bind(mainMod .. " + SHIFT + L", hl.dsp.exec_cmd(ipc .. "session lock"))
 
 -- ── Browser / apps ───────────────────────────────────────────────────────────
-hl.bind(mainMod .. " + C", hl.dsp.exec_cmd("code || codium"))
+hl.bind(mainMod .. " + C", hl.dsp.exec_cmd(scripts_dir .. "/ide.sh"))
 hl.bind(mainMod .. " + B", hl.dsp.exec_cmd(scripts_dir .. "/browser.sh op"))
 hl.bind(mainMod .. " + SHIFT + B", hl.dsp.exec_cmd("brave --incognito"))
 hl.bind(alt .. " + B", hl.dsp.exec_cmd(scripts_dir .. "/default_browser.sh --reset"))

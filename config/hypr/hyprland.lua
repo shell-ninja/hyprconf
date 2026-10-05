@@ -1,4 +1,11 @@
 -- -- -- hyprland.lua – Main configuration loader
+-- Invalidate module cache on reload
+for k in pairs(package.loaded) do
+    if k:find("^configs%.") or k == "noctalia" then
+        package.loaded[k] = nil
+    end
+end
+
 -- -- -- Load all separate Lua files in order
 
 require("configs.configs")

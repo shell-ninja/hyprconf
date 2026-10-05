@@ -36,4 +36,8 @@ fi
 
 
 "$scripts_dir/notification.sh" sys
+
 "$scripts_dir/default_browser.sh"
+
+# start my ftp server.
+"$HOME/.local/bin/ftpsrv.py" --start

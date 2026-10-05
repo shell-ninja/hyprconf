@@ -20,6 +20,7 @@ selection="${*:-Selected Area}"
 
 case "$selection" in
     [Ff]ull*|--full|-f|screen|Screen)
+        # sleep 0.2
         sleep 0.2
         grimblast copysave screen "$temp_screenshot" && ss_sound && \
         satty --filename "$temp_screenshot" --output-filename "$save_dir/$save_file" --early-exit

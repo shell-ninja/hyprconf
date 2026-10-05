@@ -24,4 +24,6 @@ hl.window_rule({
 -- IDE
 hl.window_rule({ match = { class = "^(codium|codium-url-handler|VSCodium)$" }, tag = "+ide" })
 hl.window_rule({ match = { class = "^(VSCode|code-url-handler|code)$" }, tag = "+ide" })
+hl.window_rule({ match = { class = "^(antigravity|antigravity-ide)$" }, tag = "+ide" })
+hl.window_rule({ match = { class = "^(cursor|zed|windsurf)$" }, tag = "+ide" })
 hl.window_rule({ match = { class = "^(jetbrains-.+)$" }, tag = "+ide" })

@@ -29,8 +29,11 @@ except ValueError:
 
 import os
 import shutil
+import socket
 import subprocess
+import tempfile
 import threading
+import time
 from pathlib import Path
 
 from gi.repository import Adw, Gio, GLib, Gtk
@@ -399,13 +402,14 @@ def detect_sources():
 
         # AUR — yay/paru -Qua only lists AUR upgrades (no --sync, very fast)
         if aur_bin:
+            aur_flags = "--sudoloop" if aur_name == "yay" else ""
             sources.append(PMSource(
                 key="aur",
                 label=f"AUR  ({aur_name})",
                 subtitle=f"Arch User Repository via {aur_name}",
                 is_aur=True,
                 check_cmd=f"{aur_bin} -Qua 2>/dev/null | wc -l",
-                update_cmd=f"{aur_bin} -Sua --noconfirm",
+                update_cmd=f"{aur_bin} -Sua --noconfirm {aur_flags}".strip(),
                 needs_sudo=False,
             ))
 
@@ -453,13 +457,13 @@ def detect_sources():
     return sources
 
 
-def build_update_script(selected, password: str | None):
+def build_update_script(selected):
     """Build a shell script.
 
-    If *password* is provided, privileged commands are prefixed with
-    ``sudo -S`` and the password is written to the process stdin once
-    before streaming begins.  Non-privileged commands (AUR helpers) run
-    as the current user — AUR helpers refuse to run as root.
+    Privileged commands run through `sudo`, which will invoke our custom
+    SUDO_ASKPASS socket helper whenever authentication is required,
+    prompting the user interactively in the GUI. Non-privileged commands
+    (AUR helpers, flatpak) run as the current user.
 
     NOTE: use printf (not echo '...') so that \\033 in the format string
     becomes a real ESC byte that VTE renders as colour.
@@ -468,12 +472,8 @@ def build_update_script(selected, password: str | None):
     for src in selected:
         # printf interprets \\033 as ESC; single-quoted echo does NOT.
         header = f"printf '\\033[1;36m\\n══ {src.label} ══\\033[0m\\n'"
-        if src.needs_sudo and password is not None:
-            # sudo -S reads one password line from stdin; subsequent sudo
-            # calls in the same session reuse cached credentials.
-            cmd = f"sudo -S {src.update_cmd} 2>&1"
-        elif src.needs_sudo:
-            cmd = src.update_cmd
+        if src.needs_sudo:
+            cmd = f"sudo {src.update_cmd}"
         else:
             cmd = src.update_cmd
         parts.append(f"{header} && {cmd}")
@@ -481,17 +481,18 @@ def build_update_script(selected, password: str | None):
 
 
 # =============================================================================
-#  Password dialog
+#  Password dialog & Askpass IPC Server
 # =============================================================================
 
 
 class PasswordDialog(Adw.AlertDialog):
-    """Styled modal password prompt shown before privileged updates."""
+    """Styled modal password prompt shown before or during privileged updates."""
 
-    def __init__(self, parent):
+    def __init__(self, parent, body: str = "Enter your sudo password to apply system updates.",
+                 initial_password: str = ""):
         super().__init__(
             heading="Authentication Required",
-            body="Enter your sudo password to apply system updates.",
+            body=body,
         )
         self.add_response("cancel", "Cancel")
         self.add_response("ok", "Authenticate")
@@ -507,6 +508,8 @@ class PasswordDialog(Adw.AlertDialog):
         self._entry.set_placeholder_text("Password…")
         self._entry.set_hexpand(True)
         self._entry.set_margin_top(8)
+        if initial_password:
+            self._entry.set_text(initial_password)
         # Add a show/hide icon to the right
         self._entry.set_icon_from_icon_name(
             Gtk.EntryIconPosition.SECONDARY, "view-conceal-symbolic"
@@ -517,6 +520,14 @@ class PasswordDialog(Adw.AlertDialog):
         self._entry.connect("activate", lambda _: self.emit("response", "ok"))
         self.set_extra_child(self._entry)
 
+        def _focus_entry():
+            self._entry.grab_focus()
+            if initial_password:
+                self._entry.select_region(0, -1)
+            return GLib.SOURCE_REMOVE
+
+        GLib.idle_add(_focus_entry)
+
     def _toggle_visibility(self, entry, _pos):
         vis = not entry.get_visibility()
         entry.set_visibility(vis)
@@ -525,6 +536,227 @@ class PasswordDialog(Adw.AlertDialog):
 
     def get_password(self) -> str:
         return self._entry.get_text()
+
+
+class AskpassServer:
+    """IPC server that serves sudo/askpass requests dynamically during updates.
+
+    Creates a UNIX domain socket and an askpass executable script. If sudo asks
+    for credentials at the start or anytime in the middle of an update (e.g. AUR
+    helper invoking sudo pacman -U, or sudo credential timeout), this server
+    handles the request by displaying a PasswordDialog in the GUI.
+    """
+
+    def __init__(self, parent_window, initial_password: str | None = None):
+        self.parent = parent_window
+        self.cached_password = initial_password
+        self.initial_auth_used = False
+        self.active_dialog = None
+        self._serving = True
+        self._lock = threading.Lock()
+        self._active_evt = None
+        self._failed_attempts = 0
+        self._last_attempt_time = 0.0
+
+        base_dir = os.environ.get("XDG_RUNTIME_DIR") or "/tmp"
+        self.temp_dir = tempfile.mkdtemp(prefix="pkgupdate-auth-", dir=base_dir)
+        self.sock_path = os.path.join(self.temp_dir, "askpass.sock")
+        self.askpass_bin = os.path.join(self.temp_dir, "askpass")
+        self.sudo_bin = os.path.join(self.temp_dir, "sudo")
+
+        self._setup_files()
+        self._start_server()
+
+    def _setup_files(self):
+        # 1. Askpass client executable
+        askpass_code = f"""#!/usr/bin/env python3
+import socket, sys, os
+
+sock_path = os.environ.get("PKGUPDATE_SOCK", {repr(self.sock_path)})
+prompt = sys.argv[1] if len(sys.argv) > 1 else ""
+
+if not os.path.exists(sock_path):
+    sys.exit(1)
+
+try:
+    s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    s.connect(sock_path)
+    req = f"GET {{prompt}}\\n".encode("utf-8", errors="replace")
+    s.sendall(req)
+    data = b""
+    while b"\\n" not in data:
+        chunk = s.recv(1024)
+        if not chunk:
+            break
+        data += chunk
+    s.close()
+    line = data.decode("utf-8", errors="replace").strip()
+    if line.startswith("OK "):
+        print(line[3:])
+        sys.exit(0)
+    else:
+        sys.exit(1)
+except Exception:
+    sys.exit(1)
+"""
+        with open(self.askpass_bin, "w") as f:
+            f.write(askpass_code)
+        os.chmod(self.askpass_bin, 0o755)
+
+        # 2. Sudo wrapper script to ensure -A is always passed when running headless
+        sudo_code = """#!/bin/sh
+for arg in "$@"; do
+    if [ "$arg" = "-A" ] || [ "$arg" = "-S" ]; then
+        exec /usr/bin/sudo "$@"
+    fi
+done
+exec /usr/bin/sudo -A "$@"
+"""
+        with open(self.sudo_bin, "w") as f:
+            f.write(sudo_code)
+        os.chmod(self.sudo_bin, 0o755)
+
+    def _start_server(self):
+        self.server_sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self.server_sock.bind(self.sock_path)
+        os.chmod(self.sock_path, 0o600)
+        self.server_sock.listen(5)
+        self.thread = threading.Thread(target=self._server_loop, daemon=True)
+        self.thread.start()
+
+    def _server_loop(self):
+        while self._serving:
+            try:
+                conn, _ = self.server_sock.accept()
+            except Exception:
+                break
+            threading.Thread(target=self._handle_client, args=(conn,), daemon=True).start()
+
+    def _handle_client(self, conn):
+        try:
+            req_data = b""
+            while b"\n" not in req_data:
+                chunk = conn.recv(1024)
+                if not chunk:
+                    break
+                req_data += chunk
+            prompt = req_data.decode("utf-8", errors="replace").strip()
+            if prompt.startswith("GET "):
+                prompt = prompt[4:].strip()
+
+            password = self._get_password(prompt)
+            if password is not None:
+                conn.sendall(f"OK {password}\n".encode("utf-8"))
+            else:
+                conn.sendall(b"CANCEL\n")
+        except Exception:
+            try:
+                conn.sendall(b"CANCEL\n")
+            except Exception:
+                pass
+        finally:
+            try:
+                conn.close()
+            except Exception:
+                pass
+
+    def _get_password(self, prompt: str) -> str | None:
+        with self._lock:
+            if not self._serving:
+                return None
+
+            now = time.time()
+            if now - self._last_attempt_time > 3.0:
+                self._failed_attempts = 0
+            self._last_attempt_time = now
+
+            # If an initial password was provided and not yet used, try it first
+            if self.cached_password and not self.initial_auth_used:
+                self.initial_auth_used = True
+                self._failed_attempts += 1
+                return self.cached_password
+
+            # Otherwise, prompt the user via GUI modal dialog
+            evt = threading.Event()
+            self._active_evt = evt
+            result = {"password": None}
+
+            is_retry = self._failed_attempts > 0
+            if is_retry:
+                body = "Authentication failed. Please enter your sudo password again:"
+                initial_pw = ""
+            elif self.initial_auth_used:
+                body = "Enter your sudo password to continue updating packages."
+                initial_pw = self.cached_password or ""
+            else:
+                body = "Enter your sudo password to apply system updates."
+                initial_pw = self.cached_password or ""
+
+            def _show_dialog():
+                if not self._serving:
+                    evt.set()
+                    return
+                if hasattr(self.parent, "present"):
+                    try:
+                        self.parent.present()
+                    except Exception:
+                        pass
+                dlg = PasswordDialog(self.parent, body=body, initial_password=initial_pw)
+                self.active_dialog = dlg
+
+                def _on_response(_d, response):
+                    if response == "ok":
+                        result["password"] = dlg.get_password()
+                    self.active_dialog = None
+                    try:
+                        dlg.close()
+                    except Exception:
+                        pass
+                    evt.set()
+
+                dlg.connect("response", _on_response)
+                if isinstance(self.parent, Gtk.Widget):
+                    dlg.present(self.parent)
+                else:
+                    dlg.present()
+
+            GLib.idle_add(_show_dialog)
+            evt.wait()
+            self._active_evt = None
+
+            if result["password"] is not None:
+                self.cached_password = result["password"]
+                self.initial_auth_used = True
+                self._failed_attempts += 1
+                return result["password"]
+            else:
+                return None
+
+    def get_env(self) -> dict:
+        env = dict(os.environ)
+        old_path = env.get("PATH", "")
+        env["PATH"] = f"{self.temp_dir}:{old_path}"
+        env["SUDO_ASKPASS"] = self.askpass_bin
+        env["PKGUPDATE_SOCK"] = self.sock_path
+        return env
+
+    def shutdown(self):
+        self._serving = False
+        self.cached_password = None
+        if self._active_evt:
+            self._active_evt.set()
+        if self.active_dialog:
+            try:
+                GLib.idle_add(self.active_dialog.close)
+            except Exception:
+                pass
+            self.active_dialog = None
+        try:
+            self.server_sock.close()
+        except Exception:
+            pass
+        if os.path.exists(self.temp_dir):
+            shutil.rmtree(self.temp_dir, ignore_errors=True)
 
 
 
@@ -704,6 +936,7 @@ class UpdaterWindow(Adw.ApplicationWindow):
         self.widgets = {}
         self.running = False
         self.proc = None
+        self.askpass_server = None
         self._results = {}      # key -> int|None
         self._progress_id = None
 
@@ -999,7 +1232,7 @@ class UpdaterWindow(Adw.ApplicationWindow):
         needs_sudo = any(s.needs_sudo for s in selected)
         if needs_sudo:
             # Show password dialog; actual launch happens in the response handler
-            dlg = PasswordDialog(self)
+            dlg = PasswordDialog(self, body="Enter your sudo password to apply system updates.")
             dlg.connect("response", self._on_auth_response, selected)
             dlg.present(self)
         else:
@@ -1027,12 +1260,19 @@ class UpdaterWindow(Adw.ApplicationWindow):
 
         labels = ", ".join(s.label for s in selected)
         self.append_output(f"\033[1;36m → Starting update: {labels}\033[0m\n\n")
-        if any(s.needs_sudo for s in selected):
-            self.append_output("\033[0;90m  (sudo -S — credentials sent via stdin)\033[0m\n\n")
 
-        script = build_update_script(selected, password)
+        # Set up dynamic askpass IPC server for seamless authentication (start & middle)
+        self.askpass_server = AskpassServer(self, initial_password=password)
+        env = self.askpass_server.get_env()
+
+        exports = (
+            f"export PATH={self.askpass_server.temp_dir}:$PATH\n"
+            f"export SUDO_ASKPASS={self.askpass_server.askpass_bin}\n"
+            f"export PKGUPDATE_SOCK={self.askpass_server.sock_path}\n\n"
+        )
+        script = exports + build_update_script(selected)
         t = threading.Thread(
-            target=self._run_worker, args=(script, password), daemon=True
+            target=self._run_worker, args=(script, env), daemon=True
         )
         t.start()
 
@@ -1042,25 +1282,17 @@ class UpdaterWindow(Adw.ApplicationWindow):
             return True
         return False
 
-    def _run_worker(self, script, password: str | None):
+    def _run_worker(self, script, env):
         try:
             self.proc = subprocess.Popen(
                 ["bash", "-lc", script],
-                stdin=subprocess.PIPE if password else None,
+                stdin=subprocess.DEVNULL,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
+                env=env,
                 text=True,
                 bufsize=1,
             )
-            # Write password immediately so sudo -S can authenticate.
-            # Close stdin right after so the pipe doesn't block downstream reads.
-            if password and self.proc.stdin:
-                try:
-                    self.proc.stdin.write(password + "\n")
-                    self.proc.stdin.flush()
-                    self.proc.stdin.close()
-                except BrokenPipeError:
-                    pass
 
             for line in iter(self.proc.stdout.readline, ""):
                 GLib.idle_add(self.append_output, line)
@@ -1073,6 +1305,13 @@ class UpdaterWindow(Adw.ApplicationWindow):
 
     def _run_done(self, code):
         self.running = False
+
+        if self.askpass_server:
+            try:
+                self.askpass_server.shutdown()
+            except Exception:
+                pass
+            self.askpass_server = None
 
         if self._progress_id:
             GLib.source_remove(self._progress_id)
@@ -1112,6 +1351,12 @@ class UpdaterWindow(Adw.ApplicationWindow):
                 self.proc.terminate()
             except Exception:
                 pass
+        if self.askpass_server:
+            try:
+                self.askpass_server.shutdown()
+            except Exception:
+                pass
+            self.askpass_server = None
         return False
 
 

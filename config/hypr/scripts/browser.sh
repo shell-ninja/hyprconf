@@ -5,6 +5,10 @@ browser_num=$(grep -v -n "default" "$browser_cache" | wc -l)
 browsers=($(grep -v "default" "$browser_cache"))
 default=$(grep "default=" "$browser_cache" | awk -F'=' '{print $2}')
 scripts_dir="$HOME/.config/hypr/scripts"
+[[ -f "$scripts_dir/colors.sh" ]] && source "$scripts_dir/colors.sh"
+primary="${primary:-#ac67e4}"
+secondary="${secondary:-#d65cd1}"
+foreground="${foreground:-#f2f2f3}"
 
 choose_default() {
     if [[ "$browser_num" -gt 1 && -z "$default" ]]; then
@@ -12,7 +16,12 @@ choose_default() {
 
         choose=("${browsers[@]}" "Reset")
         # Prompt user to choose a browser
-        choice=$(gum choose --limit=1 "${choose[@]}")
+        choice=$(gum choose --limit=1 \
+            --cursor="➜ " \
+            --cursor.foreground="$primary" \
+            --item.foreground="$foreground" \
+            --selected.foreground="$primary" \
+            "${choose[@]}")
 
         # Check if a valid choice was made
         if [[ "$choice" == "Reset" ]]; then
