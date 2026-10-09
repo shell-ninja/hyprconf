@@ -28,6 +28,36 @@
 #  Usage:   python3 hypr-settings-gui.py
 # =============================================================================
 
+def _enable_hyprland_blur():
+    """Ensure libhypr_gtkblur.so is loaded to enable Hyprland background blur."""
+    import os
+    import sys
+    from pathlib import Path
+    if os.environ.get("HYPR_GTKBLUR") == "1":
+        return
+    scripts_dir = Path(__file__).resolve().parent
+    so_path = scripts_dir / "libhypr_gtkblur.so"
+    c_path = scripts_dir / "hypr_gtkblur.c"
+    if not so_path.exists() and c_path.exists():
+        import subprocess
+        try:
+            subprocess.run(
+                ["gcc", "-O2", "-shared", "-fPIC", str(c_path), "-o", str(so_path), "-ldl"],
+                check=True,
+                capture_output=True,
+            )
+        except Exception:
+            pass
+    if so_path.exists():
+        env = os.environ.copy()
+        env["HYPR_GTKBLUR"] = "1"
+        preload = env.get("LD_PRELOAD", "")
+        env["LD_PRELOAD"] = f"{so_path}:{preload}".strip(":")
+        os.execve(sys.executable, [sys.executable] + sys.argv, env)
+
+
+_enable_hyprland_blur()
+
 import gi
 
 gi.require_version("Gtk", "4.0")
@@ -1098,6 +1128,19 @@ def wrap_page(*groups):
 # =============================================================================
 
 CUSTOM_CSS = """
+window, .background {
+    background-color: alpha(@window_bg_color, 0.82);
+}
+
+headerbar {
+    background-color: transparent;
+}
+
+navigation-split-view > .sidebar,
+.navigation-sidebar {
+    background-color: alpha(@window_bg_color, 0.4);
+}
+
 @keyframes avatar-pop-in {
     from { opacity: 0; }
     to   { opacity: 1; }

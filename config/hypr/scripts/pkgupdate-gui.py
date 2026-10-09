@@ -9,8 +9,35 @@
 #  Depends: python3-gobject, libadwaita >= 1.4, vte3
 #           sudo pacman -S python-gobject libadwaita vte3
 #
-#  Usage:   python3 pkgupdate-gui.py
-# =============================================================================
+def _enable_hyprland_blur():
+    """Ensure libhypr_gtkblur.so is loaded to enable Hyprland background blur."""
+    import os
+    import sys
+    from pathlib import Path
+    if os.environ.get("HYPR_GTKBLUR") == "1":
+        return
+    scripts_dir = Path(__file__).resolve().parent
+    so_path = scripts_dir / "libhypr_gtkblur.so"
+    c_path = scripts_dir / "hypr_gtkblur.c"
+    if not so_path.exists() and c_path.exists():
+        import subprocess
+        try:
+            subprocess.run(
+                ["gcc", "-O2", "-shared", "-fPIC", str(c_path), "-o", str(so_path), "-ldl"],
+                check=True,
+                capture_output=True,
+            )
+        except Exception:
+            pass
+    if so_path.exists():
+        env = os.environ.copy()
+        env["HYPR_GTKBLUR"] = "1"
+        preload = env.get("LD_PRELOAD", "")
+        env["LD_PRELOAD"] = f"{so_path}:{preload}".strip(":")
+        os.execve(sys.executable, [sys.executable] + sys.argv, env)
+
+
+_enable_hyprland_blur()
 
 import gi
 
@@ -52,12 +79,12 @@ CSS = """
 * { font-family: 'Inter', system-ui, sans-serif; }
 
 window, .background {
-    background-color: @window_bg_color;
+    background-color: alpha(@window_bg_color, 0.82);
     color: @window_fg_color;
 }
 
 headerbar {
-    background-color: @headerbar_bg_color;
+    background-color: transparent;
     border-bottom: 1px solid alpha(@window_fg_color, 0.08);
     box-shadow: none;
     min-height: 48px;
@@ -99,7 +126,7 @@ scrollbar slider:hover { background-color: alpha(@accent_color, 0.5); }
 
 /* Stats bar */
 .stats-bar {
-    background-color: @card_bg_color;
+    background-color: alpha(@card_bg_color, 0.65);
     border: 1px solid alpha(@window_fg_color, 0.08);
     border-radius: 14px;
     padding: 14px 18px;
@@ -127,7 +154,7 @@ scrollbar slider:hover { background-color: alpha(@accent_color, 0.5); }
 
 /* PM Cards */
 .pm-card {
-    background-color: @card_bg_color;
+    background-color: alpha(@card_bg_color, 0.65);
     border-radius: 14px;
     border: 1px solid alpha(@window_fg_color, 0.08);
     padding: 14px 18px;
@@ -136,7 +163,7 @@ scrollbar slider:hover { background-color: alpha(@accent_color, 0.5); }
 
 .pm-card:hover {
     border-color: alpha(@accent_color, 0.35);
-    background-color: shade(@card_bg_color, 1.05);
+    background-color: alpha(@card_bg_color, 0.85);
 }
 
 .pm-card.pm-selected {
@@ -270,7 +297,7 @@ scrollbar slider:hover { background-color: alpha(@accent_color, 0.5); }
 
 /* Terminal */
 .terminal-frame {
-    background-color: @view_bg_color;
+    background-color: alpha(@view_bg_color, 0.75);
     border-radius: 12px;
     border: 1px solid alpha(@window_fg_color, 0.10);
 }

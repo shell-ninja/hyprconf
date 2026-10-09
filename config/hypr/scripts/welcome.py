@@ -10,6 +10,36 @@
 #  Icons: inline SVG, drawn through a mask so they take the current text color.
 # =============================================================================
 
+def _enable_hyprland_blur():
+    """Ensure libhypr_gtkblur.so is loaded to enable Hyprland background blur."""
+    import os
+    import sys
+    from pathlib import Path
+    if os.environ.get("HYPR_GTKBLUR") == "1":
+        return
+    scripts_dir = Path(__file__).resolve().parent
+    so_path = scripts_dir / "libhypr_gtkblur.so"
+    c_path = scripts_dir / "hypr_gtkblur.c"
+    if not so_path.exists() and c_path.exists():
+        import subprocess
+        try:
+            subprocess.run(
+                ["gcc", "-O2", "-shared", "-fPIC", str(c_path), "-o", str(so_path), "-ldl"],
+                check=True,
+                capture_output=True,
+            )
+        except Exception:
+            pass
+    if so_path.exists():
+        env = os.environ.copy()
+        env["HYPR_GTKBLUR"] = "1"
+        preload = env.get("LD_PRELOAD", "")
+        env["LD_PRELOAD"] = f"{so_path}:{preload}".strip(":")
+        os.execve(sys.executable, [sys.executable] + sys.argv, env)
+
+
+_enable_hyprland_blur()
+
 import json
 import subprocess
 import sys
@@ -140,6 +170,14 @@ class SvgIcon(Gtk.Widget):
 
 CSS = """
 * { font-family: 'Inter', system-ui, sans-serif; }
+
+window, .background {
+    background-color: alpha(@window_bg_color, 0.82);
+}
+
+headerbar {
+    background-color: transparent;
+}
 
 .keycap {
     background-color: alpha(@window_fg_color, 0.08);

@@ -45,7 +45,7 @@ hl.window_rule({ match = { class = "^([Tt]hunar)$", title = "^(File Operation Pr
 hl.window_rule({ match = { class = "^([Tt]hunar)$", title = "^(Confirm to replace files)$" }, float = true, center = true })
 
 -- settings app
-hl.window_rule({ match = { class = "^(dev.shellninja.hypr-settings)$", title = "^(Hyprland Settings)$" }, float = true, center = true })
+hl.window_rule({ match = { class = "^(dev.shellninja.hypr-settings)$" }, float = true, center = true })
 
 -- pkgupdate GUI and welcome app
 float_center("dev.shellninja.pkgupdate")
@@ -134,14 +134,18 @@ hl.workspace_rule({
 hl.window_rule({ match = { class = "^(dev\\.noctalia\\.Noctalia)$" }, float = true, size = "monitor_w*0.6 monitor_h*0.75", center = true })
 
 -- Layer rules
-hl.layer_rule({ match = { namespace = "^gtk-layer-shell$" }, blur = true })
+hl.layer_rule({ 
+    match = { namespace = "gtk-layer-shell$" },
+    blur = true,
+    ignore_alpha = 0.5,
+})
 
 -- Noctalia Shell layer rules
 -- Note: ignore_alpha is intentionally NOT applied to the notification surface;
 -- it causes the notification to blink continuously as alpha transitions
 -- cross the threshold and trigger repeated re-renders.
 hl.layer_rule({
-    match = { namespace = "^noctalia-(bar-.+|dock|panel|attached-panel|osd|window-switcher|screen-corner)$" },
+    match = { namespace = "^noctalia-(bar-.+|dock|panel|attached-panel|osd|window-switcher|screen-corner|wallpaper-panel)$" },
     no_anim = true,
     ignore_alpha = 0.5,
     blur = true,
