@@ -168,3 +168,10 @@ hl.workspace_rule({ workspace = "2", persistent = true })
 hl.workspace_rule({ workspace = "3", persistent = true })
 hl.workspace_rule({ workspace = "4", persistent = true })
 hl.workspace_rule({ workspace = "5", persistent = true })
+
+-- Quickshell lock screen acrylic blur
+hl.layer_rule({
+    match = { namespace = "^quickshell$" },
+    blur = true,
+    ignore_alpha = 0.1,
+})

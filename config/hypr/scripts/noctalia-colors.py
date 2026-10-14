@@ -6,6 +6,7 @@ syncs the Qt6 color scheme so Dolphin picks up the new palette,
 and reloads Hyprland and Kitty configurations.
 """
 
+import json
 import os
 import re
 import sys
@@ -20,11 +21,11 @@ CURRENT_WALLPAPER = CACHE_DIR / "current_wallpaper.png"
 LOCK_FILE = Path("/tmp/noctalia_colors_sync.lock")
 SCRIPTS_DIR = Path(HOME) / ".hyprconf/hypr/scripts"
 COLORS_SH = SCRIPTS_DIR / "colors.sh"
+QS_DIR = Path(HOME) / ".hyprconf/quickshell"
 
 
-def generate_shell_colors():
-    """Extract current Noctalia colors from templates and export them as bash variables
-    in colors.sh for use across shell scripts and gum prompts."""
+def get_noctalia_colors():
+    """Extract current Noctalia colors from templates and configs."""
     colors = {
         "primary": "#ac67e4",
         "secondary": "#d65cd1",
@@ -71,6 +72,14 @@ def generate_shell_colors():
     colors["foreground"] = colors.get("on_surface", colors.get("foreground", "#f2f2f3"))
     colors["on_primary"] = colors.get("on_secondary", "#1f1825")
     colors["muted"] = colors.get("color8", colors.get("muted", "#6b6372"))
+
+    return colors
+
+
+def generate_shell_colors(colors=None):
+    """Export Noctalia colors as bash variables in colors.sh for use across shell scripts."""
+    if colors is None:
+        colors = get_noctalia_colors()
 
     content = [
         "#!/usr/bin/env bash",
@@ -123,6 +132,67 @@ def generate_shell_colors():
         print(f"Warning: Failed writing colors.sh: {e}", file=sys.stderr)
 
 
+def sync_quickshell_colors(colors=None):
+    """Generate Theme.qml, colors.json, and qmldir for Quickshell components,
+    and propagate them to all subdirectories (like lockscreen and future components)."""
+    if colors is None:
+        colors = get_noctalia_colors()
+
+    if not QS_DIR.exists():
+        return
+
+    theme_qml_content = f"""pragma Singleton
+import QtQuick
+
+QtObject {{
+    // Noctalia Dynamic Palette
+    readonly property color primary: "{colors.get('primary', '#ac67e4')}"
+    readonly property color secondary: "{colors.get('secondary', '#d65cd1')}"
+    readonly property color accent: "{colors.get('accent', '#ac67e4')}"
+    readonly property color surface: "{colors.get('surface', '#201628')}"
+    readonly property color background: "{colors.get('background', '#201628')}"
+    readonly property color foreground: "{colors.get('foreground', '#f2f2f3')}"
+    readonly property color on_primary: "{colors.get('on_primary', '#1f1825')}"
+    readonly property color on_secondary: "{colors.get('on_secondary', '#1f1825')}"
+    readonly property color on_surface: "{colors.get('on_surface', '#f2f2f3')}"
+    readonly property color error: "{colors.get('error', '#fd4663')}"
+    readonly property color on_error: "{colors.get('on_error', '#1f1825')}"
+    readonly property color muted: "{colors.get('muted', '#6b6372')}"
+
+    // Color helper functions
+    function alpha(c, a) {{
+        return Qt.rgba(c.r, c.g, c.b, a)
+    }}
+}}
+"""
+
+    qmldir_content = "singleton Theme 1.0 Theme.qml\n"
+
+    try:
+        # 1. Write root Theme.qml, qmldir, and colors.json
+        (QS_DIR / "Theme.qml").write_text(theme_qml_content)
+        (QS_DIR / "qmldir").write_text(qmldir_content)
+        (QS_DIR / "colors.json").write_text(json.dumps(colors, indent=2) + "\n")
+
+        # 2. Propagate symlinks into all subdirectories (lockscreen, etc.)
+        for item in QS_DIR.iterdir():
+            if item.is_dir() and not item.name.startswith("."):
+                sub_theme = item / "Theme.qml"
+                sub_qmldir = item / "qmldir"
+
+                if not sub_theme.is_symlink() or os.readlink(sub_theme) != "../Theme.qml":
+                    sub_theme.unlink(missing_ok=True)
+                    sub_theme.symlink_to("../Theme.qml")
+
+                if not sub_qmldir.is_symlink() or os.readlink(sub_qmldir) != "../qmldir":
+                    sub_qmldir.unlink(missing_ok=True)
+                    sub_qmldir.symlink_to("../qmldir")
+
+        print(f"Quickshell colors synced: {QS_DIR}/Theme.qml")
+    except Exception as e:
+        print(f"Warning: Quickshell color sync failed: {e}", file=sys.stderr)
+
+
 def sync_qt6ct_colors():
     """Copy the noctalia qt6ct color scheme to the live config directory
     so Dolphin and other Qt6 apps always use the current palette."""
@@ -134,6 +204,8 @@ def sync_qt6ct_colors():
         if src.exists():
             shutil.copy2(src, dst)
             print(f"Qt6ct color scheme synced: {dst}")
+    except shutil.SameFileError:
+        pass
     except Exception as e:
         print(f"Warning: Qt6ct color sync failed: {e}", file=sys.stderr)
 
@@ -196,8 +268,14 @@ def sync_noctalia_theme(wallpaper_path=None, explicit_change=False):
         except Exception as e:
             print(f"Warning: Noctalia templates-apply failed: {e}", file=sys.stderr)
 
+    # Get colors once
+    colors = get_noctalia_colors()
+
     # Generate colors.sh for shell scripts and gum
-    generate_shell_colors()
+    generate_shell_colors(colors)
+
+    # Sync Quickshell components (Theme.qml, qmldir, colors.json)
+    sync_quickshell_colors(colors)
 
     # Sync qt6ct color scheme so Dolphin picks up the new palette
     sync_qt6ct_colors()

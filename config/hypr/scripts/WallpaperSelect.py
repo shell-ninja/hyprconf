@@ -1,5 +1,35 @@
 #!/usr/bin/env python3
 
+def _enable_hyprland_blur():
+    """Ensure libhypr_gtkblur.so is loaded to enable Hyprland background blur."""
+    import os
+    import sys
+    from pathlib import Path
+    if os.environ.get("HYPR_GTKBLUR") == "1":
+        return
+    scripts_dir = Path(__file__).resolve().parent
+    so_path = scripts_dir / "libhypr_gtkblur.so"
+    c_path = scripts_dir / "hypr_gtkblur.c"
+    if not so_path.exists() and c_path.exists():
+        import subprocess
+        try:
+            subprocess.run(
+                ["gcc", "-O2", "-shared", "-fPIC", str(c_path), "-o", str(so_path), "-ldl"],
+                check=True,
+                capture_output=True,
+            )
+        except Exception:
+            pass
+    if so_path.exists():
+        env = os.environ.copy()
+        env["HYPR_GTKBLUR"] = "1"
+        preload = env.get("LD_PRELOAD", "")
+        env["LD_PRELOAD"] = f"{so_path}:{preload}".strip(":")
+        os.execve(sys.executable, [sys.executable] + sys.argv, env)
+
+
+_enable_hyprland_blur()
+
 import concurrent.futures
 import glob
 import hashlib
@@ -501,7 +531,7 @@ combobox menuitem label {{
 }}
 
 .main-container {{
-    background-color: {_rgba_css(p['mSurface'], 0.92)};
+    background-color: {_rgba_css(p['mSurface'], 0.82)};
     border: 1px solid {_rgba_css(p['mOutline'], 0.30)};
     border-radius: 22px;
     padding: 12px 18px 12px 18px;
@@ -2243,21 +2273,20 @@ class WallpaperPanel(Gtk.Window):
 
 
 def main():
-    pid = os.getpid()
-    script_name = os.path.basename(__file__)
+    my_pid = os.getpid()
+    my_ppid = os.getppid()
     res = subprocess.run(
-        f"pgrep -f '{script_name}' | grep -v '^{pid}$'; pgrep -f 'noctalia-wallpaper-panel.py' | grep -v '^{pid}$'",
-        shell=True, stdout=subprocess.PIPE, text=True
+        ["pgrep", "-f", r"python.*WallpaperSelect\.py|python.*noctalia-wallpaper-panel\.py"],
+        stdout=subprocess.PIPE, text=True
     )
-    pids = [p for p in res.stdout.strip().split('\n') if p]
-    killed_any = False
-    for p in set(pids):
-        try:
-            os.kill(int(p), signal.SIGKILL)
-            killed_any = True
-        except (ProcessLookupError, ValueError):
-            pass
-    if killed_any:
+    pids = [int(p) for p in res.stdout.strip().split() if p.isdigit()]
+    other_pids = [p for p in pids if p != my_pid and p != my_ppid]
+    if other_pids:
+        for p in set(other_pids):
+            try:
+                os.kill(p, signal.SIGKILL)
+            except (ProcessLookupError, ValueError):
+                pass
         sys.exit(0)
 
     win = WallpaperPanel()

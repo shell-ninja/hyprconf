@@ -50,6 +50,7 @@ hl.bind(mainMod .. " + SHIFT + P", hl.dsp.window.pseudo())
 -- ── Logout / lock ─────────────────────────────────────────────────────────────
 hl.bind(mainMod .. " + X", hl.dsp.exec_cmd(ipc .. "panel-toggle session"))
 hl.bind(mainMod .. " + SHIFT + L", hl.dsp.exec_cmd(ipc .. "session lock"))
+-- hl.bind(mainMod .. " + SHIFT + L", hl.dsp.exec_cmd("qs -c lockscreen")) # soon it will be available.
 
 -- ── Browser / apps ───────────────────────────────────────────────────────────
 hl.bind(mainMod .. " + C", hl.dsp.exec_cmd(scripts_dir .. "/ide.sh"))
@@ -67,6 +68,7 @@ hl.bind(mainMod .. " + CTRL + R", hl.dsp.exec_cmd("hyprctl reload && notify-send
 hl.bind(ctrl .. " + U", hl.dsp.exec_cmd(scripts_dir .. "/pkgupdate-gui.py"))
 hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd(scripts_dir .. "/startup.sh &> /dev/null"))
 hl.bind(mainMod .. " + S", hl.dsp.exec_cmd(scripts_dir .. "/settings.py"))
+-- hl.bind(mainMod .. " + SHIFT + S", hl.dsp.exec_cmd(scripts_dir .. "/qs-settings.sh")) # soon it will be available.
 hl.bind(mainMod .. " + F1", hl.dsp.exec_cmd(scripts_dir .. "/animations_toggle.sh"))
 hl.bind(mainMod .. " + CTRL + P", hl.dsp.exec_cmd(scripts_dir .. "/regenerate-colors.sh"))
 
