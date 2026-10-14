@@ -2170,6 +2170,7 @@ class WallpaperPanel(Gtk.Window):
 
             subprocess.run(f"noctalia msg wallpaper-set '{path}' 2>/dev/null || true", shell=True)
             subprocess.run([COLORS_SCRIPT, path])
+            subprocess.Popen([os.path.join(SCRIPTS_DIR, "wallcache.sh")])
 
             GLib.idle_add(Gtk.main_quit)
 

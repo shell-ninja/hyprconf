@@ -77,6 +77,7 @@ ${ENGINE} img "$target_wallpaper" $AWWW_PARAMS
 ln -sf "$target_wallpaper" "$cache_dir/current_wallpaper.png"
 baseName="$(basename "$target_wallpaper")"
 echo "${baseName%.*}" > "$wallCache"
+"$scripts_dir/wallcache.sh" &>/dev/null &
 
 # Notify Noctalia shell if active (skip if already invoked from Noctalia wallpaper_changed hook)
 if pgrep -x "noctalia" >/dev/null 2>&1 && [[ -z "$NOCTALIA_WALLPAPER_PATH" ]]; then
