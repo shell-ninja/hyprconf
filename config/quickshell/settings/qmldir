@@ -1,1 +1,8 @@
-../qmldir
+singleton Theme 1.0 Theme.qml
+BezierGraph 1.0 BezierGraph.qml
+CapsuleSwitch 1.0 CapsuleSwitch.qml
+ModernSlider 1.0 ModernSlider.qml
+ModernDropdown 1.0 ModernDropdown.qml
+SettingCard 1.0 SettingCard.qml
+DraggableWidget 1.0 DraggableWidget.qml
+LockscreenSection 1.0 LockscreenSection.qml

@@ -5,6 +5,7 @@ import Quickshell
 import Quickshell.Wayland
 import Quickshell.Io
 import Quickshell.Widgets
+import "."
 
 PanelWindow {
     id: root
@@ -28,8 +29,12 @@ PanelWindow {
         return (h && h.length > 0) ? h : "/home/shell-ninja"
     }
 
+    readonly property string configPath: homeDir + "/.hyprconf/quickshell/launcher/config.json"
     readonly property string quadWallPath: "file://" + homeDir + "/.hyprconf/hypr/.cache/wall.quad"
     readonly property string fallbackWallPath: "file://" + homeDir + "/.hyprconf/hypr/.cache/current_wallpaper.png"
+
+    // Active Theme: "style-1" (Slanted Split) or "style-2" (Panoramic Grid)
+    property string currentTheme: "style-1"
 
     // Model and filtering state
     property var allApps: []
@@ -37,6 +42,25 @@ PanelWindow {
     property string activeCategory: "All"
     property int selectedIndex: 0
     property string searchQuery: ""
+
+    // Read active launcher theme from config.json
+    Process {
+        id: configReader
+        command: ["cat", root.configPath]
+        running: true
+        stdout: StdioCollector {
+            onTextChanged: {
+                if (text && text.trim().length > 0) {
+                    try {
+                        var parsed = JSON.parse(text.trim())
+                        if (parsed.theme) {
+                            root.currentTheme = parsed.theme
+                        }
+                    } catch(e) {}
+                }
+            }
+        }
+    }
 
     // SVG icon helpers
     function svgUrl(svgContent) {
@@ -47,17 +71,52 @@ PanelWindow {
     readonly property string clearSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.muted + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>')
     readonly property string defaultAppSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.accent + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>')
     readonly property string enterKeySvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.accent + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 10 4 15 9 20"></polyline><path d="M20 4v7a4 4 0 0 1-4 4H4"></path></svg>')
+    readonly property string paletteSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.foreground + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5" fill="' + Theme.foreground + '"/><circle cx="17.5" cy="10.5" r=".5" fill="' + Theme.foreground + '"/><circle cx="8.5" cy="7.5" r=".5" fill="' + Theme.foreground + '"/><circle cx="6.5" cy="12.5" r=".5" fill="' + Theme.foreground + '"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>')
+    readonly property string windowSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.accent + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>')
 
     // Filter applications based on search text and active category
     function updateFilteredApps() {
         var q = searchQuery.toLowerCase().trim()
         var cat = activeCategory
-        var res = []
+
+        // Empty search: filter strictly by category if active, else return all
+        if (q.length === 0) {
+            if (cat === "All") {
+                filteredApps = allApps
+            } else {
+                var catOnly = []
+                for (var i = 0; i < allApps.length; i++) {
+                    var a = allApps[i]
+                    var categories = a.categories || []
+                    var matched = false
+                    for (var c = 0; c < categories.length; c++) {
+                        var curCat = categories[c].toLowerCase()
+                        if (cat === "Internet" && (curCat.indexOf("network") !== -1 || curCat.indexOf("web") !== -1 || curCat.indexOf("browser") !== -1)) {
+                            matched = true; break
+                        } else if (cat === "Development" && (curCat.indexOf("development") !== -1 || curCat.indexOf("ide") !== -1 || curCat.indexOf("programming") !== -1)) {
+                            matched = true; break
+                        } else if (cat === "Media" && (curCat.indexOf("audio") !== -1 || curCat.indexOf("video") !== -1 || curCat.indexOf("graphics") !== -1 || curCat.indexOf("media") !== -1)) {
+                            matched = true; break
+                        } else if (cat === "System" && (curCat.indexOf("system") !== -1 || curCat.indexOf("utility") !== -1 || curCat.indexOf("settings") !== -1)) {
+                            matched = true; break
+                        }
+                    }
+                    if (matched) catOnly.push(a)
+                }
+                filteredApps = catOnly
+            }
+            selectedIndex = 0
+            return
+        }
+
+        // Multi-token and fuzzy-boundary scoring search
+        var tokens = q.split(/\s+/).filter(function(t) { return t.length > 0 })
+        var scored = []
 
         for (var i = 0; i < allApps.length; i++) {
             var app = allApps[i]
 
-            // Category match
+            // Category filter if in Categories view
             if (cat !== "All") {
                 var categories = app.categories || []
                 var catMatched = false
@@ -76,34 +135,113 @@ PanelWindow {
                 if (!catMatched) continue
             }
 
-            // Search query match
-            if (q.length === 0) {
-                res.push(app)
-            } else {
-                var key = (app.search_key || "").toLowerCase()
-                var name = (app.name || "").toLowerCase()
-                var cmd = (app.exec || "").toLowerCase()
+            var name = (app.name || "").toLowerCase()
+            var cmd = (app.exec || "").toLowerCase()
+            var id = (app.id || "").toLowerCase()
+            var gen = (app.generic_name || "").toLowerCase()
+            var comment = (app.comment || "").toLowerCase()
+            var cats = (app.categories ? app.categories.join(" ").toLowerCase() : "")
+            var fullBlob = name + " " + gen + " " + cmd + " " + id + " " + comment + " " + cats
 
-                if (name.indexOf(q) !== -1 || key.indexOf(q) !== -1 || cmd.indexOf(q) !== -1) {
-                    res.push(app)
+            // All tokens must match somewhere
+            var allTokensMatch = true
+            for (var t = 0; t < tokens.length; t++) {
+                if (fullBlob.indexOf(tokens[t]) === -1) {
+                    allTokensMatch = false
+                    break
                 }
             }
+            if (!allTokensMatch) continue
+
+            // Compute relevance score
+            var score = 0
+
+            // 1. Exact matches (Highest priority)
+            if (name === q) {
+                score += 20000
+            } else if (id === q || id === (q + ".desktop")) {
+                score += 16000
+            } else if (cmd === q || cmd.startsWith(q + " ")) {
+                score += 14000
+            }
+
+            // 2. Full query prefix or word boundary in Name
+            if (name.startsWith(q)) {
+                score += 10000
+            } else if (name.indexOf(" " + q) !== -1 || name.indexOf("-" + q) !== -1) {
+                score += 7000
+            } else if (name.indexOf(q) !== -1) {
+                score += 4500
+            }
+
+            // 3. Exec / Binary match
+            if (cmd.startsWith(q)) {
+                score += 6000
+            } else if (cmd.indexOf(" " + q) !== -1 || cmd.indexOf("/" + q) !== -1) {
+                score += 4000
+            } else if (cmd.indexOf(q) !== -1) {
+                score += 2000
+            }
+
+            // 4. App ID match
+            if (id.startsWith(q)) {
+                score += 5000
+            } else if (id.indexOf(q) !== -1) {
+                score += 2500
+            }
+
+            // 5. Generic Name & Comment
+            if (gen === q || gen.startsWith(q)) {
+                score += 3500
+            } else if (gen.indexOf(q) !== -1) {
+                score += 1800
+            }
+            if (comment.indexOf(q) !== -1) {
+                score += 600
+            }
+
+            // 6. Token matching scores
+            for (var t = 0; t < tokens.length; t++) {
+                var tok = tokens[t]
+                if (name.startsWith(tok)) score += 1500
+                else if (name.indexOf(" " + tok) !== -1 || name.indexOf("-" + tok) !== -1) score += 1000
+                else if (name.indexOf(tok) !== -1) score += 600
+
+                if (cmd.startsWith(tok) || cmd.indexOf("/" + tok) !== -1) score += 800
+                else if (cmd.indexOf(tok) !== -1) score += 300
+
+                if (gen.indexOf(tok) !== -1) score += 400
+            }
+
+            // 7. Shorter name bonus to favor direct application over helpers
+            var lengthPenalty = Math.min(name.length, 50) * 4
+            score -= lengthPenalty
+
+            scored.push({ app: app, score: score })
+        }
+
+        // Sort descending by score, tiebreak with name
+        scored.sort(function(a, b) {
+            if (b.score !== a.score) return b.score - a.score
+            return a.app.name.localeCompare(b.app.name)
+        })
+
+        var res = []
+        for (var s = 0; s < scored.length; s++) {
+            res.push(scored[s].app)
         }
 
         filteredApps = res
         selectedIndex = 0
-        if (appListView.count > 0) {
-            appListView.positionViewAtIndex(0, ListView.Beginning)
-        }
     }
 
     // Launch application and exit cleanly
+    property bool isLaunching: false
+
     Process {
         id: execProc
-        onRunningChanged: {
-            if (!running) {
-                Qt.quit()
-            }
+        onExited: {
+            if (root.isLaunching) Qt.quit()
         }
     }
 
@@ -111,11 +249,14 @@ PanelWindow {
         id: quitTimer
         interval: 180
         repeat: false
-        onTriggered: Qt.quit()
+        onTriggered: {
+            if (root.isLaunching) Qt.quit()
+        }
     }
 
     function launchApp(app) {
         if (!app) return
+        root.isLaunching = true
         var script = homeDir + "/.hyprconf/hypr/scripts/launch-app.sh"
         execProc.command = [script, app.id || "", app.exec || ""]
         execProc.running = true
@@ -127,6 +268,17 @@ PanelWindow {
         if (filteredApps && filteredApps.length > 0 && selectedIndex >= 0 && selectedIndex < filteredApps.length) {
             launchApp(filteredApps[selectedIndex])
         }
+    }
+
+    Process {
+        id: themeSwitcherProc
+        command: [homeDir + "/.hyprconf/hypr/scripts/qs-launcher-theme.sh"]
+    }
+
+    function openThemeSwitcher() {
+        themeSwitcherProc.running = true
+        root.visible = false
+        Qt.quit()
     }
 
     // Load applications index
@@ -155,451 +307,36 @@ PanelWindow {
         onActivated: Qt.quit()
     }
 
-    // 100% transparent click-outside-to-dismiss area (NO screen dimming or tint)
+    // Transparent click-outside-to-dismiss area (unblurred desktop)
     MouseArea {
         anchors.fill: parent
         onClicked: Qt.quit()
     }
 
-    // =========================================================================
-    // Central Launcher Card (ClippingRectangle ensures left corners are rounded!)
-    // Dimensions proportioned to 58em x 28em: width 880px, height 420px
-    // =========================================================================
-    ClippingRectangle {
-        id: card
-        width: 880
-        height: 420
+    // ── Dynamic Launcher Theme Loader ────────────────────────────────────────
+    Loader {
+        id: themeLoader
         anchors.centerIn: parent
-        radius: 20
-        color: Theme.alpha(Theme.surface, 0.98)
-        border.width: 1
-        border.color: Theme.alpha(Theme.accent, 0.35)
-
-        // Catch clicks inside card so they don't dismiss the launcher
-        MouseArea {
-            anchors.fill: parent
-            onClicked: {}
-        }
-
-        // =====================================================================
-        // LEFT SECTION (1 & 3): Wallpaper Quad Image + Slanted Transition
-        // Takes ~49% of width (430px out of 880px), matching Rofi's 28.5em / 58em
-        // =====================================================================
-        Item {
-            id: leftSection
-            width: 415
-            height: parent.height
-            anchors.left: parent.left
-            anchors.top: parent.top
-            anchors.bottom: parent.bottom
-
-            Image {
-                id: quadImage
-                anchors.fill: parent
-                source: root.quadWallPath
-                fillMode: Image.Stretch
-                smooth: true
-                mipmap: true
-                asynchronous: true
-
-                onStatusChanged: {
-                    if (status === Image.Error) {
-                        source = root.fallbackWallPath
-                    }
-                }
-            }
-
-            // Subtle gradient for contrast on top brand text
-            Rectangle {
-                anchors.fill: parent
-                gradient: Gradient {
-                    GradientStop { position: 0.0; color: Theme.alpha(Theme.background, 0.20) }
-                    GradientStop { position: 0.35; color: "transparent" }
-                    GradientStop { position: 1.0; color: "transparent" }
-                }
-            }
-
-            // Brand / Title Overlay at Top Left of Image
-            RowLayout {
-                anchors.top: parent.top
-                anchors.left: parent.left
-                anchors.margins: 18
-                spacing: 8
-
-                Rectangle {
-                    width: 8
-                    height: 8
-                    radius: 4
-                    color: Theme.accent
-                }
-
-                Text {
-                    text: "APPLICATIONS"
-                    font.family: "Outfit"
-                    font.pixelSize: 11
-                    font.weight: Font.DemiBold
-                    font.letterSpacing: 1.5
-                    color: Theme.alpha(Theme.foreground, 0.90)
-                }
+        focus: true
+        sourceComponent: (root.currentTheme === "style-2") ? style2Component : style1Component
+        onLoaded: {
+            if (item && item.focusInput) {
+                item.focusInput()
             }
         }
+    }
 
-        // =====================================================================
-        // RIGHT SECTION (2): Search Box, Categories, Application List
-        // Positioned cleanly off the quad image transition band
-        // =====================================================================
-        Item {
-            id: rightSection
-            x: 438
-            width: card.width - x - 20
-            height: parent.height - 30
-            anchors.verticalCenter: parent.verticalCenter
+    Component {
+        id: style1Component
+        Style1 {
+            rootWindow: root
+        }
+    }
 
-            ColumnLayout {
-                anchors.fill: parent
-                spacing: 10
-
-                // ── Search Bar ───────────────────────────────────────────────
-                Rectangle {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 42
-                    radius: 12
-                    color: Theme.alpha(Theme.background, 0.75)
-                    border.width: searchInput.activeFocus ? 1.5 : 1
-                    border.color: searchInput.activeFocus ? Theme.accent : Theme.alpha(Theme.foreground, 0.15)
-
-                    Behavior on border.color { ColorAnimation { duration: 150 } }
-
-                    RowLayout {
-                        anchors.fill: parent
-                        anchors.leftMargin: 12
-                        anchors.rightMargin: 10
-                        spacing: 8
-
-                        Image {
-                            Layout.preferredWidth: 16
-                            Layout.preferredHeight: 16
-                            source: root.searchSvg
-                            sourceSize: Qt.size(32, 32)
-                        }
-
-                        TextInput {
-                            id: searchInput
-                            Layout.fillWidth: true
-                            font.family: "Outfit"
-                            font.pixelSize: 14
-                            color: Theme.foreground
-                            selectByMouse: true
-                            selectionColor: Theme.alpha(Theme.accent, 0.40)
-                            selectedTextColor: Theme.foreground
-                            focus: true
-
-                            Text {
-                                text: "Type to search applications..."
-                                font.family: "Outfit"
-                                font.pixelSize: 13
-                                color: Theme.alpha(Theme.foreground, 0.40)
-                                visible: !searchInput.text && !searchInput.inputMethodComposing
-                                anchors.verticalCenter: parent.verticalCenter
-                            }
-
-                            onTextChanged: {
-                                root.searchQuery = text
-                                root.updateFilteredApps()
-                            }
-
-                            Keys.onPressed: function(event) {
-                                if (event.key === Qt.Key_Down) {
-                                    if (root.filteredApps.length > 0) {
-                                        root.selectedIndex = Math.min(root.selectedIndex + 1, root.filteredApps.length - 1)
-                                        appListView.positionViewAtIndex(root.selectedIndex, ListView.Contain)
-                                    }
-                                    event.accepted = true
-                                } else if (event.key === Qt.Key_Up) {
-                                    if (root.filteredApps.length > 0) {
-                                        root.selectedIndex = Math.max(root.selectedIndex - 1, 0)
-                                        appListView.positionViewAtIndex(root.selectedIndex, ListView.Contain)
-                                    }
-                                    event.accepted = true
-                                } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                                    root.launchCurrent()
-                                    event.accepted = true
-                                } else if (event.key === Qt.Key_Escape) {
-                                    Qt.quit()
-                                    event.accepted = true
-                                }
-                            }
-                        }
-
-                        // Clear input button
-                        Rectangle {
-                            Layout.preferredWidth: 18
-                            Layout.preferredHeight: 18
-                            radius: 9
-                            color: clearMouse.containsMouse ? Theme.alpha(Theme.surface, 0.8) : "transparent"
-                            visible: searchInput.text.length > 0
-
-                            Image {
-                                anchors.centerIn: parent
-                                width: 11
-                                height: 11
-                                source: root.clearSvg
-                                sourceSize: Qt.size(22, 22)
-                            }
-
-                            MouseArea {
-                                id: clearMouse
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    searchInput.text = ""
-                                    searchInput.forceActiveFocus()
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // ── Category Pills ───────────────────────────────────────────
-                Row {
-                    Layout.fillWidth: true
-                    spacing: 5
-
-                    Repeater {
-                        model: ["All", "Internet", "Development", "Media", "System"]
-
-                        Rectangle {
-                            height: 24
-                            width: catText.implicitWidth + 16
-                            radius: 12
-                            color: root.activeCategory === modelData
-                                ? Theme.alpha(Theme.accent, 0.25)
-                                : (catMouse.containsMouse ? Theme.alpha(Theme.surface, 0.70) : Theme.alpha(Theme.surface, 0.40))
-                            border.width: 1
-                            border.color: root.activeCategory === modelData
-                                ? Theme.alpha(Theme.accent, 0.60)
-                                : Theme.alpha(Theme.accent, 0.12)
-
-                            Behavior on color { ColorAnimation { duration: 150 } }
-
-                            Text {
-                                id: catText
-                                anchors.centerIn: parent
-                                text: modelData
-                                font.family: "Outfit"
-                                font.pixelSize: 11
-                                font.weight: root.activeCategory === modelData ? Font.DemiBold : Font.Normal
-                                color: root.activeCategory === modelData ? Theme.accent : Theme.alpha(Theme.foreground, 0.80)
-                            }
-
-                            MouseArea {
-                                id: catMouse
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    root.activeCategory = modelData
-                                    root.updateFilteredApps()
-                                    searchInput.forceActiveFocus()
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // ── Application List ─────────────────────────────────────────
-                ListView {
-                    id: appListView
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    clip: true
-                    boundsBehavior: Flickable.StopAtBounds
-                    spacing: 4
-                    model: root.filteredApps
-
-                    delegate: Rectangle {
-                        id: delegateItem
-                        width: appListView.width
-                        height: 44
-                        radius: 10
-
-                        readonly property bool isSelected: index === root.selectedIndex
-                        readonly property bool isHovered: itemMouse.containsMouse
-
-                        color: isSelected
-                            ? Theme.alpha(Theme.accent, 0.22)
-                            : (isHovered ? Theme.alpha(Theme.surface, 0.50) : "transparent")
-
-                        border.width: isSelected ? 1 : (isHovered ? 1 : 0)
-                        border.color: isSelected
-                            ? Theme.alpha(Theme.accent, 0.55)
-                            : Theme.alpha(Theme.accent, 0.18)
-
-                        Behavior on color { ColorAnimation { duration: 120 } }
-
-                        // Left Active Glow Indicator Strip
-                        Rectangle {
-                            width: 3
-                            height: 18
-                            radius: 1.5
-                            anchors.left: parent.left
-                            anchors.leftMargin: 4
-                            anchors.verticalCenter: parent.verticalCenter
-                            color: Theme.accent
-                            visible: delegateItem.isSelected
-                        }
-
-                        RowLayout {
-                            anchors.fill: parent
-                            anchors.leftMargin: 12
-                            anchors.rightMargin: 12
-                            spacing: 10
-
-                            // App Icon
-                            Rectangle {
-                                Layout.preferredWidth: 28
-                                Layout.preferredHeight: 28
-                                radius: 7
-                                color: Theme.alpha(Theme.surface, 0.65)
-                                border.width: 1
-                                border.color: Theme.alpha(Theme.foreground, 0.08)
-
-                                Image {
-                                    anchors.centerIn: parent
-                                    width: 22
-                                    height: 22
-                                    source: (modelData.icon_path && modelData.icon_path.length > 0)
-                                        ? modelData.icon_path
-                                        : root.defaultAppSvg
-                                    sourceSize: Qt.size(44, 44)
-                                    smooth: true
-                                    mipmap: true
-
-                                    onStatusChanged: {
-                                        if (status === Image.Error) {
-                                            source = root.defaultAppSvg
-                                        }
-                                    }
-                                }
-                            }
-
-                            // App Title and Description
-                            ColumnLayout {
-                                Layout.fillWidth: true
-                                spacing: 0
-
-                                Text {
-                                    Layout.fillWidth: true
-                                    text: modelData.name || ""
-                                    font.family: "Outfit"
-                                    font.pixelSize: 13
-                                    font.weight: delegateItem.isSelected ? Font.DemiBold : Font.Medium
-                                    color: delegateItem.isSelected ? Theme.accent : Theme.foreground
-                                    elide: Text.ElideRight
-                                }
-
-                                Text {
-                                    Layout.fillWidth: true
-                                    text: modelData.comment || modelData.generic_name || modelData.exec || ""
-                                    font.family: "Outfit"
-                                    font.pixelSize: 11
-                                    color: Theme.alpha(Theme.foreground, 0.50)
-                                    elide: Text.ElideRight
-                                    visible: text.length > 0
-                                }
-                            }
-
-                            // Launch Hint Indicator (when selected)
-                            Image {
-                                Layout.preferredWidth: 13
-                                Layout.preferredHeight: 13
-                                source: root.enterKeySvg
-                                sourceSize: Qt.size(26, 26)
-                                visible: delegateItem.isSelected
-                                opacity: 0.85
-                            }
-                        }
-
-                        MouseArea {
-                            id: itemMouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onEntered: root.selectedIndex = index
-                            onClicked: {
-                                var target = (root.filteredApps && root.filteredApps.length > index) ? root.filteredApps[index] : modelData
-                                root.launchApp(target)
-                            }
-                        }
-                    }
-
-                    // Empty State Message
-                    Item {
-                        anchors.fill: parent
-                        visible: root.filteredApps.length === 0
-
-                        ColumnLayout {
-                            anchors.centerIn: parent
-                            spacing: 6
-
-                            Text {
-                                text: "No matching applications"
-                                font.family: "Outfit"
-                                font.pixelSize: 13
-                                font.weight: Font.Medium
-                                color: Theme.alpha(Theme.foreground, 0.70)
-                                Layout.alignment: Qt.AlignHCenter
-                            }
-
-                            Text {
-                                text: "Try searching with a different term"
-                                font.family: "Outfit"
-                                font.pixelSize: 11
-                                color: Theme.alpha(Theme.foreground, 0.40)
-                                Layout.alignment: Qt.AlignHCenter
-                            }
-                        }
-                    }
-                }
-
-                // ── Footer Keyboard Navigation Hints ─────────────────────────
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 10
-
-                    Text {
-                        text: root.filteredApps.length + " of " + root.allApps.length + " apps"
-                        font.family: "Outfit"
-                        font.pixelSize: 10
-                        color: Theme.alpha(Theme.foreground, 0.45)
-                    }
-
-                    Item { Layout.fillWidth: true }
-
-                    Row {
-                        spacing: 8
-
-                        Row {
-                            spacing: 3
-                            Rectangle { width: 14; height: 14; radius: 3; color: Theme.alpha(Theme.surface, 0.6); Text { text: "↑↓"; font.pixelSize: 9; color: Theme.muted; anchors.centerIn: parent } }
-                            Text { text: "navigate"; font.family: "Outfit"; font.pixelSize: 10; color: Theme.muted; anchors.verticalCenter: parent.verticalCenter }
-                        }
-
-                        Row {
-                            spacing: 3
-                            Rectangle { width: 14; height: 14; radius: 3; color: Theme.alpha(Theme.surface, 0.6); Text { text: "↵"; font.pixelSize: 9; color: Theme.muted; anchors.centerIn: parent } }
-                            Text { text: "launch"; font.family: "Outfit"; font.pixelSize: 10; color: Theme.muted; anchors.verticalCenter: parent.verticalCenter }
-                        }
-
-                        Row {
-                            spacing: 3
-                            Rectangle { width: 14; height: 14; radius: 3; color: Theme.alpha(Theme.surface, 0.6); Text { text: "esc"; font.pixelSize: 9; color: Theme.muted; anchors.centerIn: parent } }
-                            Text { text: "close"; font.family: "Outfit"; font.pixelSize: 10; color: Theme.muted; anchors.verticalCenter: parent.verticalCenter }
-                        }
-                    }
-                }
-            }
+    Component {
+        id: style2Component
+        Style2 {
+            rootWindow: root
         }
     }
 }

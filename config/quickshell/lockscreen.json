@@ -1,84 +1,84 @@
 {
-  "layout": {
-    "mode": "freeform",
-    "alignment": "center",
-    "vertical_offset": 0,
-    "module_spacing": 20,
-    "corner_power_buttons": false,
-    "corner_session_badge": false
-  },
-  "positions": {
-    "clock": {
-      "x": 0.5,
-      "y": 0.09502032520325203,
-      "preset": "custom"
+    "layout": {
+        "mode": "freeform",
+        "alignment": "center",
+        "vertical_offset": 0,
+        "module_spacing": 20,
+        "corner_power_buttons": false,
+        "corner_session_badge": false
     },
-    "quote": {
-      "x": 0.5,
-      "y": 0.18878393583042974,
-      "preset": "custom"
+    "positions": {
+        "clock": {
+            "x": 0.5,
+            "y": 0.09502032520325203,
+            "preset": "custom"
+        },
+        "quote": {
+            "x": 0.5,
+            "y": 0.18878393583042974,
+            "preset": "custom"
+        },
+        "avatar": {
+            "x": 0.5,
+            "y": 0.52,
+            "preset": "center"
+        },
+        "weather": {
+            "x": 0.5,
+            "y": 0.8343006480823864,
+            "preset": "custom"
+        },
+        "media_player": {
+            "x": 0.5,
+            "y": 0.95,
+            "preset": "custom"
+        },
+        "system_stats": {
+            "x": 0.5,
+            "y": 0.8896631823461092,
+            "preset": "custom"
+        }
+    },
+    "clock": {
+        "enabled": true,
+        "format_24h": false,
+        "show_am_pm": true,
+        "size": 100,
+        "weight": "Bold"
+    },
+    "date": {
+        "enabled": true,
+        "format": "long"
     },
     "avatar": {
-      "x": 0.5,
-      "y": 0.52,
-      "preset": "center"
+        "enabled": true,
+        "size": 140,
+        "breathing_enabled": true,
+        "orbit_satellites_enabled": true,
+        "glow_enabled": true,
+        "show_username": true,
+        "show_status": true
     },
-    "weather": {
-      "x": 0.5,
-      "y": 0.8455420659117305,
-      "preset": "custom"
+    "modules": {
+        "media_player": true,
+        "custom_quote": false,
+        "quote_text": "So, Welcome Back",
+        "system_stats": true,
+        "weather_widget": true,
+        "weather_city": "Munshiganj"
     },
-    "media_player": {
-      "x": 0.5,
-      "y": 0.95,
-      "preset": "custom"
+    "stats": {
+        "show_uptime": false,
+        "show_ram": true,
+        "show_cpu": true,
+        "show_disk": true,
+        "show_battery": false,
+        "unit_format": "gb",
+        "separator": "\u2022"
     },
-    "system_stats": {
-      "x": 0.5,
-      "y": 0.8896631823461092,
-      "preset": "custom"
+    "backdrop": {
+        "blur": 0.65,
+        "vignette": 0.65,
+        "dimming": 0.2
     }
-  },
-  "clock": {
-    "enabled": true,
-    "format_24h": false,
-    "show_am_pm": true,
-    "size": 100,
-    "weight": "Bold"
-  },
-  "date": {
-    "enabled": true,
-    "format": "long"
-  },
-  "avatar": {
-    "enabled": true,
-    "size": 140,
-    "breathing_enabled": true,
-    "orbit_satellites_enabled": true,
-    "glow_enabled": true,
-    "show_username": true,
-    "show_status": true
-  },
-  "modules": {
-    "media_player": true,
-    "custom_quote": false,
-    "quote_text": "So, Welcome Back",
-    "system_stats": true,
-    "weather_widget": true,
-    "weather_city": "Munshiganj"
-  },
-  "stats": {
-    "show_uptime": false,
-    "show_ram": true,
-    "show_cpu": true,
-    "show_disk": true,
-    "show_battery": false,
-    "unit_format": "gb",
-    "separator": "•"
-  },
-  "backdrop": {
-    "blur": 0.65,
-    "vignette": 0.65,
-    "dimming": 0.2
-  }
 }

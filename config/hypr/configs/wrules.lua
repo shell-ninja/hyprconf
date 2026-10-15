@@ -46,6 +46,12 @@ hl.window_rule({ match = { class = "^([Tt]hunar)$", title = "^(Confirm to replac
 
 -- settings app
 hl.window_rule({ match = { class = "^(dev.shellninja.hypr-settings)$" }, float = true, center = true })
+hl.window_rule({
+    match = { class = "^(org.quickshell)$", title = "^(Hyprland & Quickshell Settings)$" },
+    float = true,
+    center = true,
+    size = "1220 800",
+})
 
 -- pkgupdate GUI and welcome app
 float_center("dev.shellninja.pkgupdate")
@@ -169,9 +175,10 @@ hl.workspace_rule({ workspace = "3", persistent = true })
 hl.workspace_rule({ workspace = "4", persistent = true })
 hl.workspace_rule({ workspace = "5", persistent = true })
 
--- Quickshell lock screen acrylic blur
+-- Quickshell acrylic blur (lockscreen, launcher, launcher theme)
 hl.layer_rule({
-    match = { namespace = "^quickshell$" },
+    match = { namespace = "^quickshell.*" },
     blur = true,
     ignore_alpha = 0.1,
 })
+

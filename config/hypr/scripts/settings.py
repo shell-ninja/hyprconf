@@ -56,7 +56,8 @@ def _enable_hyprland_blur():
         os.execve(sys.executable, [sys.executable] + sys.argv, env)
 
 
-_enable_hyprland_blur()
+if __name__ == "__main__":
+    _enable_hyprland_blur()
 
 import gi
 
@@ -365,8 +366,11 @@ def launch_dotfiles_update():
     script_path.write_text(build_dotfiles_update_script())
     script_path.chmod(0o755)
 
+    clean_env = os.environ.copy()
+    clean_env.pop("LD_PRELOAD", None)
     subprocess.Popen(
         [KITTY_BIN, "--title", "Dotfiles Update", "bash", str(script_path)],
+        env=clean_env,
         start_new_session=True,
     )
 
@@ -579,14 +583,20 @@ def parse_animations():
         block = m.group(0)
         speed = get_field(block, "speed")
         bezier = get_field(block, "bezier", quoted=True)
+        style = get_field(block, "style", quoted=True)
+        enabled_val = get_field(block, "enabled")
+        is_enabled = (enabled_val != "0") if enabled_val is not None else True
         anims.append(
             {
                 "leaf": m.group(1),
                 "speed": float(speed) if speed else 1.0,
                 "bezier": bezier or "",
+                "style": style or "",
+                "enabled": is_enabled,
             }
         )
     return anims
+
 
 
 def parse_anim_global_enabled():
@@ -923,10 +933,18 @@ def _apply_animations(pending, result):
 
     for leaf, cfg in pending.get("anim_leaf", {}).items():
         header = rf'hl\.animation\(\{{\s*leaf\s*=\s*"{re.escape(leaf)}"'
-        fields = [("speed", cfg["speed"], False), ("bezier", cfg["bezier"], True)]
+        fields = []
+        if "speed" in cfg:
+            fields.append(("speed", cfg["speed"], False))
+        if "bezier" in cfg:
+            fields.append(("bezier", cfg["bezier"], True))
+        if "style" in cfg and cfg["style"] is not None:
+            fields.append(("style", cfg["style"], True))
+        if "enabled" in cfg and cfg["enabled"] is not None:
+            fields.append(("enabled", 1 if cfg["enabled"] else 0, False))
         text, found = apply_block_fields(text, header, fields)
         if found:
-            result.ok(f"animation {leaf:<16} → speed {cfg['speed']}  curve {cfg['bezier']}")
+            result.ok(f"animation {leaf:<16} → {cfg}")
         else:
             result.err(f"animation leaf {leaf} not found — skipped")
 
@@ -934,9 +952,6 @@ def _apply_animations(pending, result):
         m = re.search(
             rf'hl\.curve\(\s*"{re.escape(name)}"\s*,\s*\{{.*?\}}\)', text, re.DOTALL
         )
-        if not m:
-            result.err(f"curve {name} not found — skipped")
-            continue
         new_block = (
             f'hl.curve("{name}", {{\n'
             f'    type = "bezier",\n'
@@ -946,8 +961,26 @@ def _apply_animations(pending, result):
             f"    }},\n"
             f"}})"
         )
-        text = text[: m.start()] + new_block + text[m.end() :]
-        result.ok(f"curve {name:<16} → ({p1[0]}, {p1[1]}) / ({p2[0]}, {p2[1]})")
+        if m:
+            text = text[: m.start()] + new_block + text[m.end() :]
+            result.ok(f"curve {name:<16} → ({p1[0]}, {p1[1]}) / ({p2[0]}, {p2[1]})")
+        else:
+            # New custom curve: insert before the Animations section or append
+            anim_match = re.search(r'--+\s*Animations', text)
+            if anim_match:
+                insert_idx = anim_match.start()
+                text = text[:insert_idx] + new_block + "\n\n" + text[insert_idx:]
+            else:
+                text = text.rstrip() + "\n\n" + new_block + "\n"
+            result.ok(f"curve {name:<16} (created) → ({p1[0]}, {p1[1]}) / ({p2[0]}, {p2[1]})")
+
+    for name in pending.get("delete_curve", []):
+        m = re.search(
+            rf'\n*hl\.curve\(\s*"{re.escape(name)}"\s*,\s*\{{.*?\}}\)\n*', text, re.DOTALL
+        )
+        if m:
+            text = text[: m.start()] + "\n" + text[m.end() :]
+            result.ok(f"curve {name:<16} (deleted)")
 
     ANIMATION_LUA.write_text(text)
 
@@ -2039,8 +2072,11 @@ class HyprSettingsWindow(Adw.ApplicationWindow):
                 'echo\necho "Done. Press Enter to close."\nread\n'
             )
             wrapper.chmod(0o755)
+            clean_env = os.environ.copy()
+            clean_env.pop("LD_PRELOAD", None)
             subprocess.Popen(
                 [KITTY_BIN, "--title", title, "bash", str(wrapper)],
+                env=clean_env,
                 start_new_session=True,
             )
             return "kitty"
