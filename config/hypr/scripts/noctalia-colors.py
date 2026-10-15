@@ -174,19 +174,44 @@ QtObject {{
         (QS_DIR / "qmldir").write_text(qmldir_content)
         (QS_DIR / "colors.json").write_text(json.dumps(colors, indent=2) + "\n")
 
-        # 2. Propagate symlinks into all subdirectories (lockscreen, etc.)
+        # Subproject qmldir definitions
+        SUBPROJECT_QMLDIRS = {
+            "settings": """singleton Theme 1.0 Theme.qml
+BezierGraph 1.0 BezierGraph.qml
+CapsuleSwitch 1.0 CapsuleSwitch.qml
+ModernSlider 1.0 ModernSlider.qml
+ModernDropdown 1.0 ModernDropdown.qml
+SettingCard 1.0 SettingCard.qml
+DraggableWidget 1.0 DraggableWidget.qml
+LockscreenSection 1.0 LockscreenSection.qml
+""",
+            "launcher": """singleton Theme 1.0 Theme.qml
+Style1 1.0 Style1.qml
+Style2 1.0 Style2.qml
+""",
+            "launcher-theme": """singleton Theme 1.0 Theme.qml
+""",
+        }
+
+        # 2. Propagate Theme.qml and custom qmldir into all subdirectories
         for item in QS_DIR.iterdir():
             if item.is_dir() and not item.name.startswith("."):
                 sub_theme = item / "Theme.qml"
                 sub_qmldir = item / "qmldir"
 
-                if not sub_theme.is_symlink() or os.readlink(sub_theme) != "../Theme.qml":
+                if not sub_theme.is_symlink() or (os.path.islink(sub_theme) and os.readlink(sub_theme) != "../Theme.qml"):
                     sub_theme.unlink(missing_ok=True)
                     sub_theme.symlink_to("../Theme.qml")
 
-                if not sub_qmldir.is_symlink() or os.readlink(sub_qmldir) != "../qmldir":
-                    sub_qmldir.unlink(missing_ok=True)
-                    sub_qmldir.symlink_to("../qmldir")
+                if item.name in SUBPROJECT_QMLDIRS:
+                    expected_content = SUBPROJECT_QMLDIRS[item.name]
+                    # If it's a symlink or has wrong content, write the expected file
+                    if sub_qmldir.is_symlink() or not sub_qmldir.exists() or sub_qmldir.read_text() != expected_content:
+                        sub_qmldir.unlink(missing_ok=True)
+                        sub_qmldir.write_text(expected_content)
+                else:
+                    if not sub_qmldir.exists():
+                        sub_qmldir.symlink_to("../qmldir")
 
         print(f"Quickshell colors synced: {QS_DIR}/Theme.qml")
     except Exception as e:
