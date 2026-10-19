@@ -25,7 +25,7 @@
         },
         "weather": {
             "x": 0.5,
-            "y": 0.8384747922960725,
+            "y": 0.9172307794744318,
             "preset": "custom"
         },
         "media_player": {
@@ -35,7 +35,7 @@
         },
         "system_stats": {
             "x": 0.5,
-            "y": 0.8896631823461092,
+            "y": 0.95,
             "preset": "custom"
         }
     },
@@ -60,7 +60,7 @@
         "show_status": true
     },
     "modules": {
-        "media_player": true,
+        "media_player": false,
         "custom_quote": false,
         "quote_text": "So, Welcome Back",
         "system_stats": true,
@@ -69,7 +69,7 @@
         "weather_country": "USA"
     },
     "stats": {
-        "show_uptime": false,
+        "show_uptime": true,
         "show_ram": true,
         "show_cpu": true,
         "show_disk": true,
@@ -78,8 +78,8 @@
         "separator": "\u2022"
     },
     "backdrop": {
-        "blur": 1,
-        "vignette": 0.6000000000000001,
-        "dimming": 0.25
+        "blur": 0.25,
+        "vignette": 0.2,
+        "dimming": 0
     }
 }

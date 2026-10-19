@@ -522,6 +522,15 @@ PanelWindow {
         root.screenshotTimerSatty = (useSatty !== undefined) ? useSatty : true
         root.screenshotTimerSound = (playSound !== undefined) ? playSound : true
         root.isScreenshotTimerActive = true
+
+        // Cleanly collapse the island so the countdown badge is visible
+        hoverIntentTimer.stop()
+        closeTimer.stop()
+        root.closingView = (expandedContent && expandedContent.currentView > 0) ? expandedContent.currentView : 5
+        root.isClosingWallpaper = true
+        root.expanded = false
+        if (expandedContent) expandedContent.currentView = 0
+
         screenshotCountdownTimer.restart()
         console.log("SCREENSHOT_TIMER_STARTED: " + root.screenshotTimerTotal + "s mode=" + root.screenshotTimerMode)
     }
@@ -675,7 +684,7 @@ PanelWindow {
         hoverIntentTimer.stop()
         closeTimer.stop()
         root.ipcKeepExpanded = false
-        if (root.isScreenshotTimerActive) {
+        if (root.isScreenshotTimerActive && !root.expanded) {
             root.cancelScreenshotTimer()
             return
         }
@@ -754,10 +763,12 @@ PanelWindow {
         function power() {
             root.expanded = true
             if (expandedContent) expandedContent.currentView = 1
+            shapeContainer.forceActiveFocus()
         }
         function openPower() {
             root.expanded = true
             if (expandedContent) expandedContent.currentView = 1
+            shapeContainer.forceActiveFocus()
         }
         function togglePower() {
             if (root.expanded && expandedContent && expandedContent.currentView === 1) {
@@ -765,6 +776,7 @@ PanelWindow {
             } else {
                 root.expanded = true
                 if (expandedContent) expandedContent.currentView = 1
+                shapeContainer.forceActiveFocus()
             }
         }
         function toggleDnd() {
@@ -1321,21 +1333,20 @@ PanelWindow {
         // naturally to whichever child (TextInput, list, etc.) has active focus.
         Keys.priority: Keys.BeforeItem
         Keys.onPressed: function(event) {
+            // First allow active expanded child view to process hotkeys/navigation
+            event.accepted = false
+            if (root.expanded && expandedContent) {
+                if (expandedContent.handleKey(event)) {
+                    event.accepted = true
+                    return
+                }
+            }
+
             if (event.key === Qt.Key_Escape) {
                 // Intercept Escape globally — close whatever is open
                 event.accepted = true
                 root.closeIsland()
                 return
-            }
-
-            // For all other keys: let children handle them naturally.
-            // View 0 (dashboard home) has no focused TextInput, so we manually
-            // forward left/right navigation arrows to it via handleKey().
-            event.accepted = false
-            if (root.expanded && expandedContent && (expandedContent.currentView === 0 || expandedContent.currentView === 2)) {
-                if (expandedContent.handleKey(event)) {
-                    event.accepted = true
-                }
             }
         }
 

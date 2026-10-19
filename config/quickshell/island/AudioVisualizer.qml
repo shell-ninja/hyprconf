@@ -6,6 +6,8 @@ Item {
 
     property bool active: false
     property bool mirror: false
+    // Wing mode: "full" (mirrored valley aaabbbccccbbbaaa from center), "left" (left wing a->b->c), "right" (right wing c->b->a)
+    property string wingMode: root.mirror ? "right" : "full"
     property color barColor: Theme.accent
     property color tipColor: Theme.secondary
 
@@ -28,6 +30,41 @@ Item {
     property var barHeights: []
     property bool hasRealAudio: false
 
+    function getU(i, bCount, mode) {
+        if (bCount <= 1) return 0.0
+        if (mode === "left") {
+            return i / (bCount - 1.0)
+        } else if (mode === "right") {
+            return (bCount - 1.0 - i) / (bCount - 1.0)
+        } else {
+            var maxDist = (bCount - 1) / 2.0
+            var distFromEdge = Math.min(i, bCount - 1 - i)
+            return maxDist > 0 ? (distFromEdge / maxDist) : 0.0
+        }
+    }
+
+    function getTierMultiplier(u) {
+        if (u <= 0.35) {
+            return 1.00 - 0.15 * (u / 0.35)
+        } else if (u <= 0.70) {
+            return 0.85 - 0.33 * ((u - 0.35) / 0.35)
+        } else {
+            return 0.52 - 0.24 * ((u - 0.70) / 0.30)
+        }
+    }
+
+    function sampleCava(u, arr) {
+        if (!arr || arr.length === 0) return 0.0
+        var maxIdx = arr.length - 1
+        var fIdx = Math.max(0.0, Math.min(maxIdx, u * maxIdx))
+        var idx0 = Math.floor(fIdx)
+        var idx1 = Math.min(maxIdx, idx0 + 1)
+        var frac = fIdx - idx0
+        var v0 = (arr[idx0] !== undefined) ? arr[idx0] : 0.0
+        var v1 = (arr[idx1] !== undefined) ? arr[idx1] : 0.0
+        return v0 * (1.0 - frac) + v1 * frac
+    }
+
     function initBars() {
         var arr = []
         for (var i = 0; i < root.barCount; i++) {
@@ -42,7 +79,7 @@ Item {
     onCavaValuesChanged: {
         var sum = 0
         if (cavaValues && cavaValues.length > 0) {
-            for (var i = 0; i < Math.min(cavaValues.length, root.barCount); i++) {
+            for (var i = 0; i < cavaValues.length; i++) {
                 sum += (cavaValues[i] || 0.0)
             }
         }
@@ -167,13 +204,16 @@ Item {
             var updated = []
 
             if (root.active && root.hasRealAudio && root.cavaValues && root.cavaValues.length > 0) {
-                // Real audio frequency sync from Cava
+                // Real audio frequency sync from Cava with aaabbbccccbbbaaa symmetrical envelope
                 for (var i = 0; i < bCount; i++) {
-                    var idx = root.mirror ? (bCount - 1 - i) : i
-                    var rawVal = (idx < root.cavaValues.length) ? (root.cavaValues[idx] || 0.0) : 0.0
+                    var u = root.getU(i, bCount, root.wingMode)
+                    var tier = root.getTierMultiplier(u)
+                    var rawVal = root.sampleCava(u, root.cavaValues)
+
                     // Boost responsiveness with slight non-linear curve for punchiness
-                    var curved = Math.pow(Math.min(1.0, rawVal * 1.25), 0.85)
-                    var tgtH = minH + (maxH - minH) * curved
+                    var curved = Math.pow(Math.min(1.0, rawVal * 1.35), 0.85)
+                    var effectiveRatio = Math.max(0.04 * tier, curved * tier)
+                    var tgtH = minH + (maxH - minH) * effectiveRatio
                     var curH = (i < root.barHeights.length) ? root.barHeights[i] : minH
 
                     // Snappy attack on volume increases (0.68), smooth decay on drops (0.28)

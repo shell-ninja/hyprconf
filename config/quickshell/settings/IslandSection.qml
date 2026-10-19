@@ -1437,9 +1437,10 @@ Item {
                                 AudioVisualizer {
                                     anchors.verticalCenter: parent.verticalCenter
                                     active: root.isSimulating && root.visualizerEnabled
+                                    wingMode: "left"
                                     barCount: Math.max(2, Math.floor(root.visualizerBarCount / 2))
                                     style: root.visualizerStyle
-                                    cavaValues: root.simulatedFrequencies.slice(0, barCount)
+                                    cavaValues: root.simulatedFrequencies
                                     height: 18
                                     barW: (root.visualizerStyle === "cava" ? 4.0 : 3.2)
                                     gap: 2.4
@@ -1473,10 +1474,10 @@ Item {
                                 AudioVisualizer {
                                     anchors.verticalCenter: parent.verticalCenter
                                     active: root.isSimulating && root.visualizerEnabled
-                                    mirror: true
+                                    wingMode: "right"
                                     barCount: Math.max(2, Math.floor(root.visualizerBarCount / 2))
                                     style: root.visualizerStyle
-                                    cavaValues: root.simulatedFrequencies.slice(barCount, barCount * 2)
+                                    cavaValues: root.simulatedFrequencies
                                     height: 18
                                     barW: (root.visualizerStyle === "cava" ? 4.0 : 3.2)
                                     gap: 2.4
@@ -1512,9 +1513,10 @@ Item {
                                 AudioVisualizer {
                                     anchors.verticalCenter: parent.verticalCenter
                                     active: root.isSimulating && root.visualizerEnabled
+                                    wingMode: "full"
                                     barCount: root.visualizerBarCount
                                     style: root.visualizerStyle
-                                    cavaValues: root.simulatedFrequencies.slice(0, root.visualizerBarCount)
+                                    cavaValues: root.simulatedFrequencies
                                     height: 18
                                     barW: (root.visualizerStyle === "cava" ? 4.5 : 3.5)
                                     gap: 2.6

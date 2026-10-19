@@ -45,20 +45,28 @@ Item {
     property int dashboardPage: 0
 
     function handleKey(event) {
-        if (root.currentView === 2) {
+        if (root.currentView === 1) {
+            if (powerView && typeof powerView.handleKey === "function") {
+                if (powerView.handleKey(event)) {
+                    event.accepted = true
+                    return true
+                }
+            }
+        } else if (root.currentView === 5) {
+            if (screenshotView && typeof screenshotView.handleKey === "function") {
+                if (screenshotView.handleKey(event)) {
+                    event.accepted = true
+                    return true
+                }
+            }
+        } else if (root.currentView === 2) {
             if (wallpaperView && typeof wallpaperView.handleKey === "function") {
                 if (wallpaperView.handleKey(event)) {
                     event.accepted = true
                     return true
                 }
             }
-        }
-        if (event.key === Qt.Key_Escape) {
-            event.accepted = true
-            root.closeRequested()
-            return true
-        }
-        if (root.currentView === 0) {
+        } else if (root.currentView === 0) {
             if (event.key === Qt.Key_Right) {
                 if (root.dashboardPage === 0) {
                     event.accepted = true
@@ -80,8 +88,55 @@ Item {
                     return true
                 }
             }
+        } else if (root.currentView === 3) {
+            if (launcherView && typeof launcherView.handleKey === "function") {
+                if (launcherView.handleKey(event)) {
+                    event.accepted = true
+                    return true
+                }
+            }
+        } else if (root.currentView === 4) {
+            if (themeSwitcherView && typeof themeSwitcherView.handleKey === "function") {
+                if (themeSwitcherView.handleKey(event)) {
+                    event.accepted = true
+                    return true
+                }
+            }
+        } else if (root.currentView === 6) {
+            if (polkitView && typeof polkitView.handleKey === "function") {
+                if (polkitView.handleKey(event)) {
+                    event.accepted = true
+                    return true
+                }
+            }
+        } else if (root.currentView === 7) {
+            if (clipboardView && typeof clipboardView.handleKey === "function") {
+                if (clipboardView.handleKey(event)) {
+                    event.accepted = true
+                    return true
+                }
+            }
+        } else if (root.currentView === 8) {
+            if (emojiView && typeof emojiView.handleKey === "function") {
+                if (emojiView.handleKey(event)) {
+                    event.accepted = true
+                    return true
+                }
+            }
+        }
+
+        if (event.key === Qt.Key_Escape) {
+            event.accepted = true
+            root.closeRequested()
+            return true
         }
         return false
+    }
+
+    onCurrentViewChanged: {
+        if (currentView !== 1 && powerView && typeof powerView.cancelCountdown === "function") {
+            powerView.cancelCountdown()
+        }
     }
 
     Shortcut {

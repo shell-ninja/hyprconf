@@ -42,12 +42,36 @@ Item {
         return false
     }
 
-    // Pattern helper function: maps bar index into 'a', 'b', or 'c'
-    // Pattern: ["a", "a", "b", "b", "c", "c", "c", "c", "b", "b", "a", "a"]
-    function getPatternTier(index, totalBars) {
-        var pattern = ["a", "a", "b", "b", "c", "c", "c", "c", "b", "b", "a", "a"]
-        var pIdx = Math.min(11, Math.max(0, Math.floor(index * 12.0 / Math.max(1, totalBars))))
-        return pattern[pIdx]
+    // Normalized distance from edge to center: 0.0 at outer edges, 1.0 at center
+    function getU(index, totalBars) {
+        if (totalBars <= 1) return 0.0
+        var maxDist = (totalBars - 1) / 2.0
+        var distFromEdge = Math.min(index, totalBars - 1 - index)
+        return maxDist > 0 ? (distFromEdge / maxDist) : 0.0
+    }
+
+    // aaabbbccccbbbaaa Symmetrical Tier Multiplier Curve
+    function getTierMultiplier(u) {
+        if (u <= 0.35) {
+            return 1.00 - 0.15 * (u / 0.35) // Tier 'a': 1.00 -> 0.85 (tallest peak)
+        } else if (u <= 0.70) {
+            return 0.85 - 0.33 * ((u - 0.35) / 0.35) // Tier 'b': 0.85 -> 0.52 (mid-slope)
+        } else {
+            return 0.52 - 0.24 * ((u - 0.70) / 0.30) // Tier 'c': 0.52 -> 0.28 (center valley)
+        }
+    }
+
+    // Linear frequency interpolation across CAVA spectrum: edge (bass) to center (treble)
+    function sampleLiveCava(u) {
+        if (!root.liveBars || root.liveBars.length === 0) return 0.0
+        var maxIdx = root.liveBars.length - 1
+        var fIdx = Math.max(0.0, Math.min(maxIdx, u * maxIdx))
+        var idx0 = Math.floor(fIdx)
+        var idx1 = Math.min(maxIdx, idx0 + 1)
+        var frac = fIdx - idx0
+        var v0 = (root.liveBars[idx0] !== undefined) ? root.liveBars[idx0] : 0.0
+        var v1 = (root.liveBars[idx1] !== undefined) ? root.liveBars[idx1] : 0.0
+        return v0 * (1.0 - frac) + v1 * frac
     }
 
     // Process to read real-time CAVA stream
@@ -126,12 +150,12 @@ Item {
         anchors.topMargin: 16
         anchors.bottomMargin: 16
 
-        readonly property real computedBarWidth: Math.max(6, Math.min(22, Math.floor((vizContainer.width * 0.60) / root.activeBarCount)))
-        readonly property real computedSpacing: Math.max(4, Math.floor((vizContainer.width - root.activeBarCount * computedBarWidth) / Math.max(1, root.activeBarCount - 1)))
+        readonly property real computedSpacing: Math.max(3, Math.min(8, Math.floor((vizContainer.width * 0.12) / Math.max(1, root.activeBarCount - 1))))
+        readonly property real computedBarWidth: Math.max(4, Math.min(28, Math.floor((vizContainer.width - (root.activeBarCount - 1) * computedSpacing) / root.activeBarCount)))
 
         Row {
             anchors.centerIn: parent
-            spacing: Math.max(2, Math.floor((parent.width - root.activeBarCount * 4) / Math.max(1, root.activeBarCount - 1)))
+            spacing: vizContainer.computedSpacing
             height: parent.height
 
             Repeater {
@@ -141,20 +165,24 @@ Item {
                     id: barItem
                     readonly property int barIndex: index
                     readonly property real barVal: {
+                        var bCount = root.activeBarCount
+                        var u = root.getU(index, bCount)
+                        var tier = root.getTierMultiplier(u)
+
                         if (root.editMode) {
-                            var rel = Math.abs(index - root.activeBarCount / 2) / (root.activeBarCount / 2)
-                            return 0.3 + 0.6 * (1.0 - rel)
+                            return Math.max(0.14, 0.92 * tier)
                         }
-                        if (root.hasActiveAudio && root.liveBars && root.liveBars.length > index) {
-                            return root.liveBars[index]
+                        if (root.hasActiveAudio && root.liveBars && root.liveBars.length > 0) {
+                            var raw = root.sampleLiveCava(u)
+                            var curved = Math.pow(Math.min(1.0, raw * 1.35), 0.85)
+                            return Math.max(0.08 * tier, Math.min(1.0, curved * tier))
                         }
-                        // Gentle ambient sine wave harmonic
-                        var normI = index / root.activeBarCount
-                        var wave = Math.sin(normI * Math.PI * 3 + root.phase)
-                        return 0.08 + 0.18 * Math.max(0.0, wave)
+                        // Idle harmonic breathing synced to aaabbbccccbbbaaa pattern
+                        var breath = 0.25 + 0.15 * Math.sin(root.phase + u * Math.PI)
+                        return Math.max(0.06, breath * tier)
                     }
 
-                    width: Math.max(3, Math.min(8, Math.floor(parent.parent.width / root.activeBarCount) - 2))
+                    width: vizContainer.computedBarWidth
                     height: parent.height
 
                     Rectangle {
@@ -162,7 +190,7 @@ Item {
                         anchors.horizontalCenter: parent.horizontalCenter
                         width: parent.width
                         height: Math.max(4, Math.round(parent.height * barItem.barVal))
-                        radius: width / 2
+                        radius: (root.widgetConfig && root.widgetConfig.style === "wave") ? width / 2 : Math.min(3, width / 2)
 
                         gradient: Gradient {
                             GradientStop {

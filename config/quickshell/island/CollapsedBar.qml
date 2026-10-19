@@ -320,10 +320,10 @@ Item {
                 id: leftVisualizer
                 anchors.verticalCenter: parent.verticalCenter
                 active: root.isAudioPlaying && root.visualizerEnabled
-                mirror: false
+                wingMode: "left"
                 barCount: Math.max(2, Math.floor(root.visualizerBarCount / 2))
                 style: root.effectiveVizStyle
-                cavaValues: (root.cavaBars && root.cavaBars.length >= barCount) ? root.cavaBars.slice(0, barCount) : []
+                cavaValues: root.cavaBars
                 visible: width > 0
                 width: (root.isAudioPlaying && root.visualizerEnabled) ? implicitWidth : 0
                 opacity: (root.isAudioPlaying && root.visualizerEnabled) ? Math.max(0.0, 1.0 - root.animProgress * 2.5) : 0.0
@@ -516,10 +516,10 @@ Item {
                 id: rightVisualizer
                 anchors.verticalCenter: parent.verticalCenter
                 active: root.isAudioPlaying && root.visualizerEnabled
-                mirror: true
+                wingMode: "right"
                 barCount: Math.max(2, Math.floor(root.visualizerBarCount / 2))
                 style: root.effectiveVizStyle
-                cavaValues: (root.cavaBars && root.cavaBars.length >= root.visualizerBarCount) ? root.cavaBars.slice(barCount, barCount * 2) : (root.cavaBars ? root.cavaBars.slice(0, barCount) : [])
+                cavaValues: root.cavaBars
                 visible: width > 0
                 width: (root.isAudioPlaying && root.visualizerEnabled) ? implicitWidth : 0
                 opacity: (root.isAudioPlaying && root.visualizerEnabled) ? Math.max(0.0, 1.0 - root.animProgress * 2.5) : 0.0

@@ -84,21 +84,58 @@ Item {
         id: jsonWriter
     }
 
+    Timer {
+        id: autoSaveTimer
+        interval: 250
+        repeat: false
+        onTriggered: {
+            root.saveWidgetsConfig()
+        }
+    }
+
     function saveWidgetsConfig() {
         var jsonStr = JSON.stringify(root.widgetsConfig, null, 2)
         jsonWriter.running = false
         jsonWriter.command = [
             "python3", "-c",
-            "import sys, os, subprocess\n" +
+            "import sys, os, subprocess, json\n" +
+            "data_str = sys.argv[1]\n" +
+            "try:\n" +
+            "    data = json.loads(data_str)\n" +
+            "except Exception:\n" +
+            "    data = {}\n" +
             "p = os.path.expanduser('~/.hyprconf/quickshell/widgets/widgets.json')\n" +
             "os.makedirs(os.path.dirname(p), exist_ok=True)\n" +
             "with open(p, 'w', encoding='utf-8') as f:\n" +
-            "    f.write(sys.argv[1])\n" +
+            "    f.write(data_str)\n" +
             "p_git = os.path.expanduser('~/hyprconf/config/quickshell/widgets/widgets.json')\n" +
             "if os.path.exists(os.path.dirname(p_git)):\n" +
             "    with open(p_git, 'w', encoding='utf-8') as f:\n" +
-            "        f.write(sys.argv[1])\n" +
-            "subprocess.run(['qs', 'ipc', '-c', 'widgets', 'call', 'widgets', 'reloadConfig'], stderr=subprocess.DEVNULL)",
+            "        f.write(data_str)\n" +
+            "is_enabled = data.get('enabled', True)\n" +
+            "widgets = data.get('widgets', {})\n" +
+            "any_widget_enabled = any(w.get('enabled', False) for w in widgets.values() if isinstance(w, dict))\n" +
+            "res = subprocess.run(['pgrep', '-x', 'qs'], stdout=subprocess.PIPE, text=True)\n" +
+            "pids = res.stdout.strip().split()\n" +
+            "is_running = False\n" +
+            "for pid in pids:\n" +
+            "    try:\n" +
+            "        cmd = open(f'/proc/{pid}/cmdline').read().replace('\\x00', ' ')\n" +
+            "        if '-c widgets' in cmd:\n" +
+            "            is_running = True\n" +
+            "            break\n" +
+            "    except Exception:\n" +
+            "        pass\n" +
+            "if is_enabled and any_widget_enabled:\n" +
+            "    if is_running:\n" +
+            "        subprocess.run(['qs', 'ipc', '-c', 'widgets', 'call', 'widgets', 'setConfig', data_str], stderr=subprocess.DEVNULL)\n" +
+            "        subprocess.run(['qs', 'ipc', '-c', 'widgets', 'call', 'widgets', 'reloadConfig'], stderr=subprocess.DEVNULL)\n" +
+            "    else:\n" +
+            "        subprocess.run(['bash', os.path.expanduser('~/.hyprconf/hypr/scripts/sh/qs-widgets.sh'), '--reload'], stderr=subprocess.DEVNULL)\n" +
+            "else:\n" +
+            "    if is_running:\n" +
+            "        subprocess.run(['qs', 'ipc', '-c', 'widgets', 'call', 'widgets', 'setConfig', data_str], stderr=subprocess.DEVNULL)\n" +
+            "        subprocess.run(['qs', 'ipc', '-c', 'widgets', 'call', 'widgets', 'reloadConfig'], stderr=subprocess.DEVNULL)\n",
             jsonStr
         ]
         jsonWriter.running = true
@@ -140,6 +177,7 @@ Item {
         copy.widgets[key].y = Math.round(newY * 1000) / 1000
         root.widgetsConfig = copy
         root.isDirty = true
+        autoSaveTimer.restart()
     }
 
     function updateWidgetScale(key, newScale) {
@@ -148,14 +186,19 @@ Item {
         copy.widgets[key].scale = Math.round(newScale * 100) / 100
         root.widgetsConfig = copy
         root.isDirty = true
+        autoSaveTimer.restart()
     }
 
     function setWidgetEnabled(key, val) {
         if (!root.widgetsConfig || !root.widgetsConfig.widgets || !root.widgetsConfig.widgets[key]) return
         var copy = JSON.parse(JSON.stringify(root.widgetsConfig))
         copy.widgets[key].enabled = val
+        if (val) {
+            copy.enabled = true
+        }
         root.widgetsConfig = copy
-        root.isDirty = true
+        root.isDirty = false
+        root.saveWidgetsConfig()
     }
 
     function updateWidgetOption(key, prop, val) {
@@ -164,6 +207,7 @@ Item {
         copy.widgets[key][prop] = val
         root.widgetsConfig = copy
         root.isDirty = true
+        autoSaveTimer.restart()
     }
 
     RowLayout {
@@ -1494,7 +1538,8 @@ Item {
                                             var copy = JSON.parse(JSON.stringify(root.widgetsConfig))
                                             copy.enabled = swMasterWidgets.checked
                                             root.widgetsConfig = copy
-                                            root.isDirty = true
+                                            root.isDirty = false
+                                            root.saveWidgetsConfig()
                                         }
                                     }
                                 }
@@ -1530,7 +1575,8 @@ Item {
                                                 copy.widgets[k].show_background = swGlobalBg.checked
                                             }
                                             root.widgetsConfig = copy
-                                            root.isDirty = true
+                                            root.isDirty = false
+                                            root.saveWidgetsConfig()
                                         }
                                     }
                                 }

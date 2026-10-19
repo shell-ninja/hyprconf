@@ -30,23 +30,67 @@ Item {
     property bool playSound: true
     property int delaySeconds: 0
 
+    property int selectedIndex: 0
+
     // Forward keyboard events
     function handleKey(event) {
-        if (event.key === Qt.Key_Escape) {
+        var k = event.key
+        var t = (event.text || "").toLowerCase()
+
+        if (k === Qt.Key_Escape) {
             event.accepted = true
             root.closeRequested()
             return true
-        } else if (event.key === Qt.Key_1) {
+        } else if (k === Qt.Key_1 || t === "1" || k === Qt.Key_A || t === "a") {
+            event.accepted = true
+            root.selectedIndex = 0
             captureMode("area")
             return true
-        } else if (event.key === Qt.Key_2) {
+        } else if (k === Qt.Key_2 || t === "2" || k === Qt.Key_W || t === "w") {
+            event.accepted = true
+            root.selectedIndex = 1
             captureMode("active")
             return true
-        } else if (event.key === Qt.Key_3) {
+        } else if (k === Qt.Key_3 || t === "3" || k === Qt.Key_F || t === "f") {
+            event.accepted = true
+            root.selectedIndex = 2
             captureMode("screen")
             return true
-        } else if (event.key === Qt.Key_4) {
+        } else if (k === Qt.Key_4 || t === "4" || k === Qt.Key_T || t === "t") {
+            event.accepted = true
+            root.selectedIndex = 3
             captureMode("timer")
+            return true
+        } else if (k === Qt.Key_S || t === "s") {
+            event.accepted = true
+            root.useSatty = !root.useSatty
+            return true
+        } else if (k === Qt.Key_C || t === "c" || k === Qt.Key_M || t === "m") {
+            event.accepted = true
+            root.playSound = !root.playSound
+            return true
+        } else if (k === Qt.Key_Left) {
+            event.accepted = true
+            root.selectedIndex = (root.selectedIndex <= 0) ? 3 : root.selectedIndex - 1
+            return true
+        } else if (k === Qt.Key_Right) {
+            event.accepted = true
+            root.selectedIndex = (root.selectedIndex >= 3) ? 0 : root.selectedIndex + 1
+            return true
+        } else if (k === Qt.Key_Tab) {
+            event.accepted = true
+            root.selectedIndex = (root.selectedIndex + 1) % 4
+            return true
+        } else if (k === Qt.Key_Backtab) {
+            event.accepted = true
+            root.selectedIndex = (root.selectedIndex + 3) % 4
+            return true
+        } else if (k === Qt.Key_Return || k === Qt.Key_Enter || k === Qt.Key_Space) {
+            event.accepted = true
+            if (root.selectedIndex === 0) captureMode("area")
+            else if (root.selectedIndex === 1) captureMode("active")
+            else if (root.selectedIndex === 2) captureMode("screen")
+            else if (root.selectedIndex === 3) captureMode("timer")
             return true
         }
         return false
@@ -58,13 +102,57 @@ Item {
         onActivated: root.closeRequested()
     }
 
+    Shortcut {
+        sequence: "1"
+        enabled: root.active && !root.isClosing
+        onActivated: {
+            root.selectedIndex = 0
+            root.captureMode("area")
+        }
+    }
+
+    Shortcut {
+        sequence: "2"
+        enabled: root.active && !root.isClosing
+        onActivated: {
+            root.selectedIndex = 1
+            root.captureMode("active")
+        }
+    }
+
+    Shortcut {
+        sequence: "3"
+        enabled: root.active && !root.isClosing
+        onActivated: {
+            root.selectedIndex = 2
+            root.captureMode("screen")
+        }
+    }
+
+    Shortcut {
+        sequence: "4"
+        enabled: root.active && !root.isClosing
+        onActivated: {
+            root.selectedIndex = 3
+            root.captureMode("timer")
+        }
+    }
+
+    Shortcut {
+        sequence: "t"
+        enabled: root.active && !root.isClosing
+        onActivated: {
+            root.selectedIndex = 3
+            root.captureMode("timer")
+        }
+    }
+
     function captureMode(mode) {
         // If timer screenshot or delayed mode, delegate countdown to Dynamic Island
         if (mode === "timer" || root.delaySeconds > 0) {
             var delay = (mode === "timer") ? 5 : root.delaySeconds
             var target = (mode === "timer") ? "screen" : mode
             root.startTimerScreenshot(delay, target, root.useSatty, root.playSound)
-            root.closeRequested()
             return
         }
 
@@ -222,10 +310,10 @@ Item {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 radius: 16
-                color: card1Mouse.containsMouse ? Theme.alpha(Theme.accent, 0.14) : Theme.alpha(Theme.surface, 0.55)
+                color: (card1Mouse.containsMouse || root.selectedIndex === 0) ? Theme.alpha(Theme.accent, 0.16) : Theme.alpha(Theme.surface, 0.55)
                 border.width: 1
-                border.color: card1Mouse.containsMouse ? Theme.accent : Theme.alpha(Theme.foreground, 0.12)
-                scale: card1Mouse.pressed ? 0.96 : (card1Mouse.containsMouse ? 1.02 : 1.0)
+                border.color: (card1Mouse.containsMouse || root.selectedIndex === 0) ? Theme.accent : Theme.alpha(Theme.foreground, 0.12)
+                scale: card1Mouse.pressed ? 0.96 : ((card1Mouse.containsMouse || root.selectedIndex === 0) ? 1.02 : 1.0)
                 Behavior on scale { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
                 Behavior on color { ColorAnimation { duration: 140 } }
                 Behavior on border.color { ColorAnimation { duration: 140 } }
@@ -272,6 +360,7 @@ Item {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
+                    onEntered: root.selectedIndex = 0
                     onClicked: root.captureMode("area")
                 }
             }
@@ -281,10 +370,10 @@ Item {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 radius: 16
-                color: card2Mouse.containsMouse ? Theme.alpha(Theme.accent, 0.14) : Theme.alpha(Theme.surface, 0.55)
+                color: (card2Mouse.containsMouse || root.selectedIndex === 1) ? Theme.alpha(Theme.accent, 0.16) : Theme.alpha(Theme.surface, 0.55)
                 border.width: 1
-                border.color: card2Mouse.containsMouse ? Theme.accent : Theme.alpha(Theme.foreground, 0.12)
-                scale: card2Mouse.pressed ? 0.96 : (card2Mouse.containsMouse ? 1.02 : 1.0)
+                border.color: (card2Mouse.containsMouse || root.selectedIndex === 1) ? Theme.accent : Theme.alpha(Theme.foreground, 0.12)
+                scale: card2Mouse.pressed ? 0.96 : ((card2Mouse.containsMouse || root.selectedIndex === 1) ? 1.02 : 1.0)
                 Behavior on scale { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
                 Behavior on color { ColorAnimation { duration: 140 } }
                 Behavior on border.color { ColorAnimation { duration: 140 } }
@@ -331,6 +420,7 @@ Item {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
+                    onEntered: root.selectedIndex = 1
                     onClicked: root.captureMode("active")
                 }
             }
@@ -340,10 +430,10 @@ Item {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 radius: 16
-                color: card3Mouse.containsMouse ? Theme.alpha(Theme.accent, 0.14) : Theme.alpha(Theme.surface, 0.55)
+                color: (card3Mouse.containsMouse || root.selectedIndex === 2) ? Theme.alpha(Theme.accent, 0.16) : Theme.alpha(Theme.surface, 0.55)
                 border.width: 1
-                border.color: card3Mouse.containsMouse ? Theme.accent : Theme.alpha(Theme.foreground, 0.12)
-                scale: card3Mouse.pressed ? 0.96 : (card3Mouse.containsMouse ? 1.02 : 1.0)
+                border.color: (card3Mouse.containsMouse || root.selectedIndex === 2) ? Theme.accent : Theme.alpha(Theme.foreground, 0.12)
+                scale: card3Mouse.pressed ? 0.96 : ((card3Mouse.containsMouse || root.selectedIndex === 2) ? 1.02 : 1.0)
                 Behavior on scale { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
                 Behavior on color { ColorAnimation { duration: 140 } }
                 Behavior on border.color { ColorAnimation { duration: 140 } }
@@ -390,6 +480,7 @@ Item {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
+                    onEntered: root.selectedIndex = 2
                     onClicked: root.captureMode("screen")
                 }
             }
@@ -399,10 +490,10 @@ Item {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 radius: 16
-                color: card4Mouse.containsMouse ? Theme.alpha(Theme.accent, 0.14) : Theme.alpha(Theme.surface, 0.55)
+                color: (card4Mouse.containsMouse || root.selectedIndex === 3) ? Theme.alpha(Theme.accent, 0.16) : Theme.alpha(Theme.surface, 0.55)
                 border.width: 1
-                border.color: card4Mouse.containsMouse ? Theme.accent : Theme.alpha(Theme.foreground, 0.12)
-                scale: card4Mouse.pressed ? 0.96 : (card4Mouse.containsMouse ? 1.02 : 1.0)
+                border.color: (card4Mouse.containsMouse || root.selectedIndex === 3) ? Theme.accent : Theme.alpha(Theme.foreground, 0.12)
+                scale: card4Mouse.pressed ? 0.96 : ((card4Mouse.containsMouse || root.selectedIndex === 3) ? 1.02 : 1.0)
                 Behavior on scale { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
                 Behavior on color { ColorAnimation { duration: 140 } }
                 Behavior on border.color { ColorAnimation { duration: 140 } }
@@ -449,6 +540,7 @@ Item {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
+                    onEntered: root.selectedIndex = 3
                     onClicked: root.captureMode("timer")
                 }
             }
@@ -493,7 +585,7 @@ Item {
                     }
 
                     Text {
-                        text: "Annotate (Satty)"
+                        text: "Annotate (Satty) [S]"
                         font.family: "Outfit"
                         font.pixelSize: 11
                         font.weight: Font.Medium
@@ -539,7 +631,7 @@ Item {
                     }
 
                     Text {
-                        text: "Camera Sound"
+                        text: "Camera Sound [C]"
                         font.family: "Outfit"
                         font.pixelSize: 11
                         font.weight: Font.Medium

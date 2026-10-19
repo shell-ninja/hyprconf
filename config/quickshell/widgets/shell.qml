@@ -45,6 +45,7 @@ PanelWindow {
 
     function reloadConfig() {
         configLoader.running = false
+        configLoader.command = ["python3", "-c", "import json, os; p=os.path.expanduser('~/.hyprconf/quickshell/widgets/widgets.json'); print(open(p, encoding='utf-8').read() if os.path.exists(p) else '{}')"]
         configLoader.running = true
     }
 
@@ -54,9 +55,20 @@ PanelWindow {
         function reloadConfig() {
             root.reloadConfig()
         }
+        function setConfig(jsonStr: string) {
+            if (jsonStr && jsonStr.length > 0) {
+                try {
+                    root.widgetsConfig = JSON.parse(jsonStr)
+                } catch(e) {
+                    console.log("[Widgets] Error parsing setConfig JSON:", e)
+                }
+            }
+        }
         function toggle() {
             if (root.widgetsConfig) {
-                root.widgetsConfig.enabled = !root.widgetsConfig.enabled
+                var copy = JSON.parse(JSON.stringify(root.widgetsConfig))
+                copy.enabled = !copy.enabled
+                root.widgetsConfig = copy
             }
         }
     }

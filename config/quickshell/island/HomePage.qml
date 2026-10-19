@@ -400,6 +400,7 @@ Item {
             AudioVisualizer {
                 anchors.centerIn: parent
                 active: root.isAudioPlaying && root.visualizerEnabled
+                wingMode: "full"
                 barCount: root.visualizerBarCount
                 style: root.visualizerStyle
                 cavaValues: root.cavaBars

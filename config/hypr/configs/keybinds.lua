@@ -41,8 +41,8 @@ hl.bind(mainMod .. " + SHIFT + Return", hl.dsp.exec_cmd(terminal .. " --title fl
 hl.bind(mainMod .. " + Q", hl.dsp.window.close())
 hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(file_man))
 hl.bind(mainMod .. " + SHIFT + E", hl.dsp.exec_cmd(terminal .. " --title " .. term_file_man .. " -e " .. term_file_man))
-hl.bind(mainMod .. " + SHIFT + C", hl.dsp.exec_cmd(qsClipboard))
-hl.bind(mainMod .. " + V", hl.dsp.window.float({ action = "toggle" }))
+hl.bind(mainMod .. " + V", hl.dsp.exec_cmd(qsClipboard))
+hl.bind(mainMod .. " + SHIFT + V", hl.dsp.window.float({ action = "toggle" }))
 hl.bind(mainMod .. " + ALT + V", hl.dsp.exec_cmd("hyprctl dispatch workspaceopt allfloat"))
 hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen())
 hl.bind(mainMod .. " + D", hl.dsp.exec_cmd(qsLauncher))
@@ -54,7 +54,6 @@ hl.bind(mainMod .. " + SHIFT + P", hl.dsp.window.pseudo())
 
 -- ── Logout / lock ─────────────────────────────────────────────────────────────
 hl.bind(mainMod .. " + X", hl.dsp.exec_cmd(qsIsland .. " --power"))
-hl.bind(mainMod .. " + L", hl.dsp.exec_cmd(sh_dir .. "/qs-lock.sh"))
 hl.bind(mainMod .. " + SHIFT + L", hl.dsp.exec_cmd(sh_dir .. "/qs-lock.sh"))
 
 -- ── Browser / apps ───────────────────────────────────────────────────────────

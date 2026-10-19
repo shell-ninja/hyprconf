@@ -38,7 +38,7 @@ if [[ "$1" == "--reload" ]]; then
     if pgrep -f "qs -c widgets" >/dev/null 2>&1; then
         qs ipc -c widgets call widgets reloadConfig 2>/dev/null || true
     else
-        qs -c widgets -d
+        exec qs -c widgets -d
     fi
     exit 0
 fi
@@ -47,7 +47,7 @@ if [[ "$1" == "--toggle" ]]; then
     if pgrep -f "qs -c widgets" >/dev/null 2>&1; then
         qs ipc -c widgets call widgets toggle 2>/dev/null || true
     else
-        qs -c widgets -d
+        exec qs -c widgets -d
     fi
     exit 0
 fi

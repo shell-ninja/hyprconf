@@ -3,11 +3,11 @@ import QtQuick
 
 QtObject {
     // Dynamic Obsidian Glassmorphism Palette
-    readonly property color primary: "#f82506"
-    readonly property color secondary: "#564c7f"
-    readonly property color accent: "#f82506"
-    readonly property color surface: "#201817"
-    readonly property color background: "#150f0e"
+    readonly property color primary: "#4c5b7f"
+    readonly property color secondary: "#4a7381"
+    readonly property color accent: "#4c5b7f"
+    readonly property color surface: "#171a20"
+    readonly property color background: "#0e1015"
     readonly property color foreground: "#f2f2f3"
     readonly property color on_primary: "#12151c"
     readonly property color on_secondary: "#12151c"
