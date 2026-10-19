@@ -260,8 +260,9 @@ if [[ "$dir" != "$HOME/.hyprconf" ]]; then
             rm -rf "$HOME/.hyprconf/.git" "$HOME/.hyprconf/Logs" 2>/dev/null || true
         fi
     fi
-    # Also copy setup.sh, extras, and local if present in root of repo
+    # Also copy setup.sh, .version, extras, and local if present in root of repo
     [[ -f "$dir/setup.sh" ]] && cp -f "$dir/setup.sh" "$HOME/.hyprconf/setup.sh" 2>/dev/null || true
+    [[ -f "$dir/.version" ]] && cp -f "$dir/.version" "$HOME/.hyprconf/.version" 2>/dev/null || true
     [[ -d "$dir/extras" ]] && cp -a "$dir/extras" "$HOME/.hyprconf/" 2>/dev/null || true
     [[ -d "$dir/local" ]] && cp -a "$dir/local" "$HOME/.hyprconf/" 2>/dev/null || true
     msg dn "Configuration tree installed to $HOME/.hyprconf"
@@ -463,7 +464,7 @@ done
 
 # Set permissions for scripts and fish functions
 if [[ -d "$scripts_dir" ]]; then
-    chmod +x "$scripts_dir"/* 2>/dev/null
+    chmod +x "$scripts_dir"/* "$scripts_dir/sh"/* "$scripts_dir/py"/* 2>/dev/null || true
     [[ -d "$HOME/.hyprconf/fish/functions" ]] && chmod +x "$HOME/.hyprconf/fish/functions"/* 2>/dev/null
     msg dn "Made all helper scripts executable."
 else
@@ -789,8 +790,10 @@ except Exception: pass
 " 2>/dev/null || true
         fi
         # Prime the weather cache
-        if [[ -x "$HOME/.hyprconf/hypr/scripts/weather.py" ]]; then
-            "$HOME/.hyprconf/hypr/scripts/weather.py" --force &>/dev/null || true
+        local weather_bin="$HOME/.hyprconf/hypr/scripts/py/weather.py"
+        [[ ! -x "$weather_bin" ]] && weather_bin="$HOME/.hyprconf/hypr/scripts/py/weather.py"
+        if [[ -x "$weather_bin" ]]; then
+            "$weather_bin" --force &>/dev/null || true
         fi
         msg dn "Weather location updated successfully ($city, $country)."
     else
@@ -843,10 +846,12 @@ done
 
 # Generate colors and cache files for wallpaper (Quickshell, Hyprland, Kitty, Qt, Btop, Neovim, GTK)
 msg act "Generating colors and system theme cache..."
+local colors_bin="$HOME/.hyprconf/hypr/scripts/py/hypr-colors.py"
+[[ ! -x "$colors_bin" ]] && colors_bin="$HOME/.hyprconf/hypr/scripts/py/hypr-colors.py"
 if command -v gum &> /dev/null; then
-    gum spin --title="Generating color scheme & system theme palette..." -- bash -c '"$HOME/.hyprconf/hypr/scripts/hypr-colors.py" "'"$wallpaper"'" &>/dev/null'
+    gum spin --title="Generating color scheme & system theme palette..." -- bash -c "'$colors_bin' '$wallpaper' &>/dev/null"
 else
-    "$HOME/.hyprconf/hypr/scripts/hypr-colors.py" "$wallpaper" &> /dev/null
+    "$colors_bin" "$wallpaper" &> /dev/null
 fi
 
 # Enable pkgupdate-notifier service if systemd user daemon is active
@@ -959,16 +964,19 @@ fi
 exec_lua="$HOME/.hyprconf/hypr/configs/exec.lua"
 if [[ -f "$exec_lua" ]]; then
     if ! grep -q "qs-island.sh --start" "$exec_lua"; then
-        sed -i '/hl.on("hyprland.start", function()/a \    hl.exec_cmd(scripts_dir .. "/qs-island.sh --start &")' "$exec_lua"
+        sed -i '/hl.on("hyprland.start", function()/a \    hl.exec_cmd(sh_dir .. "/qs-island.sh --start &")' "$exec_lua"
     fi
     if ! grep -q "qs-widgets.sh --start" "$exec_lua"; then
-        sed -i '/hl.on("hyprland.start", function()/a \    hl.exec_cmd(scripts_dir .. "/qs-widgets.sh --start &")' "$exec_lua"
+        sed -i '/hl.on("hyprland.start", function()/a \    hl.exec_cmd(sh_dir .. "/qs-widgets.sh --start &")' "$exec_lua"
     fi
-    msg dn "Verified Dynamic Island & Desktop Widgets daemons in exec.lua"
+    if ! grep -q "hyprconf.sh --daemon" "$exec_lua"; then
+        sed -i '/hl.on("hyprland.start", function()/a \    hl.exec_cmd(sh_dir .. "/hyprconf.sh --daemon &")' "$exec_lua"
+    fi
+    msg dn "Verified Dynamic Island, Desktop Widgets & Hyprconf update daemons in exec.lua"
 fi
 
 # Ensure all helper scripts and setup script are executable
-chmod +x "$HOME/.hyprconf/hypr/scripts"/* "$dir/setup.sh" 2>/dev/null || true
+chmod +x "$HOME/.hyprconf/hypr/scripts"/* "$HOME/.hyprconf/hypr/scripts/sh"/* "$HOME/.hyprconf/hypr/scripts/py"/* "$dir/setup.sh" 2>/dev/null || true
 
 msg dn "Script execution completed successfully! Please log out and log back in to enjoy your setup."
 
