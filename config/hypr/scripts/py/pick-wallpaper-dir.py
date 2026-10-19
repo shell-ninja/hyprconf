@@ -174,7 +174,8 @@ if __name__ == "__main__":
     elif len(sys.argv) > 1 and sys.argv[1] in ("--config", "--get-config"):
         cfg = {
             "wallpaper_dir": get_current_dir(),
-            "live_dir": get_live_dir()
+            "live_dir": get_live_dir(),
+            "color_variant": "vibrant"
         }
         if CONFIG_FILE.exists():
             try:
@@ -182,9 +183,25 @@ if __name__ == "__main__":
                     data = json.load(f)
                     cfg["mode"] = data.get("mode", "static")
                     cfg["live_wallpaper"] = data.get("live_wallpaper", "")
+                    if data.get("color_variant"):
+                        cfg["color_variant"] = data.get("color_variant")
             except Exception:
                 pass
         print(json.dumps(cfg), flush=True)
+    elif len(sys.argv) > 2 and sys.argv[1] == "--set-variant":
+        new_v = sys.argv[2].strip().lower()
+        CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        cfg_data = {}
+        if CONFIG_FILE.exists():
+            try:
+                with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+                    cfg_data = json.load(f)
+            except Exception:
+                cfg_data = {}
+        cfg_data["color_variant"] = new_v
+        with open(CONFIG_FILE, "w", encoding="utf-8") as f:
+            json.dump(cfg_data, f, indent=2)
+        print(json.dumps({"status": "success", "color_variant": new_v}), flush=True)
     elif len(sys.argv) > 2 and sys.argv[1] == "--set":
         new_d = sys.argv[2]
         if os.path.isdir(new_d):

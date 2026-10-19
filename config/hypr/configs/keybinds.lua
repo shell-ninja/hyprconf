@@ -14,8 +14,6 @@ local py_dir          = scripts_dir .. "/py"
 local terminal        = "kitty"
 local file_man        = "dolphin || thunar"
 local term_file_man   = "yazi"
-local wallpaper       = sh_dir .. "/Wallpaper.sh"
-local wallpaperSelect = py_dir .. "/WallpaperSelect.py"
 local help            = sh_dir .. "/keybinds.sh"
 local volumeCTRL      = sh_dir .. "/volumecontrol.sh"
 local brightnessCTRL  = sh_dir .. "/brightness.sh"
@@ -28,15 +26,10 @@ local qsEmoji         = sh_dir .. "/qs-emoji.sh"
 local inputMethodCTRL = sh_dir .. "/input-method.sh"
 
 -- ── Wallpaper ─────────────────────────────────────────────────────────────────
--- hl.bind(mainMod .. " + W", hl.dsp.exec_cmd(wallpaper))
 hl.bind(mainMod .. " + W", hl.dsp.exec_cmd(qsIsland .. " --wallpaper"))
--- hl.bind(mainMod .. " + CTRL + SHIFT + W", hl.dsp.exec_cmd(qsIsland .. " --wallpaper"))
--- hl.bind(mainMod .. " + ALT + W", hl.dsp.exec_cmd(wallpaperSelect))
 
 -- ── Screenshots / Studio ───────────────────────────────────────────────────────
 hl.bind("print", hl.dsp.exec_cmd(qsScreenshot))
--- hl.bind(mainMod .. " + Print", hl.dsp.exec_cmd(sh_dir .. "/screenshot.sh area"))
--- hl.bind(mainMod .. " + SHIFT + S", hl.dsp.exec_cmd(qsScreenshot))
 
 -- ── Help ──────────────────────────────────────────────────────────────────────
 hl.bind(mainMod .. " + SHIFT + H", hl.dsp.exec_cmd(help))
@@ -76,7 +69,6 @@ hl.bind(mainMod .. " + SHIFT + comma", hl.dsp.exec_cmd(sh_dir .. "/qs-settings.s
 hl.bind(mainMod .. " + CTRL + R", hl.dsp.exec_cmd("hyprctl reload && notify-send 'Done' 'Hyprland reload'"))
 hl.bind(ctrl .. " + U", hl.dsp.exec_cmd(py_dir .. "/pkgupdate-gui.py"))
 hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd(sh_dir .. "/startup.sh &> /dev/null"))
--- hl.bind(mainMod .. " + S", hl.dsp.exec_cmd(py_dir .. "/settings.py"))
 hl.bind(mainMod .. " + S", hl.dsp.exec_cmd(sh_dir .. "/qs-settings.sh"))
 hl.bind(mainMod .. " + F1", hl.dsp.exec_cmd(sh_dir .. "/animations_toggle.sh"))
 hl.bind(mainMod .. " + CTRL + P", hl.dsp.exec_cmd(sh_dir .. "/regenerate-colors.sh"))

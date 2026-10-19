@@ -97,13 +97,9 @@ execute_action() {
         *"Open Brave (Incognito)"*) brave --incognito & ;;
         *"Reset Default Browser"*) "$sh_dir/default_browser.sh" --reset & ;;
         *"Change Wallpaper (Random)"*) "$sh_dir/Wallpaper.sh" & ;;
-        *"Open Dynamic Island Wallpaper Picker"*) "$sh_dir/qs-island.sh" --wallpaper & ;;
-        *"Open Wallpaper Selector Panel"*) "$py_dir/WallpaperSelect.py" & ;;
+        *"Open Dynamic Island Wallpaper Picker"*|*"Open Wallpaper Selector Panel"*) "$sh_dir/qs-island.sh" --wallpaper & ;;
         *"Restart Quickshell Desktop Shell"*) "$sh_dir/qs-island.sh" --restart & ;;
-        *"Toggle System Settings App"*) "$sh_dir/qs-settings.sh" & ;;
-        *"Reload Hyprland Configuration"*) hyprctl reload && notify-send -i preferences-desktop-theme "Done" "Hyprland reload" ;;
-        *"Restart Startup Services"*) "$sh_dir/startup.sh" &>/dev/null & ;;
-        *"Open Dotfiles Settings Menu"*) "$py_dir/settings.py" & ;;
+        *"Toggle System Settings App"*|*"Open Dotfiles Settings Menu"*) "$sh_dir/qs-settings.sh" & ;;
         *"Toggle Window Animations"*) "$sh_dir/animations_toggle.sh" & ;;
         *"Regenerate Colorscheme"*) "$sh_dir/regenerate-colors.sh" & ;;
         *"Take Screenshot"*|*"Open Screenshot Studio"*) "$sh_dir/qs-screenshot.sh" & ;;

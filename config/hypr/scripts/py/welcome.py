@@ -245,7 +245,7 @@ KEYBIND_SECTIONS = [
         ("palette", "Bar Theme", "Switch status bar theme", ["SUPER", "CTRL", "W"], None),
     ]),
     ("System", [
-        ("sliders", "Settings", "Open Hyprconf settings panel", ["SUPER", "S"], "settings.py"),
+        ("sliders", "Settings", "Open Hyprconf settings panel", ["SUPER", "S"], "qs-settings.sh"),
         ("refresh", "Package Updater", "Check and apply system updates", ["CTRL", "U"], "pkgupdate-gui.py"),
         ("keyboard", "Keybinds Cheatsheet", "Show all configured shortcuts", ["SUPER", "SHIFT", "H"], None),
     ]),
@@ -262,7 +262,7 @@ APPS = [
     {
         "icon": "sliders",
         "name": "Settings",
-        "file": "settings.py",
+        "file": "qs-settings.sh",
         "desc": "Customize borders, animations, display resolution, input devices, and keybindings.",
         "shortcut": ["SUPER", "S"],
     },

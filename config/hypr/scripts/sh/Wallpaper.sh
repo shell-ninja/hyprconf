@@ -39,9 +39,14 @@ AWWW_PARAMS="--transition-fps $FPS --transition-type $TYPE --transition-duration
 # Parse arguments
 target_wallpaper=""
 live_mode=0
+color_variant=""
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
+        --variant|-v)
+            color_variant="$2"
+            shift 2
+            ;;
         --live|live|-l)
             live_mode=1
             shift
@@ -188,7 +193,11 @@ with open(p, 'w') as f:
     # 6. Synchronize theme colors and caches
     if [[ -f "$cache_dir/current_wallpaper.png" ]]; then
         "$sh_dir/wallcache.sh" &>/dev/null &
-        "$py_dir/hypr-colors.py" "$cache_dir/current_wallpaper.png"
+        if [[ -n "$color_variant" ]]; then
+            "$py_dir/hypr-colors.py" "$cache_dir/current_wallpaper.png" --variant "$color_variant"
+        else
+            "$py_dir/hypr-colors.py" "$cache_dir/current_wallpaper.png"
+        fi
     fi
 
     qs ipc -c island call island reloadWallpaper 2>/dev/null || true
@@ -227,7 +236,11 @@ with open(p, 'w') as f:
     "$sh_dir/wallcache.sh" &>/dev/null &
 
     # Synchronize theme colors across Quickshell projects, Hyprland, Kitty & Qt (SYNCHRONOUS)
-    "$py_dir/hypr-colors.py" "$target_wallpaper"
+    if [[ -n "$color_variant" ]]; then
+        "$py_dir/hypr-colors.py" "$target_wallpaper" --variant "$color_variant"
+    else
+        "$py_dir/hypr-colors.py" "$target_wallpaper"
+    fi
 
     # Trigger instant wallpaper reload in running Quickshell Island
     qs ipc -c island call island reloadWallpaper 2>/dev/null || true

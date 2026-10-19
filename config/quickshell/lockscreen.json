@@ -78,8 +78,8 @@
         "separator": "\u2022"
     },
     "backdrop": {
-        "blur": 0.65,
-        "vignette": 0.65,
-        "dimming": 0.2
+        "blur": 1,
+        "vignette": 0.6000000000000001,
+        "dimming": 0.25
     }
 }

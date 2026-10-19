@@ -70,6 +70,8 @@ Item {
     // ── ACTIVE WALLPAPER DIRECTORIES & CONFIG ───────────────────────────────
     property string currentWallpaperDir: Quickshell.env("HOME") + "/.hyprconf/hypr/Wallpaper"
     property string currentLiveDir: Quickshell.env("HOME") + "/.hyprconf/hypr/Wallpaper/Live"
+    property string colorVariant: "vibrant"
+    property bool isVariantUpdating: false
 
     Process {
         id: configReader
@@ -82,10 +84,56 @@ Item {
                     var cfg = JSON.parse(text.trim())
                     if (cfg.wallpaper_dir) root.currentWallpaperDir = cfg.wallpaper_dir
                     if (cfg.live_dir) root.currentLiveDir = cfg.live_dir
+                    if (cfg.color_variant) root.colorVariant = cfg.color_variant
                     root.refreshWallpapers()
                 } catch(e) {}
             }
         }
+    }
+
+    Process {
+        id: variantUpdater
+        property string targetVariant: ""
+        command: []
+        running: false
+        onExited: {
+            root.isVariantUpdating = false
+        }
+    }
+
+    function setColorVariant(newVariant) {
+        if (!newVariant || newVariant === root.colorVariant) return
+        root.colorVariant = newVariant
+        root.isVariantUpdating = true
+
+        // Persist variant via pick-wallpaper-dir.py using Quickshell.execDetached
+        Quickshell.execDetached([
+            "python3",
+            Quickshell.env("HOME") + "/.hyprconf/hypr/scripts/py/pick-wallpaper-dir.py",
+            "--set-variant", newVariant
+        ])
+
+        // Immediately trigger live desktop & quickshell palette update
+        var wallPath = ""
+        if (root.filteredWallpapers.length > 0 && root.selectedIndex >= 0 && root.selectedIndex < root.filteredWallpapers.length) {
+            wallPath = root.filteredWallpapers[root.selectedIndex].path || ""
+        }
+        variantUpdater.running = false
+        if (wallPath && wallPath.length > 0 && wallPath.indexOf("http") !== 0) {
+            variantUpdater.command = [
+                "python3",
+                Quickshell.env("HOME") + "/.hyprconf/hypr/scripts/py/hypr-colors.py",
+                wallPath,
+                "--variant", newVariant
+            ]
+        } else {
+            variantUpdater.command = [
+                "python3",
+                Quickshell.env("HOME") + "/.hyprconf/hypr/scripts/py/hypr-colors.py",
+                "--variant", newVariant
+            ]
+        }
+        variantUpdater.running = true
     }
 
     // ── DIRECTORY BROWSER STATE & PROCESSES ─────────────────────────────────
@@ -300,12 +348,17 @@ Item {
                         "--url", applyProc.targetPath
                     ]
                 } else {
-                    applyProc.command = [
+                    var applyArgs = [
                         "bash",
                         Quickshell.env("HOME") + "/.hyprconf/hypr/scripts/sh/Wallpaper.sh",
-                        applyProc.isLive ? "--live" : "--static",
-                        applyProc.targetPath
+                        applyProc.isLive ? "--live" : "--static"
                     ]
+                    if (root.colorVariant && root.colorVariant.length > 0) {
+                        applyArgs.push("--variant")
+                        applyArgs.push(root.colorVariant)
+                    }
+                    applyArgs.push(applyProc.targetPath)
+                    applyProc.command = applyArgs
                 }
                 applyProc.running = true
             }
@@ -690,8 +743,19 @@ Item {
             searchEntry.forceActiveFocus()
             searchEntry.selectAll()
             return true
+        } else if (event.key === Qt.Key_V) {
+            event.accepted = true
+            var variants = ["vibrant", "muted", "original", "warm", "cool", "pastel"]
+            var curIdx = variants.indexOf(root.colorVariant)
+            var nextIdx = (curIdx + 1) % variants.length
+            root.setColorVariant(variants[nextIdx])
+            return true
         } else if (event.key === Qt.Key_Escape) {
             event.accepted = true
+            if (variantSelector.isDropdownOpen) {
+                variantSelector.isDropdownOpen = false
+                return true
+            }
             applyTimer.stop()
             applyBtn.isApplying = false
             root.backClicked()
@@ -704,7 +768,9 @@ Item {
         sequence: "Escape"
         enabled: true
         onActivated: {
-            if (root.isBrowsingDirs) {
+            if (variantSelector.isDropdownOpen) {
+                variantSelector.isDropdownOpen = false
+            } else if (root.isBrowsingDirs) {
                 root.closeDirBrowser()
             } else {
                 applyTimer.stop()
@@ -1594,7 +1660,7 @@ Item {
                 id: searchBarContainer
                 anchors.left: (pickVideoBtn.visible ? pickVideoBtn.right : (dirBtn.visible ? dirBtn.right : modeSegmentBar.right))
                 anchors.leftMargin: 8
-                anchors.right: hubBtn.left
+                anchors.right: variantSelector.left
                 anchors.rightMargin: 8
                 anchors.verticalCenter: parent.verticalCenter
                 height: 36
@@ -1702,6 +1768,180 @@ Item {
                 }
             }
 
+            // Color Format Variant Selector (Noctalia Shell style Dropdown List)
+            Item {
+                id: variantSelector
+                anchors.right: hubBtn.left
+                anchors.rightMargin: 8
+                anchors.verticalCenter: parent.verticalCenter
+                height: 36
+                width: variantButton.width
+                z: variantDropdown.visible ? 1000 : 1
+
+                property bool isDropdownOpen: false
+
+                Rectangle {
+                    id: variantButton
+                    anchors.verticalCenter: parent.verticalCenter
+                    height: 36
+                    width: variantContentRow.implicitWidth + 20
+                    radius: 10
+                    color: (variantSelector.isDropdownOpen || variantMouse.containsMouse) ? Theme.alpha(Theme.surface, 0.95) : Theme.alpha(Theme.surface, 0.70)
+                    border.color: variantSelector.isDropdownOpen ? Theme.accent : (root.isVariantUpdating ? Theme.accent : (variantMouse.containsMouse ? Theme.alpha(Theme.accent, 0.6) : Theme.alpha(Theme.foreground, 0.14)))
+                    border.width: 1
+
+                    Row {
+                        id: variantContentRow
+                        anchors.centerIn: parent
+                        spacing: 6
+
+                        Text {
+                            text: root.isVariantUpdating ? "󰑮" : "󰏘"
+                            font.pixelSize: 12
+                            color: Theme.accent
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+
+                        Text {
+                            text: {
+                                var v = root.colorVariant || "vibrant"
+                                return v.charAt(0).toUpperCase() + v.slice(1)
+                            }
+                            font.family: "Outfit"
+                            font.pixelSize: 11
+                            font.weight: Font.Bold
+                            color: Theme.foreground
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+
+                        Text {
+                            text: variantSelector.isDropdownOpen ? "▴" : "▾"
+                            font.pixelSize: 9
+                            color: Theme.alpha(Theme.foreground, 0.50)
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
+
+                    MouseArea {
+                        id: variantMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            variantSelector.isDropdownOpen = !variantSelector.isDropdownOpen
+                        }
+                    }
+                }
+
+                // Dropdown menu (expands upward seamlessly from the bottom control bar)
+                Rectangle {
+                    id: variantDropdown
+                    visible: variantSelector.isDropdownOpen
+                    anchors.bottom: variantButton.top
+                    anchors.bottomMargin: 8
+                    anchors.left: variantButton.left
+                    width: Math.max(160, variantButton.width)
+                    height: dropdownColumn.implicitHeight + 12
+                    radius: 12
+                    color: Theme.alpha(Theme.surface, 0.96)
+                    border.color: Theme.alpha(Theme.accent, 0.40)
+                    border.width: 1.5
+                    clip: true
+
+                    Column {
+                        id: dropdownColumn
+                        anchors.top: parent.top
+                        anchors.topMargin: 6
+                        anchors.left: parent.left
+                        anchors.leftMargin: 6
+                        anchors.right: parent.right
+                        anchors.rightMargin: 6
+                        spacing: 2
+
+                        Repeater {
+                            model: [
+                                { id: "vibrant", name: "Vibrant", desc: "Punchy, saturated", icon: "󰏘" },
+                                { id: "muted", name: "Muted", desc: "Soft & calm", icon: "󰏘" },
+                                { id: "expressive", name: "Expressive", desc: "Contrasting pop", icon: "󰏘" },
+                                { id: "warm", name: "Warm", desc: "Amber & gold", icon: "󰏘" },
+                                { id: "cool", name: "Cool", desc: "Cyan & cobalt", icon: "󰏘" },
+                                { id: "pastel", name: "Pastel", desc: "Airy & bright", icon: "󰏘" },
+                                { id: "original", name: "Original", desc: "Natural sampled", icon: "󰏘" }
+                            ]
+
+                            Rectangle {
+                                width: parent.width
+                                height: 32
+                                radius: 8
+                                readonly property bool isSelected: root.colorVariant === modelData.id
+                                color: isSelected
+                                    ? Theme.alpha(Theme.accent, 0.28)
+                                    : (itemMouse.containsMouse ? Theme.alpha(Theme.foreground, 0.08) : "transparent")
+                                border.color: isSelected ? Theme.accent : "transparent"
+                                border.width: 1
+
+                                Row {
+                                    anchors.left: parent.left
+                                    anchors.leftMargin: 8
+                                    anchors.right: checkIcon.left
+                                    anchors.rightMargin: 4
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    spacing: 8
+
+                                    Text {
+                                        text: modelData.icon
+                                        font.pixelSize: 11
+                                        color: parent.parent.isSelected ? Theme.accent : Theme.alpha(Theme.foreground, 0.60)
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
+
+                                    Text {
+                                        text: modelData.name
+                                        font.family: "Outfit"
+                                        font.pixelSize: 11
+                                        font.weight: parent.parent.isSelected ? Font.Bold : Font.Medium
+                                        color: parent.parent.isSelected ? Theme.accent : Theme.foreground
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
+
+                                    Text {
+                                        text: "• " + modelData.desc
+                                        font.family: "Outfit"
+                                        font.pixelSize: 9
+                                        color: Theme.alpha(Theme.foreground, 0.38)
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        elide: Text.ElideRight
+                                    }
+                                }
+
+                                Text {
+                                    id: checkIcon
+                                    anchors.right: parent.right
+                                    anchors.rightMargin: 8
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: "✓"
+                                    font.pixelSize: 11
+                                    font.bold: true
+                                    color: Theme.accent
+                                    visible: parent.isSelected
+                                }
+
+                                MouseArea {
+                                    id: itemMouse
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        variantSelector.isDropdownOpen = false
+                                        root.setColorVariant(modelData.id)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             // Hub Button (📖 Hub)
             Rectangle {
                 id: hubBtn
@@ -1740,7 +1980,7 @@ Item {
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
                     onClicked: {
-                        Quickshell.exec(["xdg-open", root.activeMode === "live" ? root.currentLiveDir : (root.activeMode === "wallhaven" ? Quickshell.env("HOME") + "/.hyprconf/hypr/Wallpaper/wallhaven" : root.currentWallpaperDir)])
+                        Quickshell.execDetached(["xdg-open", root.activeMode === "live" ? root.currentLiveDir : (root.activeMode === "wallhaven" ? Quickshell.env("HOME") + "/.hyprconf/hypr/Wallpaper/wallhaven" : root.currentWallpaperDir)])
                     }
                 }
             }
