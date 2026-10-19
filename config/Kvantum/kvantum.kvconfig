@@ -1,2 +1,5 @@
 [General]
 theme=Dracula
+
+[Icons]
+theme=kora

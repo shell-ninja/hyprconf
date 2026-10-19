@@ -13,10 +13,43 @@ cyan="\e[1;36m"
 orange="\x1b[38;5;214m"
 end="\e[1;0m"
 
+# ─── Gum Theme Configuration ───────────────────────────────────────────
+export GUM_STYLE_BORDER="rounded"
+export GUM_STYLE_BORDER_FOREGROUND="#89b4fa"
+export GUM_STYLE_FOREGROUND="#89b4fa"
+
+# Confirm dialogs
+export GUM_CONFIRM_PROMPT_FOREGROUND="#89b4fa"
+export GUM_CONFIRM_SELECTED_FOREGROUND="#11111b"
+export GUM_CONFIRM_SELECTED_BACKGROUND="#89b4fa"
+export GUM_CONFIRM_UNSELECTED_FOREGROUND="#cdd6f4"
+export GUM_CONFIRM_UNSELECTED_BACKGROUND="#313244"
+
+# Choose menus
+export GUM_CHOOSE_CURSOR=" > "
+export GUM_CHOOSE_CURSOR_FOREGROUND="#89b4fa"
+export GUM_CHOOSE_SELECTED_FOREGROUND="#a6e3a1"
+export GUM_CHOOSE_HEADER_FOREGROUND="#f9e2af"
+export GUM_CHOOSE_ITEM_FOREGROUND="#cdd6f4"
+
+# Spinners
+export GUM_SPIN_SPINNER="dot"
+export GUM_SPIN_SPINNER_FOREGROUND="#89b4fa"
+export GUM_SPIN_TITLE_FOREGROUND="#cdd6f4"
+
+# Text inputs
+export GUM_INPUT_PROMPT_FOREGROUND="#89b4fa"
+export GUM_INPUT_CURSOR_FOREGROUND="#89b4fa"
+export GUM_INPUT_HEADER_FOREGROUND="#f9e2af"
+export GUM_INPUT_PLACEHOLDER_FOREGROUND="#6c7086"
+export GUM_INPUT_WIDTH=60
+
 if command -v gum &> /dev/null; then
 display_text() {
     gum style \
         --border rounded \
+        --border-foreground "#89b4fa" \
+        --foreground "#89b4fa" \
         --align center \
         --width 60 \
         --margin "1" \
@@ -44,6 +77,13 @@ fi
 
 clear && display_text
 printf " \n \n"
+
+# Verify no command-line flags are required
+if [[ $# -gt 0 ]]; then
+    printf "${yellow}!!${end} setup.sh is an interactive installation script (no flags required).\n"
+    printf "${blue}\$\$${end} Proceeding with interactive gum prompts...\n\n"
+    sleep 1
+fi
 
 ###------ Startup ------###
 
@@ -100,21 +140,17 @@ dirs=(
     kitty
     Kvantum
     menus
+    quickshell
     nvim
     nwg-look
     pypr
     qt5ct
     qt6ct
-    rofi
     satty
-    swaync
+    starship
     systemd
-    wal
-    waybar
-    wlogout
     xfce4
     xsettingsd
-    yazi
     dolphinrc
     kwalletmanagerrc
     kwalletrc
@@ -180,7 +216,7 @@ if [[ -d "$HOME/.backup_hyprconf-${USER}" ]]; then
 fi
 
 mkdir -p "$HOME/.backup_hyprconf-${USER}"
-if [[ -d "$HOME/.hyprconf" ]]; then
+if [[ "$dir" != "$HOME/.hyprconf" && -d "$HOME/.hyprconf" ]]; then
     mv "$HOME/.hyprconf" "$HOME/.backup_hyprconf-${USER}/"
     msg dn "Moved previous ~/.hyprconf to ~/.backup_hyprconf-${USER}/"
 else
@@ -192,7 +228,7 @@ else
             ((backed_count++))
         fi
     done
-    msg dn "Backed up $backed_count existing configuration directories to ~/.backup_hyprconf-${USER}/"
+    [[ $backed_count -gt 0 ]] && msg dn "Backed up $backed_count existing configuration directories to ~/.backup_hyprconf-${USER}/"
 fi
 
 # OpenBangla Keyboard environment configuration
@@ -210,8 +246,174 @@ if [[ -d "$keyboard_path" ]]; then
     fi
 fi
 
-# Copy complete configuration tree
-cp -a "$dir/config" "$HOME/.hyprconf"
+# Copy complete configuration tree if installing from external cloned repo
+if [[ "$dir" != "$HOME/.hyprconf" ]]; then
+    msg act "Installing configuration files from external source ($dir) to $HOME/.hyprconf..."
+    mkdir -p "$HOME/.hyprconf"
+    if [[ -d "$dir/config" ]]; then
+        cp -a "$dir/config/." "$HOME/.hyprconf/"
+    else
+        if command -v rsync &> /dev/null; then
+            rsync -a --exclude='.git' --exclude='Logs' "$dir/" "$HOME/.hyprconf/"
+        else
+            cp -a "$dir/." "$HOME/.hyprconf/"
+            rm -rf "$HOME/.hyprconf/.git" "$HOME/.hyprconf/Logs" 2>/dev/null || true
+        fi
+    fi
+    # Also copy setup.sh, extras, and local if present in root of repo
+    [[ -f "$dir/setup.sh" ]] && cp -f "$dir/setup.sh" "$HOME/.hyprconf/setup.sh" 2>/dev/null || true
+    [[ -d "$dir/extras" ]] && cp -a "$dir/extras" "$HOME/.hyprconf/" 2>/dev/null || true
+    [[ -d "$dir/local" ]] && cp -a "$dir/local" "$HOME/.hyprconf/" 2>/dev/null || true
+    msg dn "Configuration tree installed to $HOME/.hyprconf"
+fi
+
+# Ensure Quickshell subprojects have valid relative symlinks & default configs
+island_dir="$HOME/.hyprconf/quickshell/island"
+launcher_dir="$HOME/.hyprconf/quickshell/launcher"
+launcher_theme_dir="$HOME/.hyprconf/quickshell/launcher-theme"
+settings_dir="$HOME/.hyprconf/quickshell/settings"
+widgets_dir="$HOME/.hyprconf/quickshell/widgets"
+
+# 1. Dynamic Island launcher morphing styles
+if [[ -d "$island_dir" && -d "$launcher_dir" ]]; then
+    for style in Style1.qml Style2.qml; do
+        target="$island_dir/$style"
+        if [[ ! -e "$target" || ( -L "$target" && "$(readlink "$target")" =~ /home/ ) ]]; then
+            ln -sfn "../launcher/$style" "$target"
+        fi
+    done
+fi
+
+# 2. Settings desktop widget preview symlinks
+if [[ -d "$settings_dir" && -d "$widgets_dir" ]]; then
+    for w in DesktopClock.qml DesktopVisualizer.qml DesktopSystemMonitor.qml DesktopAudioPlayer.qml DesktopWeather.qml; do
+        target="$settings_dir/$w"
+        if [[ ! -e "$target" || ( -L "$target" && "$(readlink "$target")" =~ /home/ ) ]]; then
+            ln -sfn "../widgets/$w" "$target"
+        fi
+    done
+fi
+
+# 3. Ensure Theme.qml & colors.json relative symlinks exist in all subprojects
+for sub in "$island_dir" "$launcher_dir" "$launcher_theme_dir" "$settings_dir" "$widgets_dir"; do
+    [[ -d "$sub" ]] || continue
+    [[ ! -e "$sub/Theme.qml" || ( -L "$sub/Theme.qml" && "$(readlink "$sub/Theme.qml")" =~ /home/ ) ]] && ln -sfn "../Theme.qml" "$sub/Theme.qml"
+    [[ ! -e "$sub/colors.json" || ( -L "$sub/colors.json" && "$(readlink "$sub/colors.json")" =~ /home/ ) ]] && ln -sfn "../colors.json" "$sub/colors.json"
+done
+
+# 4. Ensure desktop widgets default configuration
+widgets_json="$widgets_dir/widgets.json"
+if [[ -d "$widgets_dir" && ! -f "$widgets_json" ]]; then
+    cat > "$widgets_json" << 'WIDGETS_JSON_EOF'
+{
+  "enabled": false,
+  "global_glass_opacity": 0.65,
+  "widgets": {
+    "clock": {
+      "id": "clock",
+      "type": "clock",
+      "title": "Desktop Clock",
+      "enabled": true,
+      "x": 0.5,
+      "y": 0.28,
+      "width": 360,
+      "height": 130,
+      "scale": 1,
+      "format_24h": false,
+      "show_seconds": false,
+      "show_date": true,
+      "show_greeting": true,
+      "glass_opacity": 0.65
+    },
+    "visualizer": {
+      "id": "visualizer",
+      "type": "visualizer",
+      "title": "Audio Visualizer",
+      "enabled": true,
+      "x": 0.5,
+      "y": 0.74,
+      "width": 520,
+      "height": 90,
+      "scale": 1,
+      "bar_count": 28,
+      "style": "bars",
+      "glass_opacity": 0.55
+    },
+    "system_monitor": {
+      "id": "system_monitor",
+      "type": "system_monitor",
+      "title": "System Monitor",
+      "enabled": true,
+      "x": 0.84,
+      "y": 0.34,
+      "width": 280,
+      "height": 230,
+      "scale": 1,
+      "show_cpu": true,
+      "show_ram": true,
+      "show_disk": true,
+      "show_temp": true,
+      "glass_opacity": 0.65
+    },
+    "audio_player": {
+      "id": "audio_player",
+      "type": "audio_player",
+      "title": "Audio Player",
+      "enabled": true,
+      "x": 0.16,
+      "y": 0.34,
+      "width": 340,
+      "height": 150,
+      "scale": 1,
+      "compact": false,
+      "glass_opacity": 0.65
+    },
+    "weather": {
+      "id": "weather",
+      "type": "weather",
+      "title": "Weather Forecast",
+      "enabled": true,
+      "x": 0.16,
+      "y": 0.55,
+      "width": 320,
+      "height": 125,
+      "scale": 1,
+      "unit": "C",
+      "show_location": true,
+      "show_details": true,
+      "show_background": false,
+      "glass_opacity": 0.65
+    }
+  }
+}
+WIDGETS_JSON_EOF
+    msg dn "Initialized default Desktop Widgets configuration in $widgets_json"
+fi
+
+# 5. Ensure Launcher configuration exists
+launcher_cfg="$launcher_dir/config.json"
+if [[ -d "$launcher_dir" && ! -f "$launcher_cfg" ]]; then
+    printf '{\n  "theme": "style-2"\n}\n' > "$launcher_cfg"
+fi
+
+# 6. Ensure Dynamic Island configuration exists
+island_cfg="$island_dir/config.json"
+if [[ -d "$island_dir" && ! -f "$island_cfg" ]]; then
+    cat > "$island_cfg" << 'ISLAND_CFG_EOF'
+{
+  "position": "top",
+  "auto_hide": false,
+  "style": "capsule",
+  "matrix_stream": false,
+  "visualizer": {
+    "enabled": true,
+    "bar_count": 8,
+    "style": "wave",
+    "move_to_bottom_on_hover": true
+  }
+}
+ISLAND_CFG_EOF
+fi
 
 # Environment file paths
 env_file="$HOME/.hyprconf/hypr/configs/environment.lua"
@@ -248,12 +450,15 @@ if [[ -d "$HOME/.hyprconf/fastfetch" && ! -d "$HOME/.local/share/fastfetch" ]]; 
     mv "$HOME/.hyprconf/fastfetch" "$HOME/.local/share/"
 fi
 
-# Symlinking configuration directories to ~/.config
-for dotfilesDir in "$HOME/.hyprconf"/*; do
-    [[ -d "$dotfilesDir" ]] || continue
-    configDirName=$(basename "$dotfilesDir")
-    configDirPath="$HOME/.config/$configDirName"
-    ln -sfn "$dotfilesDir" "$configDirPath"
+# Symlinking configuration directories and files to ~/.config
+for dotfile in "$HOME/.hyprconf"/*; do
+    [[ -e "$dotfile" ]] || continue
+    configName=$(basename "$dotfile")
+    case "$configName" in
+        setup.sh|update.sh|README*|LICENSE*|PACKAGES*|UPDATES*|Logs|*.md|extras|local) continue ;;
+    esac
+    configPath="$HOME/.config/$configName"
+    ln -sfn "$dotfile" "$configPath"
 done
 
 # Set permissions for scripts and fish functions
@@ -268,9 +473,13 @@ fi
 # Install Fonts
 msg act "Checking font installation..."
 mkdir -p "$fonts_dir"
-if [[ ! -f "$fonts_dir/Icomoon-Feather.ttf" ]]; then
+font_source=""
+[[ -d "$dir/extras/fonts" ]] && font_source="$dir/extras/fonts"
+[[ -z "$font_source" && -d "$HOME/.hyprconf/extras/fonts" ]] && font_source="$HOME/.hyprconf/extras/fonts"
+
+if [[ -n "$font_source" && ! -f "$fonts_dir/Icomoon-Feather.ttf" ]]; then
     msg act "Installing fonts to $fonts_dir..."
-    cp -a "$dir/extras/fonts/." "$fonts_dir/"
+    cp -a "$font_source/." "$fonts_dir/"
     
     msg act "Updating user font cache..."
     if command -v gum &> /dev/null; then
@@ -279,7 +488,7 @@ if [[ ! -f "$fonts_dir/Icomoon-Feather.ttf" ]]; then
         fc-cache -f "$fonts_dir" &> /dev/null
     fi
     msg dn "Fonts installed successfully."
-else
+elif [[ -f "$fonts_dir/Icomoon-Feather.ttf" ]]; then
     msg skp "Fonts are already installed."
 fi
 
@@ -287,38 +496,51 @@ fi
 if [[ -f "$HOME/.local/state/dolphinstaterc" ]]; then
     mv "$HOME/.local/state/dolphinstaterc" "$HOME/.local/state/dolphinstaterc.back"
 fi
+
 if [[ -d "$HOME/.local/share/konsole" ]]; then
     mv "$HOME/.local/share/konsole" "$HOME/.local/share/konsole.back"
 fi
 
 mkdir -p "$HOME/.local/state" "$HOME/.local/share"
-[[ -f "$dir/local/state/dolphinstaterc" ]] && cp -r "$dir/local/state/dolphinstaterc" "$HOME/.local/state/"
-[[ -d "$dir/local/share/konsole" ]] && cp -r "$dir/local/share/konsole" "$HOME/.local/share/"
+local_src=""
+[[ -d "$dir/local" ]] && local_src="$dir/local"
+[[ -z "$local_src" && -d "$HOME/.hyprconf/local" ]] && local_src="$HOME/.hyprconf/local"
 
-# Wayland session file installation
-wayland_session_dir="/usr/share/wayland-sessions"
-if [[ ! -d "$wayland_session_dir" ]]; then
-    msg att "$wayland_session_dir directory not found. Creating..."
-    sudo mkdir -p "$wayland_session_dir"
-fi
-if [[ -f "$dir/extras/hyprland.desktop" ]]; then
-    sudo cp "$dir/extras/hyprland.desktop" "$wayland_session_dir/"
-    msg dn "Hyprland desktop entry copied to $wayland_session_dir"
+if [[ -n "$local_src" ]]; then
+    [[ -f "$local_src/state/dolphinstaterc" ]] && cp -r "$local_src/state/dolphinstaterc" "$HOME/.local/state/"
+    [[ -d "$local_src/share/konsole" ]] && cp -r "$local_src/share/konsole" "$HOME/.local/share/"
 fi
 
-# Desktop application entries setup
-msg act "Installing application desktop entries..."
-mkdir -p "$applications_dir"
-desktop_files=("Hyprconf.desktop" "sysupdate.desktop")
-for file in "${desktop_files[@]}"; do
-    if [[ -f "$dir/extras/$file" ]]; then
-        cp "$dir/extras/$file" "$applications_dir/"
-        sed -i "s|/home/shell-ninja|$HOME|g; s|/home/[^/]*|$HOME|g" "$applications_dir/$file"
-        msg dn "Installed $file to $applications_dir"
+# Wayland session & desktop application entries
+extras_src=""
+[[ -d "$dir/extras" ]] && extras_src="$dir/extras"
+[[ -z "$extras_src" && -d "$HOME/.hyprconf/extras" ]] && extras_src="$HOME/.hyprconf/extras"
+
+if [[ -n "$extras_src" ]]; then
+    wayland_session_dir="/usr/share/wayland-sessions"
+    if [[ ! -d "$wayland_session_dir" ]]; then
+        msg att "$wayland_session_dir directory not found. Creating..."
+        sudo mkdir -p "$wayland_session_dir"
     fi
-done
-if command -v update-desktop-database &> /dev/null; then
-    update-desktop-database "$applications_dir" &> /dev/null || true
+    if [[ -f "$extras_src/hyprland.desktop" ]]; then
+        sudo cp "$extras_src/hyprland.desktop" "$wayland_session_dir/"
+        msg dn "Hyprland desktop entry copied to $wayland_session_dir"
+    fi
+
+    # Desktop application entries setup
+    msg act "Installing application desktop entries..."
+    mkdir -p "$applications_dir"
+    desktop_files=("Hyprconf.desktop" "sysupdate.desktop")
+    for file in "${desktop_files[@]}"; do
+        if [[ -f "$extras_src/$file" ]]; then
+            cp "$extras_src/$file" "$applications_dir/"
+            sed -i "s|/home/shell-ninja|$HOME|g; s|/home/[^/]*|$HOME|g" "$applications_dir/$file"
+            msg dn "Installed $file to $applications_dir"
+        fi
+    done
+    if command -v update-desktop-database &> /dev/null; then
+        update-desktop-database "$applications_dir" &> /dev/null || true
+    fi
 fi
 
 # Function to restore temporary backups
@@ -354,178 +576,351 @@ if [[ -e "$hypr_cache_backup" ]]; then
 fi
 rm -rf "$backup_dir"
 
-# Download additional wallpapers (Interactive)
-dl_wallpaper=false
-if command -v gum &> /dev/null; then
-    if gum confirm "Would you like to download additional Wallpapers?"; then
-        dl_wallpaper=true
-    fi
-else
-    msg ask "Would you like to download additional Wallpapers? [y/N]"
-    read -r -p "$(echo -e '\e[1;32mSelect: \e[0m')" wallpaper_choice
-    [[ "$wallpaper_choice" =~ ^[Yy]$ ]] && dl_wallpaper=true
-fi
+# ─── Interactive Configuration Prompts (via Gum) ─────────────────────────
 
-if [[ "$dl_wallpaper" == true ]]; then
-    url="https://github.com/shell-ninja/Wallpapers/archive/refs/heads/main.zip"
-    target_dir="$HOME/.cache/wallpaper-cache"
-    zip_path="$target_dir.zip"
-    msg act "Downloading extra wallpapers package..."
-
-    mkdir -p "$HOME/.cache"
+# 1. Desktop Wallpaper Setup
+select_wallpaper() {
+    echo
     if command -v gum &> /dev/null; then
-        gum spin --title="Downloading wallpaper archive..." -- curl -s-fL "$url" -o "$zip_path"
+        gum style --border rounded --margin "0 0" --padding "0 1" --border-foreground "#89b4fa" --foreground "#89b4fa" --bold "Desktop Wallpaper Setup"
     else
-        curl -fL "$url" -o "$zip_path"
+        msg act "Desktop Wallpaper Setup..."
     fi
 
-    if [[ -f "$zip_path" ]]; then
-        mkdir -p "$target_dir"
-        unzip -q "$zip_path" "wallpaper-cache-main/*" -d "$target_dir" > /dev/null 2>&1
-        if [[ -d "$target_dir/wallpaper-cache-main" ]]; then
-            mv "$target_dir/wallpaper-cache-main/"* "$target_dir/" 2>/dev/null
-            rmdir "$target_dir/wallpaper-cache-main" 2>/dev/null
-        fi
-        rm -f "$zip_path"
-    fi
-
-    if [[ -d "$target_dir" && $(ls -A "$target_dir" 2>/dev/null) ]]; then
-        mkdir -p "$HOME/.hyprconf/hypr/Wallpaper"
-        cp -r "$target_dir"/* "$HOME/.hyprconf/hypr/Wallpaper/" 2>/dev/null
-        rm -rf "$target_dir"
-        msg dn "Extra wallpapers downloaded successfully."
-    else
-        msg err "Failed to download wallpapers. Continuing with standard wallpapers."
-    fi
-fi
-
-# Ensure default wallpaper symlink
-if [[ -d "$HOME/.hyprconf/hypr/Wallpaper" ]]; then
-    wall_cache_file="$HOME/.hyprconf/hypr/.cache/.wallpaper"
+    local wall_dir="$HOME/.hyprconf/hypr/Wallpaper"
+    mkdir -p "$wall_dir"
     mkdir -p "$HOME/.hyprconf/hypr/.cache"
+    local wall_cache_file="$HOME/.hyprconf/hypr/.cache/.wallpaper"
 
-    if [[ -f "$HOME/.hyprconf/hypr/Wallpaper/shell-ninja.png" ]]; then
-        wallpaper="$HOME/.hyprconf/hypr/Wallpaper/shell-ninja.png"
-        echo "shell-ninja" > "$wall_cache_file"
-    elif [[ -f "$wall_cache_file" ]]; then
-        read -r wallName < "$wall_cache_file"
-        [[ -n "$wallName" ]] && wallpaper=$(find "$HOME/.hyprconf/hypr/Wallpaper" -maxdepth 1 -type f -name "${wallName}.*" 2>/dev/null | head -n1)
-    fi
-
-    # Fallback to any available wallpaper if still empty
-    if [[ -z "$wallpaper" ]]; then
-        wallpaper=$(find "$HOME/.hyprconf/hypr/Wallpaper" -maxdepth 1 -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" \) 2>/dev/null | head -n1)
-        if [[ -n "$wallpaper" ]]; then
-            baseName=$(basename "$wallpaper")
-            echo "${baseName%.*}" > "$wall_cache_file"
+    local selected_wall="shell-ninja.png"
+    wallpaper="$wall_dir/$selected_wall"
+    if [[ ! -f "$wallpaper" ]]; then
+        local found_wall
+        found_wall=$(find "$wall_dir" -maxdepth 1 -type f \( -iname "*.png" -o -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.webp" \) 2>/dev/null | head -n 1)
+        if [[ -n "$found_wall" ]]; then
+            wallpaper="$found_wall"
+            selected_wall=$(basename "$found_wall")
         fi
     fi
 
-    if [[ -n "$wallpaper" ]]; then
+    if [[ -f "$wallpaper" ]]; then
+        local baseName="${selected_wall%.*}"
+        echo "$baseName" > "$wall_cache_file"
         ln -sf "$wallpaper" "$HOME/.hyprconf/hypr/.cache/current_wallpaper.png"
+        msg dn "Wallpaper set to: $selected_wall"
     fi
-fi
+}
 
-# Interactive Waybar Configuration Selection
-select_waybar_config() {
-    local waybar_configs_dir="$HOME/.hyprconf/waybar/configs"
-    local selected_config="full-top"
+# 2. Dynamic Island Style Selection
+select_island_style() {
+    echo
+    if command -v gum &> /dev/null; then
+        gum style --border rounded --margin "0 0" --padding "0 1" --border-foreground "#89b4fa" --foreground "#89b4fa" --bold "Dynamic Island Style"
+    fi
 
-    if [[ -d "$waybar_configs_dir" ]]; then
-        local configs=()
-        for cfg in "$waybar_configs_dir"/*; do
-            [[ -f "$cfg" ]] && configs+=("$(basename "$cfg")")
+    local island_cfg="$HOME/.hyprconf/quickshell/island/config.json"
+    local chosen_style="capsule"
+
+    if command -v gum &> /dev/null; then
+        local choice
+        choice=$(gum choose --selected="Capsule: Floating Organic Pill (Default)" \
+            --header="Select your preferred Dynamic Island style:" \
+            "Capsule: Floating Organic Pill (Default)" \
+            "Orbital: Curved Dynamic Notch" \
+            "Split Wings: Twin Segmented Bar" \
+            "Minimal Rail: Compact Sleek Track")
+        case "$choice" in
+            *"Orbital"*) chosen_style="orbital" ;;
+            *"Split Wings"*) chosen_style="split_wings" ;;
+            *"Minimal Rail"*) chosen_style="minimal_rail" ;;
+            *) chosen_style="capsule" ;;
+        esac
+    elif [[ -t 0 ]]; then
+        msg ask "Select your preferred Dynamic Island style:"
+        PS3="$(echo -e '\e[1;32mEnter Dynamic Island style number: \e[0m')"
+        select opt in "Capsule (Default)" "Orbital" "Split Wings" "Minimal Rail"; do
+            case $REPLY in
+                2) chosen_style="orbital"; break ;;
+                3) chosen_style="split_wings"; break ;;
+                4) chosen_style="minimal_rail"; break ;;
+                *) chosen_style="capsule"; break ;;
+            esac
         done
-
-        if [[ ${#configs[@]} -gt 0 ]]; then
-            msg ask "Select your preferred Waybar layout:"
-            if command -v gum &> /dev/null; then
-                selected_config=$(gum choose "${configs[@]}" --selected="full-top")
-            elif [[ -t 0 ]]; then
-                PS3="$(echo -e '\e[1;32mEnter selection number (default full-top): \e[0m')"
-                select opt in "${configs[@]}"; do
-                    if [[ -n "$opt" ]]; then
-                        selected_config="$opt"
-                        break
-                    fi
-                done
-            fi
-        fi
     fi
 
-    [[ -z "$selected_config" ]] && selected_config="full-top"
-    msg act "Applying Waybar layout: $selected_config"
-    ln -sf "$HOME/.hyprconf/waybar/configs/$selected_config" "$HOME/.hyprconf/waybar/config"
-    if [[ -f "$HOME/.hyprconf/waybar/style/${selected_config}.css" ]]; then
-        ln -sf "$HOME/.hyprconf/waybar/style/${selected_config}.css" "$HOME/.hyprconf/waybar/style.css"
+    [[ -z "$chosen_style" ]] && chosen_style="capsule"
+    msg act "Applying Dynamic Island style: $chosen_style"
+    mkdir -p "$(dirname "$island_cfg")"
+    if [[ -f "$island_cfg" ]]; then
+        python3 -c "
+import json
+p = '$island_cfg'
+try:
+    with open(p, 'r') as f: data = json.load(f)
+    data['style'] = '$chosen_style'
+    with open(p, 'w') as f: json.dump(data, f, indent=2)
+except Exception: pass
+" 2>/dev/null || true
     else
-        ln -sf "$HOME/.hyprconf/waybar/style/full-top.css" "$HOME/.hyprconf/waybar/style.css"
+        cat > "$island_cfg" << ISLAND_JSON_EOF
+{
+  "position": "top",
+  "auto_hide": false,
+  "style": "$chosen_style",
+  "matrix_stream": false,
+  "visualizer": {
+    "enabled": true,
+    "bar_count": 8,
+    "style": "wave",
+    "move_to_bottom_on_hover": true
+  }
+}
+ISLAND_JSON_EOF
     fi
 }
 
-# Interactive Hyprlock Theme Selection
-select_hyprlock_config() {
-    local lock_dir="$HOME/.hyprconf/hypr/lockscreens"
-    local selected_lock="hyprlock-1.conf"
+# 3. Quickshell App Launcher Style Selection
+select_quickshell_launcher_config() {
+    echo
+    if command -v gum &> /dev/null; then
+        gum style --border rounded --margin "0 0" --padding "0 1" --border-foreground "#89b4fa" --foreground "#89b4fa" --bold "App Launcher Theme (Island Notch Expansion)"
+    fi
 
-    if [[ -d "$lock_dir" ]]; then
-        local lock_themes=()
-        for theme in "$lock_dir"/hyprlock-*.conf; do
-            [[ -f "$theme" ]] && lock_themes+=("$(basename "$theme")")
+    local config_file="$HOME/.hyprconf/quickshell/launcher/config.json"
+    local selected_launcher="style-2"
+
+    if command -v gum &> /dev/null; then
+        local choice
+        choice=$(gum choose --selected="Style 2: Panoramic Grid (Default)" \
+            --header="Select your preferred App Launcher style:" \
+            "Style 2: Panoramic Grid (Default)" \
+            "Style 1: Slanted Split Quad")
+        if [[ "$choice" =~ "Style 1" ]]; then
+            selected_launcher="style-1"
+        else
+            selected_launcher="style-2"
+        fi
+    elif [[ -t 0 ]]; then
+        msg ask "Select your preferred App Launcher style:"
+        PS3="$(echo -e '\e[1;32mEnter selection number (default Style 2): \e[0m')"
+        select opt in "Style 2: Panoramic Grid" "Style 1: Slanted Split Quad"; do
+            case $REPLY in
+                2) selected_launcher="style-1"; break ;;
+                *) selected_launcher="style-2"; break ;;
+            esac
         done
+    fi
 
-        if [[ ${#lock_themes[@]} -gt 0 ]]; then
-            msg ask "Select your preferred Hyprlock theme:"
-            if command -v gum &> /dev/null; then
-                selected_lock=$(gum choose "${lock_themes[@]}" --selected="hyprlock-1.conf")
-            elif [[ -t 0 ]]; then
-                PS3="$(echo -e '\e[1;32mEnter selection number (default hyprlock-1.conf): \e[0m')"
-                select opt in "${lock_themes[@]}"; do
-                    if [[ -n "$opt" ]]; then
-                        selected_lock="$opt"
-                        break
-                    fi
-                done
-            fi
+    [[ -z "$selected_launcher" ]] && selected_launcher="style-2"
+    msg act "Applying App Launcher style: $selected_launcher"
+    mkdir -p "$(dirname "$config_file")"
+    printf '{\n  \"theme\": \"%s\"\n}\n' "$selected_launcher" > "$config_file"
+}
+
+# 4. Desktop Widgets Configuration
+configure_desktop_widgets() {
+    local widgets_file="$HOME/.hyprconf/quickshell/widgets/widgets.json"
+
+    # Turn off by default without user prompt
+    if [[ -f "$widgets_file" ]]; then
+        python3 -c "
+import json
+p = '$widgets_file'
+try:
+    with open(p, 'r') as f: data = json.load(f)
+    data['enabled'] = False
+    with open(p, 'w') as f: json.dump(data, f, indent=2)
+except Exception: pass
+" 2>/dev/null || true
+    fi
+    msg dn "Desktop Widgets layer turned off by default (can be enabled anytime in Settings app)."
+}
+
+# 5. Interactive Weather Location Configuration
+configure_weather_location() {
+    echo
+    if command -v gum &> /dev/null; then
+        gum style --border rounded --margin "0 0" --padding "0 1" --border-foreground "#89b4fa" --foreground "#89b4fa" --bold "Weather Forecast & Location Setup"
+    else
+        msg ask "Set your location for weather forecast:"
+    fi
+
+    local city=""
+    local country=""
+    if command -v gum &> /dev/null; then
+        city=$(gum input --placeholder "Enter your City (e.g. London, Tokyo, New York)" --header "City / Town (press Enter to skip):" --prompt "  > ")
+        if [[ "$city" =~ , ]]; then
+            country="$(echo "$city" | cut -d',' -f2- | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+            city="$(echo "$city" | cut -d',' -f1 | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+        fi
+        if [[ -n "$city" && -z "$country" ]]; then
+            country=$(gum input --placeholder "Enter your Country (e.g. United Kingdom, Japan, USA)" --header "Country:" --prompt "  > ")
+        fi
+    elif [[ -t 0 ]]; then
+        read -r -p "$(echo -e "\e[1;32mEnter your City (leave blank to skip): \e[0m")" input_city
+        city="$input_city"
+        if [[ "$city" =~ , ]]; then
+            country="$(echo "$city" | cut -d',' -f2- | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+            city="$(echo "$city" | cut -d',' -f1 | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+        fi
+        if [[ -n "$city" && -z "$country" ]]; then
+            read -r -p "$(echo -e "\e[1;32mEnter your Country: \e[0m")" input_country
+            country="$input_country"
         fi
     fi
 
-    [[ -z "$selected_lock" ]] && selected_lock="hyprlock-1.conf"
-    msg act "Applying Hyprlock theme: $selected_lock"
-    ln -sf "$HOME/.hyprconf/hypr/lockscreens/$selected_lock" "$HOME/.hyprconf/hypr/hyprlock.conf"
+    city="$(echo "$city" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+    country="$(echo "$country" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+
+    if [[ -n "$city" || -n "$country" ]]; then
+        msg act "Setting weather location: $city, $country"
+        local lock_json="$HOME/.hyprconf/quickshell/lockscreen.json"
+        if [[ -f "$lock_json" ]]; then
+            python3 -c "
+import json
+p = '$lock_json'
+try:
+    with open(p, 'r') as f: data = json.load(f)
+    if 'modules' not in data: data['modules'] = {}
+    data['modules']['weather_city'] = '$city'
+    data['modules']['weather_country'] = '$country'
+    with open(p, 'w') as f: json.dump(data, f, indent=4)
+except Exception: pass
+" 2>/dev/null || true
+        fi
+        # Prime the weather cache
+        if [[ -x "$HOME/.hyprconf/hypr/scripts/weather.py" ]]; then
+            "$HOME/.hyprconf/hypr/scripts/weather.py" --force &>/dev/null || true
+        fi
+        msg dn "Weather location updated successfully ($city, $country)."
+    else
+        msg skp "Location left blank. Skipped setting weather location."
+    fi
 }
 
-# Run selection menus
-select_waybar_config
-select_hyprlock_config
+# 6. Automatic User Face Avatar setup
+setup_user_avatar() {
+    msg act "Setting up user face avatar..."
+    local cache_dir="$HOME/.hyprconf/hypr/.cache"
+    mkdir -p "$cache_dir"
+    local face_target="$cache_dir/.face"
+    if [[ ! -f "$face_target" ]]; then
+        if [[ -f "$HOME/.face" && ! -L "$HOME/.face" ]]; then
+            cp "$HOME/.face" "$face_target"
+        elif [[ -f "$wallpaper" ]]; then
+            python3 -c "
+from PIL import Image
+try:
+    im = Image.open('$wallpaper').convert('RGBA')
+    w, h = im.size
+    min_d = min(w, h)
+    im = im.crop(((w-min_d)//2, (h-min_d)//2, (w+min_d)//2, (h+min_d)//2)).resize((512, 512), Image.Resampling.LANCZOS)
+    im.save('$face_target', 'PNG')
+except Exception: pass
+" 2>/dev/null || true
+        fi
+    fi
+    if [[ -f "$face_target" ]]; then
+        ln -sfn "$face_target" "$HOME/.face"
+        msg dn "Avatar successfully linked to ~/.face"
+    fi
+}
 
-# Generate colors and cache files
-msg act "Generating colors and cache files..."
+# Run interactive user selection menus
+select_wallpaper
+configure_weather_location
+select_island_style
+select_quickshell_launcher_config
+configure_desktop_widgets
+setup_user_avatar
+
+# Clean up legacy noctalia files from GTK configurations
+for d in "$HOME/.hyprconf/gtk-3.0" "$HOME/.hyprconf/gtk-4.0" "$HOME/.config/gtk-3.0" "$HOME/.config/gtk-4.0"; do
+    if [[ -d "$d" ]]; then
+        rm -f "$d/noctalia.css" "$d/colors.css" 2>/dev/null || true
+    fi
+done
+
+# Generate colors and cache files for wallpaper (Quickshell, Hyprland, Kitty, Qt, Btop, Neovim, GTK)
+msg act "Generating colors and system theme cache..."
 if command -v gum &> /dev/null; then
-    gum spin --title="Generating color scheme & wallpaper cache..." -- bash -c '"$HOME/.hyprconf/hypr/scripts/wallcache.sh" &>/dev/null && "$HOME/.hyprconf/hypr/scripts/pywal.sh" &>/dev/null'
+    gum spin --title="Generating color scheme & system theme palette..." -- bash -c '"$HOME/.hyprconf/hypr/scripts/hypr-colors.py" "'"$wallpaper"'" &>/dev/null'
 else
-    "$HOME/.hyprconf/hypr/scripts/wallcache.sh" &> /dev/null
-    "$HOME/.hyprconf/hypr/scripts/pywal.sh" &> /dev/null
+    "$HOME/.hyprconf/hypr/scripts/hypr-colors.py" "$wallpaper" &> /dev/null
 fi
 
-# Enable nightlight service if systemd user daemon is active
+# Enable pkgupdate-notifier service if systemd user daemon is active
 if command -v systemctl &> /dev/null && systemctl --user is-system-running &> /dev/null; then
     systemctl --user daemon-reload &> /dev/null
-    systemctl --user enable --now hyprnightlight.timer &> /dev/null
+    systemctl --user enable --now pkgupdate-notifier.service &> /dev/null
 fi
 
 # Set default themes, icon, and cursor if tools are available
 if command -v gsettings &> /dev/null; then
-    gsettings set org.gnome.desktop.interface gtk-theme "FlatColor" &> /dev/null || true
+    gsettings set org.gnome.desktop.interface gtk-theme "adw-gtk3" &> /dev/null || true
     gsettings set org.gnome.desktop.interface color-scheme "prefer-dark" &> /dev/null || true
-    gsettings set org.gnome.desktop.interface icon-theme "TokyoNight" &> /dev/null || true
+    gsettings set org.gnome.desktop.interface icon-theme "kora" &> /dev/null || true
     gsettings set org.gnome.desktop.interface cursor-theme "Bibata-Modern-Ice" &> /dev/null || true
 fi
 
+# Ensure XDG Directory Discovery for Qt/KDE
+icons_dir="$HOME/.icons"
+mkdir -p "$HOME/.local/share/icons"
+if [[ -d "$icons_dir/kora" ]]; then
+    ln -snf "$icons_dir/kora" "$HOME/.local/share/icons/kora"
+fi
+for kora_dir in "$icons_dir"/kora*; do
+    if [[ -d "$kora_dir" ]]; then
+        ln -snf "$kora_dir" "$HOME/.local/share/icons/$(basename "$kora_dir")"
+    fi
+done
+
+# 1. Detect KDE configuration tool for kdeglobals
+if command -v kwriteconfig6 &> /dev/null; then
+    KWRITECONFIG="kwriteconfig6"
+elif command -v kwriteconfig5 &> /dev/null; then
+    KWRITECONFIG="kwriteconfig5"
+elif command -v kwriteconfig &> /dev/null; then
+    KWRITECONFIG="kwriteconfig"
+fi
+
+# 2. Set KDE Icon Theme (kdeglobals)
+if [ -n "$KWRITECONFIG" ]; then
+    "$KWRITECONFIG" --file kdeglobals --group Icons --key Theme "kora"
+elif command -v crudini &> /dev/null; then
+    crudini --ini-options=nospace --set "$HOME/.config/kdeglobals" Icons Theme "kora"
+fi
+
+# 3. Set Qt Platform Theme (qt5ct / qt6ct) Icon Theme
+mkdir -p "$HOME/.config/qt5ct" "$HOME/.config/qt6ct"
+for qtconf in "$HOME/.config/qt5ct/qt5ct.conf" "$HOME/.config/qt6ct/qt6ct.conf"; do
+    if command -v crudini &> /dev/null; then
+        crudini --ini-options=nospace --set "$qtconf" Appearance icon_theme "kora"
+    elif [ -n "$KWRITECONFIG" ]; then
+        "$KWRITECONFIG" --file "$qtconf" --group Appearance --key icon_theme "kora"
+    else
+        if [[ -f "$qtconf" ]]; then
+            if grep -q "^\[Appearance\]" "$qtconf"; then
+                if grep -q "^icon_theme=" "$qtconf"; then
+                    sed -i 's/^icon_theme=.*/icon_theme=kora/' "$qtconf"
+                else
+                    sed -i '/^\[Appearance\]/a icon_theme=kora' "$qtconf"
+                fi
+            else
+                printf "\n[Appearance]\nicon_theme=kora\n" >> "$qtconf"
+            fi
+        else
+            printf "[Appearance]\nicon_theme=kora\n" > "$qtconf"
+        fi
+    fi
+done
+
+# 4. Set Kvantum Theme (crudini works here, or fallback to kwriteconfig)
+mkdir -p "$HOME/.config/Kvantum"
 if command -v crudini &> /dev/null; then
-    mkdir -p ~/.config/Kvantum
-    crudini --set ~/.config/Kvantum/kvantum.kvconfig General theme "Dracula" &> /dev/null || true
-    crudini --set ~/.config/kdeglobals Icons Theme "TokyoNight" &> /dev/null || true
+    crudini --set ~/.config/Kvantum/kvantum.kvconfig General theme "Dracula"
+elif [ -n "$KWRITECONFIG" ]; then
+    "$KWRITECONFIG" --file ~/.config/Kvantum/kvantum.kvconfig --group General --key theme "Dracula"
 fi
 
 # Set Dolphin / KDE default terminal to kitty
@@ -559,6 +954,21 @@ TerminalApplication=kitty
 EOF
     fi
 fi
+
+# Verify and ensure Hyprland autostart commands in exec.lua
+exec_lua="$HOME/.hyprconf/hypr/configs/exec.lua"
+if [[ -f "$exec_lua" ]]; then
+    if ! grep -q "qs-island.sh --start" "$exec_lua"; then
+        sed -i '/hl.on("hyprland.start", function()/a \    hl.exec_cmd(scripts_dir .. "/qs-island.sh --start &")' "$exec_lua"
+    fi
+    if ! grep -q "qs-widgets.sh --start" "$exec_lua"; then
+        sed -i '/hl.on("hyprland.start", function()/a \    hl.exec_cmd(scripts_dir .. "/qs-widgets.sh --start &")' "$exec_lua"
+    fi
+    msg dn "Verified Dynamic Island & Desktop Widgets daemons in exec.lua"
+fi
+
+# Ensure all helper scripts and setup script are executable
+chmod +x "$HOME/.hyprconf/hypr/scripts"/* "$dir/setup.sh" 2>/dev/null || true
 
 msg dn "Script execution completed successfully! Please log out and log back in to enjoy your setup."
 

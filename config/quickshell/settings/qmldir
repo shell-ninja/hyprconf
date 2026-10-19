@@ -1,0 +1,18 @@
+singleton Theme 1.0 Theme.qml
+BezierGraph 1.0 BezierGraph.qml
+CapsuleSwitch 1.0 CapsuleSwitch.qml
+ModernSlider 1.0 ModernSlider.qml
+ModernDropdown 1.0 ModernDropdown.qml
+SettingCard 1.0 SettingCard.qml
+DraggableWidget 1.0 DraggableWidget.qml
+LockscreenSection 1.0 LockscreenSection.qml
+WeatherSection 1.0 WeatherSection.qml
+IslandSection 1.0 IslandSection.qml
+WidgetsSection 1.0 WidgetsSection.qml
+ResizableDraggableWidget 1.0 ResizableDraggableWidget.qml
+DesktopClock 1.0 DesktopClock.qml
+DesktopVisualizer 1.0 DesktopVisualizer.qml
+DesktopSystemMonitor 1.0 DesktopSystemMonitor.qml
+DesktopAudioPlayer 1.0 DesktopAudioPlayer.qml
+DesktopWeather 1.0 DesktopWeather.qml
+AudioVisualizer 1.0 AudioVisualizer.qml

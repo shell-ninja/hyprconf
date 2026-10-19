@@ -1,0 +1,1 @@
+../launcher/Style2.qml

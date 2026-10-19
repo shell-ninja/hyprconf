@@ -1,0 +1,24 @@
+singleton Theme 1.0 Theme.qml
+IslandShape 1.0 IslandShape.qml
+CollapsedBar 1.0 CollapsedBar.qml
+DashboardView 1.0 DashboardView.qml
+HomePage 1.0 HomePage.qml
+PowerView 1.0 PowerView.qml
+WallpaperView 1.0 WallpaperView.qml
+ProfileBanner 1.0 ProfileBanner.qml
+QuickToggles 1.0 QuickToggles.qml
+WifiCard 1.0 WifiCard.qml
+BluetoothCard 1.0 BluetoothCard.qml
+VerticalSlider 1.0 VerticalSlider.qml
+BottomCard 1.0 BottomCard.qml
+LauncherView 1.0 LauncherView.qml
+Style1 1.0 Style1.qml
+Style2 1.0 Style2.qml
+ThemeSwitcherView 1.0 ThemeSwitcherView.qml
+ScreenshotView 1.0 ScreenshotView.qml
+PolkitView 1.0 PolkitView.qml
+StatusPage 1.0 StatusPage.qml
+NetworkDetailPage 1.0 NetworkDetailPage.qml
+ClipboardView 1.0 ClipboardView.qml
+AudioVisualizer 1.0 AudioVisualizer.qml
+EmojiView 1.0 EmojiView.qml

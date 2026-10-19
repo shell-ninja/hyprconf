@@ -1,0 +1,27 @@
+# hyprconf-update.service — optional systemd --user unit
+#
+# Install:
+#   mkdir -p ~/.config/systemd/user
+#   cp ~/.hyprconf/systemd/user/hyprconf-update.service ~/.config/systemd/user/
+#   systemctl --user daemon-reload
+#   systemctl --user enable --now hyprconf-update.service
+#
+# Logs:
+#   journalctl --user -u hyprconf-update -f
+#
+# Note: hypr/configs/exec.lua already autostarts hyprconf.sh --daemon with Hyprland.
+# This systemd unit is an alternative if you prefer systemd-managed user services.
+
+[Unit]
+Description=Hyprconf Background Update Checker & Notifier (every 6h)
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=/bin/bash %h/.hyprconf/hypr/scripts/sh/hyprconf.sh --daemon
+Restart=on-failure
+RestartSec=60
+
+[Install]
+WantedBy=graphical-session.target

@@ -18,7 +18,10 @@
 
 # change starship style in fish
 set -l fish_config "$HOME/.config/fish/config.fish"
-set -l starship_dir "$HOME/.config/fish/starship"
+set -l starship_dir "$HOME/.hyprconf/starship"
+if not test -d "$starship_dir"
+    set starship_dir "$HOME/.config/starship"
+end
 
 set -l styles
 for file in "$starship_dir"/*.toml
@@ -54,13 +57,25 @@ if string match -qr '^[0-9]+$' "$stl"; and test $stl -ge 1 -a $stl -le (count $s
     echo
     printf "  \e[1;34m[*]\e[0m Setting prompt to: \e[1;32m%s\e[0m\n" "$selected"
 
-    # Set in current environment immediately
-    set -gx STARSHIP_CONFIG "$prompt_file"
+    # Copy selected preset to active starship.toml
+    cp "$prompt_file" "$HOME/.config/starship.toml"
 
-    # Safely replace the line setting STARSHIP_CONFIG in config.fish
-    if test -f "$fish_config"
-        sed -i -E "s|^([[:space:]]*set -gx STARSHIP_CONFIG).*|\1 \"$prompt_file\"|g" "$fish_config"
+    # Re-apply Noctalia palette if available
+    set -l noctalia_apply "/usr/share/noctalia/assets/templates/starship/apply.sh"
+    if test -x "$noctalia_apply"
+        "$noctalia_apply" 2>/dev/null
     end
+
+    # Set in current environment immediately
+    set -gx STARSHIP_CONFIG "$HOME/.config/starship.toml"
+
+    # Ensure STARSHIP_CONFIG points to ~/.config/starship.toml in config.fish
+    if test -f "$fish_config"
+        sed -i -E 's|^([[:space:]]*set -gx STARSHIP_CONFIG).*|\1 "$HOME/.config/starship.toml"|g' "$fish_config"
+    end
+
+    # Invalidate cached init script to pick up changes
+    rm -f "$HOME/.config/fish/starship_init.fish"
 
     printf "  \e[1;34m[*]\e[0m Applying changes immediately...\n"
     sleep 1; and clear

@@ -1,0 +1,1 @@
+../widgets/DesktopVisualizer.qml

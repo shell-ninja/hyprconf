@@ -2,7 +2,7 @@
 
 hl.config({
     animations = {
-        enabled = 1,
+        enabled = True,
     },
 })
 
@@ -13,8 +13,8 @@ hl.config({
 hl.curve("fluent_decel", {
     type = "bezier",
     points = {
-        { 0.1, 1.0 },
-        { 0.0, 1.0 },
+        { 0.1, 1 },
+        { 0, 1 },
     },
 })
 
@@ -37,8 +37,8 @@ hl.curve("md3_accel", {
 hl.curve("elegant_bounce", {
     type = "bezier",
     points = {
-        { 0.55, 1.07 },
-        { 0.28, 1.12 },
+        { 0.03, 1.53 },
+        { 0.8, 0.91 },
     },
 })
 
@@ -59,6 +59,14 @@ hl.curve("linear", {
 })
 
 ----------------------------------------------------------------------
+hl.curve("test", {
+    type = "bezier",
+    points = {
+        { 0, 1.75 },
+        { 0.44, 1.07 },
+    },
+})
+
 -- Animations
 ----------------------------------------------------------------------
 
@@ -66,7 +74,7 @@ hl.curve("linear", {
 hl.animation({
     leaf = "windowsIn",
     enabled = 1,
-    speed = 5,
+    speed = 5.5,
     bezier = "elegant_bounce",
     style = "slide down",
 })
@@ -74,7 +82,7 @@ hl.animation({
 hl.animation({
     leaf = "windowsOut",
     enabled = 1,
-    speed = 4,
+    speed = 5.5,
     bezier = "md3_accel",
     style = "slide up",
 })
@@ -83,7 +91,7 @@ hl.animation({
     leaf = "windowsMove",
     enabled = 1,
     speed = 5,
-    bezier = "fluent_decel",
+    bezier = "elegant_bounce",
     style = "slide",
 })
 
@@ -97,7 +105,7 @@ hl.animation({
 
 hl.animation({
     leaf = "borderangle",
-    enabled = 1,
+    enabled = 0,  -- Disabled: looping animation burns GPU at idle
     speed = 30,
     bezier = "linear",
     style = "loop",
@@ -115,7 +123,7 @@ hl.animation({
 hl.animation({
     leaf = "workspaces",
     enabled = 1,
-    speed = 5,
+    speed = 5.5,
     bezier = "fluent_decel",
     style = "slidevert",
 })

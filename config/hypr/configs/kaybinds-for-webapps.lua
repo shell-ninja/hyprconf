@@ -1,7 +1,7 @@
 -- kaybinds-for-webapps.lua
 -- Quick-launch bindings for web apps via a helper script.
 
-local apps = os.getenv("HOME") .. "/.hyprconf/hypr/scripts/apps.sh"
+local apps = os.getenv("HOME") .. "/.hyprconf/hypr/scripts/sh/apps.sh"
 
 hl.bind("ALT + A",       hl.dsp.exec_cmd(apps .. " chatgpt"))
 hl.bind("CTRL + ALT + A", hl.dsp.exec_cmd(apps .. " gemini.google"))

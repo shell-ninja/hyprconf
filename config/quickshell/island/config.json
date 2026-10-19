@@ -1,0 +1,12 @@
+{
+  "position": "top",
+  "auto_hide": false,
+  "style": "minimal_rail",
+  "matrix_stream": true,
+  "visualizer": {
+    "enabled": true,
+    "bar_count": 8,
+    "style": "wave",
+    "move_to_bottom_on_hover": true
+  }
+}
