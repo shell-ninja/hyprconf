@@ -23,6 +23,7 @@ local qsIsland        = sh_dir .. "/qs-island.sh"
 local qsScreenshot    = sh_dir .. "/qs-screenshot.sh"
 local qsClipboard     = sh_dir .. "/qs-clipboard.sh"
 local qsEmoji         = sh_dir .. "/qs-emoji.sh"
+local qsReload        = sh_dir .. "/qs-reload.sh"
 local inputMethodCTRL = sh_dir .. "/input-method.sh"
 
 -- ── Wallpaper ─────────────────────────────────────────────────────────────────
@@ -40,8 +41,8 @@ hl.bind(mainMod .. " + SHIFT + Return", hl.dsp.exec_cmd(terminal .. " --title fl
 hl.bind(mainMod .. " + Q", hl.dsp.window.close())
 hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(file_man))
 hl.bind(mainMod .. " + SHIFT + E", hl.dsp.exec_cmd(terminal .. " --title " .. term_file_man .. " -e " .. term_file_man))
-hl.bind(mainMod .. " + V", hl.dsp.exec_cmd(qsClipboard))
-hl.bind(mainMod .. " + SHIFT + V", hl.dsp.window.float({ action = "toggle" }))
+hl.bind(mainMod .. " + SHIFT + C", hl.dsp.exec_cmd(qsClipboard))
+hl.bind(mainMod .. " + V", hl.dsp.window.float({ action = "toggle" }))
 hl.bind(mainMod .. " + ALT + V", hl.dsp.exec_cmd("hyprctl dispatch workspaceopt allfloat"))
 hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen())
 hl.bind(mainMod .. " + D", hl.dsp.exec_cmd(qsLauncher))
@@ -63,12 +64,14 @@ hl.bind(mainMod .. " + SHIFT + B", hl.dsp.exec_cmd("brave --incognito"))
 hl.bind(alt .. " + B", hl.dsp.exec_cmd(sh_dir .. "/default_browser.sh --reset"))
 
 -- ── Layout / config ───────────────────────────────────────────────────────────
+hl.bind(ctrl .. " + Escape", hl.dsp.exec_cmd(qsReload))
 hl.bind(mainMod .. " + CTRL + W", hl.dsp.exec_cmd(qsIsland .. " --wallpaper"))
-hl.bind(mainMod .. " + ALT + B", hl.dsp.exec_cmd(qsIsland .. " --restart"))
+hl.bind(mainMod .. " + ALT + B", hl.dsp.exec_cmd(qsReload))
 hl.bind(mainMod .. " + SHIFT + comma", hl.dsp.exec_cmd(sh_dir .. "/qs-settings.sh"))
 hl.bind(mainMod .. " + CTRL + R", hl.dsp.exec_cmd("hyprctl reload && notify-send 'Done' 'Hyprland reload'"))
 hl.bind(ctrl .. " + U", hl.dsp.exec_cmd(py_dir .. "/pkgupdate-gui.py"))
 hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd(sh_dir .. "/startup.sh &> /dev/null"))
+-- hl.bind(mainMod .. " + S", hl.dsp.exec_cmd(py_dir .. "/settings.py"))
 hl.bind(mainMod .. " + S", hl.dsp.exec_cmd(sh_dir .. "/qs-settings.sh"))
 hl.bind(mainMod .. " + F1", hl.dsp.exec_cmd(sh_dir .. "/animations_toggle.sh"))
 hl.bind(mainMod .. " + CTRL + P", hl.dsp.exec_cmd(sh_dir .. "/regenerate-colors.sh"))

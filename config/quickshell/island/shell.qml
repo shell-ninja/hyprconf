@@ -19,11 +19,12 @@ PanelWindow {
     anchors.left: true
     anchors.right: true
     color: "transparent"
+    visible: (!root.hasFullscreenWindow || root.expanded)
 
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: "quickshell-island"
     WlrLayershell.keyboardFocus: root.expanded ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
-    exclusiveZone: (root.islandAutoHide ? 0 : 48)
+    exclusiveZone: (root.hasFullscreenWindow || root.islandAutoHide) ? 0 : 48
 
     screen: Quickshell.screens.length > 0 ? Quickshell.screens[0] : null
 
@@ -37,6 +38,62 @@ PanelWindow {
         onIsActiveChanged: {
             if (!isActive && expandedContent && expandedContent.currentView === 6) {
                 root.closePolkit()
+            }
+        }
+    }
+
+    // ── FULLSCREEN DETECTION & ZERO-LATENCY AUTO-HIDE ─────────────────────────
+    property bool hasFullscreenWindow: false
+
+    Process {
+        id: fullscreenCheckProc
+        command: ["hyprctl", "-j", "activeworkspace"]
+        running: true
+        stdout: StdioCollector {
+            onTextChanged: {
+                if (!text || text.trim().length === 0) return
+                try {
+                    var ws = JSON.parse(text.trim())
+                    root.hasFullscreenWindow = (ws && ws.hasfullscreen === true)
+                } catch(e) {}
+            }
+        }
+    }
+
+    Timer {
+        id: fullscreenDebounceTimer
+        interval: 35
+        repeat: false
+        onTriggered: {
+            if (fullscreenCheckProc.running) {
+                fullscreenCheckProc.running = false
+            }
+            fullscreenCheckProc.running = true
+        }
+    }
+
+    function checkFullscreenState() {
+        fullscreenDebounceTimer.restart()
+    }
+
+    Connections {
+        target: Hyprland
+
+        function onFocusedWorkspaceChanged() {
+            root.checkFullscreenState()
+        }
+
+        function onRawEvent(event) {
+            if (event.name === "fullscreen") {
+                // event.data: "1" (or "2") when entering fullscreen, "0" when exiting
+                var isFs = (event.data === "1" || event.data === "2")
+                root.hasFullscreenWindow = isFs
+                root.checkFullscreenState()
+            } else if (event.name === "workspace" || event.name === "workspacev2" ||
+                       event.name === "openwindow" || event.name === "closewindow" ||
+                       event.name === "activewindow" || event.name === "activewindowv2" ||
+                       event.name === "focusedmon") {
+                root.checkFullscreenState()
             }
         }
     }
@@ -1228,7 +1285,7 @@ PanelWindow {
         y: (root.islandPosition === "bottom") ? (parent.height - height) : 0
         width: Math.max(root.activeCollapsedWidth, 320)
         height: 12
-        visible: root.islandAutoHide && !root.expanded
+        visible: root.islandAutoHide && !root.expanded && !root.hasFullscreenWindow
 
         HoverHandler {
             id: edgeSensorHover
@@ -1248,6 +1305,7 @@ PanelWindow {
         height: root.activeCollapsedHeight + (root.activeExpandedHeight - root.activeCollapsedHeight) * root.animProgress
         clip: root.expanded ? ((expandedContent && (expandedContent.currentView >= 2)) ? false : true) : false
         focus: true
+        visible: (!root.hasFullscreenWindow || root.expanded)
         opacity: root.isAutoHidden ? 0.12 : 1.0
 
         transform: Translate {
@@ -1597,7 +1655,7 @@ PanelWindow {
             id: expandClicker
             z: 0
             anchors.fill: parent
-            enabled: !root.expanded && !root.isScreenshotTimerActive && !root.hasNotificationPopup && (root.islandStyle !== "minimal_rail") && (!collapsedBar || !collapsedBar.isWorkspaceAreaHovered)
+            enabled: !root.expanded && !root.hasFullscreenWindow && !root.isScreenshotTimerActive && !root.hasNotificationPopup && (root.islandStyle !== "minimal_rail") && (!collapsedBar || !collapsedBar.isWorkspaceAreaHovered)
             cursorShape: Qt.PointingHandCursor
             onClicked: {
                 hoverIntentTimer.stop()

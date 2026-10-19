@@ -40,6 +40,7 @@ SUPER + SHIFT + W  󰶻  Open Dynamic Island Wallpaper Picker
 SUPER + CTRL + SHIFT + W  󰶻  Open Dynamic Island Wallpaper Picker
 SUPER + ALT + W  󰶻  Open Wallpaper Selector Panel
 SUPER + CTRL + W  󰶻  Open Dynamic Island Wallpaper Picker
+CTRL + ESC  󰶻  Reload Island & Entire Quickshell
 SUPER + ALT + B  󰶻  Restart Quickshell Desktop Shell
 SUPER + SHIFT + ,  󰶻  Toggle System Settings App
 SUPER + SHIFT + S  󰶻  Open Screenshot Studio
@@ -98,7 +99,7 @@ execute_action() {
         *"Reset Default Browser"*) "$sh_dir/default_browser.sh" --reset & ;;
         *"Change Wallpaper (Random)"*) "$sh_dir/Wallpaper.sh" & ;;
         *"Open Dynamic Island Wallpaper Picker"*|*"Open Wallpaper Selector Panel"*) "$sh_dir/qs-island.sh" --wallpaper & ;;
-        *"Restart Quickshell Desktop Shell"*) "$sh_dir/qs-island.sh" --restart & ;;
+        *"Reload Island & Entire Quickshell"*|*"Restart Quickshell Desktop Shell"*) "$sh_dir/qs-reload.sh" & ;;
         *"Toggle System Settings App"*|*"Open Dotfiles Settings Menu"*) "$sh_dir/qs-settings.sh" & ;;
         *"Toggle Window Animations"*) "$sh_dir/animations_toggle.sh" & ;;
         *"Regenerate Colorscheme"*) "$sh_dir/regenerate-colors.sh" & ;;
