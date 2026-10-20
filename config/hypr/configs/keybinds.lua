@@ -24,6 +24,7 @@ local qsIsland        = sh_dir .. "/qs-island.sh"
 local qsScreenshot    = sh_dir .. "/qs-screenshot.sh"
 local qsClipboard     = sh_dir .. "/qs-clipboard.sh"
 local qsEmoji         = sh_dir .. "/qs-emoji.sh"
+local qsKeybinds      = sh_dir .. "/qs-keybinds.sh"
 local qsReload        = sh_dir .. "/qs-reload.sh"
 local inputMethodCTRL = sh_dir .. "/input-method.sh"
 
@@ -33,8 +34,8 @@ hl.bind(mainMod .. " + W", hl.dsp.exec_cmd(qsIsland .. " --wallpaper"))
 -- ── Screenshots / Studio ───────────────────────────────────────────────────────
 hl.bind("print", hl.dsp.exec_cmd(qsScreenshot))
 
--- ── Help ──────────────────────────────────────────────────────────────────────
-hl.bind(mainMod .. " + SHIFT + H", hl.dsp.exec_cmd(help))
+-- ── Help / Keybinds Cheatsheet ────────────────────────────────────────────────
+hl.bind(mainMod .. " + SHIFT + H", hl.dsp.exec_cmd(qsKeybinds))
 
 -- ── Terminal & core apps ──────────────────────────────────────────────────────
 hl.bind(mainMod .. " + Return", hl.dsp.exec_cmd(terminal .. " --title main"))

@@ -127,7 +127,12 @@ execute_action() {
     esac
 }
 
-# ── Mode 1: List keybindings ─────────────────────────────────────────────────
+# ── Mode 1: List keybindings (JSON or plain text) ─────────────────────────────
+if [[ "${1:-}" == "--json" || "${1:-}" == "-j" ]]; then
+    python3 "$py_dir/keybinds_catalog.py" --json
+    exit 0
+fi
+
 if [[ "${1:-}" == "--list" || "${1:-}" == "-l" ]]; then
     get_keybinds
     exit 0
@@ -140,12 +145,6 @@ if [[ -n "${1:-}" ]]; then
 fi
 
 # ── Mode 3: Display keybinds summary ─────────────────────────────────────────
-if command -v rofi >/dev/null 2>&1; then
-    selected=$(get_keybinds | rofi -dmenu -i -p "Keybinds")
-    if [[ -n "$selected" ]]; then
-        execute_action "$selected"
-    fi
-    exit 0
-fi
+# Default to Quickshell Dynamic Island Keybinds launcher
+exec "$sh_dir/qs-island.sh" --keybinds
 
-notify-send "Keybinds" "Keybindings view available: SUPER + SHIFT + H" || true

@@ -118,6 +118,18 @@ if [[ "$1" == "--power" ]]; then
     fi
 fi
 
+if [[ "$1" == "--keybinds" ]]; then
+    if pgrep -f "qs -c island" >/dev/null 2>&1; then
+        qs ipc -c island call island toggleKeybinds
+        exit 0
+    else
+        qs -c island -d
+        sleep 0.35
+        qs ipc -c island call island openKeybinds
+        exit 0
+    fi
+fi
+
 if pkill -f "qs -c island" 2>/dev/null; then
     exit 0
 fi

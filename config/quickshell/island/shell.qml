@@ -118,6 +118,9 @@ PanelWindow {
     property string osdIcon: "volume"
     property string osdSubLabel: ""
 
+    property int systemBrightness: -1
+    property int systemVolume: -1
+
     Timer {
         id: osdTimer
         interval: 1800
@@ -130,7 +133,22 @@ PanelWindow {
     function showOsd(type, value, label, icon, subLabel) {
         root.osdType = type || "volume"
         var numVal = parseFloat(value)
-        root.osdValue = isNaN(numVal) ? 0.0 : (numVal > 1.0 ? numVal / 100.0 : numVal)
+        if (root.osdType === "brightness" || root.osdType === "volume" || root.osdType === "mic") {
+            root.osdValue = isNaN(numVal) ? 0.0 : Math.max(0.0, Math.min(1.0, numVal / 100.0))
+        } else {
+            root.osdValue = isNaN(numVal) ? 0.0 : (numVal > 1.0 ? numVal / 100.0 : numVal)
+        }
+        if (root.osdType === "brightness") {
+            var bVal = parseInt(value, 10)
+            if (!isNaN(bVal)) {
+                root.systemBrightness = Math.max(0, Math.min(100, bVal))
+            }
+        } else if (root.osdType === "volume") {
+            var vVal = parseInt(value, 10)
+            if (!isNaN(vVal)) {
+                root.systemVolume = Math.max(0, Math.min(100, vVal))
+            }
+        }
         root.osdLabel = (label !== undefined && label !== null) ? ("" + label) : ""
         root.osdIcon = icon || root.osdType
         root.osdSubLabel = (subLabel !== undefined && subLabel !== null) ? ("" + subLabel) : ""
@@ -680,6 +698,40 @@ PanelWindow {
             openEmoji()
         }
     }
+
+    function openKeybinds() {
+        if (root.expanded && expandedContent && expandedContent.currentView === 9) {
+            closeKeybinds()
+            return
+        }
+        root.isClosingWallpaper = false
+        hoverIntentTimer.stop()
+        closeTimer.stop()
+        if (expandedContent) {
+            expandedContent.currentView = 9
+            if (expandedContent.keybindsView && typeof expandedContent.keybindsView.focusSearch === "function") {
+                expandedContent.keybindsView.focusSearch()
+            }
+        }
+        root.expanded = true
+    }
+
+    function closeKeybinds() {
+        hoverIntentTimer.stop()
+        closeTimer.stop()
+        root.closingView = 9
+        root.isClosingWallpaper = true
+        root.expanded = false
+        if (expandedContent) expandedContent.currentView = 0
+    }
+
+    function toggleKeybinds() {
+        if (root.expanded && expandedContent && expandedContent.currentView === 9) {
+            closeKeybinds()
+        } else {
+            openKeybinds()
+        }
+    }
     function closeIsland() {
         hoverIntentTimer.stop()
         closeTimer.stop()
@@ -703,6 +755,8 @@ PanelWindow {
                 root.closeClipboard()
             } else if (expandedContent.currentView === 8) {
                 root.closeEmoji()
+            } else if (expandedContent.currentView === 9) {
+                root.closeKeybinds()
             } else {
                 root.closingView = expandedContent.currentView
                 root.isClosingWallpaper = true
@@ -849,6 +903,15 @@ PanelWindow {
         }
         function toggleEmoji() {
             root.toggleEmoji()
+        }
+        function openKeybinds() {
+            root.openKeybinds()
+        }
+        function closeKeybinds() {
+            root.closeKeybinds()
+        }
+        function toggleKeybinds() {
+            root.toggleKeybinds()
         }
         function setAudioPlaying(val: bool) {
             root.isSinkPlaying = val
@@ -1590,6 +1653,8 @@ PanelWindow {
         DashboardView {
             id: expandedContent
             wallpaperTimestamp: root.wallpaperTimestamp
+            systemBrightness: root.systemBrightness
+            systemVolume: root.systemVolume
             isAudioPlaying: root.isAudioPlaying
             cavaBars: root.cavaBars
             visualizerEnabled: root.visualizerEnabled

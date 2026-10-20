@@ -438,6 +438,36 @@ ClippingRectangle {
                         onClicked: rootWindow.openThemeSwitcher()
                     }
                 }
+
+                // Dedicated Close button (✕)
+                Rectangle {
+                    width: 28
+                    height: 28
+                    radius: 8
+                    color: closeBtnMouse.containsMouse ? Theme.alpha("#ef4444", 0.25) : "transparent"
+                    border.width: 1
+                    border.color: closeBtnMouse.containsMouse ? "#ef4444" : Theme.alpha(Theme.foreground, 0.12)
+
+                    Image {
+                        anchors.centerIn: parent
+                        width: 12
+                        height: 12
+                        source: rootWindow.closeSvg
+                        fillMode: Image.PreserveAspectFit
+                    }
+
+                    MouseArea {
+                        id: closeBtnMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            if (rootWindow && typeof rootWindow.closeRequested === "function") {
+                                rootWindow.closeRequested()
+                            }
+                        }
+                    }
+                }
             }
         }
     }

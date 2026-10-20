@@ -27,6 +27,7 @@ Item {
         if (currentView === 6) return 520
         if (currentView === 7) return clipboardView ? clipboardView.preferredWidth : 780
         if (currentView === 8) return emojiView ? emojiView.preferredWidth : 620
+        if (currentView === 9) return keybindsView ? keybindsView.preferredWidth : 780
         return 444
     }
     implicitHeight: {
@@ -37,6 +38,7 @@ Item {
         if (currentView === 6) return 370
         if (currentView === 7) return clipboardView ? clipboardView.preferredHeight : 520
         if (currentView === 8) return emojiView ? emojiView.preferredHeight : 460
+        if (currentView === 9) return keybindsView ? keybindsView.preferredHeight : 520
         return 496
     }
 
@@ -123,6 +125,13 @@ Item {
                     return true
                 }
             }
+        } else if (root.currentView === 9) {
+            if (keybindsView && typeof keybindsView.handleKey === "function") {
+                if (keybindsView.handleKey(event)) {
+                    event.accepted = true
+                    return true
+                }
+            }
         }
 
         if (event.key === Qt.Key_Escape) {
@@ -167,6 +176,9 @@ Item {
     property string visualizerStyle: "wave"
     property int visualizerBarCount: 8
 
+    property int systemBrightness: -1
+    property int systemVolume: -1
+
     // ── 1. HOME DASHBOARD PAGE (PAGE 1) ──────────────────────────────────────
     HomePage {
         id: homePage
@@ -177,6 +189,9 @@ Item {
         opacity: (root.currentView === 0 && root.dashboardPage === 0) ? 1.0 : 0.0
         scale: (root.currentView === 0 && root.dashboardPage === 0) ? 1.0 : 0.95
         x: (root.dashboardPage === 0) ? 0 : -28
+
+        externalBrightness: root.systemBrightness
+        externalVolume: root.systemVolume
 
         isAudioPlaying: root.isAudioPlaying
         cavaBars: root.cavaBars
@@ -464,6 +479,29 @@ Item {
             root.closeRequested()
         }
         onEmojiSelected: function(emoji) {
+            root.closeRequested()
+        }
+    }
+
+    // ── 10. KEYBINDS LAUNCHER (SUPER + SHIFT + H) ───────────────────────────
+    KeybindsView {
+        id: keybindsView
+        anchors.fill: parent
+        active: root.active && root.currentView === 9
+        isClosing: root.isClosingWallpaper
+        animProgress: root.animProgress
+        visible: root.currentView === 9
+        opacity: root.currentView === 9 ? 1.0 : 0.0
+        scale: root.currentView === 9 ? 1.0 : 0.94
+
+        Behavior on opacity {
+            NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
+        }
+        Behavior on scale {
+            NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
+        }
+
+        onCloseRequested: {
             root.closeRequested()
         }
     }

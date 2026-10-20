@@ -94,6 +94,19 @@ Item {
 
     // ── DESKTOP BRIGHTNESS (ddcutil) ─────────────────────────────────────────
     property int currentBrightness: 50
+    property int externalBrightness: -1
+    onExternalBrightnessChanged: {
+        if (externalBrightness >= 0 && externalBrightness !== root.currentBrightness) {
+            root.currentBrightness = externalBrightness
+        }
+    }
+
+    property int externalVolume: -1
+    onExternalVolumeChanged: {
+        if (externalVolume >= 0 && externalVolume !== root.currentVolume) {
+            root.currentVolume = externalVolume
+        }
+    }
 
     Process {
         id: brightReader
@@ -137,6 +150,18 @@ Item {
         if (active) {
             cascadeExitAnim.stop()
             cascadeEnterAnim.start()
+            if (!brightReader.running) {
+                brightReader.running = true
+            } else {
+                brightReader.running = false
+                brightReader.running = true
+            }
+            if (!volReader.running) {
+                volReader.running = true
+            } else {
+                volReader.running = false
+                volReader.running = true
+            }
         } else {
             cascadeEnterAnim.stop()
             cascadeExitAnim.start()

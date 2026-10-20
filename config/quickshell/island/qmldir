@@ -22,3 +22,4 @@ NetworkDetailPage 1.0 NetworkDetailPage.qml
 ClipboardView 1.0 ClipboardView.qml
 AudioVisualizer 1.0 AudioVisualizer.qml
 EmojiView 1.0 EmojiView.qml
+KeybindsView 1.0 KeybindsView.qml
