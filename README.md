@@ -22,11 +22,58 @@ A streamlined, obsidian-styled **Hyprland** desktop environment powered natively
 <br>
 
 <div align="center">
+  <a href="#screenshots"><kbd> Visual Showcase </kbd></a>&ensp;&ensp;
   <a href="#features"><kbd> Features </kbd></a>&ensp;&ensp;
   <a href="#shortcuts"><kbd> Shortcuts </kbd></a>&ensp;&ensp;
   <a href="#structure"><kbd> Configuration </kbd></a>&ensp;&ensp;
   <a href="#update"><kbd> Updater </kbd></a>&ensp;&ensp;
   <a href="#contributing"><kbd> Contributing </kbd></a>
+</div>
+
+<br>
+
+---
+
+<a id="screenshots"></a>
+
+## Visual Showcase
+
+### Desktop & Workspace Layout
+<div align="center">
+  <img src="ss/overview1.png" width="49%" alt="Obsidian Minimalist Desktop with Collapsed Dynamic Island" />
+  <img src="ss/overview2.png" width="49%" alt="Multi-Window Tiled Workflow" />
+</div>
+
+<br>
+
+### Dynamic Island Command Center & Settings
+<div align="center">
+  <img src="ss/control-center.png" width="49%" alt="Dynamic Island Morphing Control Center & Audio Diagnostics" />
+  <img src="ss/overview-with-dynamic-island-settings.png" width="49%" alt="Quickshell Unified Settings — Dynamic Island Configuration" />
+</div>
+
+<br>
+
+### Custom Application Launchers
+<div align="center">
+  <img src="ss/menu1.png" width="49%" alt="Quickshell Application Launcher" />
+  <img src="ss/menu-selector.png" width="49%" alt="Launcher Style Switcher (Slanted Split Quad & Panoramic Grid)" />
+</div>
+
+<br>
+
+### Dynamic Theming & System Widgets
+<div align="center">
+  <img src="ss/wallpaper-selector.png" width="49%" alt="Dynamic Island Wallpaper & Noctalia Palette Harmonizer" />
+  <img src="ss/pkg-updater.png" width="49%" alt="Quickshell System Package Updater" />
+</div>
+
+<br>
+
+### Morphing Lockscreen & Personalization Canvas
+<div align="center">
+  <img src="ss/lockscreen.png" width="49%" alt="Dynamic Island Morphing Lockscreen with PAM Auth" />
+  <img src="ss/lockscreen-settings.png" width="49%" alt="WYSIWYG Lockscreen Settings & Draggable Canvas" />
 </div>
 
 <br>
