@@ -1,0 +1,1 @@
+../widgets/DesktopWeather.qml

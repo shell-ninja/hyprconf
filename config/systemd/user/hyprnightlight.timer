@@ -1,9 +1,0 @@
-[Unit]
-Description=Update Hyprland Night Light every 5 minutes
-
-[Timer]
-OnCalendar=*-*-* *:*:00
-AccuracySec=1s
-
-[Install]
-WantedBy=timers.target

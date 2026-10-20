@@ -59,8 +59,8 @@ touch "$log"
 
 sleep 1
 
-printf "${green}=>${end} Cloning hyprconf repository\n"
-git clone --depth=1 https://github.com/shell-ninja/hyprconf.git "$HOME/.cache/hyprconf" &> /dev/null
+printf "${green}=>${end} Cloning hyprconf repository (main branch)\n"
+git clone --depth=1 -b main https://github.com/shell-ninja/hyprconf.git "$HOME/.cache/hyprconf" &> /dev/null
 
 if [[ -d "$HOME/.cache/hyprconf" ]]; then
     cd "$HOME/.cache/hyprconf"

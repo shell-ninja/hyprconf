@@ -1,1 +1,0 @@
-### This `rofi-pywal.rasi` file is generated every time you switch a wallpaper.

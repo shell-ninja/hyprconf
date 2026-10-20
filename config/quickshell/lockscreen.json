@@ -1,0 +1,138 @@
+{
+    "layout": {
+        "mode": "freeform",
+        "alignment": "center",
+        "vertical_offset": 0,
+        "module_spacing": 20,
+        "corner_power_buttons": false,
+        "corner_session_badge": false
+    },
+    "positions": {
+        "clock": {
+            "x": 0.5,
+            "y": 0.11118729488982654,
+            "preset": "custom",
+            "scale": 1.6
+        },
+        "quote": {
+            "x": 0.5,
+            "y": 0.18878393583042974,
+            "preset": "custom",
+            "scale": 1
+        },
+        "avatar": {
+            "x": 0.5,
+            "y": 0.45,
+            "preset": "custom",
+            "scale": 1
+        },
+        "weather": {
+            "x": 0.5,
+            "y": 0.24628691983122364,
+            "preset": "custom",
+            "scale": 1.3
+        },
+        "media_player": {
+            "x": 0.25,
+            "y": 0.88,
+            "preset": "custom",
+            "scale": 1
+        },
+        "system_stats": {
+            "x": 0.9124472573839663,
+            "y": 0.95,
+            "preset": "custom",
+            "scale": 1
+        },
+        "user_avatar": {
+            "x": 0.5,
+            "y": 0.5,
+            "scale": 1.4,
+            "preset": "custom"
+        },
+        "username": {
+            "x": 0.5,
+            "y": 0.6439425105485233,
+            "scale": 1.4,
+            "preset": "custom"
+        },
+        "session_lock": {
+            "x": 0.88,
+            "y": 0.85,
+            "scale": 1,
+            "preset": "custom"
+        },
+        "input_field": {
+            "x": 0.5,
+            "y": 0.7140939990623535,
+            "scale": 1,
+            "preset": "custom"
+        },
+        "audio_visualizer": {
+            "x": 0.1294798259493671,
+            "y": 0.9484282700421941,
+            "scale": 1.85,
+            "preset": "custom"
+        }
+    },
+    "clock": {
+        "enabled": true,
+        "format_24h": false,
+        "show_am_pm": true,
+        "size": 100,
+        "weight": "Bold"
+    },
+    "date": {
+        "enabled": true,
+        "format": "long"
+    },
+    "avatar": {
+        "enabled": true,
+        "size": 140,
+        "breathing_enabled": true,
+        "orbit_satellites_enabled": true,
+        "glow_enabled": true,
+        "show_username": true,
+        "show_status": true
+    },
+    "modules": {
+        "media_player": false,
+        "custom_quote": false,
+        "quote_text": "So, Welcome Back",
+        "system_stats": true,
+        "weather_widget": true,
+        "weather_city": "New York",
+        "weather_country": "USA",
+        "user_avatar": true,
+        "username": true,
+        "session_lock": false,
+        "input_field": true,
+        "audio_visualizer": true
+    },
+    "stats": {
+        "show_uptime": true,
+        "show_ram": true,
+        "show_cpu": true,
+        "show_disk": true,
+        "show_battery": false,
+        "unit_format": "gb",
+        "separator": "\u2022"
+    },
+    "backdrop": {
+        "blur": 0.6501399002157497,
+        "vignette": 0,
+        "dimming": 0
+    },
+    "widget_backgrounds": {
+        "clock": false,
+        "quote": true,
+        "user_avatar": true,
+        "username": false,
+        "session_lock": true,
+        "input_field": true,
+        "audio_visualizer": false,
+        "weather": false,
+        "media_player": true,
+        "system_stats": false
+    }
+}

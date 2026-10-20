@@ -26,6 +26,7 @@ hl.env("QT_WAYLAND_DISABLE_WINDOWDECORATION", "1")
 hl.env("GRIMBLAST_HIDE_CURSOR", "0")
 hl.env("MOZ_ENABLE_WAYLAND", "1")
 hl.env("ELECTRON_OZONE_PLATFORM_HINT", "auto")
+hl.env("QS_NO_RELOAD_POPUP", "1")
 
 -- NVIDIA:
 -- hl.env("LIBVA_DRIVER_NAME",         "nvidia")

@@ -3,5 +3,8 @@
  "export-gtkrc-20": true,
  "export-index-theme": true,
  "export-xsettingsd": true,
- "export-gtk4-symlinks": true
+ "export-gtk4-symlinks": true,
+ "flatpak-export-gtk-theme-override": false,
+ "flatpak-export-icon-theme-override": false,
+ "flatpak-install-current-gtk-theme": false
 }

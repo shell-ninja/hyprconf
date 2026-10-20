@@ -18,7 +18,7 @@ hl.config({
         follow_mouse        = 1,
         float_switch_override_focus = false,
 
-        sensitivity = 0, -- -1.0 – 1.0, 0 = no modification
+        sensitivity = 0.0, -- -1.0 – 1.0, 0 = no modification
 
         touchpad = {
             disable_while_typing  = true,

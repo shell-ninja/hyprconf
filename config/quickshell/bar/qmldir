@@ -1,0 +1,7 @@
+singleton Theme 1.0 Theme.qml
+Bar 1.0 Bar.qml
+BarPopup 1.0 BarPopup.qml
+Pill 1.0 Pill.qml
+ActionButton 1.0 ActionButton.qml
+MonoText 1.0 MonoText.qml
+SvgIcon 1.0 SvgIcon.qml

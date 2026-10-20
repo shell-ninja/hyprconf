@@ -23,7 +23,6 @@ float_center("hyprland-share-picker")
 float_center("[Kk]vantummanager")
 float_center("[Ll]xappearance")
 float_center("eog")
-float_center("[Tt]hunar")
 float_center("[Gg]nome-disks")
 float_center("org.kde.kcalc")
 float_center("org.telegram.desktop")
@@ -36,6 +35,7 @@ float_center("com.heroicgameslauncher.hgl")
 float_center("[Ss]team")
 float_center("xdg-desktop-portal-gtk")
 float_center("electron")
+float_center("Sign in - Google Accounts")
 
 -- Specific titles
 hl.window_rule({ match = { title = "^(Authentication Required)$" }, float = true, center = true })
@@ -45,7 +45,13 @@ hl.window_rule({ match = { class = "^([Tt]hunar)$", title = "^(File Operation Pr
 hl.window_rule({ match = { class = "^([Tt]hunar)$", title = "^(Confirm to replace files)$" }, float = true, center = true })
 
 -- settings app
-hl.window_rule({ match = { class = "^(dev.shellninja.hypr-settings)$", title = "^(Hyprland Settings)$" }, float = true, center = true })
+hl.window_rule({ match = { class = "^(dev.shellninja.hypr-settings)$" }, float = true, center = true })
+hl.window_rule({
+    match = { class = "^(org.quickshell)$", title = "^(Hyprland & Quickshell Settings)$" },
+    float = true,
+    center = true,
+    size = "1220 800",
+})
 
 -- pkgupdate GUI and welcome app
 float_center("dev.shellninja.pkgupdate")
@@ -72,8 +78,9 @@ hl.window_rule({
 })
 
 -- Kitty titles
-hl.window_rule({ match = { class = "^(kitty)$", title = "^(update|floating|yazi|monitor|browser)$" }, float = true })
-hl.window_rule({ match = { class = "^(kitty)$", title = "^(yazi|update|browser)$" }, center = true })
+hl.window_rule({ match = { class = "^(kitty)$", title = "^(main)$" }, tile = true })
+hl.window_rule({ match = { class = "^(kitty)$", title = "^(update|floating|yazi|monitor|browser|ide)$" }, float = true })
+hl.window_rule({ match = { class = "^(kitty)$", title = "^(yazi|update|browser|ide)$" }, center = true })
 
 -- Size rules
 hl.window_rule({ match = { class = "^([Kk]vantummanager)$" }, size = "monitor_w*0.55 monitor_h*0.75" })
@@ -87,6 +94,7 @@ hl.window_rule({ match = { class = "^(kitty)$", title = "^(update)$" }, size = "
 hl.window_rule({ match = { class = "^(kitty)$", title = "^(yazi)$" }, size = "monitor_w*0.6 monitor_h*0.6" })
 hl.window_rule({ match = { class = "^(kitty)$", title = "^(monitor)$" }, size = "monitor_w*0.5 monitor_h*0.55" })
 hl.window_rule({ match = { class = "^(kitty)$", title = "^(browser)$" }, size = "monitor_w*0.5 monitor_h*0.6" })
+hl.window_rule({ match = { class = "^(kitty)$", title = "^(ide)$" }, size = "monitor_w*0.35 monitor_h*0.4" })
 hl.window_rule({ match = { class = "^(kitty)$", title = "^(floating)$" }, size = "monitor_w*0.55 monitor_h*0.75" })
 hl.window_rule({ match = { class = "^(com.obsproject.Studio)$" }, size = "monitor_w*0.5 monitor_h*0.7" })
 hl.window_rule({ match = { class = "^(org.telegram.desktop)$" }, size = "monitor_w*0.6 monitor_h*0.8" })
@@ -129,21 +137,11 @@ hl.workspace_rule({
     -- decorate = true,  -- Optional: Explicitly enable decorations if disabled globally
 })
 
-hl.window_rule({ match = { class = "^(dev\\.noctalia\\.Noctalia)$" }, float = true, size = "monitor_w*0.6 monitor_h*0.75", center = true })
-
 -- Layer rules
--- hl.layer_rule({ match = { namespace = "^rofi$" }, blur = true })
-hl.layer_rule({ match = { namespace = "^notifications$" }, blur = true })
-hl.layer_rule({ match = { namespace = "^gtk-layer-shell$" }, blur = true })
--- hl.layer_rule({ match = { namespace = "^waybar$" }, blur = true })
-
--- Noctalia Shell layer rules
-hl.layer_rule({
-    match = { namespace = "^noctalia-(bar-.+|notification|dock|panel|attached-panel|osd|window-switcher|screen-corner)$" },
-    no_anim = true,
-    ignore_alpha = 0.5,
+hl.layer_rule({ 
+    match = { namespace = "gtk-layer-shell$" },
     blur = true,
-    blur_popups = true,
+    ignore_alpha = 0.5,
 })
 
 
@@ -153,3 +151,12 @@ hl.workspace_rule({ workspace = "2", persistent = true })
 hl.workspace_rule({ workspace = "3", persistent = true })
 hl.workspace_rule({ workspace = "4", persistent = true })
 hl.workspace_rule({ workspace = "5", persistent = true })
+
+-- Quickshell acrylic blur (lockscreen, launcher, launcher theme, island)
+hl.layer_rule({
+    match = { namespace = "^quickshell.*" },
+    no_anim = true,
+    blur = true,
+    ignore_alpha = 0.1,
+})
+
