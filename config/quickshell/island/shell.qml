@@ -347,6 +347,7 @@ PanelWindow {
         if (v === 6) return polkitExpandedWidth
         if (v === 7) return clipboardExpandedWidth
         if (v === 8) return (expandedContent && expandedContent.emojiView ? expandedContent.emojiView.preferredWidth : 620)
+        if (v === 9) return (expandedContent && expandedContent.keybindsView ? expandedContent.keybindsView.preferredWidth : 780)
         return defaultExpandedWidth
     }
     readonly property real activeExpandedHeight: {
@@ -358,6 +359,7 @@ PanelWindow {
         if (v === 6) return polkitExpandedHeight
         if (v === 7) return clipboardExpandedHeight
         if (v === 8) return (expandedContent && expandedContent.emojiView ? expandedContent.emojiView.preferredHeight : 460)
+        if (v === 9) return (expandedContent && expandedContent.keybindsView ? expandedContent.keybindsView.preferredHeight : 520)
         return defaultExpandedHeight
     }
 

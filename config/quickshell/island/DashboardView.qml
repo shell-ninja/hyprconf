@@ -164,6 +164,7 @@ Item {
     property alias polkitView: polkitView
     property alias clipboardView: clipboardView
     property alias emojiView: emojiView
+    property alias keybindsView: keybindsView
 
     property bool isClosingWallpaper: false
     property real animProgress: 1.0

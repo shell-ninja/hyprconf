@@ -21,6 +21,11 @@ if [[ -d "$island_dir" && -d "$launcher_dir" ]]; then
     done
 fi
 
+# Ensure island qmldir includes KeybindsView
+if [[ -f "$island_dir/qmldir" ]] && ! grep -q "KeybindsView" "$island_dir/qmldir"; then
+    echo "KeybindsView 1.0 KeybindsView.qml" >> "$island_dir/qmldir"
+fi
+
 # Ensure cava config exists for audio visualizer
 cava_conf="$HOME/.hyprconf/hypr/.cache/cava-island.conf"
 if [[ ! -f "$cava_conf" ]]; then

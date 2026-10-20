@@ -970,7 +970,10 @@ QtObject {{
 }}
 """
 
-    qmldir_content = "singleton Theme 1.0 Theme.qml\n"
+    qmldir_content = """singleton Theme 1.0 Theme.qml
+LockscreenSystemGraph 1.0 LockscreenSystemGraph.qml
+LockscreenAudioVisualizer 1.0 LockscreenAudioVisualizer.qml
+"""
 
     try:
         QS_DIR.mkdir(parents=True, exist_ok=True)
@@ -1016,6 +1019,8 @@ DesktopSystemMonitor 1.0 DesktopSystemMonitor.qml
 DesktopAudioPlayer 1.0 DesktopAudioPlayer.qml
 DesktopWeather 1.0 DesktopWeather.qml
 AudioVisualizer 1.0 AudioVisualizer.qml
+LockscreenSystemGraph 1.0 LockscreenSystemGraph.qml
+LockscreenAudioVisualizer 1.0 LockscreenAudioVisualizer.qml
 """,
             "launcher": """singleton Theme 1.0 Theme.qml
 Style1 1.0 Style1.qml
@@ -1056,6 +1061,11 @@ NetworkDetailPage 1.0 NetworkDetailPage.qml
 ClipboardView 1.0 ClipboardView.qml
 AudioVisualizer 1.0 AudioVisualizer.qml
 EmojiView 1.0 EmojiView.qml
+KeybindsView 1.0 KeybindsView.qml
+""",
+            "lockscreen": """singleton Theme 1.0 Theme.qml
+LockscreenSystemGraph 1.0 LockscreenSystemGraph.qml
+LockscreenAudioVisualizer 1.0 LockscreenAudioVisualizer.qml
 """,
             "bar": """singleton Theme 1.0 Theme.qml
 Bar 1.0 Bar.qml
