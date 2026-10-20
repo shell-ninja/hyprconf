@@ -454,10 +454,11 @@ if command -v lspci &> /dev/null && lspci -k | grep -A 2 -E "(VGA|3D)" | grep -i
     [[ -f "$env_file" ]] && sed -i '/^-- hl\.env("GBM_BACKEND"/s/^-- //' "$env_file"
 fi
 
-# Fastfetch share directory placement
-if [[ -d "$HOME/.hyprconf/fastfetch" && ! -d "$HOME/.local/share/fastfetch" ]]; then
-    mkdir -p "$HOME/.local/share"
-    mv "$HOME/.hyprconf/fastfetch" "$HOME/.local/share/"
+# Fastfetch cleanup from ~/.hyprconf if present from legacy installs
+if [[ -d "$HOME/.hyprconf/fastfetch" ]]; then
+    mkdir -p "$HOME/.local/share/fastfetch"
+    cp -a "$HOME/.hyprconf/fastfetch/." "$HOME/.local/share/fastfetch/" 2>/dev/null || true
+    rm -rf "$HOME/.hyprconf/fastfetch"
 fi
 
 # Symlinking configuration directories and files to ~/.config
@@ -465,7 +466,7 @@ for dotfile in "$HOME/.hyprconf"/*; do
     [[ -e "$dotfile" ]] || continue
     configName=$(basename "$dotfile")
     case "$configName" in
-        setup.sh|update.sh|README*|LICENSE*|PACKAGES*|UPDATES*|Logs|*.md|extras|local) continue ;;
+        setup.sh|update.sh|README*|LICENSE*|PACKAGES*|UPDATES*|Logs|*.md|extras|local|fastfetch) continue ;;
     esac
     configPath="$HOME/.config/$configName"
     ln -sfn "$dotfile" "$configPath"
@@ -502,7 +503,7 @@ elif [[ -f "$fonts_dir/Icomoon-Feather.ttf" ]]; then
     msg skp "Fonts are already installed."
 fi
 
-# Extra files setup (dolphinstaterc, konsole)
+# Extra files setup (dolphinstaterc, konsole, fastfetch)
 if [[ -f "$HOME/.local/state/dolphinstaterc" ]]; then
     mv "$HOME/.local/state/dolphinstaterc" "$HOME/.local/state/dolphinstaterc.back"
 fi
@@ -519,6 +520,20 @@ local_src=""
 if [[ -n "$local_src" ]]; then
     [[ -f "$local_src/state/dolphinstaterc" ]] && cp -r "$local_src/state/dolphinstaterc" "$HOME/.local/state/"
     [[ -d "$local_src/share/konsole" ]] && cp -r "$local_src/share/konsole" "$HOME/.local/share/"
+    if [[ -d "$local_src/share/fastfetch" ]]; then
+        mkdir -p "$HOME/.local/share/fastfetch"
+        cp -a "$local_src/share/fastfetch/." "$HOME/.local/share/fastfetch/"
+        msg dn "Installed fastfetch presets and assets to $HOME/.local/share/fastfetch"
+    fi
+fi
+
+# Initialize default fastfetch configuration symlink if not present
+if [[ -d "$HOME/.local/share/fastfetch/presets" ]]; then
+    [[ -L "$HOME/.config/fastfetch" ]] && rm -f "$HOME/.config/fastfetch"
+    mkdir -p "$HOME/.config/fastfetch"
+    if [[ ! -e "$HOME/.config/fastfetch/config.jsonc" && -f "$HOME/.local/share/fastfetch/presets/minimal.jsonc" ]]; then
+        ln -sf "$HOME/.local/share/fastfetch/presets/minimal.jsonc" "$HOME/.config/fastfetch/config.jsonc"
+    fi
 fi
 
 # Wayland session & desktop application entries
