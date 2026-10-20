@@ -69,14 +69,13 @@ STATE_FILE = CACHE_DIR / "state.json"
 LOCK_FILE = CACHE_DIR / "notifier.lock"
 LOG_FILE = CACHE_DIR / "notifier.log"
 
-# Reuse the same icon/sound assets as systemupdate.sh when present, so
-# notifications look consistent with the rest of the rice. Falls back to a
-# themed icon name if the hypr config isn't there (e.g. on a non-Hyprland box).
-HYPR_ICONS = Path.home() / ".config/hypr/icons"
-HYPR_SOUNDS = Path.home() / ".config/hypr/sounds"
-UPDATE_ICON = HYPR_ICONS / "update.png"
+# Notification sound and icon assets. Falls back to themed icon name.
+HYPR_SOUNDS = Path.home() / ".hyprconf/hypr/sounds"
+if not HYPR_SOUNDS.exists():
+    HYPR_SOUNDS = Path.home() / ".config/hypr/sounds"
 SOUND_UPDATE = HYPR_SOUNDS / "update.wav"
-FALLBACK_ICON = "software-update-available"
+UPDATE_ICON = "system-software-update"
+
 
 
 # -----------------------------------------------------------------------------
@@ -388,7 +387,7 @@ def build_notification(results: list[SourceResult]) -> tuple[str, str, int]:
 
 
 def send_notification(title: str, body: str) -> None:
-    icon = str(UPDATE_ICON) if UPDATE_ICON.exists() else FALLBACK_ICON
+    icon = UPDATE_ICON
     cmd = [
         "notify-send",
         "--urgency=critical",

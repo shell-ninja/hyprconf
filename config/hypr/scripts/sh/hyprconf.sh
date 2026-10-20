@@ -20,11 +20,12 @@ SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 HYPRCONF_DIR="${HYPRCONF_DIR:-$HOME/.hyprconf}"
 VERSION_FILE="$HYPRCONF_DIR/.version"
 REPO_URL="https://github.com/shell-ninja/hyprconf"
+BRANCH="${BRANCH:-main}"
 CACHE_DIR="$HYPRCONF_DIR/hypr/.cache"
 STATE_FILE="$CACHE_DIR/update_state.json"
 LOCK_FILE="${XDG_RUNTIME_DIR:-/tmp}/hyprconf_update_daemon.lock"
 SOUND_FILE_UPDATE="$HYPRCONF_DIR/hypr/sounds/update.wav"
-ICON_FILE="$HYPRCONF_DIR/hypr/icons/pkgupdt.svg"
+ICON_FILE="system-software-update"
 FALLBACK_ICON="preferences-system-updates"
 
 # 6 hours in seconds: 6 * 3600 = 21600
@@ -67,6 +68,7 @@ check_remote_json() {
 import urllib.request, json, subprocess, re, sys
 
 local_raw = sys.argv[1].strip() if len(sys.argv) > 1 else "v1.0.0"
+branch = sys.argv[2].strip() if len(sys.argv) > 2 else "main"
 
 def parse_v(v):
     if not v:
@@ -107,7 +109,7 @@ def get_remote_version():
     except Exception:
         pass
 
-    # 3. Fallback to git ls-remote (works even with GitHub API rate limits)
+    # 3. Fallback to git ls-remote tags
     try:
         res = subprocess.run(
             ["git", "ls-remote", "--tags", "--refs", "https://github.com/shell-ninja/hyprconf.git"],
@@ -125,22 +127,38 @@ def get_remote_version():
     except Exception:
         pass
 
+    # 4. Check target branch HEAD commit
+    try:
+        res = subprocess.run(
+            ["git", "ls-remote", "--heads", "https://github.com/shell-ninja/hyprconf.git", f"refs/heads/{branch}"],
+            capture_output=True, text=True, timeout=8
+        )
+        if res.returncode == 0 and res.stdout.strip():
+            sha = res.stdout.strip().split()[0][:7]
+            return f"{branch}@{sha}"
+    except Exception:
+        pass
+
     return None
 
 remote_ver = get_remote_version()
 has_update = False
 if remote_ver:
-    has_update = parse_v(remote_ver) > parse_v(local_raw)
+    if "@" in remote_ver:
+        has_update = (local_raw != remote_ver)
+    else:
+        has_update = parse_v(remote_ver) > parse_v(local_raw)
 
 output = {
     "local": local_raw,
     "remote": remote_ver,
+    "branch": branch,
     "has_update": bool(has_update),
     "status": "ok" if remote_ver else "no_remote"
 }
 print(json.dumps(output))
 sys.exit(1 if has_update else 0)
-' "$cur_ver"
+' "$cur_ver" "$BRANCH"
 }
 
 # ── Notification Helper ───────────────────────────────────────────────────────
@@ -149,8 +167,7 @@ send_notification() {
     local local_ver="$2"
     local title="Hyprconf Update Available"
     local body="A new version (${remote_ver}) is available (current: ${local_ver}). Click to update now."
-    local icon="$ICON_FILE"
-    [[ -f "$icon" ]] || icon="$FALLBACK_ICON"
+    local icon="${ICON_FILE:-$FALLBACK_ICON}"
 
     # Play update notification chime if sound file exists
     if [[ -f "$SOUND_FILE_UPDATE" ]] && command -v paplay &>/dev/null; then
@@ -298,7 +315,11 @@ do_update() {
     if [[ "$has_upd" == "true" && -n "$rem_ver" ]]; then
         echo -e ":: New version available: \033[1;32m${rem_ver}\033[0m (installed: ${local_ver})\n"
         target_ver="$rem_ver"
-        download_url="${REPO_URL}/archive/refs/tags/${target_ver}.zip"
+        if [[ "$target_ver" == *"@"* || "$target_ver" == "$BRANCH"* ]]; then
+            download_url="${REPO_URL}/archive/refs/heads/${BRANCH}.zip"
+        else
+            download_url="${REPO_URL}/archive/refs/tags/${target_ver}.zip"
+        fi
 
         if command -v gum &>/dev/null; then
             gum confirm "Would you like to update your Hyprconf to ${target_ver}?" \
@@ -318,7 +339,7 @@ do_update() {
     else
         echo -e ":: You are currently on the latest version (\033[1;34m${local_ver}\033[0m).\n"
         target_ver="${local_ver}"
-        download_url="${REPO_URL}/archive/refs/heads/main.zip"
+        download_url="${REPO_URL}/archive/refs/heads/${BRANCH}.zip"
 
         if command -v gum &>/dev/null; then
             gum confirm "No newer release found. Reinstall/reapply current configuration from GitHub?" \
@@ -353,9 +374,9 @@ do_update() {
     fi
 
     if [[ ! -s "$zip_file" ]]; then
-        # Fallback to main branch archive if tag zip download was not found
-        echo -e "!! Tag archive not found. Falling back to default main branch..."
-        curl -f -L "${REPO_URL}/archive/refs/heads/main.zip" -o "$zip_file" || {
+        # Fallback to default branch archive if tag zip download was not found
+        echo -e "!! Tag archive not found. Falling back to default ${BRANCH} branch..."
+        curl -f -L "${REPO_URL}/archive/refs/heads/${BRANCH}.zip" -o "$zip_file" || {
             echo -e "\n!! Failed to download repository. Please check your internet connection."
             exit 1
         }
@@ -397,8 +418,7 @@ do_update() {
 
     # Send completion notification
     if command -v notify-send &>/dev/null; then
-        local icon="$ICON_FILE"
-        [[ -f "$icon" ]] || icon="$FALLBACK_ICON"
+        local icon="${ICON_FILE:-$FALLBACK_ICON}"
         notify-send -a "Hyprconf Updater" -i "$icon" "Hyprconf Updated" "Successfully updated to version ${target_ver}." 2>/dev/null || true
     fi
 

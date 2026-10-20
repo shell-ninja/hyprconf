@@ -2,7 +2,7 @@
 
 scriptsDir="$HOME/.hyprconf/hypr/scripts/py"
 cacheDir="$HOME/.hyprconf/hypr/.cache"
-icon="$HOME/.hyprconf/hypr/icons/colors.png"
+icon="preferences-desktop-theme"
 msg="Re-generating Colors"
 
 notify-send "Colors" -i "$icon" "$msg"
