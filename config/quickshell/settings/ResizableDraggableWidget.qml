@@ -14,6 +14,7 @@ Item {
     property real canvasWidth: 600
     property real canvasHeight: 400
     property bool isSelected: false
+    property bool interactive: true
     property bool isDragging: dragArea.drag.active
     property bool isResizing: resizeMouse.drag.active
 
@@ -49,6 +50,7 @@ Item {
         anchors.fill: parent
         anchors.margins: -4
         radius: 14
+        visible: root.interactive && (root.isSelected || root.isDragging || root.isResizing || dragArea.containsMouse)
         color: root.isDragging
             ? Theme.alpha(Theme.accent, 0.16)
             : (root.isSelected ? Theme.alpha(Theme.accent, 0.08) : "transparent")
@@ -71,7 +73,7 @@ Item {
         color: Theme.alpha(Theme.background, 0.94)
         border.width: 1
         border.color: (root.isSelected || root.isDragging || root.isResizing) ? Theme.accent : Theme.alpha(Theme.accent, 0.40)
-        visible: root.isSelected || root.isDragging || root.isResizing || dragArea.containsMouse
+        visible: root.interactive && (root.isSelected || root.isDragging || root.isResizing || dragArea.containsMouse)
         z: 200
 
         Text {
@@ -100,7 +102,8 @@ Item {
     MouseArea {
         id: dragArea
         anchors.fill: parent
-        hoverEnabled: true
+        hoverEnabled: root.interactive
+        enabled: root.interactive
         cursorShape: pressed ? Qt.ClosedHandCursor : Qt.OpenHandCursor
         drag.target: root
         drag.axis: Drag.XAndYAxis
@@ -117,13 +120,20 @@ Item {
             var rawCenterX = root.x + root.width / 2
             var rawCenterY = root.y + root.height / 2
 
-            // Magnetic snap to center X (within 4%)
-            if (Math.abs(rawCenterX - root.canvasWidth / 2) < root.canvasWidth * 0.04) {
+            // Magnetic snap to center X (within 3%)
+            if (Math.abs(rawCenterX - root.canvasWidth / 2) < root.canvasWidth * 0.03) {
                 rawCenterX = root.canvasWidth / 2
                 root.x = Math.round(rawCenterX - root.width / 2)
+            } else if (root.moduleKey !== "user_avatar" && typeof window !== "undefined" && window && window.config && window.config.positions && window.config.positions.user_avatar && window.config.positions.user_avatar.x !== undefined) {
+                var avNormX = window.config.positions.user_avatar.x
+                var avPixelX = avNormX * root.canvasWidth
+                if (Math.abs(rawCenterX - avPixelX) < root.canvasWidth * 0.03) {
+                    rawCenterX = avPixelX
+                    root.x = Math.round(rawCenterX - root.width / 2)
+                }
             }
-            // Magnetic snap to center Y (within 4%)
-            if (Math.abs(rawCenterY - root.canvasHeight / 2) < root.canvasHeight * 0.04) {
+            // Magnetic snap to center Y (within 3%)
+            if (Math.abs(rawCenterY - root.canvasHeight / 2) < root.canvasHeight * 0.03) {
                 rawCenterY = root.canvasHeight / 2
                 root.y = Math.round(rawCenterY - root.height / 2)
             }
@@ -144,7 +154,7 @@ Item {
         anchors.right: parent.right
         anchors.bottom: parent.bottom
         anchors.margins: -5
-        visible: root.isSelected || dragArea.containsMouse || root.isResizing
+        visible: root.interactive && (root.isSelected || dragArea.containsMouse || root.isResizing)
         color: resizeMouse.containsMouse || root.isResizing ? Theme.accent : Theme.alpha(Theme.background, 0.90)
         border.width: 1.5
         border.color: Theme.accent

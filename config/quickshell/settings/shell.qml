@@ -27,40 +27,35 @@ FloatingWindow {
 
     IpcHandler {
         target: "settings"
-        function openIsland() {
-            window.activeRootNav = 2
-            window.activeSection = 10
-            window.visible = true
-        }
         function openHyprconf() {
             window.activeRootNav = 0
             window.activeSection = 0
             window.visible = true
         }
-        function openLockscreen() {
+        function openIsland() {
             window.activeRootNav = 1
-            window.activeSection = 9
+            window.activeSection = 10
             window.visible = true
         }
         function openWidgets() {
-            window.activeRootNav = 3
+            window.activeRootNav = 2
             window.activeSection = 11
             window.visible = true
         }
         function openWidgetsLibrary() {
-            window.activeRootNav = 3
+            window.activeRootNav = 2
             window.activeSection = 11
             if (typeof widgetsSection !== "undefined" && widgetsSection) widgetsSection.activeTab = 0
             window.visible = true
         }
         function openWidgetsCustomizer() {
-            window.activeRootNav = 3
+            window.activeRootNav = 2
             window.activeSection = 11
             if (typeof widgetsSection !== "undefined" && widgetsSection) widgetsSection.activeTab = 1
             window.visible = true
         }
         function openWeatherCustomizer() {
-            window.activeRootNav = 3
+            window.activeRootNav = 2
             window.activeSection = 11
             if (typeof widgetsSection !== "undefined" && widgetsSection) {
                 widgetsSection.selectedWidgetId = "weather"
@@ -69,7 +64,7 @@ FloatingWindow {
             window.visible = true
         }
         function openVisualizerCustomizer() {
-            window.activeRootNav = 3
+            window.activeRootNav = 2
             window.activeSection = 11
             if (typeof widgetsSection !== "undefined" && widgetsSection) {
                 widgetsSection.selectedWidgetId = "visualizer"
@@ -78,9 +73,38 @@ FloatingWindow {
             window.visible = true
         }
         function openWidgetsGlobal() {
-            window.activeRootNav = 3
+            window.activeRootNav = 2
             window.activeSection = 11
             if (typeof widgetsSection !== "undefined" && widgetsSection) widgetsSection.activeTab = 2
+            window.visible = true
+        }
+        function openWeather() {
+            window.activeRootNav = 3
+            window.activeSection = 7
+            window.visible = true
+        }
+        function openLockscreen() {
+            window.activeRootNav = 4
+            window.activeSection = 9
+            if (typeof lockscreenSection !== "undefined" && lockscreenSection) {
+                lockscreenSection.studioMode = 0
+            }
+            window.visible = true
+        }
+        function openLockscreenPreview() {
+            window.activeRootNav = 4
+            window.activeSection = 9
+            if (typeof lockscreenSection !== "undefined" && lockscreenSection) {
+                lockscreenSection.studioMode = 1
+            }
+            window.visible = true
+        }
+        function openLockscreenSettings() {
+            window.activeRootNav = 4
+            window.activeSection = 9
+            if (typeof lockscreenSection !== "undefined" && lockscreenSection) {
+                lockscreenSection.studioMode = 2
+            }
             window.visible = true
         }
     }
@@ -151,11 +175,11 @@ FloatingWindow {
     }
 
     // Active Navigation Section:
-    // activeRootNav: 0 for "Hyprconf Settings" (parent), 1 for "Lockscreen Canvas", 2 for "Dynamic Island"
-    property int activeRootNav: (Quickshell.env("QS_SETTINGS_SECTION") === "island" ? 2 : (Quickshell.env("QS_SETTINGS_SECTION") === "widgets" ? 3 : 0))
+    // activeRootNav: 0 for "Hyprconf Settings", 1 for "Dynamic Island", 2 for "Desktop Widgets", 3 for "Weather", 4 for "Lockscreen Canvas"
+    property int activeRootNav: (Quickshell.env("QS_SETTINGS_SECTION") === "island" ? 1 : (Quickshell.env("QS_SETTINGS_SECTION") === "widgets" ? 2 : (Quickshell.env("QS_SETTINGS_SECTION") === "weather" ? 3 : (Quickshell.env("QS_SETTINGS_SECTION") === "lockscreen" ? 4 : 0))))
     // Sub-sections under Hyprconf Settings:
-    // 0: Overview, 1: Appearance, 2: Display, 3: Animations, 4: Input, 5: Login Avatar, 7: Weather, 9: Lockscreen WYSIWYG, 10: Dynamic Island, 11: Desktop Widgets
-    property int activeSection: (Quickshell.env("QS_SETTINGS_SECTION") === "island" ? 10 : (Quickshell.env("QS_SETTINGS_SECTION") === "widgets" ? 11 : 0))
+    // 0: Overview, 1: Appearance, 2: Display, 3: Animations, 4: Input, 5: Login Avatar
+    property int activeSection: (Quickshell.env("QS_SETTINGS_SECTION") === "island" ? 10 : (Quickshell.env("QS_SETTINGS_SECTION") === "widgets" ? 11 : (Quickshell.env("QS_SETTINGS_SECTION") === "weather" ? 7 : (Quickshell.env("QS_SETTINGS_SECTION") === "lockscreen" ? 9 : 0))))
     property int activeTab: 0 // Subtab in Lockscreen (0: Layout, 1: Clock, 2: Avatar, 3: Widgets, 4: Backdrop)
     property bool isDirty: false
     property bool showSaveToast: false
@@ -409,6 +433,17 @@ FloatingWindow {
         }
     }
 
+    Timer {
+        interval: 1000
+        repeat: true
+        running: true
+        onTriggered: {
+            if (!sysStatsProc.running) {
+                sysStatsProc.running = true
+            }
+        }
+    }
+
     // ── Backend Get Process ──────────────────────────────────────────────────
     Process {
         id: backendGetProc
@@ -634,7 +669,7 @@ FloatingWindow {
     }
 
     function discardAllChanges() {
-        if (window.activeRootNav === 3 && typeof widgetsSection !== "undefined" && widgetsSection) {
+        if (window.activeRootNav === 2 && typeof widgetsSection !== "undefined" && widgetsSection) {
             widgetsSection.reloadConfig()
             window.isDirty = false
             window.toastMessage = "Widget Changes Discarded"
@@ -653,7 +688,7 @@ FloatingWindow {
     }
 
     function applyAllChanges() {
-        if (window.activeRootNav === 3 && typeof widgetsSection !== "undefined" && widgetsSection) {
+        if (window.activeRootNav === 2 && typeof widgetsSection !== "undefined" && widgetsSection) {
             widgetsSection.saveWidgetsConfig()
             window.isDirty = false
             return
@@ -692,6 +727,20 @@ FloatingWindow {
         }
         if (!window.config.layout) window.config.layout = {}
         window.config.layout.mode = "freeform"
+        window.markDirty()
+    }
+
+    function updateWidgetScale(key, scale) {
+        if (!window.config.positions) window.config.positions = {}
+        if (!window.config.positions[key]) window.config.positions[key] = {}
+        window.config.positions[key].scale = Math.max(0.5, Math.min(2.5, scale))
+        window.markDirty()
+    }
+
+    function updateWidgetBackground(key, enabled) {
+        if (!window.config) window.config = {}
+        if (!window.config.widget_backgrounds) window.config.widget_backgrounds = {}
+        window.config.widget_backgrounds[key] = enabled
         window.markDirty()
     }
 
@@ -814,6 +863,7 @@ FloatingWindow {
         if (secIdx === 9) return svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + s + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="M20 12h2"/><path d="m19.07 4.93-1.41 1.41"/><path d="M15.947 12.65a4 4 0 0 0-5.925-4.128"/><path d="M13 22H7a5 5 0 1 1 4.9-6H13a3 3 0 0 1 0 6z"/></svg>')
         if (secIdx === 10) return svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + s + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="6" width="16" height="6" rx="3"/><line x1="8" y1="16" x2="8" y2="18"/><line x1="12" y1="15" x2="12" y2="19"/><line x1="16" y1="16" x2="16" y2="18"/></svg>')
         if (secIdx === 11) return svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + s + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>')
+        if (secIdx === 12) return svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + s + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>')
         return svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + s + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>')
     }
 
@@ -1110,77 +1160,17 @@ FloatingWindow {
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: {
                                     window.activeRootNav = 0
-                                    if (window.activeSection === 9) window.activeSection = 0
+                                    if (window.activeSection === 9 || window.activeSection === 10 || window.activeSection === 11) window.activeSection = 0
                                 }
                             }
                         }
 
-                        // 2. Parent Option: Lockscreen Canvas
+                        // 2. Parent Option: Dynamic Island
                         Rectangle {
                             width: parent.width
                             height: 48
                             radius: 10
                             readonly property bool isSelected: window.activeRootNav === 1
-
-                            color: isSelected
-                                ? Theme.accent
-                                : (lockMouse.containsMouse ? Theme.alpha(Theme.surface, 0.85) : "transparent")
-
-                            Behavior on color { ColorAnimation { duration: 120 } }
-
-                            Row {
-                                anchors.fill: parent
-                                anchors.leftMargin: 12
-                                anchors.rightMargin: 12
-                                spacing: 10
-
-                                Image {
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    width: 20
-                                    height: 20
-                                    source: window.getNavSvg(9, parent.parent.isSelected)
-                                    sourceSize: Qt.size(40, 40)
-                                }
-
-                                Column {
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    spacing: 2
-
-                                    Text {
-                                        text: "Lockscreen Canvas"
-                                        color: parent.parent.parent.isSelected ? Theme.on_primary : Theme.foreground
-                                        font.family: "Outfit"
-                                        font.pixelSize: 13
-                                        font.weight: parent.parent.parent.isSelected ? Font.DemiBold : Font.Normal
-                                    }
-
-                                    Text {
-                                        text: "WYSIWYG Editor"
-                                        color: parent.parent.parent.isSelected ? Theme.alpha(Theme.on_primary, 0.80) : Theme.alpha(Theme.foreground, 0.50)
-                                        font.family: "Outfit"
-                                        font.pixelSize: 10
-                                    }
-                                }
-                            }
-
-                            MouseArea {
-                                id: lockMouse
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    window.activeRootNav = 1
-                                    window.activeSection = 9
-                                }
-                            }
-                        }
-
-                        // 3. Parent Option: Dynamic Island
-                        Rectangle {
-                            width: parent.width
-                            height: 48
-                            radius: 10
-                            readonly property bool isSelected: window.activeRootNav === 2
 
                             color: isSelected
                                 ? Theme.accent
@@ -1229,18 +1219,18 @@ FloatingWindow {
                                 hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: {
-                                    window.activeRootNav = 2
+                                    window.activeRootNav = 1
                                     window.activeSection = 10
                                 }
                             }
                         }
 
-                        // 4. Parent Option: Desktop Widgets
+                        // 3. Parent Option: Desktop Widgets
                         Rectangle {
                             width: parent.width
                             height: 48
                             radius: 10
-                            readonly property bool isSelected: window.activeRootNav === 3
+                            readonly property bool isSelected: window.activeRootNav === 2
 
                             color: isSelected
                                 ? Theme.accent
@@ -1289,9 +1279,129 @@ FloatingWindow {
                                 hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: {
-                                    window.activeRootNav = 3
+                                    window.activeRootNav = 2
                                     window.activeSection = 11
                                     window.isDirty = (typeof widgetsSection !== "undefined" && widgetsSection) ? widgetsSection.isDirty : false
+                                }
+                            }
+                        }
+
+                        // 4. Parent Option: Weather
+                        Rectangle {
+                            width: parent.width
+                            height: 48
+                            radius: 10
+                            readonly property bool isSelected: window.activeRootNav === 3
+
+                            color: isSelected
+                                ? Theme.accent
+                                : (weatherNavMouse.containsMouse ? Theme.alpha(Theme.surface, 0.85) : "transparent")
+
+                            Behavior on color { ColorAnimation { duration: 120 } }
+
+                            Row {
+                                anchors.fill: parent
+                                anchors.leftMargin: 12
+                                anchors.rightMargin: 12
+                                spacing: 10
+
+                                Image {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    width: 20
+                                    height: 20
+                                    source: window.getNavSvg(9, parent.parent.isSelected)
+                                    sourceSize: Qt.size(40, 40)
+                                }
+
+                                Column {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    spacing: 2
+
+                                    Text {
+                                        text: "Weather Forecast"
+                                        color: parent.parent.parent.isSelected ? Theme.on_primary : Theme.foreground
+                                        font.family: "Outfit"
+                                        font.pixelSize: 13
+                                        font.weight: parent.parent.parent.isSelected ? Font.DemiBold : Font.Normal
+                                    }
+
+                                    Text {
+                                        text: "Live Atmosphere"
+                                        color: parent.parent.parent.isSelected ? Theme.alpha(Theme.on_primary, 0.80) : Theme.alpha(Theme.foreground, 0.50)
+                                        font.family: "Outfit"
+                                        font.pixelSize: 10
+                                    }
+                                }
+                            }
+
+                            MouseArea {
+                                id: weatherNavMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    window.activeRootNav = 3
+                                    window.activeSection = 7
+                                }
+                            }
+                        }
+
+                        // 5. Parent Option: Lockscreen Canvas
+                        Rectangle {
+                            width: parent.width
+                            height: 48
+                            radius: 10
+                            readonly property bool isSelected: window.activeRootNav === 4
+
+                            color: isSelected
+                                ? Theme.accent
+                                : (lockMouse.containsMouse ? Theme.alpha(Theme.surface, 0.85) : "transparent")
+
+                            Behavior on color { ColorAnimation { duration: 120 } }
+
+                            Row {
+                                anchors.fill: parent
+                                anchors.leftMargin: 12
+                                anchors.rightMargin: 12
+                                spacing: 10
+
+                                Image {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    width: 20
+                                    height: 20
+                                    source: window.getNavSvg(12, parent.parent.isSelected)
+                                    sourceSize: Qt.size(40, 40)
+                                }
+
+                                Column {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    spacing: 2
+
+                                    Text {
+                                        text: "Lockscreen Canvas"
+                                        color: parent.parent.parent.isSelected ? Theme.on_primary : Theme.foreground
+                                        font.family: "Outfit"
+                                        font.pixelSize: 13
+                                        font.weight: parent.parent.parent.isSelected ? Font.DemiBold : Font.Normal
+                                    }
+
+                                    Text {
+                                        text: "WYSIWYG Editor"
+                                        color: parent.parent.parent.isSelected ? Theme.alpha(Theme.on_primary, 0.80) : Theme.alpha(Theme.foreground, 0.50)
+                                        font.family: "Outfit"
+                                        font.pixelSize: 10
+                                    }
+                                }
+                            }
+
+                            MouseArea {
+                                id: lockMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    window.activeRootNav = 4
+                                    window.activeSection = 9
                                 }
                             }
                         }
@@ -1348,8 +1458,7 @@ FloatingWindow {
                                     { name: "Display", iconIdx: 2, secIdx: 2 },
                                     { name: "Animations", iconIdx: 3, secIdx: 3 },
                                     { name: "Input & Touchpad", iconIdx: 4, secIdx: 4 },
-                                    { name: "Login Avatar", iconIdx: 7, secIdx: 5 },
-                                    { name: "Weather", iconIdx: 9, secIdx: 7 }
+                                    { name: "Login Avatar", iconIdx: 7, secIdx: 5 }
                                 ]
 
                                 Rectangle {
@@ -3112,12 +3221,6 @@ FloatingWindow {
                     }
                 }
 
-                // ── SECTION 7: LIVE WEATHER & GENERATIVE ATMOSPHERE ──────────
-                WeatherSection {
-                    anchors.fill: parent
-                    visible: window.activeSection === 7
-                }
-
                 } // End of hyprContentArea
 
                 Process {
@@ -3134,25 +3237,34 @@ FloatingWindow {
                 }
 
                 // =============================================================
-                // SECTION 9: LOCKSCREEN & LIVE CANVAS (The Complete WYSIWYG Editor!)
+                // ROOT NAV 1: DYNAMIC ISLAND & AUDIO VISUALIZER
                 // =============================================================
-                LockscreenSection {
-                    visible: window.activeRootNav === 1 && window.activeSection === 9
+                IslandSection {
+                    visible: window.activeRootNav === 1
                 }
 
                 // =============================================================
-                // SECTION 10: DYNAMIC ISLAND & AUDIO VISUALIZER
+                // ROOT NAV 2: DESKTOP WIDGETS & LIVE DRAG/DROP CANVAS
                 // =============================================================
-                IslandSection {
+                WidgetsSection {
+                    id: widgetsSection
                     visible: window.activeRootNav === 2
                 }
 
                 // =============================================================
-                // SECTION 11: DESKTOP WIDGETS & LIVE DRAG/DROP CANVAS
+                // ROOT NAV 3: LIVE WEATHER & GENERATIVE ATMOSPHERE (STANDALONE)
                 // =============================================================
-                WidgetsSection {
-                    id: widgetsSection
+                WeatherSection {
+                    anchors.fill: parent
                     visible: window.activeRootNav === 3
+                }
+
+                // =============================================================
+                // ROOT NAV 4: LOCKSCREEN & LIVE CANVAS (The WYSIWYG Editor!)
+                // =============================================================
+                LockscreenSection {
+                    id: lockscreenSection
+                    visible: window.activeRootNav === 4
                 }
             }
         }

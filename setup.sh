@@ -274,6 +274,7 @@ launcher_dir="$HOME/.hyprconf/quickshell/launcher"
 launcher_theme_dir="$HOME/.hyprconf/quickshell/launcher-theme"
 settings_dir="$HOME/.hyprconf/quickshell/settings"
 widgets_dir="$HOME/.hyprconf/quickshell/widgets"
+lockscreen_dir="$HOME/.hyprconf/quickshell/lockscreen"
 
 # 1. Dynamic Island launcher morphing styles
 if [[ -d "$island_dir" && -d "$launcher_dir" ]]; then
@@ -285,7 +286,7 @@ if [[ -d "$island_dir" && -d "$launcher_dir" ]]; then
     done
 fi
 
-# 2. Settings desktop widget preview symlinks
+# 2. Settings desktop & lockscreen widget preview symlinks
 if [[ -d "$settings_dir" && -d "$widgets_dir" ]]; then
     for w in DesktopClock.qml DesktopVisualizer.qml DesktopSystemMonitor.qml DesktopAudioPlayer.qml DesktopWeather.qml; do
         target="$settings_dir/$w"
@@ -294,9 +295,17 @@ if [[ -d "$settings_dir" && -d "$widgets_dir" ]]; then
         fi
     done
 fi
+if [[ -d "$settings_dir" && -d "$lockscreen_dir" ]]; then
+    for l in LockscreenSystemGraph.qml LockscreenAudioVisualizer.qml; do
+        target="$settings_dir/$l"
+        if [[ ! -e "$target" || ( -L "$target" && "$(readlink "$target")" =~ /home/ ) ]]; then
+            ln -sfn "../lockscreen/$l" "$target"
+        fi
+    done
+fi
 
 # 3. Ensure Theme.qml & colors.json relative symlinks exist in all subprojects
-for sub in "$island_dir" "$launcher_dir" "$launcher_theme_dir" "$settings_dir" "$widgets_dir"; do
+for sub in "$island_dir" "$launcher_dir" "$launcher_theme_dir" "$settings_dir" "$widgets_dir" "$lockscreen_dir"; do
     [[ -d "$sub" ]] || continue
     [[ ! -e "$sub/Theme.qml" || ( -L "$sub/Theme.qml" && "$(readlink "$sub/Theme.qml")" =~ /home/ ) ]] && ln -sfn "../Theme.qml" "$sub/Theme.qml"
     [[ ! -e "$sub/colors.json" || ( -L "$sub/colors.json" && "$(readlink "$sub/colors.json")" =~ /home/ ) ]] && ln -sfn "../colors.json" "$sub/colors.json"

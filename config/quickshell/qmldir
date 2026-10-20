@@ -1,1 +1,3 @@
 singleton Theme 1.0 Theme.qml
+LockscreenSystemGraph 1.0 LockscreenSystemGraph.qml
+LockscreenAudioVisualizer 1.0 LockscreenAudioVisualizer.qml

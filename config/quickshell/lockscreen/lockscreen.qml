@@ -35,12 +35,17 @@ Scope {
                 corner_session_badge: true
             },
             positions: {
-                clock: { x: 0.50, y: 0.18, preset: "top-center" },
-                quote: { x: 0.50, y: 0.30, preset: "top-center" },
-                avatar: { x: 0.50, y: 0.52, preset: "center" },
-                weather: { x: 0.50, y: 0.64, preset: "custom" },
-                media_player: { x: 0.25, y: 0.85, preset: "bottom-left" },
-                system_stats: { x: 0.50, y: 0.89, preset: "bottom-center" }
+                clock: { x: 0.50, y: 0.18, scale: 1.0, preset: "top-center" },
+                quote: { x: 0.50, y: 0.20, scale: 1.0, preset: "top-center" },
+                user_avatar: { x: 0.50, y: 0.38, scale: 1.0, preset: "center" },
+                username: { x: 0.50, y: 0.49, scale: 1.0, preset: "center" },
+                session_lock: { x: 0.50, y: 0.53, scale: 1.0, preset: "center" },
+                input_field: { x: 0.50, y: 0.60, scale: 1.0, preset: "center" },
+                avatar: { x: 0.50, y: 0.52, scale: 1.0, preset: "center" },
+                audio_visualizer: { x: 0.50, y: 0.72, scale: 1.0, preset: "bottom-center" },
+                weather: { x: 0.50, y: 0.84, scale: 1.0, preset: "custom" },
+                media_player: { x: 0.25, y: 0.88, scale: 1.0, preset: "bottom-left" },
+                system_stats: { x: 0.50, y: 0.92, scale: 1.0, preset: "bottom-center" }
             },
             clock: {
                 enabled: true,
@@ -63,6 +68,11 @@ Scope {
                 show_status: true
             },
             modules: {
+                user_avatar: true,
+                username: true,
+                session_lock: true,
+                input_field: true,
+                audio_visualizer: true,
                 media_player: false,
                 custom_quote: false,
                 quote_text: "Crafting the digital realm.",
@@ -84,6 +94,18 @@ Scope {
                 blur: 0.65,
                 vignette: 0.60,
                 dimming: 0.20
+            },
+            widget_backgrounds: {
+                clock: false,
+                quote: true,
+                user_avatar: true,
+                username: false,
+                session_lock: true,
+                input_field: true,
+                audio_visualizer: true,
+                weather: true,
+                media_player: true,
+                system_stats: true
             }
         }
     }
@@ -130,7 +152,7 @@ Scope {
     }
 
     Timer {
-        interval: 10000
+        interval: 1000
         repeat: true
         running: true
         onTriggered: {
@@ -896,6 +918,12 @@ Scope {
                         return Math.max(16, Math.min(containerH - itemHeight - 16, Math.round(ny * containerH - itemHeight / 2)))
                     }
 
+                    function getModuleScale(key, defaultScale) {
+                        var p = (root.cfg && root.cfg.positions && root.cfg.positions[key]) ? root.cfg.positions[key] : null
+                        var sc = (p && p.scale !== undefined && p.scale > 0) ? p.scale : (defaultScale || 1.0)
+                        return Math.max(0.4, Math.min(3.0, sc))
+                    }
+
                     // 1. Clock & AM/PM & Date Module
                     Item {
                         id: clockModule
@@ -903,7 +931,20 @@ Scope {
                         height: timeRow.implicitHeight + (dateText.visible ? (dateText.implicitHeight + 4) : 0)
                         x: modulesContainer.getModuleX("clock", 0.50, width)
                         y: modulesContainer.getModuleY("clock", 0.18, height)
+                        scale: modulesContainer.getModuleScale("clock", 1.0)
+                        transformOrigin: Item.Center
                         visible: (root.cfg && root.cfg.clock) ? root.cfg.clock.enabled : true
+
+                        Rectangle {
+                            anchors.fill: parent
+                            anchors.margins: -12
+                            radius: 20
+                            visible: Boolean(root.cfg && root.cfg.widget_backgrounds && root.cfg.widget_backgrounds.clock)
+                            color: Theme.alpha(Theme.surface, 0.45)
+                            border.width: 1
+                            border.color: Theme.alpha(Theme.accent, 0.30)
+                            z: -1
+                        }
 
                         Column {
                             id: clockCol
@@ -953,253 +994,291 @@ Scope {
                         }
                     }
 
-                    // 2. Identity & Unlock Cluster (Avatar + DisplayName + Password Input Pill)
+                    // 2a. User Avatar Module (Continuous Breathing, Glowing Halo & Celestial Orbit)
                     Item {
-                        id: avatarAuthCluster
-                        width: 380
-                        height: avatarAuthCol.implicitHeight
-                        x: modulesContainer.getModuleX("avatar", 0.50, width)
-                        y: modulesContainer.getModuleY("avatar", 0.52, height)
-
-                        Column {
-                            id: avatarAuthCol
-                            width: parent.width
-                            spacing: (root.cfg && root.cfg.layout && root.cfg.layout.module_spacing !== undefined) ? root.cfg.layout.module_spacing : 20
-                            anchors.horizontalCenter: parent.horizontalCenter
-
-                    // Elevated Avatar with Continuous Breathing, Glowing Halo & Celestial Orbit
-                    Item {
-                        id: avatarSection
+                        id: userAvatarModule
                         readonly property real baseSize: (root.cfg && root.cfg.avatar && root.cfg.avatar.size) ? root.cfg.avatar.size : 116
                         width: baseSize + 40
                         height: baseSize + 40
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        visible: (root.cfg && root.cfg.avatar) ? root.cfg.avatar.enabled : true
-                        scale: (0.88 + root.entranceProgress * 0.12) * (avatarHoverArea.containsMouse ? 1.04 : 1.0)
-                        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutQuad } }
+                        x: modulesContainer.getModuleX("user_avatar", 0.50, width)
+                        y: modulesContainer.getModuleY("user_avatar", 0.38, height)
+                        scale: modulesContainer.getModuleScale("user_avatar", 1.0)
+                        transformOrigin: Item.Center
+                        visible: ((root.cfg && root.cfg.avatar) ? root.cfg.avatar.enabled : true) &&
+                                 ((root.cfg && root.cfg.modules) ? (root.cfg.modules.user_avatar !== false) : true)
 
-                        // Layer 1: Ethereal Aurora Bloom (Breathing Glow Halo)
-                        Rectangle {
-                            anchors.centerIn: parent
-                            width: avatarSection.baseSize + 20 + (root.ringGlowPulse * 20)
-                            height: avatarSection.baseSize + 20 + (root.ringGlowPulse * 20)
-                            radius: width / 2
-                            visible: (root.cfg && root.cfg.avatar) ? root.cfg.avatar.glow_enabled : true
-                            opacity: 0.35 + (root.ringGlowPulse * 0.35)
-                            color: root.authError
-                                ? Theme.alpha(Theme.error, 0.35 + root.errorFlash * 0.30)
-                                : (root.verifying ? Theme.secondary : Theme.accent)
-                            Behavior on color { ColorAnimation { duration: 240 } }
-                        }
-
-                        // Layer 2: Keystroke Resonance Ripple Ring
-                        Rectangle {
-                            anchors.centerIn: parent
-                            width: avatarSection.baseSize + 16
-                            height: avatarSection.baseSize + 16
-                            radius: width / 2
-                            scale: root.avatarRippleScale
-                            opacity: root.avatarRippleOpacity
-                            color: "transparent"
-                            border.width: 2.0
-                            border.color: Theme.accent
-                        }
-
-                        // Layer 3: Rotating Celestial Orbit Ring with Dual Plasma Satellites
                         Item {
+                            id: avatarSection
                             anchors.centerIn: parent
-                            width: avatarSection.baseSize + 24
-                            height: avatarSection.baseSize + 24
-                            visible: (root.cfg && root.cfg.avatar) ? root.cfg.avatar.orbit_satellites_enabled : true
+                            width: userAvatarModule.baseSize + 40
+                            height: userAvatarModule.baseSize + 40
+                            scale: (0.88 + root.entranceProgress * 0.12) * (avatarHoverArea.containsMouse ? 1.04 : 1.0)
+                            Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutQuad } }
 
-                            RotationAnimation on rotation {
-                                from: 0
-                                to: 360
-                                duration: root.verifying ? 1000 : (avatarHoverArea.containsMouse ? 2800 : 6500)
-                                loops: Animation.Infinite
-                                running: true
+                            // Layer 1: Ethereal Aurora Bloom (Breathing Glow Halo)
+                            Rectangle {
+                                anchors.centerIn: parent
+                                width: userAvatarModule.baseSize + 20 + (root.ringGlowPulse * 20)
+                                height: userAvatarModule.baseSize + 20 + (root.ringGlowPulse * 20)
+                                radius: width / 2
+                                visible: (root.cfg && root.cfg.avatar) ? root.cfg.avatar.glow_enabled : true
+                                opacity: 0.35 + (root.ringGlowPulse * 0.35)
+                                color: root.authError
+                                    ? Theme.alpha(Theme.error, 0.35 + root.errorFlash * 0.30)
+                                    : (root.verifying ? Theme.secondary : Theme.accent)
+                                Behavior on color { ColorAnimation { duration: 240 } }
                             }
 
-                            // Concentric Orbit Guide Ring
+                            // Layer 2: Keystroke Resonance Ripple Ring
                             Rectangle {
-                                anchors.fill: parent
+                                anchors.centerIn: parent
+                                width: userAvatarModule.baseSize + 16
+                                height: userAvatarModule.baseSize + 16
                                 radius: width / 2
+                                scale: root.avatarRippleScale
+                                opacity: root.avatarRippleOpacity
                                 color: "transparent"
-                                border.width: 1.2
+                                border.width: 2.0
+                                border.color: Theme.accent
+                            }
+
+                            // Layer 3: Rotating Celestial Orbit Ring with Dual Plasma Satellites
+                            Item {
+                                anchors.centerIn: parent
+                                width: userAvatarModule.baseSize + 24
+                                height: userAvatarModule.baseSize + 24
+                                visible: (root.cfg && root.cfg.avatar) ? root.cfg.avatar.orbit_satellites_enabled : true
+
+                                RotationAnimation on rotation {
+                                    from: 0
+                                    to: 360
+                                    duration: root.verifying ? 1000 : (avatarHoverArea.containsMouse ? 2800 : 6500)
+                                    loops: Animation.Infinite
+                                    running: true
+                                }
+
+                                // Concentric Orbit Guide Ring
+                                Rectangle {
+                                    anchors.fill: parent
+                                    radius: width / 2
+                                    color: "transparent"
+                                    border.width: 1.2
+                                    border.color: root.authError
+                                        ? Theme.alpha(Theme.error, 0.70)
+                                        : (root.verifying ? Theme.alpha(Theme.secondary, 0.85) : Theme.alpha(Theme.accent, 0.35 + root.ringGlowPulse * 0.25))
+                                    Behavior on border.color { ColorAnimation { duration: 200 } }
+                                }
+
+                                // Satellite 1 (North Pole)
+                                Rectangle {
+                                    width: 8
+                                    height: 8
+                                    radius: 4
+                                    x: (parent.width - width) / 2
+                                    y: -height / 2
+                                    color: root.authError ? Theme.error : Theme.accent
+                                    border.width: 1.5
+                                    border.color: "#ffffff"
+                                }
+
+                                // Satellite 2 (South Pole)
+                                Rectangle {
+                                    width: 6
+                                    height: 6
+                                    radius: 3
+                                    x: (parent.width - width) / 2
+                                    y: parent.height - height / 2
+                                    color: root.authError ? Theme.error : Theme.secondary
+                                    border.width: 1
+                                    border.color: "#ffffff"
+                                }
+                            }
+
+                            // Layer 4: Outer Concentric Glass Ring
+                            Rectangle {
+                                anchors.centerIn: parent
+                                width: userAvatarModule.baseSize + 14
+                                height: userAvatarModule.baseSize + 14
+                                radius: width / 2
+                                color: (root.cfg && root.cfg.widget_backgrounds && root.cfg.widget_backgrounds.user_avatar === false)
+                                    ? "transparent"
+                                    : Theme.alpha(Theme.surface, 0.40)
+                                border.width: (root.cfg && root.cfg.widget_backgrounds && root.cfg.widget_backgrounds.user_avatar === false) ? 0 : 1.5
                                 border.color: root.authError
-                                    ? Theme.alpha(Theme.error, 0.70)
-                                    : (root.verifying ? Theme.alpha(Theme.secondary, 0.85) : Theme.alpha(Theme.accent, 0.35 + root.ringGlowPulse * 0.25))
+                                    ? Theme.alpha(Theme.error, 0.80)
+                                    : (root.verifying ? Theme.alpha(Theme.accent, 0.90) : Theme.alpha(Theme.accent, 0.50))
                                 Behavior on border.color { ColorAnimation { duration: 200 } }
                             }
 
-                            // Satellite 1 (North Pole)
-                            Rectangle {
-                                width: 8
-                                height: 8
-                                radius: 4
-                                x: (parent.width - width) / 2
-                                y: -height / 2
-                                color: root.authError ? Theme.error : Theme.accent
-                                border.width: 1.5
-                                border.color: "#ffffff"
-                            }
-
-                            // Satellite 2 (South Pole)
-                            Rectangle {
-                                width: 6
-                                height: 6
-                                radius: 3
-                                x: (parent.width - width) / 2
-                                y: parent.height - height / 2
-                                color: root.authError ? Theme.error : Theme.secondary
-                                border.width: 1
-                                border.color: "#ffffff"
-                            }
-                        }
-
-                        // Layer 4: Outer Concentric Glass Ring
-                        Rectangle {
-                            anchors.centerIn: parent
-                            width: avatarSection.baseSize + 14
-                            height: avatarSection.baseSize + 14
-                            radius: width / 2
-                            color: Theme.alpha(Theme.surface, 0.40)
-                            border.width: 1.5
-                            border.color: root.authError
-                                ? Theme.alpha(Theme.error, 0.80)
-                                : (root.verifying ? Theme.alpha(Theme.accent, 0.90) : Theme.alpha(Theme.accent, 0.50))
-                            Behavior on border.color { ColorAnimation { duration: 200 } }
-                        }
-
-                        // Layer 5: Inner Circular Avatar Container with Breathing Zoom
-                        Item {
-                            id: avatarContainer
-                            readonly property real avatarSize: avatarSection.baseSize
-                            width: avatarSize
-                            height: avatarSize
-                            anchors.centerIn: parent
-                            scale: (root.cfg && root.cfg.avatar && root.cfg.avatar.breathing_enabled) ? (1.0 + (root.avatarBreath * 0.045)) : 1.0
-
+                            // Layer 5: Inner Circular Avatar Container with Breathing Zoom
                             Item {
-                                id: avatarMask
-                                width: avatarContainer.avatarSize
-                                height: avatarContainer.avatarSize
-                                layer.enabled: true
-                                layer.smooth: true
-                                visible: false
+                                id: avatarContainer
+                                readonly property real avatarSize: userAvatarModule.baseSize
+                                width: avatarSize
+                                height: avatarSize
+                                anchors.centerIn: parent
+                                scale: (root.cfg && root.cfg.avatar && root.cfg.avatar.breathing_enabled) ? (1.0 + (root.avatarBreath * 0.045)) : 1.0
+
+                                Item {
+                                    id: avatarMask
+                                    width: avatarContainer.avatarSize
+                                    height: avatarContainer.avatarSize
+                                    layer.enabled: true
+                                    layer.smooth: true
+                                    visible: false
+
+                                    Rectangle {
+                                        anchors.fill: parent
+                                        radius: width / 2
+                                        color: "#ffffff"
+                                        antialiasing: true
+                                    }
+                                }
+
+                                Image {
+                                    id: rawAvatarImg
+                                    anchors.fill: parent
+                                    fillMode: Image.PreserveAspectCrop
+                                    smooth: true
+                                    mipmap: true
+                                    sourceSize: Qt.size(256, 256)
+                                    source: root.primaryAvatar
+                                    visible: false
+
+                                    onStatusChanged: {
+                                        if (status === Image.Error) {
+                                            if (source == root.primaryAvatar) {
+                                                source = root.secondaryAvatar
+                                            } else {
+                                                root.avatarFallback = true
+                                            }
+                                        }
+                                    }
+                                }
 
                                 Rectangle {
                                     anchors.fill: parent
                                     radius: width / 2
-                                    color: "#ffffff"
+                                    color: root.avatarFallback ? Theme.surface : Theme.background
                                     antialiasing: true
-                                }
-                            }
 
-                            Image {
-                                id: rawAvatarImg
-                                anchors.fill: parent
-                                fillMode: Image.PreserveAspectCrop
-                                smooth: true
-                                mipmap: true
-                                sourceSize: Qt.size(256, 256)
-                                source: root.primaryAvatar
-                                visible: false
-
-                                onStatusChanged: {
-                                    if (status === Image.Error) {
-                                        if (source == root.primaryAvatar) {
-                                            source = root.secondaryAvatar
-                                        } else {
-                                            root.avatarFallback = true
-                                        }
+                                    Image {
+                                        anchors.centerIn: parent
+                                        width: parent.width * 0.45
+                                        height: parent.height * 0.45
+                                        visible: root.avatarFallback
+                                        source: root.userSvg
+                                        sourceSize: Qt.size(116, 116)
                                     }
                                 }
-                            }
 
-                            Rectangle {
-                                anchors.fill: parent
-                                radius: width / 2
-                                color: root.avatarFallback ? Theme.surface : Theme.background
-                                antialiasing: true
+                                MultiEffect {
+                                    anchors.fill: parent
+                                    source: rawAvatarImg
+                                    visible: !root.avatarFallback && rawAvatarImg.status === Image.Ready
+                                    autoPaddingEnabled: false
+                                    maskEnabled: true
+                                    maskSource: avatarMask
+                                    maskThresholdMin: 0.5
+                                    maskSpreadAtMin: 1.0
+                                }
 
-                                Image {
-                                    anchors.centerIn: parent
-                                    width: parent.width * 0.45
-                                    height: parent.height * 0.45
-                                    visible: root.avatarFallback
-                                    source: root.userSvg
-                                    sourceSize: Qt.size(116, 116)
+                                // Lens specular crescent highlight
+                                Rectangle {
+                                    anchors.fill: parent
+                                    radius: width / 2
+                                    antialiasing: true
+                                    gradient: Gradient {
+                                        orientation: Gradient.Vertical
+                                        GradientStop { position: 0.0; color: Theme.alpha(Theme.foreground, 0.26) }
+                                        GradientStop { position: 0.35; color: Theme.alpha(Theme.foreground, 0.05) }
+                                        GradientStop { position: 0.70; color: "transparent" }
+                                    }
+                                }
+
+                                // Inner crisp border
+                                Rectangle {
+                                    anchors.fill: parent
+                                    radius: width / 2
+                                    color: "transparent"
+                                    antialiasing: true
+                                    border.width: 1.6
+                                    border.color: root.authError ? Theme.alpha(Theme.error, 0.85) : Theme.alpha(Theme.accent, 0.75)
+                                    Behavior on border.color { ColorAnimation { duration: 160 } }
                                 }
                             }
 
-                            MultiEffect {
+                            MouseArea {
+                                id: avatarHoverArea
                                 anchors.fill: parent
-                                source: rawAvatarImg
-                                visible: !root.avatarFallback && rawAvatarImg.status === Image.Ready
-                                autoPaddingEnabled: false
-                                maskEnabled: true
-                                maskSource: avatarMask
-                                maskThresholdMin: 0.5
-                                maskSpreadAtMin: 1.0
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: passwordField.forceActiveFocus()
                             }
-
-                            // Lens specular crescent highlight
-                            Rectangle {
-                                anchors.fill: parent
-                                radius: width / 2
-                                antialiasing: true
-                                gradient: Gradient {
-                                    orientation: Gradient.Vertical
-                                    GradientStop { position: 0.0; color: Theme.alpha(Theme.foreground, 0.26) }
-                                    GradientStop { position: 0.35; color: Theme.alpha(Theme.foreground, 0.05) }
-                                    GradientStop { position: 0.70; color: "transparent" }
-                                }
-                            }
-
-                            // Inner crisp border
-                            Rectangle {
-                                anchors.fill: parent
-                                radius: width / 2
-                                color: "transparent"
-                                antialiasing: true
-                                border.width: 1.6
-                                border.color: root.authError ? Theme.alpha(Theme.error, 0.85) : Theme.alpha(Theme.accent, 0.75)
-                                Behavior on border.color { ColorAnimation { duration: 160 } }
-                            }
-                        }
-
-                        MouseArea {
-                            id: avatarHoverArea
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: passwordField.forceActiveFocus()
                         }
                     }
 
-                    // User Identity & Status Indicator
-                    Column {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        spacing: 5
-                        visible: (root.cfg && root.cfg.avatar) ? (root.cfg.avatar.show_username || root.cfg.avatar.show_status) : true
+                    // 2b. Separated Username Module
+                    Item {
+                        id: usernameModule
+                        width: usernameText.implicitWidth + 24
+                        height: usernameText.implicitHeight + 8
+                        x: modulesContainer.getModuleX("username", 0.50, width)
+                        y: modulesContainer.getModuleY("username", 0.49, height)
+                        scale: modulesContainer.getModuleScale("username", 1.0)
+                        transformOrigin: Item.Center
+                        visible: ((root.cfg && root.cfg.avatar) ? root.cfg.avatar.show_username : true) &&
+                                 ((root.cfg && root.cfg.modules) ? (root.cfg.modules.username !== false) : true)
+
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: height / 2
+                            visible: Boolean(root.cfg && root.cfg.widget_backgrounds && root.cfg.widget_backgrounds.username)
+                            color: Theme.alpha(Theme.surface, 0.45)
+                            border.width: 1
+                            border.color: Theme.alpha(Theme.accent, 0.28)
+                            z: -1
+                        }
 
                         Text {
-                            anchors.horizontalCenter: parent.horizontalCenter
+                            id: usernameText
+                            anchors.centerIn: parent
                             text: root.displayName
-                            visible: (root.cfg && root.cfg.avatar) ? root.cfg.avatar.show_username : true
                             color: Theme.foreground
                             font.family: "Outfit"
                             font.pixelSize: 18
                             font.weight: Font.DemiBold
                             font.letterSpacing: 2
                         }
+                    }
+
+                    // 2c. Separated Session Lock Status Module
+                    Item {
+                        id: sessionLockModule
+                        width: sessionStatusRow.implicitWidth + 20
+                        height: sessionStatusRow.implicitHeight + 8
+                        x: modulesContainer.getModuleX("session_lock", 0.50, width)
+                        y: modulesContainer.getModuleY("session_lock", 0.53, height)
+                        scale: modulesContainer.getModuleScale("session_lock", 1.0)
+                        transformOrigin: Item.Center
+                        visible: ((root.cfg && root.cfg.avatar) ? root.cfg.avatar.show_status : true) &&
+                                 ((root.cfg && root.cfg.modules) ? (root.cfg.modules.session_lock !== false) : true)
+
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: height / 2
+                            visible: Boolean(root.cfg && root.cfg.widget_backgrounds && root.cfg.widget_backgrounds.session_lock !== false)
+                            color: Theme.alpha(Theme.surface, 0.40)
+                            border.width: 1
+                            border.color: Theme.alpha(Theme.accent, 0.25)
+                            z: -1
+                        }
 
                         Row {
-                            anchors.horizontalCenter: parent.horizontalCenter
+                            id: sessionStatusRow
+                            anchors.centerIn: parent
                             spacing: 6
                             opacity: 0.85
-                            visible: (root.cfg && root.cfg.avatar) ? root.cfg.avatar.show_status : true
 
                             Rectangle {
                                 anchors.verticalCenter: parent.verticalCenter
@@ -1236,374 +1315,417 @@ Scope {
                         }
                     }
 
-                    // Clear Optical iOS Liquid Glass Capsule
+                    // 2d. Separated Password Input Field Module (Optical Glass Capsule + Error Badge)
                     Item {
-                        id: pillWrapper
+                        id: inputFieldModule
                         width: 380
-                        height: 52
-                        anchors.horizontalCenter: parent.horizontalCenter
+                        height: 52 + (errorBadgeContainer.visible ? 34 : 0)
+                        x: modulesContainer.getModuleX("input_field", 0.50, width)
+                        y: modulesContainer.getModuleY("input_field", 0.60, height)
+                        scale: modulesContainer.getModuleScale("input_field", 1.0)
+                        transformOrigin: Item.Center
+                        visible: (root.cfg && root.cfg.modules) ? (root.cfg.modules.input_field !== false) : true
 
                         onXChanged: glassCapture.scheduleUpdate()
                         onYChanged: glassCapture.scheduleUpdate()
 
-                        transform: [
-                            Scale {
-                                origin.x: pillWrapper.width / 2
-                                origin.y: pillWrapper.height / 2
-                                xScale: root.pillScale
-                                yScale: root.pillScale
-                            },
-                            Translate { x: root.pillShake }
-                        ]
-
-                        ShaderEffectSource {
-                            id: glassCapture
-                            sourceItem: backdrop
-                            anchors.fill: parent
-                            visible: false
-                            live: false
-                            hideSource: false
-                            sourceRect: {
-                                var p = pillWrapper.mapToItem(backdrop, 0, 0)
-                                var insetX = pillWrapper.width * 0.05
-                                var insetY = pillWrapper.height * 0.10
-                                return Qt.rect(
-                                    p.x + insetX,
-                                    p.y + insetY,
-                                    pillWrapper.width - insetX * 2,
-                                    pillWrapper.height - insetY * 2
-                                )
-                            }
-                        }
-
+                        // Clear Optical iOS Liquid Glass Capsule
                         Item {
-                            id: pillMask
-                            anchors.fill: parent
-                            layer.enabled: true
-                            visible: false
+                            id: pillWrapper
+                            width: 380
+                            height: 52
+                            anchors.top: parent.top
+                            anchors.horizontalCenter: parent.horizontalCenter
 
-                            Rectangle {
+                            onXChanged: glassCapture.scheduleUpdate()
+                            onYChanged: glassCapture.scheduleUpdate()
+
+                            transform: [
+                                Scale {
+                                    origin.x: pillWrapper.width / 2
+                                    origin.y: pillWrapper.height / 2
+                                    xScale: root.pillScale
+                                    yScale: root.pillScale
+                                },
+                                Translate { x: root.pillShake }
+                            ]
+
+                            ShaderEffectSource {
+                                id: glassCapture
+                                sourceItem: backdrop
                                 anchors.fill: parent
-                                radius: height / 2
-                                color: "white"
-                                antialiasing: true
+                                visible: false
+                                live: false
+                                hideSource: false
+                                sourceRect: {
+                                    var p = pillWrapper.mapToItem(backdrop, 0, 0)
+                                    var insetX = pillWrapper.width * 0.05
+                                    var insetY = pillWrapper.height * 0.10
+                                    return Qt.rect(
+                                        p.x + insetX,
+                                        p.y + insetY,
+                                        pillWrapper.width - insetX * 2,
+                                        pillWrapper.height - insetY * 2
+                                    )
+                                }
                             }
-                        }
 
-                        MultiEffect {
-                            anchors.fill: parent
-                            source: glassCapture
-                            autoPaddingEnabled: false
-                            blurEnabled: true
-                            blurMax: 24
-                            blur: 0.35
-                            saturation: 0.55
-                            contrast: 0.20
-                            brightness: 0.08
-                            maskEnabled: true
-                            maskSource: pillMask
-                            maskThresholdMin: 0.5
-                            maskSpreadAtMin: 1.0
-                        }
-
-                        // Glass tint
-                        Rectangle {
-                            anchors.fill: parent
-                            radius: height / 2
-                            antialiasing: true
-                            color: root.authError
-                                ? Theme.alpha(Theme.error, 0.18 + root.errorFlash * 0.20)
-                                : (passwordField.activeFocus
-                                    ? Theme.alpha(Theme.accent, 0.12)
-                                    : Theme.alpha(Theme.surface, 0.40))
-                            Behavior on color { ColorAnimation { duration: 150 } }
-                        }
-
-                        // Vertical specular highlights
-                        Rectangle {
-                            anchors.fill: parent
-                            radius: height / 2
-                            antialiasing: true
-                            gradient: Gradient {
-                                orientation: Gradient.Vertical
-                                GradientStop { position: 0.0; color: Theme.alpha(Theme.foreground, 0.35) }
-                                GradientStop { position: 0.18; color: Theme.alpha(Theme.foreground, 0.08) }
-                                GradientStop { position: 0.55; color: "transparent" }
-                                GradientStop { position: 0.86; color: Qt.rgba(0, 0, 0, 0.10) }
-                                GradientStop { position: 1.0; color: Theme.alpha(Theme.foreground, 0.18) }
-                            }
-                        }
-
-                        // Outer border
-                        Rectangle {
-                            anchors.fill: parent
-                            radius: height / 2
-                            antialiasing: true
-                            color: "transparent"
-                            border.width: root.unlocked ? 1.8 : (root.authError ? 1.5 : (passwordField.activeFocus ? 1.4 : 1.1))
-                            border.color: root.unlocked
-                                ? Theme.accent
-                                : (root.authError
-                                    ? Theme.alpha(Theme.error, 0.85)
-                                    : (passwordField.activeFocus ? Theme.alpha(Theme.accent, 0.85) : Theme.alpha(Theme.foreground, 0.30)))
-                            Behavior on border.color { ColorAnimation { duration: 150 } }
-                            Behavior on border.width { NumberAnimation { duration: 150 } }
-                        }
-
-                        // Inner bevel border
-                        Rectangle {
-                            anchors.fill: parent
-                            anchors.margins: 1.2
-                            radius: height / 2
-                            antialiasing: true
-                            color: "transparent"
-                            border.width: 1
-                            border.color: Theme.alpha(Theme.foreground, 0.14)
-                        }
-
-                        RowLayout {
-                            anchors.fill: parent
-                            anchors.leftMargin: 18
-                            anchors.rightMargin: 12
-                            spacing: 12
-
-                            // Lock icon with micro-bounce
                             Item {
-                                Layout.preferredWidth: 22
-                                Layout.preferredHeight: 22
-                                rotation: root.lockRotation
-
-                                transform: Translate {
-                                    y: root.keypressBounce
-                                }
-
-                                Image {
-                                    anchors.fill: parent
-                                    source: root.unlocked ? "" : root.lockShackleSvg
-                                    sourceSize: Qt.size(44, 44)
-                                    opacity: root.verifying ? 0.75 : 0.95
-                                    visible: !root.unlocked
-                                }
-
-                                Image {
-                                    anchors.fill: parent
-                                    source: root.unlocked ? root.unlockedSvg : root.lockBodySvg
-                                    sourceSize: Qt.size(44, 44)
-                                    opacity: root.verifying ? 0.75 : 0.95
-                                }
-                            }
-
-                            TextField {
-                                id: passwordField
-                                Layout.fillWidth: true
-                                Layout.fillHeight: true
-                                focus: true
-                                echoMode: TextInput.Password
-                                passwordCharacter: "●"
-                                placeholderText: root.unlocked ? "Unlocked" : (root.authError ? "Incorrect password" : "Enter password")
-                                placeholderTextColor: root.unlocked ? Theme.accent : (root.authError ? "#fda4af" : Qt.rgba(1, 1, 1, 0.65))
-                                color: "#ffffff"
-                                font.family: (passwordField.echoMode === TextInput.Password)
-                                    ? "JetBrainsMono Nerd Font, Noto Sans, Outfit"
-                                    : "Outfit, JetBrainsMono Nerd Font, sans-serif"
-                                font.pixelSize: (passwordField.echoMode === TextInput.Password) ? 17 : 15
-                                font.letterSpacing: (passwordField.echoMode === TextInput.Password && text.length > 0) ? 3 : 0.5
-                                selectionColor: Theme.alpha(Theme.accent, 0.45)
-                                selectedTextColor: "#ffffff"
-                                verticalAlignment: TextInput.AlignVCenter
-                                background: null
-                                enabled: !root.verifying && !root.unlocked
-
-                                onTextChanged: {
-                                    root.passwordBuffer = text
-                                    if (root.authError && text.length > 0) {
-                                        root.authError = false
-                                        root.errorFlash = 0.0
-                                        root.statusMessage = ""
-                                    }
-                                    bounceAnim.restart()
-                                    avatarRippleAnim.restart()
-                                }
-
-                                onAccepted: root.attemptUnlock()
-
-                                Keys.onEscapePressed: {
-                                    text = ""
-                                    root.passwordBuffer = ""
-                                    root.authError = false
-                                    root.statusMessage = ""
-                                }
-
-                                Connections {
-                                    target: root
-                                    function onClearAndFocusPassword() {
-                                        passwordField.text = ""
-                                        passwordField.forceActiveFocus()
-                                    }
-                                }
-                            }
-
-                            // Show/Hide Password Eye Button
-                            Item {
-                                Layout.preferredWidth: 28
-                                Layout.preferredHeight: 28
-                                visible: passwordField.text.length > 0 && !root.verifying
+                                id: pillMask
+                                anchors.fill: parent
+                                layer.enabled: true
+                                visible: false
 
                                 Rectangle {
                                     anchors.fill: parent
-                                    radius: 14
-                                    color: eyeMouse.containsMouse ? Theme.alpha(Theme.accent, 0.25) : "transparent"
-                                    Behavior on color { ColorAnimation { duration: 120 } }
-                                }
-
-                                Image {
-                                    anchors.centerIn: parent
-                                    width: 17
-                                    height: 17
-                                    source: passwordField.echoMode === TextInput.Password
-                                        ? root.eyeSvg
-                                        : root.eyeOffSvg
-                                    sourceSize: Qt.size(34, 34)
-                                    opacity: eyeMouse.containsMouse ? 0.95 : 0.65
-                                    Behavior on opacity { NumberAnimation { duration: 120 } }
-                                }
-
-                                MouseArea {
-                                    id: eyeMouse
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: {
-                                        passwordField.echoMode = (passwordField.echoMode === TextInput.Password)
-                                            ? TextInput.Normal
-                                            : TextInput.Password
-                                        passwordField.forceActiveFocus()
-                                    }
+                                    radius: height / 2
+                                    color: "white"
+                                    antialiasing: true
                                 }
                             }
 
-                            // Spinner while verifying
-                            Item {
-                                Layout.preferredWidth: 32
-                                Layout.preferredHeight: 32
-                                visible: root.verifying
-
-                                Image {
-                                    id: spinnerImg
-                                    anchors.centerIn: parent
-                                    width: 20
-                                    height: 20
-                                    source: root.spinnerSvg
-                                    sourceSize: Qt.size(40, 40)
-
-                                    RotationAnimation on rotation {
-                                        from: 0
-                                        to: 360
-                                        duration: 800
-                                        loops: Animation.Infinite
-                                        running: root.verifying
-                                    }
-                                }
+                            MultiEffect {
+                                anchors.fill: parent
+                                source: glassCapture
+                                autoPaddingEnabled: false
+                                blurEnabled: true
+                                blurMax: 24
+                                blur: 0.35
+                                saturation: 0.55
+                                contrast: 0.20
+                                brightness: 0.08
+                                maskEnabled: true
+                                maskSource: pillMask
+                                maskThresholdMin: 0.5
+                                maskSpreadAtMin: 1.0
+                                visible: Boolean(root.cfg && root.cfg.widget_backgrounds ? root.cfg.widget_backgrounds.input_field !== false : true)
                             }
 
-                            // Submit Arrow Button
+                            // Glass tint
                             Rectangle {
-                                Layout.preferredWidth: 32
-                                Layout.preferredHeight: 32
-                                radius: 16
-                                color: submitMouse.containsMouse
-                                    ? Theme.alpha(Theme.accent, 0.45)
-                                    : Theme.alpha(Theme.accent, 0.25)
+                                anchors.fill: parent
+                                radius: height / 2
+                                antialiasing: true
+                                color: (root.cfg && root.cfg.widget_backgrounds && root.cfg.widget_backgrounds.input_field === false)
+                                    ? "transparent"
+                                    : (root.authError
+                                        ? Theme.alpha(Theme.error, 0.18 + root.errorFlash * 0.20)
+                                        : (passwordField.activeFocus
+                                            ? Theme.alpha(Theme.accent, 0.12)
+                                            : Theme.alpha(Theme.surface, 0.40)))
+                                Behavior on color { ColorAnimation { duration: 150 } }
+                            }
+
+                            // Vertical specular highlights
+                            Rectangle {
+                                anchors.fill: parent
+                                radius: height / 2
+                                antialiasing: true
+                                gradient: Gradient {
+                                    orientation: Gradient.Vertical
+                                    GradientStop { position: 0.0; color: Theme.alpha(Theme.foreground, 0.35) }
+                                    GradientStop { position: 0.18; color: Theme.alpha(Theme.foreground, 0.08) }
+                                    GradientStop { position: 0.55; color: "transparent" }
+                                    GradientStop { position: 0.86; color: Qt.rgba(0, 0, 0, 0.10) }
+                                    GradientStop { position: 1.0; color: Theme.alpha(Theme.foreground, 0.18) }
+                                }
+                            }
+
+                            // Outer border
+                            Rectangle {
+                                anchors.fill: parent
+                                radius: height / 2
+                                antialiasing: true
+                                color: "transparent"
+                                border.width: root.unlocked ? 1.8 : (root.authError ? 1.5 : (passwordField.activeFocus ? 1.4 : 1.1))
+                                border.color: root.unlocked
+                                    ? Theme.accent
+                                    : (root.authError
+                                        ? Theme.alpha(Theme.error, 0.85)
+                                        : (passwordField.activeFocus ? Theme.alpha(Theme.accent, 0.85) : Theme.alpha(Theme.foreground, 0.30)))
+                                Behavior on border.color { ColorAnimation { duration: 150 } }
+                                Behavior on border.width { NumberAnimation { duration: 150 } }
+                            }
+
+                            // Inner bevel border
+                            Rectangle {
+                                anchors.fill: parent
+                                anchors.margins: 1.2
+                                radius: height / 2
+                                antialiasing: true
+                                color: "transparent"
                                 border.width: 1
-                                border.color: submitMouse.containsMouse
-                                    ? Theme.alpha(Theme.accent, 0.85)
-                                    : Theme.alpha(Theme.accent, 0.50)
-                                visible: passwordField.text.length > 0 && !root.verifying
-                                scale: submitMouse.pressed ? 0.93 : (submitMouse.containsMouse ? 1.06 : 1.0)
-                                Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutQuad } }
-                                Behavior on color { ColorAnimation { duration: 120 } }
-                                Behavior on border.color { ColorAnimation { duration: 120 } }
+                                border.color: Theme.alpha(Theme.foreground, 0.14)
+                            }
 
-                                Image {
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.leftMargin: 18
+                                anchors.rightMargin: 12
+                                spacing: 12
+
+                                // Lock icon with micro-bounce
+                                Item {
+                                    Layout.preferredWidth: 22
+                                    Layout.preferredHeight: 22
+                                    rotation: root.lockRotation
+
+                                    transform: Translate {
+                                        y: root.keypressBounce
+                                    }
+
+                                    Image {
+                                        anchors.fill: parent
+                                        source: root.unlocked ? "" : root.lockShackleSvg
+                                        sourceSize: Qt.size(44, 44)
+                                        opacity: root.verifying ? 0.75 : 0.95
+                                        visible: !root.unlocked
+                                    }
+
+                                    Image {
+                                        anchors.fill: parent
+                                        source: root.unlocked ? root.unlockedSvg : root.lockBodySvg
+                                        sourceSize: Qt.size(44, 44)
+                                        opacity: root.verifying ? 0.75 : 0.95
+                                    }
+                                }
+
+                                TextField {
+                                    id: passwordField
+                                    Layout.fillWidth: true
+                                    Layout.fillHeight: true
+                                    focus: true
+                                    echoMode: TextInput.Password
+                                    passwordCharacter: "●"
+                                    placeholderText: root.unlocked ? "Unlocked" : (root.authError ? "Incorrect password" : "Enter password")
+                                    placeholderTextColor: root.unlocked ? Theme.accent : (root.authError ? "#fda4af" : Qt.rgba(1, 1, 1, 0.65))
+                                    color: "#ffffff"
+                                    font.family: (passwordField.echoMode === TextInput.Password)
+                                        ? "JetBrainsMono Nerd Font, Noto Sans, Outfit"
+                                        : "Outfit, JetBrainsMono Nerd Font, sans-serif"
+                                    font.pixelSize: (passwordField.echoMode === TextInput.Password) ? 17 : 15
+                                    font.letterSpacing: (passwordField.echoMode === TextInput.Password && text.length > 0) ? 3 : 0.5
+                                    selectionColor: Theme.alpha(Theme.accent, 0.45)
+                                    selectedTextColor: "#ffffff"
+                                    verticalAlignment: TextInput.AlignVCenter
+                                    background: null
+                                    enabled: !root.verifying && !root.unlocked
+
+                                    onTextChanged: {
+                                        root.passwordBuffer = text
+                                        if (root.authError && text.length > 0) {
+                                            root.authError = false
+                                            root.errorFlash = 0.0
+                                            root.statusMessage = ""
+                                        }
+                                        bounceAnim.restart()
+                                        avatarRippleAnim.restart()
+                                    }
+
+                                    onAccepted: root.attemptUnlock()
+
+                                    Keys.onEscapePressed: {
+                                        text = ""
+                                        root.passwordBuffer = ""
+                                        root.authError = false
+                                        root.statusMessage = ""
+                                    }
+
+                                    Connections {
+                                        target: root
+                                        function onClearAndFocusPassword() {
+                                            passwordField.text = ""
+                                            passwordField.forceActiveFocus()
+                                        }
+                                    }
+                                }
+
+                                // Show/Hide Password Eye Button
+                                Item {
+                                    Layout.preferredWidth: 28
+                                    Layout.preferredHeight: 28
+                                    visible: passwordField.text.length > 0 && !root.verifying
+
+                                    Rectangle {
+                                        anchors.fill: parent
+                                        radius: 14
+                                        color: eyeMouse.containsMouse ? Theme.alpha(Theme.accent, 0.25) : "transparent"
+                                        Behavior on color { ColorAnimation { duration: 120 } }
+                                    }
+
+                                    Image {
+                                        anchors.centerIn: parent
+                                        width: 17
+                                        height: 17
+                                        source: passwordField.echoMode === TextInput.Password
+                                            ? root.eyeSvg
+                                            : root.eyeOffSvg
+                                        sourceSize: Qt.size(34, 34)
+                                        opacity: eyeMouse.containsMouse ? 0.95 : 0.65
+                                        Behavior on opacity { NumberAnimation { duration: 120 } }
+                                    }
+
+                                    MouseArea {
+                                        id: eyeMouse
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            passwordField.echoMode = (passwordField.echoMode === TextInput.Password)
+                                                ? TextInput.Normal
+                                                : TextInput.Password
+                                            passwordField.forceActiveFocus()
+                                        }
+                                    }
+                                }
+
+                                // Spinner while verifying
+                                Item {
+                                    Layout.preferredWidth: 32
+                                    Layout.preferredHeight: 32
+                                    visible: root.verifying
+
+                                    Image {
+                                        id: spinnerImg
+                                        anchors.centerIn: parent
+                                        width: 20
+                                        height: 20
+                                        source: root.spinnerSvg
+                                        sourceSize: Qt.size(40, 40)
+
+                                        RotationAnimation on rotation {
+                                            from: 0
+                                            to: 360
+                                            duration: 800
+                                            loops: Animation.Infinite
+                                            running: root.verifying
+                                        }
+                                    }
+                                }
+
+                                // Submit Arrow Button
+                                Rectangle {
+                                    Layout.preferredWidth: 32
+                                    Layout.preferredHeight: 32
+                                    radius: 16
+                                    color: submitMouse.containsMouse
+                                        ? Theme.alpha(Theme.accent, 0.45)
+                                        : Theme.alpha(Theme.accent, 0.25)
+                                    border.width: 1
+                                    border.color: submitMouse.containsMouse
+                                        ? Theme.alpha(Theme.accent, 0.85)
+                                        : Theme.alpha(Theme.accent, 0.50)
+                                    visible: passwordField.text.length > 0 && !root.verifying
+                                    scale: submitMouse.pressed ? 0.93 : (submitMouse.containsMouse ? 1.06 : 1.0)
+                                    Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutQuad } }
+                                    Behavior on color { ColorAnimation { duration: 120 } }
+                                    Behavior on border.color { ColorAnimation { duration: 120 } }
+
+                                    Image {
+                                        anchors.centerIn: parent
+                                        width: 16
+                                        height: 16
+                                        source: root.arrowRightSvg
+                                        sourceSize: Qt.size(32, 32)
+                                        opacity: submitMouse.containsMouse ? 1.0 : 0.85
+                                    }
+
+                                    MouseArea {
+                                        id: submitMouse
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: root.attemptUnlock()
+                                    }
+                                }
+                            }
+                        }
+
+                        // Animated Error Badge Pill
+                        Item {
+                            id: errorBadgeContainer
+                            width: parent.width
+                            height: 28
+                            anchors.top: pillWrapper.bottom
+                            anchors.topMargin: 6
+                            visible: root.authError && root.statusMessage.length > 0
+
+                            Rectangle {
+                                id: errorBadge
+                                width: errorRow.implicitWidth + 24
+                                height: 26
+                                radius: 13
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                y: root.authError ? 0 : -6
+                                opacity: root.authError && root.statusMessage.length > 0 ? 1.0 : 0.0
+                                color: Theme.alpha(Theme.error, 0.25)
+                                border.width: 1
+                                border.color: Theme.alpha(Theme.error, 0.70)
+
+                                Behavior on opacity { NumberAnimation { duration: 120 } }
+                                Behavior on y { NumberAnimation { duration: 150; easing.type: Easing.OutBack } }
+
+                                Row {
+                                    id: errorRow
                                     anchors.centerIn: parent
-                                    width: 16
-                                    height: 16
-                                    source: root.arrowRightSvg
-                                    sourceSize: Qt.size(32, 32)
-                                    opacity: submitMouse.containsMouse ? 1.0 : 0.85
-                                }
+                                    spacing: 6
 
-                                MouseArea {
-                                    id: submitMouse
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: root.attemptUnlock()
+                                    Image {
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        width: 13
+                                        height: 13
+                                        source: root.alertSvg
+                                        sourceSize: Qt.size(26, 26)
+                                    }
+
+                                    Text {
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        text: root.statusMessage
+                                        color: Theme.foreground
+                                        font.family: "Outfit"
+                                        font.pixelSize: 10
+                                        font.weight: Font.DemiBold
+                                        font.letterSpacing: 1.5
+                                    }
                                 }
                             }
                         }
                     }
 
-                    // Animated Error Badge Pill
+                    // 3. Audio Visualizer Widget (Rounded Bars & Symmetrical CAVA Pattern)
                     Item {
-                        width: errorBadge.width
-                        height: 28
-                        anchors.horizontalCenter: parent.horizontalCenter
+                        id: audioVisualizerModule
+                        width: 280
+                        height: 52
+                        x: modulesContainer.getModuleX("audio_visualizer", 0.50, width)
+                        y: modulesContainer.getModuleY("audio_visualizer", 0.72, height)
+                        scale: modulesContainer.getModuleScale("audio_visualizer", 1.0)
+                        transformOrigin: Item.Center
+                        visible: (root.cfg && root.cfg.modules) ? (root.cfg.modules.audio_visualizer !== false) : true
 
-                        Rectangle {
-                            id: errorBadge
-                            width: errorRow.implicitWidth + 24
-                            height: 26
-                            radius: 13
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            y: root.authError ? 0 : -6
-                            opacity: root.authError && root.statusMessage.length > 0 ? 1.0 : 0.0
-                            color: Theme.alpha(Theme.error, 0.25)
-                            border.width: 1
-                            border.color: Theme.alpha(Theme.error, 0.70)
-
-                            Behavior on opacity { NumberAnimation { duration: 120 } }
-                            Behavior on y { NumberAnimation { duration: 150; easing.type: Easing.OutBack } }
-
-                            Row {
-                                id: errorRow
-                                anchors.centerIn: parent
-                                spacing: 6
-
-                                Image {
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    width: 13
-                                    height: 13
-                                    source: root.alertSvg
-                                    sourceSize: Qt.size(26, 26)
-                                }
-
-                                Text {
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    text: root.statusMessage
-                                    color: Theme.foreground
-                                    font.family: "Outfit"
-                                    font.pixelSize: 10
-                                    font.weight: Font.DemiBold
-                                    font.letterSpacing: 1.5
-                                }
-                            }
-                        }
+                        LockscreenAudioVisualizer {
+                            anchors.centerIn: parent
+                            previewMode: false
+                            barCount: 16
+                            showBackground: Boolean(root.cfg && root.cfg.widget_backgrounds ? root.cfg.widget_backgrounds.audio_visualizer !== false : true)
                         }
                     }
-                }
 
-                    // 3. Weather Forecast Capsule Module
+                    // 4. Weather Forecast Capsule Module
                     Rectangle {
                         id: weatherModule
                         height: 32
                         width: weatherRow.implicitWidth + 28
                         radius: 16
-                        color: Theme.alpha(Theme.surface, 0.50)
-                        border.width: 1
+                        color: (root.cfg && root.cfg.widget_backgrounds && root.cfg.widget_backgrounds.weather === false)
+                            ? "transparent"
+                            : Theme.alpha(Theme.surface, 0.50)
+                        border.width: (root.cfg && root.cfg.widget_backgrounds && root.cfg.widget_backgrounds.weather === false) ? 0 : 1
                         border.color: Theme.alpha(Theme.accent, 0.35)
                         x: modulesContainer.getModuleX("weather", 0.50, width)
-                        y: modulesContainer.getModuleY("weather", 0.64, height)
+                        y: modulesContainer.getModuleY("weather", 0.84, height)
+                        scale: modulesContainer.getModuleScale("weather", 1.0)
+                        transformOrigin: Item.Center
                         visible: Boolean(root.cfg && root.cfg.modules && root.cfg.modules.weather_widget)
 
                         Row {
@@ -1632,17 +1754,21 @@ Scope {
                         }
                     }
 
-                    // 4. Dynamic Custom Quote / Status Message Module
+                    // 5. Dynamic Custom Quote / Status Message Module
                     Rectangle {
                         id: quoteModule
                         height: 32
                         width: quoteRow.implicitWidth + 28
                         radius: 16
-                        color: Theme.alpha(Theme.surface, 0.40)
-                        border.width: 1
+                        color: (root.cfg && root.cfg.widget_backgrounds && root.cfg.widget_backgrounds.quote === false)
+                            ? "transparent"
+                            : Theme.alpha(Theme.surface, 0.40)
+                        border.width: (root.cfg && root.cfg.widget_backgrounds && root.cfg.widget_backgrounds.quote === false) ? 0 : 1
                         border.color: Theme.alpha(Theme.accent, 0.25)
                         x: modulesContainer.getModuleX("quote", 0.50, width)
-                        y: modulesContainer.getModuleY("quote", 0.30, height)
+                        y: modulesContainer.getModuleY("quote", 0.20, height)
+                        scale: modulesContainer.getModuleScale("quote", 1.0)
+                        transformOrigin: Item.Center
                         visible: Boolean(root.cfg && root.cfg.modules && root.cfg.modules.custom_quote)
 
                         Row {
@@ -1680,17 +1806,21 @@ Scope {
                         }
                     }
 
-                    // 5. Media Player Widget Module
+                    // 6. Media Player Widget Module
                     Rectangle {
                         id: mediaModule
                         width: 320
                         height: 48
                         radius: 24
-                        color: Theme.alpha(Theme.surface, 0.45)
-                        border.width: 1
+                        color: (root.cfg && root.cfg.widget_backgrounds && root.cfg.widget_backgrounds.media_player === false)
+                            ? "transparent"
+                            : Theme.alpha(Theme.surface, 0.45)
+                        border.width: (root.cfg && root.cfg.widget_backgrounds && root.cfg.widget_backgrounds.media_player === false) ? 0 : 1
                         border.color: Theme.alpha(Theme.accent, 0.35)
                         x: modulesContainer.getModuleX("media_player", 0.25, width)
-                        y: modulesContainer.getModuleY("media_player", 0.85, height)
+                        y: modulesContainer.getModuleY("media_player", 0.88, height)
+                        scale: modulesContainer.getModuleScale("media_player", 1.0)
+                        transformOrigin: Item.Center
                         visible: Boolean(root.cfg && root.cfg.modules && root.cfg.modules.media_player && root.isMediaPlaying)
 
                         Row {
@@ -1742,40 +1872,22 @@ Scope {
                         }
                     }
 
-                    // 6. System Stats Badge Module
-                    Rectangle {
+                    // 7. System Stats Graph Module (CPU, GPU, RAM Smooth Area Graphs)
+                    Item {
                         id: statsModule
-                        height: 32
-                        width: statsTextRow.implicitWidth + 28
-                        radius: 16
-                        color: Theme.alpha(Theme.surface, 0.50)
-                        border.width: 1
-                        border.color: Theme.alpha(Theme.accent, 0.30)
+                        width: 320
+                        height: 76
                         x: modulesContainer.getModuleX("system_stats", 0.50, width)
-                        y: modulesContainer.getModuleY("system_stats", 0.89, height)
+                        y: modulesContainer.getModuleY("system_stats", 0.92, height)
+                        scale: modulesContainer.getModuleScale("system_stats", 1.0)
+                        transformOrigin: Item.Center
                         visible: Boolean(root.cfg && root.cfg.modules && root.cfg.modules.system_stats)
 
-                        Row {
-                            id: statsTextRow
-                            anchors.centerIn: parent
-                            spacing: 8
-
-                            Image {
-                                anchors.verticalCenter: parent.verticalCenter
-                                width: 13
-                                height: 13
-                                source: root.zapSvg
-                                sourceSize: Qt.size(26, 26)
-                            }
-
-                            Text {
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: root.getSystemStatsString()
-                                color: Theme.alpha(Theme.foreground, 0.85)
-                                font.family: "Outfit"
-                                font.pixelSize: 11
-                                font.weight: Font.Medium
-                            }
+                        LockscreenSystemGraph {
+                            anchors.fill: parent
+                            statsData: root.sysStatsData
+                            previewMode: false
+                            showBackground: Boolean(root.cfg && root.cfg.widget_backgrounds ? root.cfg.widget_backgrounds.system_stats !== false : true)
                         }
                     }
                 }

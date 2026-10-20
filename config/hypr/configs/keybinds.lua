@@ -14,6 +14,7 @@ local py_dir          = scripts_dir .. "/py"
 local terminal        = "kitty"
 local file_man        = "dolphin || thunar"
 local term_file_man   = "yazi"
+local wallpaper       = sh_dir .. "/Wallpaper.sh"
 local help            = sh_dir .. "/keybinds.sh"
 local volumeCTRL      = sh_dir .. "/volumecontrol.sh"
 local brightnessCTRL  = sh_dir .. "/brightness.sh"
@@ -27,10 +28,13 @@ local qsReload        = sh_dir .. "/qs-reload.sh"
 local inputMethodCTRL = sh_dir .. "/input-method.sh"
 
 -- ── Wallpaper ─────────────────────────────────────────────────────────────────
+-- hl.bind(mainMod .. " + W", hl.dsp.exec_cmd(wallpaper))
 hl.bind(mainMod .. " + W", hl.dsp.exec_cmd(qsIsland .. " --wallpaper"))
 
 -- ── Screenshots / Studio ───────────────────────────────────────────────────────
 hl.bind("print", hl.dsp.exec_cmd(qsScreenshot))
+-- hl.bind(mainMod .. " + Print", hl.dsp.exec_cmd(sh_dir .. "/screenshot.sh area"))
+-- hl.bind(mainMod .. " + SHIFT + S", hl.dsp.exec_cmd(qsScreenshot))
 
 -- ── Help ──────────────────────────────────────────────────────────────────────
 hl.bind(mainMod .. " + SHIFT + H", hl.dsp.exec_cmd(help))
@@ -116,6 +120,7 @@ hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd(brightnessCTRL .. " down 5"), {
 
 -- ── Move focus (HJK + arrow keys) ───────────────────────────────────────────
 hl.bind(mainMod .. " + H", hl.dsp.focus({ direction = "left" }))
+hl.bind(mainMod .. " + L", hl.dsp.focus({ direction = "right" }))
 hl.bind(mainMod .. " + K", hl.dsp.focus({ direction = "up" }))
 hl.bind(mainMod .. " + J", hl.dsp.focus({ direction = "down" }))
 hl.bind(mainMod .. " + left", hl.dsp.focus({ direction = "left" }))
