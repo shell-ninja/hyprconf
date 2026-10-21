@@ -22,7 +22,7 @@ Scope {
         return (h && h.length > 0) ? h : ("/home/" + userName)
     }
 
-    readonly property string configPath: homeDir + "/.hyprconf/quickshell/lockscreen.json"
+    readonly property string configPath: homeDir + "/.local/share/hyprconf/lockscreen.json"
 
     function getDefaultConfig() {
         return {

@@ -23,7 +23,7 @@ Item {
         return (h && h.length > 0) ? h : "/home/shell-ninja"
     }
 
-    readonly property string configPath: homeDir + "/.hyprconf/quickshell/launcher/config.json"
+    readonly property string configPath: homeDir + "/.local/share/hyprconf/launcher.json"
     property real wallpaperTimestamp: Date.now()
     readonly property string quadWallPath: "file://" + homeDir + "/.hyprconf/hypr/.cache/wall.quad"
     readonly property string wallpaperPath: "file://" + homeDir + "/.hyprconf/hypr/.cache/current_wallpaper.png"

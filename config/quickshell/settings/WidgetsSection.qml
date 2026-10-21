@@ -15,7 +15,7 @@ Item {
         return (h && h.length > 0) ? h : "/home/shell-ninja"
     }
 
-    readonly property string configPath: homeDir + "/.hyprconf/quickshell/widgets/widgets.json"
+    readonly property string configPath: homeDir + "/.local/share/hyprconf/widgets.json"
 
     function svgUrl(svgContent) {
         return "data:image/svg+xml;utf8," + encodeURIComponent(svgContent)
@@ -63,7 +63,7 @@ Item {
     // Load widgets.json
     Process {
         id: jsonReader
-        command: ["python3", "-c", "import json, os; p=os.path.expanduser('~/.hyprconf/quickshell/widgets/widgets.json'); print(open(p, encoding='utf-8').read() if os.path.exists(p) else '{}')"]
+        command: ["python3", "-c", "import json, os; p=os.path.expanduser('~/.local/share/hyprconf/widgets.json'); print(open(p, encoding='utf-8').read() if os.path.exists(p) else '{}')"]
         running: true
         stdout: StdioCollector {
             onTextChanged: {
@@ -104,14 +104,10 @@ Item {
             "    data = json.loads(data_str)\n" +
             "except Exception:\n" +
             "    data = {}\n" +
-            "p = os.path.expanduser('~/.hyprconf/quickshell/widgets/widgets.json')\n" +
+            "p = os.path.expanduser('~/.local/share/hyprconf/widgets.json')\n" +
             "os.makedirs(os.path.dirname(p), exist_ok=True)\n" +
             "with open(p, 'w', encoding='utf-8') as f:\n" +
             "    f.write(data_str)\n" +
-            "p_git = os.path.expanduser('~/hyprconf/config/quickshell/widgets/widgets.json')\n" +
-            "if os.path.exists(os.path.dirname(p_git)):\n" +
-            "    with open(p_git, 'w', encoding='utf-8') as f:\n" +
-            "        f.write(data_str)\n" +
             "is_enabled = data.get('enabled', True)\n" +
             "widgets = data.get('widgets', {})\n" +
             "any_widget_enabled = any(w.get('enabled', False) for w in widgets.values() if isinstance(w, dict))\n" +

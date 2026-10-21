@@ -1,7 +1,8 @@
 #!/usr/bin/env sh
 # wallcache.sh — Generate thumbnail, blur, and quad images for the current wallpaper.
 
-cacheDir="$HOME/.hyprconf/hypr/.cache"
+cacheDir="$HOME/.local/share/hyprconf/.cache"
+[[ ! -d "$cacheDir" && -d "$HOME/.hyprconf/hypr/.cache" ]] && cacheDir="$HOME/.hyprconf/hypr/.cache"
 thmbDir="${cacheDir}/thumbs"
 currentWall_name="$(cat "${cacheDir}/.wallpaper")"
 input_file="${cacheDir}/current_wallpaper.png"

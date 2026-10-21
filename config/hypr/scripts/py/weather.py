@@ -13,8 +13,9 @@ from datetime import datetime
 from pathlib import Path
 
 HOME = Path(os.environ.get("HOME", "/home/shell-ninja"))
-CONFIG_FILE = HOME / ".hyprconf/quickshell/lockscreen.json"
-CACHE_FILE = HOME / ".hyprconf/hypr/.cache/weather_cache.json"
+CONFIG_FILE = HOME / ".local/share/hyprconf/lockscreen.json"
+LOCAL_CACHE = HOME / ".local" / "share" / "hyprconf" / ".cache"
+CACHE_FILE = (LOCAL_CACHE / "weather_cache.json") if (LOCAL_CACHE.exists() or LOCAL_CACHE.parent.exists()) else (HOME / ".hyprconf" / "hypr" / ".cache" / "weather_cache.json")
 CACHE_TTL = 900  # 15 minutes
 
 

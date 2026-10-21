@@ -1,12 +1,1 @@
-{
-  "position": "top",
-  "auto_hide": false,
-  "style": "capsule",
-  "matrix_stream": true,
-  "visualizer": {
-    "enabled": true,
-    "bar_count": 16,
-    "style": "wave",
-    "move_to_bottom_on_hover": true
-  }
-}
+../../../local/share/hyprconf/island.json

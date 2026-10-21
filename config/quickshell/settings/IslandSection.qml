@@ -56,11 +56,11 @@ Item {
     }
 
     // ── Config Loader ───────────────────────────────────────────────────────
-    readonly property string configFilePath: window.homeDir + "/.hyprconf/quickshell/island/config.json"
+    readonly property string configFilePath: window.homeDir + "/.local/share/hyprconf/island.json"
 
     Process {
         id: configReader
-        command: ["python3", "-c", "import json, os; p=os.path.expanduser('~/.hyprconf/quickshell/island/config.json'); print(open(p).read() if os.path.exists(p) else '{}')"]
+        command: ["python3", "-c", "import json, os; p=os.path.expanduser('~/.local/share/hyprconf/island.json'); print(open(p).read() if os.path.exists(p) else '{}')"]
         running: true
         stdout: StdioCollector {
             onTextChanged: {
@@ -126,7 +126,7 @@ Item {
             }
         }
         var jsonStr = JSON.stringify(payload, null, 2)
-        var pyScript = "import json, os; p=os.path.expanduser('~/.hyprconf/quickshell/island/config.json'); os.makedirs(os.path.dirname(p), exist_ok=True); open(p, 'w').write('''" + jsonStr + "''')"
+        var pyScript = "import json, os; p=os.path.expanduser('~/.local/share/hyprconf/island.json'); os.makedirs(os.path.dirname(p), exist_ok=True); open(p, 'w').write('''" + jsonStr + "''')"
         configWriter.command = ["python3", "-c", pyScript]
         configWriter.running = true
     }

@@ -26,10 +26,11 @@ if [[ -f "$island_dir/qmldir" ]] && ! grep -q "KeybindsView" "$island_dir/qmldir
     echo "KeybindsView 1.0 KeybindsView.qml" >> "$island_dir/qmldir"
 fi
 
-# Ensure cava config exists for audio visualizer
-cava_conf="$HOME/.hyprconf/hypr/.cache/cava-island.conf"
+cache_dir="$HOME/.local/share/hyprconf/.cache"
+[[ ! -d "$cache_dir" && -d "$HOME/.hyprconf/hypr/.cache" ]] && cache_dir="$HOME/.hyprconf/hypr/.cache"
+cava_conf="$cache_dir/cava-island.conf"
 if [[ ! -f "$cava_conf" ]]; then
-    mkdir -p "$HOME/.hyprconf/hypr/.cache"
+    mkdir -p "$cache_dir"
     cat << 'EOF' > "$cava_conf"
 [general]
 bars = 16

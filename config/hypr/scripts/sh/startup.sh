@@ -3,7 +3,9 @@
 scripts_dir="$HOME/.hyprconf/hypr/scripts"
 sh_dir="$scripts_dir/sh"
 py_dir="$scripts_dir/py"
-wallpaper="$HOME/.hyprconf/hypr/.cache/current_wallpaper.png"
+cache_dir="$HOME/.local/share/hyprconf/.cache"
+[[ ! -d "$cache_dir" && -d "$HOME/.hyprconf/hypr/.cache" ]] && cache_dir="$HOME/.hyprconf/hypr/.cache"
+wallpaper="$cache_dir/current_wallpaper.png"
 welcome_app="$py_dir/welcome.py"
 
 # Transition config
@@ -24,8 +26,8 @@ if [[ -f "$welcome_app" ]]; then
     python3 "$welcome_app" --autostart &
 fi
 
-if [[ -f "$HOME/.hyprconf/hypr/.cache/.live_wallpaper" ]]; then
-    live_wall=$(cat "$HOME/.hyprconf/hypr/.cache/.live_wallpaper" 2>/dev/null)
+if [[ -f "$cache_dir/.live_wallpaper" ]]; then
+    live_wall=$(cat "$cache_dir/.live_wallpaper" 2>/dev/null)
     if [[ -n "$live_wall" && -f "$live_wall" ]]; then
         "$sh_dir/Wallpaper.sh" --live "$live_wall"
     elif [[ -f "$wallpaper" ]]; then

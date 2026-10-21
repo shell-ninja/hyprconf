@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
-browser_cache="$HOME/.hyprconf/hypr/.cache/.browser"
+cache_dir="$HOME/.local/share/hyprconf/.cache"
+[[ ! -d "$cache_dir" && -d "$HOME/.hyprconf/hypr/.cache" ]] && cache_dir="$HOME/.hyprconf/hypr/.cache"
+browser_cache="$cache_dir/.browser"
 browser_num=$(grep -v -n "default" "$browser_cache" | wc -l)
 browsers=($(grep -v "default" "$browser_cache"))
 default=$(grep "default=" "$browser_cache" | awk -F'=' '{print $2}')

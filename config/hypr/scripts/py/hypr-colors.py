@@ -17,7 +17,8 @@ from pathlib import Path
 from PIL import Image
 
 HOME = os.getenv("HOME", str(Path.home()))
-CACHE_DIR = Path(HOME) / ".hyprconf/hypr/.cache"
+LOCAL_CACHE = Path(HOME) / ".local" / "share" / "hyprconf" / ".cache"
+CACHE_DIR = LOCAL_CACHE if (LOCAL_CACHE.exists() or LOCAL_CACHE.parent.exists()) else (Path(HOME) / ".hyprconf" / "hypr" / ".cache")
 CURRENT_WALLPAPER = CACHE_DIR / "current_wallpaper.png"
 SCRIPTS_DIR = Path(HOME) / ".hyprconf/hypr/scripts"
 COLORS_SH = SCRIPTS_DIR / "sh/colors.sh"
@@ -322,9 +323,10 @@ def get_fallback_colors():
 
 
 def generate_hypr_lua(colors):
-    """Write hypr/theme.lua and hypr/noctalia.lua so Hyprland window borders stay synchronized."""
+    """Write hypr/theme.lua so Hyprland window borders stay synchronized."""
     theme_file = Path(HOME) / ".hyprconf/hypr/theme.lua"
-    noctalia_file = Path(HOME) / ".hyprconf/hypr/noctalia.lua"
+    legacy_noctalia = Path(HOME) / ".hyprconf/hypr/noctalia.lua"
+    legacy_config_noctalia = Path(HOME) / ".config/hypr/noctalia.lua"
 
     def strip_hash(h):
         return str(h).lstrip("#")
@@ -387,7 +389,8 @@ return {{
     try:
         theme_file.parent.mkdir(parents=True, exist_ok=True)
         theme_file.write_text(content)
-        noctalia_file.write_text(content)
+        legacy_noctalia.unlink(missing_ok=True)
+        legacy_config_noctalia.unlink(missing_ok=True)
         print(f"Hyprland theme updated: {theme_file}")
     except Exception as e:
         print(f"Warning: Failed writing theme.lua: {e}", file=sys.stderr)
@@ -998,6 +1001,9 @@ LockscreenAudioVisualizer 1.0 LockscreenAudioVisualizer.qml
         safe_write(QS_DIR / "Theme.qml", theme_qml_content)
         safe_write(QS_DIR / "qmldir", qmldir_content)
         safe_write(QS_DIR / "colors.json", json.dumps(colors, indent=2) + "\n")
+        user_colors_json = Path(HOME) / ".local" / "share" / "hyprconf" / "colors.json"
+        if user_colors_json.parent.exists():
+            safe_write(user_colors_json, json.dumps(colors, indent=2) + "\n")
 
         # Subproject qmldir definitions
         SUBPROJECT_QMLDIRS = {
@@ -1159,7 +1165,8 @@ def notify_kde_reload():
 
 def get_saved_variant():
     """Retrieve user-selected color variant from wallpaper_config.json."""
-    cfg_file = CACHE_DIR / "wallpaper_config.json"
+    user_cfg = Path.home() / ".local" / "share" / "hyprconf" / "wallpaper_config.json"
+    cfg_file = user_cfg if user_cfg.exists() else (CACHE_DIR / "wallpaper_config.json")
     if cfg_file.exists():
         try:
             data = json.loads(cfg_file.read_text())
@@ -1182,14 +1189,15 @@ def sync_theme(wallpaper_path=None, variant=None):
         variant = get_saved_variant()
     else:
         # Persist chosen variant into wallpaper_config.json
-        cfg_file = CACHE_DIR / "wallpaper_config.json"
+        user_cfg = Path.home() / ".local" / "share" / "hyprconf" / "wallpaper_config.json"
+        cfg_file = user_cfg if user_cfg.parent.exists() else (CACHE_DIR / "wallpaper_config.json")
         try:
             cfg_data = json.loads(cfg_file.read_text()) if cfg_file.exists() else {}
             if not isinstance(cfg_data, dict):
                 cfg_data = {}
             if cfg_data.get("color_variant") != variant:
                 cfg_data["color_variant"] = variant
-                CACHE_DIR.mkdir(parents=True, exist_ok=True)
+                cfg_file.parent.mkdir(parents=True, exist_ok=True)
                 cfg_file.write_text(json.dumps(cfg_data, indent=2))
         except Exception:
             pass

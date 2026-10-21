@@ -20,7 +20,7 @@ FloatingWindow {
         return (h && h.length > 0) ? h : "/home/user"
     }
 
-    readonly property string configPath: homeDir + "/.hyprconf/quickshell/lockscreen.json"
+    readonly property string configPath: homeDir + "/.local/share/hyprconf/lockscreen.json"
     property real avatarTimestamp: 1
     readonly property string avatarPath: "file://" + homeDir + "/.hyprconf/hypr/.cache/.face" + (avatarTimestamp > 1 ? ("?t=" + avatarTimestamp) : "")
     readonly property string wallpaperPath: "file://" + homeDir + "/.hyprconf/hypr/.cache/current_wallpaper.png"

@@ -13,10 +13,11 @@ from pathlib import Path
 from PIL import Image
 
 HOME = Path(os.environ.get("HOME", "/home/shell-ninja"))
-CACHE_DIR = HOME / ".hyprconf" / "hypr" / ".cache"
+LOCAL_CACHE = HOME / ".local" / "share" / "hyprconf" / ".cache"
+CACHE_DIR = LOCAL_CACHE if (LOCAL_CACHE.exists() or LOCAL_CACHE.parent.exists()) else (HOME / ".hyprconf" / "hypr" / ".cache")
 FACE_DEST = CACHE_DIR / ".face"
 BACKUP_FACE = CACHE_DIR / ".face.bkp"
-LOCKSCREEN_JSON = HOME / ".hyprconf" / "quickshell" / "lockscreen.json"
+LOCKSCREEN_JSON = HOME / ".local" / "share" / "hyprconf" / "lockscreen.json"
 
 def process_avatar(src_path: str, dst_path: Path):
     """Crop image to center square, convert to RGBA PNG, and save."""

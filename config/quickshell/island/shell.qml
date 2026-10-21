@@ -214,7 +214,7 @@ PanelWindow {
 
     Process {
         id: configLoader
-        command: ["python3", "-c", "import json, os; p=os.path.expanduser('~/.hyprconf/quickshell/island/config.json'); print(open(p).read() if os.path.exists(p) else '{}')"]
+        command: ["python3", "-c", "import json, os; p=os.path.expanduser('~/.local/share/hyprconf/island.json'); print(open(p).read() if os.path.exists(p) else '{}')"]
         running: true
         stdout: StdioCollector {
             onTextChanged: {
