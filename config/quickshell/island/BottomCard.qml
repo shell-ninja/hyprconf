@@ -29,6 +29,85 @@ Rectangle {
     readonly property string musicSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.accent + '" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>')
     readonly property string cloudSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.accent + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>')
 
+    readonly property string packageSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.accent + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16.5 9.4-9-5.19M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>')
+    readonly property string terminalSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.accent + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>')
+    readonly property string alertSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.error + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>')
+    readonly property string chatSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.accent + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>')
+    readonly property string globeSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.accent + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>')
+    readonly property string codeSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.accent + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>')
+
+    function formatNotifTime(timeVal) {
+        if (!timeVal) return "Just now"
+        var d = new Date(timeVal)
+        if (isNaN(d.getTime())) return "Recent"
+        var now = new Date()
+        var diffSec = Math.floor((now.getTime() - d.getTime()) / 1000)
+        if (diffSec < 60) return "Just now"
+        if (diffSec < 3600) return Math.floor(diffSec / 60) + "m ago"
+        if (diffSec < 86400) return Math.floor(diffSec / 3600) + "h ago"
+        var hours = d.getHours().toString().padStart(2, '0')
+        var mins = d.getMinutes().toString().padStart(2, '0')
+        return hours + ":" + mins
+    }
+
+    function getNotificationIcon(rawIcon, app, summary) {
+        if (rawIcon && typeof rawIcon === "string" && rawIcon.trim().length > 0) {
+            var iconTrim = rawIcon.trim()
+            if (iconTrim.indexOf("/") === 0 || iconTrim.indexOf("file://") === 0 || iconTrim.indexOf("image://") === 0) {
+                return iconTrim
+            }
+            try {
+                var resolved = Quickshell.iconPath(iconTrim, true)
+                if (resolved && resolved.length > 0) return resolved
+            } catch(e) {}
+        }
+
+        var appStr = (app || "").toLowerCase()
+        var sumStr = (summary || "").toLowerCase()
+        var combo = appStr + " " + sumStr
+
+        if (appStr.length > 0) {
+            try {
+                var appRes = Quickshell.iconPath(appStr.replace(/\s+/g, "-"), true)
+                if (appRes && appRes.length > 0) return appRes
+            } catch(e) {}
+        }
+
+        if (combo.includes("package") || combo.includes("update") || combo.includes("pacman") || combo.includes("paru") || combo.includes("aur") || combo.includes("upgrade")) {
+            try {
+                var pkgIcon = Quickshell.iconPath("system-software-update", true) || Quickshell.iconPath("package-x-generic", true) || Quickshell.iconPath("package", true)
+                if (pkgIcon && pkgIcon.length > 0) return pkgIcon
+            } catch(e) {}
+            return root.packageSvg
+        }
+
+        if (combo.includes("terminal") || combo.includes("kitty") || combo.includes("alacritty") || combo.includes("bash") || combo.includes("fish")) {
+            return root.terminalSvg
+        }
+
+        if (combo.includes("code") || combo.includes("ide") || combo.includes("nvim") || combo.includes("antigravity")) {
+            return root.codeSvg
+        }
+
+        if (combo.includes("discord") || combo.includes("telegram") || combo.includes("chat") || combo.includes("message")) {
+            return root.chatSvg
+        }
+
+        if (combo.includes("firefox") || combo.includes("chrome") || combo.includes("brave") || combo.includes("browser")) {
+            return root.globeSvg
+        }
+
+        if (combo.includes("music") || combo.includes("spotify") || combo.includes("audio") || combo.includes("song")) {
+            return root.musicSvg
+        }
+
+        if (combo.includes("error") || combo.includes("fail") || combo.includes("warn") || combo.includes("alert")) {
+            return root.alertSvg
+        }
+
+        return root.bellSvg
+    }
+
     readonly property string homeDir: {
         var h = Quickshell.env("HOME")
         return (h && h.length > 0) ? h : "/home/shell-ninja"
@@ -259,101 +338,157 @@ Rectangle {
             boundsBehavior: Flickable.StopAtBounds
 
             delegate: Rectangle {
+                id: notifCard
                 width: notifListView.width
-                height: 52
+                implicitHeight: Math.max(56, contentCol.implicitHeight + 18)
+                height: implicitHeight
                 radius: 12
-                color: Theme.alpha(Theme.background, 0.55)
-                border.color: Theme.alpha(Theme.foreground, 0.08)
+                color: itemHoverArea.containsMouse ? Theme.alpha(Theme.surface, 0.90) : Theme.alpha(Theme.background, 0.55)
+                border.color: itemHoverArea.containsMouse ? Theme.alpha(Theme.accent, 0.35) : Theme.alpha(Theme.foreground, 0.08)
                 border.width: 1
 
-                Row {
+                Behavior on color { ColorAnimation { duration: 150 } }
+                Behavior on border.color { ColorAnimation { duration: 150 } }
+
+                MouseArea {
+                    id: itemHoverArea
                     anchors.fill: parent
-                    anchors.margins: 8
-                    spacing: 10
-
-                    // App Avatar/Initial Badge
-                    Rectangle {
-                        width: 28
-                        height: 28
-                        radius: 14
-                        color: Theme.alpha(Theme.accent, 0.18)
-                        border.color: Theme.alpha(Theme.accent, 0.3)
-                        border.width: 1
-                        anchors.verticalCenter: parent.verticalCenter
-                        clip: true
-
-                        Image {
-                            id: notifItemImg
-                            anchors.centerIn: parent
-                            width: 18
-                            height: 18
-                            fillMode: Image.PreserveAspectFit
-                            source: (modelData.icon && modelData.icon.length > 0) ? modelData.icon : ""
-                            visible: status === Image.Ready && source != ""
-                        }
-
-                        Text {
-                            anchors.centerIn: parent
-                            text: (modelData.app && modelData.app.length > 0) ? modelData.app.charAt(0).toUpperCase() : "N"
-                            font.family: "Outfit"
-                            font.pixelSize: 12
-                            font.weight: Font.Bold
-                            color: Theme.accent
-                            visible: !notifItemImg.visible
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                        if (modelData.rawNotif && typeof modelData.rawNotif.invoke === "function") {
+                            try { modelData.rawNotif.invoke("default") } catch(e) {}
                         }
                     }
+                }
 
-                    // Text column
-                    Column {
-                        width: parent.width - 28 - 20 - 20
-                        anchors.verticalCenter: parent.verticalCenter
-                        spacing: 1
+                // App / Category Icon Squircle
+                Rectangle {
+                    id: notifIconBox
+                    width: 32
+                    height: 32
+                    radius: 10
+                    color: Theme.alpha(Theme.accent, 0.14)
+                    border.color: Theme.alpha(Theme.accent, 0.28)
+                    border.width: 1
+                    anchors.left: parent.left
+                    anchors.leftMargin: 10
+                    anchors.top: parent.top
+                    anchors.topMargin: 10
+                    clip: true
+
+                    Image {
+                        id: notifItemImg
+                        anchors.centerIn: parent
+                        width: 18
+                        height: 18
+                        fillMode: Image.PreserveAspectFit
+                        source: root.getNotificationIcon(modelData.icon, modelData.app, modelData.summary)
+                        sourceSize: Qt.size(36, 36)
+                    }
+                }
+
+                // Individual Dismiss Button
+                Rectangle {
+                    id: notifDismissBtn
+                    width: 22
+                    height: 22
+                    radius: 11
+                    z: 5
+                    color: dismissMouse.containsMouse ? Theme.alpha(Theme.error, 0.25) : "transparent"
+                    border.color: dismissMouse.containsMouse ? Theme.alpha(Theme.error, 0.40) : "transparent"
+                    border.width: 1
+                    anchors.right: parent.right
+                    anchors.rightMargin: 8
+                    anchors.top: parent.top
+                    anchors.topMargin: 9
+
+                    Image {
+                        anchors.centerIn: parent
+                        width: 11
+                        height: 11
+                        source: root.trashSvg
+                        opacity: dismissMouse.containsMouse ? 1.0 : 0.40
+                    }
+
+                    MouseArea {
+                        id: dismissMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.handleDismiss(modelData.id)
+                    }
+                }
+
+                // Content Column (dynamically expands with content)
+                Column {
+                    id: contentCol
+                    anchors.left: notifIconBox.right
+                    anchors.leftMargin: 10
+                    anchors.right: notifDismissBtn.left
+                    anchors.rightMargin: 6
+                    anchors.top: parent.top
+                    anchors.topMargin: 9
+                    spacing: 2
+
+                    // Meta Row: App name & Timestamp
+                    Row {
+                        width: parent.width
+                        spacing: 5
 
                         Text {
-                            text: modelData.summary ? modelData.summary : "Notification"
-                            font.family: "Outfit"
-                            font.pixelSize: 11
-                            font.weight: Font.Bold
-                            color: Theme.foreground
-                            elide: Text.ElideRight
-                            width: parent.width
-                        }
-
-                        Text {
-                            text: modelData.body ? modelData.body : ""
+                            text: (modelData.app && modelData.app.length > 0) ? modelData.app : "System"
                             font.family: "Outfit"
                             font.pixelSize: 10
-                            font.weight: Font.Normal
-                            color: Theme.alpha(Theme.foreground, 0.70)
+                            font.weight: Font.DemiBold
+                            color: Theme.accent
                             elide: Text.ElideRight
-                            width: parent.width
-                            visible: text.length > 0
+                            maximumLineCount: 1
+                        }
+
+                        Text {
+                            text: "•"
+                            font.pixelSize: 9
+                            color: Theme.alpha(Theme.foreground, 0.30)
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+
+                        Text {
+                            text: root.formatNotifTime(modelData.time)
+                            font.family: "Outfit"
+                            font.pixelSize: 9
+                            font.weight: Font.Normal
+                            color: Theme.alpha(Theme.foreground, 0.45)
+                            anchors.verticalCenter: parent.verticalCenter
                         }
                     }
 
-                    // Individual Dismiss Button
-                    Rectangle {
-                        width: 20
-                        height: 20
-                        radius: 10
-                        color: dismissMouse.containsMouse ? Theme.alpha(Theme.foreground, 0.15) : "transparent"
-                        anchors.verticalCenter: parent.verticalCenter
+                    // Summary / Title
+                    Text {
+                        text: modelData.summary ? modelData.summary : "Notification"
+                        font.family: "Outfit"
+                        font.pixelSize: 12
+                        font.weight: Font.Bold
+                        color: Theme.foreground
+                        wrapMode: Text.Wrap
+                        width: parent.width
+                        maximumLineCount: 2
+                        elide: Text.ElideRight
+                    }
 
-                        Image {
-                            anchors.centerIn: parent
-                            width: 10
-                            height: 10
-                            source: root.trashSvg
-                            opacity: dismissMouse.containsMouse ? 1.0 : 0.4
-                        }
-
-                        MouseArea {
-                            id: dismissMouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: root.handleDismiss(modelData.id)
-                        }
+                    // Body
+                    Text {
+                        text: modelData.body ? modelData.body : ""
+                        font.family: "Outfit"
+                        font.pixelSize: 11
+                        font.weight: Font.Normal
+                        color: Theme.alpha(Theme.foreground, 0.78)
+                        lineHeight: 1.25
+                        wrapMode: Text.Wrap
+                        width: parent.width
+                        maximumLineCount: 6
+                        elide: Text.ElideRight
+                        visible: text.length > 0
                     }
                 }
             }

@@ -2,13 +2,13 @@
 
 <h1 align="center">Hyprconf — Minimalist Obsidian Hyprland & Quickshell Desktop</h1>
 <p align="center">
-  <b>v1.0.0</b> &bull; Crafted by <b><a href="https://github.com/shell-ninja">Shell Ninja</a></b>
+  <b>v1.0.1</b> &bull; Crafted by <b><a href="https://github.com/shell-ninja">Shell Ninja</a></b>
 </p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/Hyprland-Wayland-00c8ff?style=for-the-badge&logo=hyprland&logoColor=white" alt="Hyprland" />
   <img src="https://img.shields.io/badge/Quickshell-Qt6%20QML-41cd52?style=for-the-badge&logo=qt&logoColor=white" alt="Quickshell" />
-  <img src="https://img.shields.io/badge/Release-v1.0.0-89b4fa?style=for-the-badge" alt="v1.0.0" />
+  <img src="https://img.shields.io/badge/Release-v1.0.1-89b4fa?style=for-the-badge" alt="v1.0.1" />
   <img src="https://img.shields.io/badge/License-GPL--3.0-f38ba8?style=for-the-badge" alt="License" />
 </p>
 

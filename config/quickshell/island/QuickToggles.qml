@@ -13,7 +13,27 @@ Item {
         return "data:image/svg+xml;utf8," + encodeURIComponent(svgContent)
     }
 
+    signal openWifiDialogRequested()
+
+    readonly property string ethernetSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v10c0 1.1-.9 2-2 2h-4v2h2v2H6v-2h2v-2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="M7 9h2v4H7zM11 9h2v4h-2zM15 9h2v4h-2z"/></svg>')
+    readonly property string chevronRightSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>')
     readonly property string wifiSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1.2" fill="currentColor"/></svg>')
+
+    function getWifiSvg(signal, isEnabled) {
+        if (!isEnabled) {
+            return svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.58 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1.2" fill="currentColor"/></svg>')
+        }
+        if (signal >= 75) {
+            return svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1.2" fill="currentColor"/></svg>')
+        } else if (signal >= 50) {
+            return svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1.2" fill="currentColor"/></svg>')
+        } else if (signal >= 25) {
+            return svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1.2" fill="currentColor"/></svg>')
+        } else {
+            return svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="20" r="1.8" fill="currentColor"/></svg>')
+        }
+    }
+
     readonly property string btSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6.5 6.5 17.5 17.5 12 23 12 1 17.5 6.5 6.5 17.5"/></svg>')
     readonly property string coffeeSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>')
     readonly property string moonSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>')
@@ -26,8 +46,12 @@ Item {
     }
 
     // ── STATES ───────────────────────────────────────────────────────────────
+    property bool networkConnected: false
+    property string networkType: "none" // "ethernet", "wifi", "none"
+    property string networkName: "Wi-Fi"
+    property int wifiSignal: 0
     property bool wifiActive: true
-    property string wifiName: "Wi-Fi"
+    readonly property bool isNetworkActive: networkConnected || (networkType === "wifi" && wifiActive)
     property bool btActive: true
     property bool caffeineActive: false
     property string nightLightMode: "off" // "off", "on", "scheduled"
@@ -99,26 +123,42 @@ Item {
     // Wi-Fi & BT Readers
     Process {
         id: statusReader
-        command: ["bash", "-c", "echo $(nmcli -t -f STATE g 2>/dev/null):$(bluetoothctl show 2>/dev/null | grep -c 'Powered: yes')"]
+        command: ["python3", root.homeDir + "/.hyprconf/hypr/scripts/py/island-network.py", "status"]
+        running: true
+        stdout: StdioCollector {
+            onTextChanged: {
+                if (!text || text.trim().length === 0) return
+                try {
+                    var data = JSON.parse(text.trim())
+                    root.networkConnected = data.connected
+                    root.networkType = data.type || "none"
+                    root.networkName = data.name || "Network"
+                    root.wifiSignal = data.signal || 0
+                    root.wifiActive = (data.wifi_enabled !== undefined) ? data.wifi_enabled : true
+                } catch (e) {}
+            }
+        }
+    }
+
+    Process {
+        id: btReader
+        command: ["bash", "-c", "bluetoothctl show 2>/dev/null | grep -c 'Powered: yes'"]
         running: true
         stdout: StdioCollector {
             onTextChanged: {
                 if (!text) return
-                var parts = text.trim().split(":")
-                if (parts.length >= 2) {
-                    root.wifiActive = (parts[0] === "connected")
-                    root.btActive = (parts[1] === "1")
-                }
+                root.btActive = (text.trim() === "1")
             }
         }
     }
 
     Timer {
-        interval: 2000
+        interval: 2500
         running: true
         repeat: true
         onTriggered: {
             if (!statusReader.running) statusReader.running = true
+            if (!btReader.running) btReader.running = true
             if (!caffeineReader.running) caffeineReader.running = true
             if (!nightLightReader.running) nightLightReader.running = true
             if (!dndReader.running) dndReader.running = true
@@ -167,9 +207,10 @@ Item {
     }
 
     function toggleWifi() {
-        root.wifiActive = !root.wifiActive
-        toggleCmd.command = ["bash", "-c", root.wifiActive ? "nmcli radio wifi on" : "nmcli radio wifi off"]
+        toggleCmd.command = ["python3", root.homeDir + "/.hyprconf/hypr/scripts/py/island-network.py", "toggle-wifi"]
         toggleCmd.running = true
+        statusReader.running = false
+        statusReader.running = true
     }
 
     function toggleBt() {
@@ -185,39 +226,131 @@ Item {
         spacing: 10
         rowSpacing: 9
 
-        // 1. Wi-Fi
+        // 1. Network Tile (Ethernet / Wi-Fi with dynamic signal & > arrow)
         Rectangle {
             width: 135
             height: 48
             radius: 14
-            color: root.wifiActive ? Theme.accent : Theme.alpha(Theme.surface, 0.65)
-            border.color: root.wifiActive ? Theme.accent : Theme.alpha(Theme.foreground, 0.08)
+            color: root.isNetworkActive ? Theme.accent : Theme.alpha(Theme.surface, 0.65)
+            border.color: root.isNetworkActive ? Theme.accent : Theme.alpha(Theme.foreground, 0.08)
             border.width: 1
 
             Behavior on color { ColorAnimation { duration: 150 } }
 
-            Row {
-                anchors.centerIn: parent
-                spacing: 8
-                Image {
-                    width: 16; height: 16
-                    source: root.wifiSvg
+            // Left Section: Network Status & Toggle
+            Item {
+                anchors.left: parent.left
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                anchors.right: splitDivider.left
+
+                Row {
                     anchors.verticalCenter: parent.verticalCenter
+                    anchors.left: parent.left
+                    anchors.leftMargin: 10
+                    spacing: 7
+
+                    Image {
+                        width: 16
+                        height: 16
+                        source: root.networkType === "ethernet" ? root.ethernetSvg : root.getWifiSvg(root.wifiSignal, root.wifiActive)
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+
+                    Column {
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: 1
+
+                        Text {
+                            text: root.networkType === "ethernet" ? "Ethernet" : "Wi-Fi"
+                            font.family: "Outfit"
+                            font.pixelSize: 11
+                            font.weight: Font.Bold
+                            color: root.isNetworkActive ? Theme.background : Theme.foreground
+                        }
+
+                        Text {
+                            text: {
+                                if (root.networkConnected) {
+                                    if (root.networkType === "ethernet") return "Connected"
+                                    return (root.networkName && root.networkName !== "Wi-Fi") ? root.networkName : "Connected"
+                                }
+                                return root.wifiActive ? "Not joined" : "Off"
+                            }
+                            font.family: "Outfit"
+                            font.pixelSize: 9
+                            font.weight: Font.DemiBold
+                            color: root.isNetworkActive ? Theme.alpha(Theme.background, 0.8) : Theme.muted
+                            elide: Text.ElideRight
+                            width: 58
+                        }
+                    }
                 }
-                Text {
-                    text: "Wi-Fi"
-                    font.family: "Outfit"
-                    font.pixelSize: 12
-                    font.weight: Font.Bold
-                    color: root.wifiActive ? Theme.background : Theme.foreground
-                    anchors.verticalCenter: parent.verticalCenter
+
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                        if (root.networkType === "ethernet") {
+                            // Ethernet click opens nmtui
+                            toggleCmd.command = ["kitty", "--title", "floating", "-e", "nmtui"]
+                            toggleCmd.running = true
+                        } else {
+                            root.toggleWifi()
+                        }
+                    }
                 }
             }
 
-            MouseArea {
-                anchors.fill: parent
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.toggleWifi()
+            // Divider Line
+            Rectangle {
+                id: splitDivider
+                anchors.right: arrowContainer.left
+                anchors.verticalCenter: parent.verticalCenter
+                width: 1
+                height: 22
+                color: root.isNetworkActive ? Theme.alpha(Theme.background, 0.22) : Theme.alpha(Theme.foreground, 0.1)
+            }
+
+            // Right Section: Little Arrow '>' Button
+            Item {
+                id: arrowContainer
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                width: 32
+
+                Rectangle {
+                    anchors.centerIn: parent
+                    width: 24
+                    height: 24
+                    radius: 12
+                    color: arrowMouse.containsMouse ? (root.isNetworkActive ? Theme.alpha(Theme.background, 0.2) : Theme.alpha(Theme.foreground, 0.12)) : "transparent"
+                    Behavior on color { ColorAnimation { duration: 120 } }
+
+                    Image {
+                        anchors.centerIn: parent
+                        width: 12
+                        height: 12
+                        source: root.chevronRightSvg
+                        opacity: root.isNetworkActive ? 0.95 : 0.65
+                    }
+                }
+
+                MouseArea {
+                    id: arrowMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                        if (root.networkType === "ethernet") {
+                            toggleCmd.command = ["kitty", "--title", "floating", "-e", "nmtui"]
+                            toggleCmd.running = true
+                        } else {
+                            root.openWifiDialogRequested()
+                        }
+                    }
+                }
             }
         }
 

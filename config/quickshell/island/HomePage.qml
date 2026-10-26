@@ -19,13 +19,15 @@ Item {
     signal clearAllNotifications()
     signal dismissNotification(var notifId)
 
-    // Live Audio Visualizer integration
     property bool isAudioPlaying: false
     property var cavaBars: []
     property bool visualizerEnabled: true
     property string visualizerStyle: "wave"
     property int visualizerBarCount: 8
     property real animProgress: 1.0
+
+    property alias isWifiDialogOpen: wifiDialog.isOpen
+    function closeWifiDialog() { wifiDialog.close() }
 
     function svgUrl(svgContent) {
         return "data:image/svg+xml;utf8," + encodeURIComponent(svgContent)
@@ -246,6 +248,9 @@ Item {
                 id: quickToggles
                 width: 280
                 height: 165
+                onOpenWifiDialogRequested: {
+                    wifiDialog.open()
+                }
             }
 
             // Right: Sliders Column
@@ -290,7 +295,11 @@ Item {
         BottomCard {
             id: card2
             width: parent.width
-            height: (root.isAudioPlaying && root.visualizerEnabled) ? 116 : 155
+            height: {
+                if (root.isAudioPlaying && root.visualizerEnabled) return 130
+                if (root.notificationList && root.notificationList.length > 0) return 185
+                return 160
+            }
             opacity: 0.0
             transform: Translate { id: t2; y: 22 }
 
@@ -434,5 +443,10 @@ Item {
                 gap: 3.8
             }
         }
+    }
+
+    // ── WI-FI NETWORKS DIALOGUE OVERLAY ──────────────────────────────────────
+    WifiNetworkDialog {
+        id: wifiDialog
     }
 }

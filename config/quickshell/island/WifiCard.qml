@@ -12,6 +12,7 @@ Rectangle {
     property string deviceType: "ethernet"
 
     signal toggleWifi()
+    signal openWifiRequested()
 
     implicitWidth: 270
     implicitHeight: 80
@@ -29,26 +30,23 @@ Rectangle {
     }
 
     readonly property string wifiSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + (root.isEnabled ? Theme.accent : Theme.muted) + '" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1.2" fill="' + (root.isEnabled ? Theme.accent : Theme.muted) + '"/></svg>')
-    readonly property string globeSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + (root.isEnabled ? Theme.accent : Theme.muted) + '" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>')
+    readonly property string globeSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + (root.isEnabled ? Theme.accent : Theme.muted) + '" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v10c0 1.1-.9 2-2 2h-4v2h2v2H6v-2h2v-2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="M7 9h2v4H7zM11 9h2v4h-2zM15 9h2v4h-2z"/></svg>')
     readonly property string chevronSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.foreground + '" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>')
 
     Process {
         id: netReader
-        command: ["bash", "-c", "nmcli -t -f TYPE,STATE,CONNECTION device | head -n 3"]
+        command: ["python3", Quickshell.env("HOME") + "/.hyprconf/hypr/scripts/py/island-network.py", "status"]
         running: true
         stdout: StdioCollector {
             onTextChanged: {
-                if (!text) return
-                var lines = text.trim().split("\n")
-                for (var i = 0; i < lines.length; i++) {
-                    var parts = lines[i].split(":")
-                    if (parts.length >= 3 && parts[1] === "connected") {
-                        root.isConnected = true
-                        root.networkName = parts[2]
-                        root.deviceType = parts[0]
-                        return
-                    }
-                }
+                if (!text || text.trim().length === 0) return
+                try {
+                    var d = JSON.parse(text.trim())
+                    root.isConnected = d.connected
+                    root.networkName = d.name || "Network"
+                    root.deviceType = d.type || "ethernet"
+                    root.isEnabled = (d.wifi_enabled !== undefined) ? d.wifi_enabled : true
+                } catch(e) {}
             }
         }
     }
@@ -158,13 +156,41 @@ Rectangle {
                 }
             }
 
-            // Subtle chevron arrow
-            Image {
-                width: 12
-                height: 12
-                source: root.chevronSvg
-                opacity: 0.35
+            // Subtle chevron arrow button
+            Rectangle {
+                width: 22
+                height: 22
+                radius: 11
+                color: chevMouse.containsMouse ? Theme.alpha(Theme.foreground, 0.12) : "transparent"
                 anchors.verticalCenter: parent.verticalCenter
+
+                Image {
+                    anchors.centerIn: parent
+                    width: 12
+                    height: 12
+                    source: root.chevronSvg
+                    opacity: 0.65
+                }
+
+                MouseArea {
+                    id: chevMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                        if (root.deviceType === "ethernet") {
+                            termProcess.running = false
+                            termProcess.running = true
+                        } else {
+                            root.openWifiRequested()
+                        }
+                    }
+                }
+            }
+
+            Process {
+                id: termProcess
+                command: ["kitty", "--title", "floating", "-e", "nmtui"]
             }
         }
     }

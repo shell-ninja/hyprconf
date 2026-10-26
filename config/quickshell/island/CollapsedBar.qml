@@ -115,7 +115,23 @@ Item {
     readonly property string micMuteSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.error + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V5a3 3 0 0 0-5.94-.6"/><path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>')
     readonly property string sunSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.accent + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>')
     readonly property string keyboardSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.accent + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2" ry="2"/><line x1="6" y1="8" x2="6" y2="8"/><line x1="10" y1="8" x2="10" y2="8"/><line x1="14" y1="8" x2="14" y2="8"/><line x1="18" y1="8" x2="18" y2="8"/><line x1="6" y1="12" x2="6" y2="12"/><line x1="10" y1="12" x2="10" y2="12"/><line x1="14" y1="12" x2="14" y2="12"/><line x1="18" y1="12" x2="18" y2="12"/><line x1="8" y1="16" x2="16" y2="16"/></svg>')
+    readonly property string ethernetSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.accent + '" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v10c0 1.1-.9 2-2 2h-4v2h2v2H6v-2h2v-2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="M7 9h2v4H7zM11 9h2v4h-2zM15 9h2v4h-2z"/></svg>')
     readonly property string wifiSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.accent + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1.2" fill="' + Theme.accent + '"/></svg>')
+
+    function getWifiSvg(signal, isEnabled) {
+        if (!isEnabled) {
+            return svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.muted + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.58 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1.2" fill="' + Theme.muted + '"/></svg>')
+        }
+        if (signal >= 75) {
+            return svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.accent + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1.2" fill="' + Theme.accent + '"/></svg>')
+        } else if (signal >= 50) {
+            return svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.accent + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1.2" fill="' + Theme.accent + '"/></svg>')
+        } else if (signal >= 25) {
+            return svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.accent + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1.2" fill="' + Theme.accent + '"/></svg>')
+        } else {
+            return svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.accent + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="20" r="1.8" fill="' + Theme.accent + '"/></svg>')
+        }
+    }
 
     property var occupiedWorkspaces: []
 
@@ -221,7 +237,7 @@ Item {
                         if (root.audioMonitorInitialized && rest !== root.lastSinkState) {
                             var pctStr = Math.round(v * 100) + "%"
                             var sIcon = m ? "volume-mute" : (v > 0.5 ? "volume-high" : (v > 0 ? "volume-low" : "volume-mute"))
-                            root.triggerOsd("volume", v, m ? "Muted" : pctStr, sIcon, "")
+                            root.triggerOsd("volume", Math.round(v * 100), m ? "Muted" : pctStr, sIcon, "")
                         }
                         root.lastSinkState = rest
                     }
@@ -234,7 +250,7 @@ Item {
                         if (root.audioMonitorInitialized && rest !== root.lastSourceState) {
                             var pctStr = Math.round(v * 100) + "%"
                             var mIcon = m ? "mic-mute" : "mic"
-                            root.triggerOsd("mic", v, m ? "Muted" : pctStr, mIcon, "")
+                            root.triggerOsd("mic", Math.round(v * 100), m ? "Muted" : pctStr, mIcon, "")
                         }
                         root.lastSourceState = rest
                     }
@@ -264,13 +280,36 @@ Item {
         }
     }
 
+    // ── NETWORK STATUS (ETHERNET / WI-FI) ────────────────────────────────────
+    property string barNetType: "none"
+    property int barNetSignal: 0
+    property bool barNetConnected: false
+
+    Process {
+        id: barNetFetcher
+        command: ["python3", root.homeDir + "/.hyprconf/hypr/scripts/py/island-network.py", "status"]
+        running: true
+        stdout: StdioCollector {
+            onTextChanged: {
+                if (!text || text.trim().length === 0) return
+                try {
+                    var d = JSON.parse(text.trim())
+                    root.barNetType = d.type || "none"
+                    root.barNetSignal = d.signal || 0
+                    root.barNetConnected = d.connected
+                } catch(e) {}
+            }
+        }
+    }
+
     Timer {
         id: batPollTimer
-        interval: 15000
+        interval: 10000
         repeat: true
         running: true
         onTriggered: {
             if (!batFetcher.running) batFetcher.running = true
+            if (!barNetFetcher.running) barNetFetcher.running = true
         }
     }
 
@@ -1262,7 +1301,7 @@ Item {
                     }
 
                     // D. Adaptive Right Module:
-                    // If Desktop / No Battery: Wi-Fi Icon (Matching DESKTOP Image)
+                    // If Desktop / No Battery: Ethernet or Wi-Fi Icon
                     Item {
                         width: 18
                         height: 18
@@ -1273,7 +1312,7 @@ Item {
                             anchors.centerIn: parent
                             width: 15
                             height: 15
-                            source: root.wifiSvg
+                            source: root.barNetType === "ethernet" ? root.ethernetSvg : root.getWifiSvg(root.barNetSignal, true)
                         }
                     }
 
@@ -2292,10 +2331,13 @@ Item {
                 spacing: 3
 
                 // Top line: Label + Value Badge
-                Row {
+                Item {
                     width: parent.width
+                    height: 16
 
                     Text {
+                        anchors.left: parent.left
+                        anchors.verticalCenter: parent.verticalCenter
                         text: osdRow.displayTitle
                         font.family: "Outfit"
                         font.pixelSize: 11
@@ -2304,13 +2346,9 @@ Item {
                         elide: Text.ElideRight
                     }
 
-                    Item {
-                        width: Math.max(8, parent.width - 170)
-                        height: 1
-                    }
-
                     Text {
                         anchors.right: parent.right
+                        anchors.verticalCenter: parent.verticalCenter
                         text: {
                             if (root.osdType === "volume") {
                                 return osdRow.isMuted ? "Muted" : Math.round(root.osdValue * 100) + "%"

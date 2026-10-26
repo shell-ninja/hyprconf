@@ -133,21 +133,20 @@ PanelWindow {
     function showOsd(type, value, label, icon, subLabel) {
         root.osdType = type || "volume"
         var numVal = parseFloat(value)
+        if (isNaN(numVal)) numVal = 0.0
+
         if (root.osdType === "brightness" || root.osdType === "volume" || root.osdType === "mic") {
-            root.osdValue = isNaN(numVal) ? 0.0 : Math.max(0.0, Math.min(1.0, numVal / 100.0))
+            var normalized = (numVal > 0.0 && numVal < 1.0) ? numVal : (numVal / 100.0)
+            root.osdValue = Math.max(0.0, Math.min(1.0, normalized))
+
+            var intVal = Math.round(root.osdValue * 100)
+            if (root.osdType === "brightness") {
+                root.systemBrightness = intVal
+            } else if (root.osdType === "volume") {
+                root.systemVolume = intVal
+            }
         } else {
-            root.osdValue = isNaN(numVal) ? 0.0 : (numVal > 1.0 ? numVal / 100.0 : numVal)
-        }
-        if (root.osdType === "brightness") {
-            var bVal = parseInt(value, 10)
-            if (!isNaN(bVal)) {
-                root.systemBrightness = Math.max(0, Math.min(100, bVal))
-            }
-        } else if (root.osdType === "volume") {
-            var vVal = parseInt(value, 10)
-            if (!isNaN(vVal)) {
-                root.systemVolume = Math.max(0, Math.min(100, vVal))
-            }
+            root.osdValue = (numVal > 0.0 && numVal < 1.0) ? numVal : Math.max(0.0, Math.min(1.0, numVal / 100.0))
         }
         root.osdLabel = (label !== undefined && label !== null) ? ("" + label) : ""
         root.osdIcon = icon || root.osdType
@@ -991,7 +990,13 @@ PanelWindow {
             if (collapsedBar) {
                 var v = parseFloat(vol)
                 if (!isNaN(v)) {
-                    collapsedBar.currentVolume = (v > 1.0) ? (v / 100.0) : v
+                    var norm = (v > 0.0 && v < 1.0) ? v : (v / 100.0)
+                    var clamped = Math.max(0.0, Math.min(1.0, norm))
+                    collapsedBar.currentVolume = clamped
+                    root.systemVolume = Math.round(clamped * 100)
+                    if (!root.hasOsdPopup) {
+                        root.osdValue = clamped
+                    }
                 }
                 if (muted !== undefined && muted.length > 0) {
                     collapsedBar.isMuted = (muted === "1" || muted === "true")
@@ -1134,6 +1139,13 @@ PanelWindow {
                 if (resolved && resolved.length > 0) {
                     iconSource = resolved
                 }
+            }
+        }
+        if (iconSource.length === 0 && notif.appName && notif.appName.length > 0) {
+            var appLower = notif.appName.toLowerCase().replace(/\s+/g, "-")
+            var resApp = Quickshell.iconPath(appLower, true)
+            if (resApp && resApp.length > 0) {
+                iconSource = resApp
             }
         }
 

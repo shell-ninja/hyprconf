@@ -69,6 +69,14 @@ Item {
                 }
             }
         } else if (root.currentView === 0) {
+            if (root.dashboardPage === 0 && homePage.isWifiDialogOpen) {
+                if (event.key === Qt.Key_Escape) {
+                    homePage.closeWifiDialog()
+                    event.accepted = true
+                    return true
+                }
+                return true
+            }
             if (event.key === Qt.Key_Right) {
                 if (root.dashboardPage === 0) {
                     event.accepted = true
