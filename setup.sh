@@ -477,11 +477,16 @@ if [[ -d "$settings_dir" && -d "$lockscreen_dir" ]]; then
 fi
 
 # 3. Ensure Theme.qml & colors.json relative symlinks exist in all subprojects
-for sub in "$island_dir" "$launcher_dir" "$launcher_theme_dir" "$settings_dir" "$widgets_dir" "$lockscreen_dir"; do
+for sub in "$island_dir" "$launcher_dir" "$launcher_theme_dir" "$settings_dir" "$widgets_dir" "$lockscreen_dir" "$dock_dir"; do
     [[ -d "$sub" ]] || continue
     [[ ! -e "$sub/Theme.qml" || ( -L "$sub/Theme.qml" && "$(readlink "$sub/Theme.qml")" =~ /home/ ) ]] && ln -sfn "../Theme.qml" "$sub/Theme.qml"
     [[ ! -e "$sub/colors.json" || ( -L "$sub/colors.json" && "$(readlink "$sub/colors.json")" =~ /home/ ) ]] && ln -sfn "../colors.json" "$sub/colors.json"
 done
+
+# Ensure settings qmldir includes DockSection
+if [[ -f "$settings_dir/qmldir" ]] && ! grep -q "DockSection" "$settings_dir/qmldir"; then
+    echo "DockSection 1.0 DockSection.qml" >> "$settings_dir/qmldir"
+fi
 
 # 4. Bootstrap user settings and sync symlinks into ~/.hyprconf
 local_hyprconf=""
@@ -567,6 +572,9 @@ for dotfile in "$HOME/.hyprconf"/*; do
         setup.sh|update.sh|README*|LICENSE*|PACKAGES*|UPDATES*|Logs|*.md|extras|local|fastfetch) continue ;;
     esac
     configPath="$HOME/.config/$configName"
+    if [[ -d "$configPath" && ! -L "$configPath" ]]; then
+        rm -rf "$configPath"
+    fi
     ln -sfn "$dotfile" "$configPath"
 done
 

@@ -1018,6 +1018,7 @@ LockscreenSection 1.0 LockscreenSection.qml
 WeatherSection 1.0 WeatherSection.qml
 IslandSection 1.0 IslandSection.qml
 WidgetsSection 1.0 WidgetsSection.qml
+DockSection 1.0 DockSection.qml
 ResizableDraggableWidget 1.0 ResizableDraggableWidget.qml
 DesktopClock 1.0 DesktopClock.qml
 DesktopVisualizer 1.0 DesktopVisualizer.qml
@@ -1027,6 +1028,10 @@ DesktopWeather 1.0 DesktopWeather.qml
 AudioVisualizer 1.0 AudioVisualizer.qml
 LockscreenSystemGraph 1.0 LockscreenSystemGraph.qml
 LockscreenAudioVisualizer 1.0 LockscreenAudioVisualizer.qml
+""",
+            "dock": """singleton Theme 1.0 Theme.qml
+DockItem 1.0 DockItem.qml
+DockContextMenu 1.0 DockContextMenu.qml
 """,
             "launcher": """singleton Theme 1.0 Theme.qml
 Style1 1.0 Style1.qml
@@ -1140,6 +1145,7 @@ SvgIcon 1.0 SvgIcon.qml
         # Touch main entry points to trigger hot-reload in running daemons
         try:
             (QS_DIR / "island/shell.qml").touch()
+            (QS_DIR / "dock/shell.qml").touch()
         except Exception:
             pass
 
