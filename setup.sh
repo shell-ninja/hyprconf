@@ -317,6 +317,7 @@ for base_dir in "$HOME/.hyprconf" "$HOME/.config"; do
     migrate_to_state "$base_dir/quickshell/widgets/widgets.json" "$user_state_dir/widgets.json"
     migrate_to_state "$base_dir/quickshell/island/config.json" "$user_state_dir/island.json"
     migrate_to_state "$base_dir/quickshell/launcher/config.json" "$user_state_dir/launcher.json"
+    migrate_to_state "$base_dir/quickshell/dock/dock.json" "$user_state_dir/dock.json"
     migrate_to_state "$base_dir/hypr/configs/monitor.lua" "$user_state_dir/monitor.lua"
     migrate_to_state "$base_dir/hypr/configs/keybinds.lua" "$user_state_dir/keybinds.lua"
     migrate_to_state "$base_dir/hypr/.cache/wallpaper_config.json" "$user_state_dir/wallpaper_config.json"
@@ -445,6 +446,7 @@ launcher_theme_dir="$HOME/.hyprconf/quickshell/launcher-theme"
 settings_dir="$HOME/.hyprconf/quickshell/settings"
 widgets_dir="$HOME/.hyprconf/quickshell/widgets"
 lockscreen_dir="$HOME/.hyprconf/quickshell/lockscreen"
+dock_dir="$HOME/.hyprconf/quickshell/dock"
 
 # 1. Dynamic Island launcher morphing styles
 if [[ -d "$island_dir" && -d "$launcher_dir" ]]; then
@@ -507,11 +509,12 @@ if [[ -n "$local_hyprconf" && -d "$local_hyprconf" ]]; then
     fi
 fi
 
-mkdir -p "$widgets_dir" "$island_dir" "$launcher_dir" "$lockscreen_dir" "$HOME/.hyprconf/hypr/configs"
+mkdir -p "$widgets_dir" "$island_dir" "$launcher_dir" "$lockscreen_dir" "$dock_dir" "$HOME/.hyprconf/hypr/configs"
 ln -sfn "$user_state_dir/lockscreen.json" "$HOME/.hyprconf/quickshell/lockscreen.json"
 ln -sfn "$user_state_dir/widgets.json" "$widgets_dir/widgets.json"
 ln -sfn "$user_state_dir/island.json" "$island_dir/config.json"
 ln -sfn "$user_state_dir/launcher.json" "$launcher_dir/config.json"
+ln -sfn "$user_state_dir/dock.json" "$dock_dir/dock.json"
 ln -sfn "$user_state_dir/monitor.lua" "$HOME/.hyprconf/hypr/configs/monitor.lua"
 ln -sfn "$user_state_dir/keybinds.lua" "$HOME/.hyprconf/hypr/configs/keybinds.lua"
 # Symlink ~/.hyprconf/hypr/.cache -> ~/.local/share/hyprconf/.cache

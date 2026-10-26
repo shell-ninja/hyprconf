@@ -20,7 +20,7 @@ FloatingWindow {
         return (h && h.length > 0) ? h : "/home/user"
     }
 
-    readonly property string configPath: homeDir + "/.local/share/hyprconf/lockscreen.json"
+    readonly property string configPath: homeDir + "/.hyprconf/quickshell/lockscreen.json"
     property real avatarTimestamp: 1
     readonly property string avatarPath: "file://" + homeDir + "/.hyprconf/hypr/.cache/.face" + (avatarTimestamp > 1 ? ("?t=" + avatarTimestamp) : "")
     readonly property string wallpaperPath: "file://" + homeDir + "/.hyprconf/hypr/.cache/current_wallpaper.png"
@@ -107,6 +107,11 @@ FloatingWindow {
             }
             window.visible = true
         }
+        function openDock() {
+            window.activeRootNav = 5
+            window.activeSection = 12
+            window.visible = true
+        }
     }
 
     // Default configuration template for Lockscreen
@@ -174,12 +179,11 @@ FloatingWindow {
         }
     }
 
-    // Active Navigation Section:
-    // activeRootNav: 0 for "Hyprconf Settings", 1 for "Dynamic Island", 2 for "Desktop Widgets", 3 for "Weather", 4 for "Lockscreen Canvas"
-    property int activeRootNav: (Quickshell.env("QS_SETTINGS_SECTION") === "island" ? 1 : (Quickshell.env("QS_SETTINGS_SECTION") === "widgets" ? 2 : (Quickshell.env("QS_SETTINGS_SECTION") === "weather" ? 3 : (Quickshell.env("QS_SETTINGS_SECTION") === "lockscreen" ? 4 : 0))))
+    // activeRootNav: 0 for "Hyprconf Settings", 1 for "Dynamic Island", 2 for "Desktop Widgets", 3 for "Weather", 4 for "Lockscreen Canvas", 5 for "Application Dock"
+    property int activeRootNav: (Quickshell.env("QS_SETTINGS_SECTION") === "island" ? 1 : (Quickshell.env("QS_SETTINGS_SECTION") === "widgets" ? 2 : (Quickshell.env("QS_SETTINGS_SECTION") === "dock" ? 5 : (Quickshell.env("QS_SETTINGS_SECTION") === "weather" ? 3 : (Quickshell.env("QS_SETTINGS_SECTION") === "lockscreen" ? 4 : 0)))))
     // Sub-sections under Hyprconf Settings:
     // 0: Overview, 1: Appearance, 2: Display, 3: Animations, 4: Input, 5: Login Avatar
-    property int activeSection: (Quickshell.env("QS_SETTINGS_SECTION") === "island" ? 10 : (Quickshell.env("QS_SETTINGS_SECTION") === "widgets" ? 11 : (Quickshell.env("QS_SETTINGS_SECTION") === "weather" ? 7 : (Quickshell.env("QS_SETTINGS_SECTION") === "lockscreen" ? 9 : 0))))
+    property int activeSection: (Quickshell.env("QS_SETTINGS_SECTION") === "island" ? 10 : (Quickshell.env("QS_SETTINGS_SECTION") === "widgets" ? 11 : (Quickshell.env("QS_SETTINGS_SECTION") === "dock" ? 12 : (Quickshell.env("QS_SETTINGS_SECTION") === "weather" ? 7 : (Quickshell.env("QS_SETTINGS_SECTION") === "lockscreen" ? 9 : 0)))))
     property int activeTab: 0 // Subtab in Lockscreen (0: Layout, 1: Clock, 2: Avatar, 3: Widgets, 4: Backdrop)
     property bool isDirty: false
     property bool showSaveToast: false
@@ -864,6 +868,7 @@ FloatingWindow {
         if (secIdx === 10) return svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + s + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="6" width="16" height="6" rx="3"/><line x1="8" y1="16" x2="8" y2="18"/><line x1="12" y1="15" x2="12" y2="19"/><line x1="16" y1="16" x2="16" y2="18"/></svg>')
         if (secIdx === 11) return svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + s + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>')
         if (secIdx === 12) return svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + s + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>')
+        if (secIdx === 13) return svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + s + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="4"/><circle cx="7" cy="12" r="1.5" fill="' + s + '"/><circle cx="12" cy="12" r="1.5" fill="' + s + '"/><circle cx="17" cy="12" r="1.5" fill="' + s + '"/></svg>')
         return svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + s + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>')
     }
 
@@ -1402,6 +1407,66 @@ FloatingWindow {
                                 onClicked: {
                                     window.activeRootNav = 4
                                     window.activeSection = 9
+                                }
+                            }
+                        }
+
+                        // 6. Parent Option: Application Dock
+                        Rectangle {
+                            width: parent.width
+                            height: 48
+                            radius: 10
+                            readonly property bool isSelected: window.activeRootNav === 5
+
+                            color: isSelected
+                                ? Theme.accent
+                                : (dockNavMouse.containsMouse ? Theme.alpha(Theme.surface, 0.85) : "transparent")
+
+                            Behavior on color { ColorAnimation { duration: 120 } }
+
+                            Row {
+                                anchors.fill: parent
+                                anchors.leftMargin: 12
+                                anchors.rightMargin: 12
+                                spacing: 10
+
+                                Image {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    width: 20
+                                    height: 20
+                                    source: window.getNavSvg(13, parent.parent.isSelected)
+                                    sourceSize: Qt.size(40, 40)
+                                }
+
+                                Column {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    spacing: 2
+
+                                    Text {
+                                        text: "Application Dock"
+                                        color: parent.parent.parent.isSelected ? Theme.on_primary : Theme.foreground
+                                        font.family: "Outfit"
+                                        font.pixelSize: 13
+                                        font.weight: parent.parent.parent.isSelected ? Font.DemiBold : Font.Normal
+                                    }
+
+                                    Text {
+                                        text: "Stages, Pins & Positions"
+                                        color: parent.parent.parent.isSelected ? Theme.alpha(Theme.on_primary, 0.80) : Theme.alpha(Theme.foreground, 0.50)
+                                        font.family: "Outfit"
+                                        font.pixelSize: 10
+                                    }
+                                }
+                            }
+
+                            MouseArea {
+                                id: dockNavMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    window.activeRootNav = 5
+                                    window.activeSection = 12
                                 }
                             }
                         }
@@ -3265,6 +3330,14 @@ FloatingWindow {
                 LockscreenSection {
                     id: lockscreenSection
                     visible: window.activeRootNav === 4
+                }
+
+                // =============================================================
+                // ROOT NAV 5: APPLICATION DOCK STUDIO
+                // =============================================================
+                DockSection {
+                    id: dockSection
+                    visible: window.activeRootNav === 5
                 }
             }
         }

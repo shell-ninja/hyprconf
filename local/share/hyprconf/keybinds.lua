@@ -51,6 +51,7 @@ hl.bind(mainMod .. " + D", hl.dsp.exec_cmd(qsLauncher))
 hl.bind(mainMod .. " + SPACE", hl.dsp.exec_cmd(qsLauncher))
 hl.bind(mainMod .. " + ALT + D", hl.dsp.exec_cmd(qsLauncherTheme))
 hl.bind(mainMod .. " + SHIFT + D", hl.dsp.exec_cmd(qsEmoji))
+hl.bind(mainMod .. " + ALT + SPACE", hl.dsp.exec_cmd(sh_dir .. "/qs-dock.sh --toggle"))
 hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
 hl.bind(mainMod .. " + SHIFT + P", hl.dsp.window.pseudo())
 

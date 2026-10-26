@@ -16,6 +16,7 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("hypridle &")
     hl.exec_cmd(sh_dir .. "/qs-island.sh --start &")
     hl.exec_cmd(sh_dir .. "/qs-widgets.sh --start &")
+    hl.exec_cmd(sh_dir .. "/qs-dock.sh --start &")
 
     hl.exec_cmd("pypr &")
 end)

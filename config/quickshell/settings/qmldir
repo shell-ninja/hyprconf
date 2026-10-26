@@ -9,6 +9,7 @@ LockscreenSection 1.0 LockscreenSection.qml
 WeatherSection 1.0 WeatherSection.qml
 IslandSection 1.0 IslandSection.qml
 WidgetsSection 1.0 WidgetsSection.qml
+DockSection 1.0 DockSection.qml
 ResizableDraggableWidget 1.0 ResizableDraggableWidget.qml
 DesktopClock 1.0 DesktopClock.qml
 DesktopVisualizer 1.0 DesktopVisualizer.qml

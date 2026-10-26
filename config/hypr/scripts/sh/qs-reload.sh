@@ -48,7 +48,12 @@ if [[ -f "$sh_dir/qs-widgets.sh" ]]; then
     nohup bash "$sh_dir/qs-widgets.sh" --start >/dev/null 2>&1 &
 fi
 
-# 4. Notify user of successful reload
+# 4. Relaunch Quickshell Dock daemon (if enabled)
+if [[ -f "$sh_dir/qs-dock.sh" ]]; then
+    nohup bash "$sh_dir/qs-dock.sh" --start >/dev/null 2>&1 &
+fi
+
+# 5. Notify user of successful reload
 if [[ "${1:-}" != "--quiet" && "${1:-}" != "-q" ]]; then
     notify-send -a "Quickshell" \
         -i preferences-desktop-theme \
