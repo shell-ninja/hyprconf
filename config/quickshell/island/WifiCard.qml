@@ -103,7 +103,11 @@ Rectangle {
             }
 
             Text {
-                text: root.isEnabled ? root.networkName : "Disconnected"
+                text: {
+                    if (!root.isEnabled) return "Off"
+                    if (root.isConnected) return root.networkName
+                    return "Not joined"
+                }
                 font.family: "Outfit"
                 font.pixelSize: 12
                 font.weight: Font.Medium

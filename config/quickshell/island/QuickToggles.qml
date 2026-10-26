@@ -247,8 +247,10 @@ Item {
                 Row {
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.left: parent.left
-                    anchors.leftMargin: 10
-                    spacing: 7
+                    anchors.right: parent.right
+                    anchors.leftMargin: 8
+                    anchors.rightMargin: 4
+                    spacing: 6
 
                     Image {
                         width: 16
@@ -259,6 +261,7 @@ Item {
 
                     Column {
                         anchors.verticalCenter: parent.verticalCenter
+                        width: Math.max(10, parent.width - 22)
                         spacing: 1
 
                         Text {
@@ -267,22 +270,28 @@ Item {
                             font.pixelSize: 11
                             font.weight: Font.Bold
                             color: root.isNetworkActive ? Theme.background : Theme.foreground
+                            elide: Text.ElideRight
+                            width: parent.width
                         }
 
                         Text {
                             text: {
                                 if (root.networkConnected) {
                                     if (root.networkType === "ethernet") return "Connected"
-                                    return (root.networkName && root.networkName !== "Wi-Fi") ? root.networkName : "Connected"
+                                    // Wi-Fi: show connected SSID!
+                                    if (root.networkName && root.networkName !== "Wi-Fi" && root.networkName !== "Network") {
+                                        return root.networkName
+                                    }
+                                    return "Connected"
                                 }
                                 return root.wifiActive ? "Not joined" : "Off"
                             }
                             font.family: "Outfit"
                             font.pixelSize: 9
                             font.weight: Font.DemiBold
-                            color: root.isNetworkActive ? Theme.alpha(Theme.background, 0.8) : Theme.muted
+                            color: root.isNetworkActive ? Theme.alpha(Theme.background, 0.85) : Theme.muted
                             elide: Text.ElideRight
-                            width: 58
+                            width: parent.width
                         }
                     }
                 }
@@ -318,7 +327,7 @@ Item {
                 anchors.right: parent.right
                 anchors.top: parent.top
                 anchors.bottom: parent.bottom
-                width: 32
+                width: 28
 
                 Rectangle {
                     anchors.centerIn: parent

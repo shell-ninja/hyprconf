@@ -11,7 +11,7 @@ Item {
     anchors.fill: parent
     z: 100
     visible: opacity > 0.001
-    opacity: 0.0
+    opacity: isOpen ? 1.0 : 0.0
     enabled: isOpen
 
     property bool isOpen: false
@@ -221,7 +221,7 @@ Item {
         id: mainPanel
         anchors.fill: parent
         radius: 20
-        color: Theme.alpha(Theme.background, 0.96)
+        color: Theme.background
         border.width: 1
         border.color: Theme.alpha(Theme.foreground, 0.12)
         clip: true

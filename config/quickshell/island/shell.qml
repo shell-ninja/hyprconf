@@ -809,6 +809,23 @@ PanelWindow {
                 expandedContent.dashboardPage = 2
             }
         }
+        function openWifi() {
+            closeTimer.stop()
+            root.ipcKeepExpanded = true
+            root.expanded = true
+            if (expandedContent) {
+                expandedContent.currentView = 0
+                expandedContent.dashboardPage = 0
+                if (expandedContent.homePage) {
+                    expandedContent.homePage.openWifiDialog()
+                }
+            }
+        }
+        function closeWifi() {
+            if (expandedContent && expandedContent.homePage) {
+                expandedContent.homePage.closeWifiDialog()
+            }
+        }
         function collapse() {
             root.closeIsland()
         }

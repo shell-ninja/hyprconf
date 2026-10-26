@@ -10,6 +10,10 @@ import os
 import subprocess
 import json
 import re
+from pathlib import Path
+
+HOME = Path(os.environ.get("HOME", "/home/shell-ninja"))
+MOCK_FILE = HOME / ".hyprconf" / "hypr" / ".cache" / "mock_wifi.json"
 
 def run_cmd(args, timeout=10):
     try:
@@ -19,6 +23,15 @@ def run_cmd(args, timeout=10):
         return 1, "", str(e)
 
 def get_status():
+    if MOCK_FILE.exists():
+        try:
+            with open(MOCK_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                if "status" in data:
+                    return data["status"]
+        except Exception:
+            pass
+
     _, wifi_out, _ = run_cmd(["nmcli", "-t", "-f", "WIFI", "g"])
     wifi_enabled = wifi_out.lower() == "enabled"
 
@@ -50,17 +63,33 @@ def get_status():
                     # Wifi found connected, we can keep checking if ethernet is also there,
                     # but if ethernet was before it, ethernet took precedence.
 
-    # If connected to Wi-Fi, get accurate active signal
+    # If connected to Wi-Fi, get accurate active signal and SSID
     if conn_type == "wifi" and is_connected:
-        _, wlist_out, _ = run_cmd(["nmcli", "-t", "-f", "IN-USE,SIGNAL,SSID", "device", "wifi", "list"])
-        if wlist_out:
-            for wline in wlist_out.splitlines():
-                if wline.startswith("*:"):
-                    wparts = wline.split(":")
-                    if len(wparts) >= 2 and wparts[1].isdigit():
-                        signal = int(wparts[1])
-                        if len(wparts) >= 3 and wparts[2]:
-                            conn_name = wparts[2]
+        code_act, act_out, _ = run_cmd(["nmcli", "-t", "-f", "ACTIVE,SIGNAL,SSID", "device", "wifi"])
+        if code_act == 0 and act_out:
+            for aline in act_out.splitlines():
+                if aline.startswith("yes:"):
+                    aparts = aline.split(":")
+                    if len(aparts) >= 2 and aparts[1].isdigit():
+                        signal = int(aparts[1])
+                    if len(aparts) >= 3:
+                        assid = ":".join(aparts[2:]).strip()
+                        if assid and assid != "--":
+                            conn_name = assid
+                    break
+
+        if signal == 0 or conn_name == "Wi-Fi":
+            _, wlist_out, _ = run_cmd(["nmcli", "-t", "-f", "IN-USE,SIGNAL,SSID", "device", "wifi", "list"])
+            if wlist_out:
+                for wline in wlist_out.splitlines():
+                    if wline.startswith("*:"):
+                        wparts = wline.split(":")
+                        if len(wparts) >= 2 and wparts[1].isdigit():
+                            signal = int(wparts[1])
+                        if len(wparts) >= 3:
+                            found_ssid = ":".join(wparts[2:]).strip()
+                            if found_ssid and found_ssid != "--":
+                                conn_name = found_ssid
                         break
 
     return {
@@ -82,6 +111,18 @@ def get_saved_connections():
     return saved
 
 def get_wifi_list():
+    if MOCK_FILE.exists():
+        try:
+            with open(MOCK_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                if "networks" in data:
+                    return {
+                        "wifi_enabled": data.get("wifi_enabled", True),
+                        "networks": data["networks"]
+                    }
+        except Exception:
+            pass
+
     _, wifi_out, _ = run_cmd(["nmcli", "-t", "-f", "WIFI", "g"])
     wifi_enabled = wifi_out.lower() == "enabled"
 

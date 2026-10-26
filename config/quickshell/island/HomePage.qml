@@ -27,6 +27,7 @@ Item {
     property real animProgress: 1.0
 
     property alias isWifiDialogOpen: wifiDialog.isOpen
+    function openWifiDialog() { wifiDialog.open() }
     function closeWifiDialog() { wifiDialog.close() }
 
     function svgUrl(svgContent) {
@@ -228,7 +229,7 @@ Item {
         ProfileBanner {
             id: card0
             width: parent.width
-            height: 90
+            height: 104
             wallpaperTimestamp: root.wallpaperTimestamp
             opacity: 0.0
             transform: Translate { id: t0; y: 14 }
@@ -297,7 +298,7 @@ Item {
             width: parent.width
             height: {
                 if (root.isAudioPlaying && root.visualizerEnabled) return 130
-                if (root.notificationList && root.notificationList.length > 0) return 185
+                if (root.notificationList && root.notificationList.length > 0) return 172
                 return 160
             }
             opacity: 0.0
