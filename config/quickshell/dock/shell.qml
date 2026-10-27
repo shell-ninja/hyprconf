@@ -550,8 +550,10 @@ ShellRoot {
 
                 visible: root.config.enabled !== false
 
-                // Click-through mask: only the active content receives input
+                // Input mask: edgeTrigger always active (for 3px hover detection),
+                // dockContainer added when expanded (for app interaction)
                 mask: Region {
+                    Region { item: (root.config.enabled !== false) ? edgeTrigger : null }
                     Region { item: (root.config.enabled !== false && isWindowExpanded) ? dockContainer : null }
                 }
 
@@ -645,13 +647,15 @@ ShellRoot {
                     border.color: Theme.alpha(Theme.accent, root.config.border_glow ? 0.38 : 0.20)
 
                     // Centering & Sliding Animation
+                    // Uses fullWidth/fullHeight for hidden position so the dock
+                    // slides from the correct edge even when window is collapsed to 3px
                     x: {
                         if (isHorizontal) {
                             return (dockWin.width - width) / 2
                         } else if (pos === "left") {
                             return dockWin.isDockOpen ? 10 : (-width - 15)
                         } else if (pos === "right") {
-                            return dockWin.isDockOpen ? (dockWin.width - width - 10) : (dockWin.width + 15)
+                            return dockWin.isDockOpen ? (dockWin.fullWidth - width - 10) : (dockWin.fullWidth + 15)
                         }
                         return 0
                     }
@@ -660,7 +664,7 @@ ShellRoot {
                         if (!isHorizontal) {
                             return (dockWin.height - height) / 2
                         } else if (pos === "bottom") {
-                            return dockWin.isDockOpen ? (dockWin.height - height - 10) : (dockWin.height + 15)
+                            return dockWin.isDockOpen ? (dockWin.fullHeight - height - 10) : (dockWin.fullHeight + 15)
                         } else if (pos === "top") {
                             return dockWin.isDockOpen ? 10 : (-height - 15)
                         }
