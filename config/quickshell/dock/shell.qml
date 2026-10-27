@@ -501,17 +501,23 @@ ShellRoot {
                         id: dockWin
                         screen: screenScope.modelData
 
-                // Gate hover detection until the Wayland input mask is committed;
-                // prevents false hover when cursor is inside PanelWindow area
-                // during Loader recreation (before mask takes effect)
-                property bool maskReady: false
+                // Dynamic window expansion:
+                // When dock is hidden → window is only 3px at the screen edge (cursor must reach the very edge)
+                // When dock is open → window expands to full size for dock interaction
+                // collapseDelay keeps window expanded during the 220ms slide-out animation
+                property bool isWindowExpanded: isDockOpen || collapseDelay.running
                 Timer {
-                    id: maskReadyTimer
-                    interval: 50
+                    id: collapseDelay
+                    interval: 240  // slightly longer than the 220ms slide animation
                     repeat: false
-                    onTriggered: dockWin.maskReady = true
                 }
-                Component.onCompleted: maskReadyTimer.start()
+                onIsDockOpenChanged: {
+                    if (!isDockOpen) collapseDelay.restart()
+                }
+
+                // Full sizes for expanded state
+                readonly property int fullWidth: iconSz + dockPad * 2 + 100
+                readonly property int fullHeight: iconSz + dockPad * 2 + 56
 
                 // Anchors according to position
                 anchors {
@@ -521,9 +527,9 @@ ShellRoot {
                     right: isHorizontal ? true : (pos === "right")
                 }
 
-                // Window dimensions sized to dock container + margin + tooltip room
-                implicitWidth: isHorizontal ? screen.width : (iconSz + dockPad * 2 + 100)
-                implicitHeight: isHorizontal ? (iconSz + dockPad * 2 + 56) : screen.height
+                // Dynamic window size: 3px trigger strip when hidden, full when open
+                implicitWidth: isHorizontal ? screen.width : (isWindowExpanded ? fullWidth : 3)
+                implicitHeight: isHorizontal ? (isWindowExpanded ? fullHeight : 3) : screen.height
 
                 color: "transparent"
                 WlrLayershell.layer: WlrLayer.Top
@@ -544,10 +550,9 @@ ShellRoot {
 
                 visible: root.config.enabled !== false
 
-                // Input Mask: Only edge trigger (3px) and active dock container receive clicks
+                // Click-through mask: only the active content receives input
                 mask: Region {
-                    Region { item: (root.config.enabled !== false) ? edgeTrigger : null }
-                    Region { item: (root.config.enabled !== false && dockWin.isDockOpen) ? dockContainer : null }
+                    Region { item: (root.config.enabled !== false && isWindowExpanded) ? dockContainer : null }
                 }
 
                 // ── VISIBILITY & STAGE MECHANICS ────────────────────────────
@@ -558,7 +563,7 @@ ShellRoot {
                     }
                 }
 
-                readonly property bool isHovered: dockWin.maskReady && (edgeHH.hovered || dockHH.hovered || (contextMenu.visible && contextMenu.isHovered)) && (root.config.enabled !== false)
+                readonly property bool isHovered: (edgeHH.hovered || dockHH.hovered || (contextMenu.visible && contextMenu.isHovered)) && (root.config.enabled !== false)
 
                 // Accurately detect if focused workspace has any open windows
                 readonly property bool hasWindowsOnWorkspace: root.currentWsWindowCount > 0
@@ -621,7 +626,7 @@ ShellRoot {
 
                     HoverHandler {
                         id: edgeHH
-                        enabled: root.config.enabled !== false && dockWin.maskReady
+                        enabled: root.config.enabled !== false
                     }
                 }
 
@@ -671,7 +676,7 @@ ShellRoot {
 
                     HoverHandler {
                         id: dockHH
-                        enabled: root.config.enabled !== false && dockWin.maskReady
+                        enabled: root.config.enabled !== false
                     }
 
                     // Background click dismisser for context menu & clicks
