@@ -37,7 +37,7 @@ Item {
         if (currentView === 5) return 380
         if (currentView === 6) return 370
         if (currentView === 7) return clipboardView ? clipboardView.preferredHeight : 520
-        if (currentView === 8) return emojiView ? emojiView.preferredHeight : 460
+        if (currentView === 8) return emojiView ? emojiView.preferredHeight : 510
         if (currentView === 9) return keybindsView ? keybindsView.preferredHeight : 520
         return 496
     }

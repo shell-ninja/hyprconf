@@ -22,7 +22,7 @@ Item {
     }
 
     readonly property real preferredWidth: 620
-    readonly property real preferredHeight: 460
+    readonly property real preferredHeight: 510
     implicitWidth: preferredWidth
     implicitHeight: preferredHeight
 
@@ -195,7 +195,7 @@ Item {
             root.closeRequested()
             return true
         }
-        var cols = 13
+        var cols = 10
         if (event.key === Qt.Key_Right) {
             if (filteredEmojis.length > 0) {
                 selectedIndex = Math.min(filteredEmojis.length - 1, selectedIndex + 1)
@@ -321,14 +321,33 @@ Item {
                                 root.updateFilter()
                             }
 
+                            Keys.onDownPressed: function(event) {
+                                if (root.filteredEmojis.length > 0) {
+                                    event.accepted = true
+                                    root.selectedIndex = Math.min(root.filteredEmojis.length - 1, root.selectedIndex + 10)
+                                    emojiGrid.positionViewAtIndex(root.selectedIndex, GridView.Contain)
+                                    root.hoveredEmojiData = root.filteredEmojis[root.selectedIndex]
+                                }
+                            }
+                            Keys.onUpPressed: function(event) {
+                                if (root.filteredEmojis.length > 0) {
+                                    event.accepted = true
+                                    root.selectedIndex = Math.max(0, root.selectedIndex - 10)
+                                    emojiGrid.positionViewAtIndex(root.selectedIndex, GridView.Contain)
+                                    root.hoveredEmojiData = root.filteredEmojis[root.selectedIndex]
+                                }
+                            }
+
                             Keys.onReturnPressed: {
                                 if (root.filteredEmojis.length > 0) {
-                                    root.selectEmoji(root.filteredEmojis[0].emoji)
+                                    var idx = (root.selectedIndex >= 0 && root.selectedIndex < root.filteredEmojis.length) ? root.selectedIndex : 0;
+                                    root.selectEmoji(root.filteredEmojis[idx].emoji)
                                 }
                             }
                             Keys.onEnterPressed: {
                                 if (root.filteredEmojis.length > 0) {
-                                    root.selectEmoji(root.filteredEmojis[0].emoji)
+                                    var idx = (root.selectedIndex >= 0 && root.selectedIndex < root.filteredEmojis.length) ? root.selectedIndex : 0;
+                                    root.selectEmoji(root.filteredEmojis[idx].emoji)
                                 }
                             }
                             Keys.onEscapePressed: function(event) {
@@ -425,9 +444,9 @@ Item {
 
                         delegate: Rectangle {
                             id: catPill
-                            height: 26
-                            width: catText.implicitWidth + 20
-                            radius: 13
+                            height: 28
+                            width: catText.implicitWidth + 24
+                            radius: 14
                             color: {
                                 if (root.activeCategory === modelData.id) return Theme.alpha(Theme.accent, 0.24)
                                 if (pillMouse.containsMouse) return Theme.alpha(Theme.foreground, 0.10)
@@ -441,12 +460,12 @@ Item {
 
                             Row {
                                 anchors.centerIn: parent
-                                spacing: 4
+                                spacing: 5
 
                                 Text {
                                     text: modelData.icon
                                     font.family: "Noto Color Emoji"
-                                    font.pixelSize: 11
+                                    font.pixelSize: 13
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
 
@@ -489,14 +508,14 @@ Item {
             // ── MAIN EMOJI GRID ──────────────────────────────────────────────
             Item {
                 width: parent.width
-                height: 310
+                height: 345
                 clip: true
 
                 GridView {
                     id: emojiGrid
                     anchors.fill: parent
-                    cellWidth: 45
-                    cellHeight: 45
+                    cellWidth: 58
+                    cellHeight: 58
                     boundsBehavior: Flickable.StopAtBounds
                     model: root.filteredEmojis
 
@@ -506,8 +525,8 @@ Item {
                     }
 
                     delegate: Item {
-                        width: 45
-                        height: 45
+                        width: 58
+                        height: 58
 
                         required property var modelData
                         required property int index
@@ -517,9 +536,9 @@ Item {
                         Rectangle {
                             id: tileRect
                             anchors.centerIn: parent
-                            width: 38
-                            height: 38
-                            radius: 9
+                            width: 50
+                            height: 50
+                            radius: 12
                             color: {
                                 if (isSelected) return Theme.alpha(Theme.accent, 0.30)
                                 if (tileMouse.containsMouse) return Theme.alpha(Theme.accent, 0.18)
@@ -531,7 +550,7 @@ Item {
                                 return "transparent"
                             }
                             border.width: 1
-                            scale: tileMouse.pressed ? 0.90 : (tileMouse.containsMouse || isSelected ? 1.15 : 1.0)
+                            scale: tileMouse.pressed ? 0.90 : (tileMouse.containsMouse || isSelected ? 1.14 : 1.0)
 
                             Behavior on scale { NumberAnimation { duration: 110; easing.type: Easing.OutCubic } }
                             Behavior on color { ColorAnimation { duration: 110 } }
@@ -541,7 +560,7 @@ Item {
                                 anchors.centerIn: parent
                                 text: modelData.emoji || ""
                                 font.family: "Noto Color Emoji"
-                                font.pixelSize: 20
+                                font.pixelSize: 30
                             }
 
                             MouseArea {
@@ -599,7 +618,7 @@ Item {
             // ── BOTTOM DETAIL / PREVIEW STATUS ROW ───────────────────────────
             Rectangle {
                 width: parent.width
-                height: 38
+                height: 42
                 radius: 10
                 color: Theme.alpha(Theme.foreground, 0.035)
                 border.color: Theme.alpha(Theme.foreground, 0.07)
@@ -607,15 +626,15 @@ Item {
 
                 RowLayout {
                     anchors.fill: parent
-                    anchors.leftMargin: 10
-                    anchors.rightMargin: 10
-                    spacing: 8
+                    anchors.leftMargin: 12
+                    anchors.rightMargin: 12
+                    spacing: 10
 
                     // Hovered Icon
                     Text {
                         text: root.hoveredEmojiData ? root.hoveredEmojiData.emoji : "✨"
                         font.family: "Noto Color Emoji"
-                        font.pixelSize: 18
+                        font.pixelSize: 26
                         Layout.alignment: Qt.AlignVCenter
                     }
 
@@ -623,7 +642,7 @@ Item {
                     Column {
                         Layout.fillWidth: true
                         Layout.alignment: Qt.AlignVCenter
-                        spacing: 1
+                        spacing: 2
 
                         Text {
                             text: {
@@ -634,7 +653,7 @@ Item {
                                 return "Hover over any emoji for preview"
                             }
                             font.family: "Outfit"
-                            font.pixelSize: 11
+                            font.pixelSize: 12
                             font.weight: Font.DemiBold
                             color: Theme.foreground
                             elide: Text.ElideRight
@@ -648,7 +667,7 @@ Item {
                                 return "Press Super + Shift + D anytime to toggle"
                             }
                             font.family: "Outfit"
-                            font.pixelSize: 9
+                            font.pixelSize: 10
                             color: Theme.alpha(Theme.foreground, 0.45)
                             elide: Text.ElideRight
                         }
@@ -656,9 +675,9 @@ Item {
 
                     // Paste Hint Pill
                     Rectangle {
-                        height: 22
-                        width: pasteText.implicitWidth + 14
-                        radius: 11
+                        height: 24
+                        width: pasteText.implicitWidth + 16
+                        radius: 12
                         color: Theme.alpha(Theme.accent, 0.18)
                         border.color: Theme.alpha(Theme.accent, 0.35)
                         border.width: 1
