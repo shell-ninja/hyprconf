@@ -483,9 +483,17 @@ for sub in "$island_dir" "$launcher_dir" "$launcher_theme_dir" "$settings_dir" "
     [[ ! -e "$sub/colors.json" || ( -L "$sub/colors.json" && "$(readlink "$sub/colors.json")" =~ /home/ ) ]] && ln -sfn "../colors.json" "$sub/colors.json"
 done
 
-# Ensure settings qmldir includes DockSection
+# Ensure settings and island qmldir include required components
 if [[ -f "$settings_dir/qmldir" ]] && ! grep -q "DockSection" "$settings_dir/qmldir"; then
     echo "DockSection 1.0 DockSection.qml" >> "$settings_dir/qmldir"
+fi
+if [[ -f "$island_dir/qmldir" ]]; then
+    if ! grep -q "KeybindsView" "$island_dir/qmldir"; then
+        echo "KeybindsView 1.0 KeybindsView.qml" >> "$island_dir/qmldir"
+    fi
+    if ! grep -q "WifiNetworkDialog" "$island_dir/qmldir"; then
+        echo "WifiNetworkDialog 1.0 WifiNetworkDialog.qml" >> "$island_dir/qmldir"
+    fi
 fi
 
 # 4. Bootstrap user settings and sync symlinks into ~/.hyprconf
