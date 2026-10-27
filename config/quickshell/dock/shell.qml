@@ -517,7 +517,6 @@ ShellRoot {
                 WlrLayershell.layer: WlrLayer.Top
                 WlrLayershell.namespace: "dock"
                 WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
-
                 // Reserved workspace margin in Always On mode
                 exclusiveZone: {
                     if (root.config.mode === "always_on" && root.config.enabled !== false) {
@@ -526,13 +525,17 @@ ShellRoot {
                     return 0
                 }
 
+                Binding on exclusionMode {
+                    value: (root.config.mode === "always_on" && root.config.enabled !== false) ? ExclusionMode.Normal : ExclusionMode.Ignore
+                    delayed: true
+                }
+
                 visible: root.config.enabled !== false
 
                 // Input Mask: Only edge trigger (3px) and active dock container receive clicks
                 mask: Region {
                     Region { item: (root.config.enabled !== false) ? edgeTrigger : null }
                     Region { item: (root.config.enabled !== false && dockWin.isDockOpen) ? dockContainer : null }
-                    Region { item: (root.config.enabled !== false && contextMenu.visible) ? contextMenu : null }
                 }
 
                 // ── VISIBILITY & STAGE MECHANICS ────────────────────────────
