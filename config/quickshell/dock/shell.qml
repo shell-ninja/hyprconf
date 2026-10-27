@@ -487,9 +487,19 @@ ShellRoot {
             id: screenScope
             required property var modelData
 
-            PanelWindow {
-                id: dockWin
-                screen: screenScope.modelData
+            Loader {
+                id: dockWinLoader
+                active: true
+                property string currentPos: root.pos
+                onCurrentPosChanged: {
+                    active = false
+                    active = true
+                }
+
+                sourceComponent: Component {
+                    PanelWindow {
+                        id: dockWin
+                        screen: screenScope.modelData
 
                 // Anchors according to position
                 anchors {
@@ -932,3 +942,6 @@ ShellRoot {
         }
     }
 }
+}
+}
+
