@@ -501,6 +501,18 @@ ShellRoot {
                         id: dockWin
                         screen: screenScope.modelData
 
+                // Gate hover detection until the Wayland input mask is committed;
+                // prevents false hover when cursor is inside PanelWindow area
+                // during Loader recreation (before mask takes effect)
+                property bool maskReady: false
+                Timer {
+                    id: maskReadyTimer
+                    interval: 50
+                    repeat: false
+                    onTriggered: dockWin.maskReady = true
+                }
+                Component.onCompleted: maskReadyTimer.start()
+
                 // Anchors according to position
                 anchors {
                     top: isHorizontal ? (pos === "top") : true
@@ -509,9 +521,9 @@ ShellRoot {
                     right: isHorizontal ? true : (pos === "right")
                 }
 
-                // Window dimensions sized strictly to dock container + margin + tooltip/hover room
-                implicitWidth: isHorizontal ? screen.width : (iconSz + dockPad * 2 + 160)
-                implicitHeight: isHorizontal ? (iconSz + dockPad * 2 + 80) : screen.height
+                // Window dimensions sized to dock container + margin + tooltip room
+                implicitWidth: isHorizontal ? screen.width : (iconSz + dockPad * 2 + 100)
+                implicitHeight: isHorizontal ? (iconSz + dockPad * 2 + 56) : screen.height
 
                 color: "transparent"
                 WlrLayershell.layer: WlrLayer.Top
@@ -546,7 +558,7 @@ ShellRoot {
                     }
                 }
 
-                readonly property bool isHovered: (edgeHH.hovered || dockHH.hovered || (contextMenu.visible && contextMenu.isHovered)) && (root.config.enabled !== false)
+                readonly property bool isHovered: dockWin.maskReady && (edgeHH.hovered || dockHH.hovered || (contextMenu.visible && contextMenu.isHovered)) && (root.config.enabled !== false)
 
                 // Accurately detect if focused workspace has any open windows
                 readonly property bool hasWindowsOnWorkspace: root.currentWsWindowCount > 0
@@ -609,7 +621,7 @@ ShellRoot {
 
                     HoverHandler {
                         id: edgeHH
-                        enabled: root.config.enabled !== false
+                        enabled: root.config.enabled !== false && dockWin.maskReady
                     }
                 }
 
@@ -659,7 +671,7 @@ ShellRoot {
 
                     HoverHandler {
                         id: dockHH
-                        enabled: root.config.enabled !== false
+                        enabled: root.config.enabled !== false && dockWin.maskReady
                     }
 
                     // Background click dismisser for context menu & clicks
