@@ -213,7 +213,7 @@ PanelWindow {
 
     Process {
         id: configLoader
-        command: ["python3", "-c", "import json, os; p=os.path.expanduser('~/.local/share/hyprconf/island.json'); print(open(p).read() if os.path.exists(p) else '{}')"]
+        command: ["python3", "-c", "import json, os; p1=os.path.expanduser('~/.local/share/hyprconf/island.json'); p2=os.path.expanduser('~/.hyprconf/quickshell/island/config.json'); p=p1 if os.path.exists(p1) else p2; print(open(p, encoding='utf-8').read() if os.path.exists(p) else '{}')"]
         running: true
         stdout: StdioCollector {
             onTextChanged: {

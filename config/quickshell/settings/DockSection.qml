@@ -71,7 +71,7 @@ Item {
 
     Process {
         id: dockReader
-        command: ["python3", "-c", "import json, os; p=os.path.expanduser('~/.hyprconf/quickshell/dock/dock.json'); print(open(p, encoding='utf-8').read() if os.path.exists(p) else '{}')"]
+        command: ["python3", "-c", "import json, os; p1=os.path.expanduser('~/.local/share/hyprconf/dock.json'); p2=os.path.expanduser('~/.hyprconf/quickshell/dock/dock.json'); p=p1 if os.path.exists(p1) else p2; print(open(p, encoding='utf-8').read() if os.path.exists(p) else '{}')"]
         running: true
         stdout: StdioCollector {
             onTextChanged: {
@@ -100,7 +100,7 @@ Item {
         }
     }
 
-    // ── Save dock.json & Live Apply via IPC ──────────────────────────────────
+    // ── Save dock.json & Remote IPC Reload ──────────────────────────────────
     Process {
         id: dockWriter
         onExited: {
@@ -114,7 +114,7 @@ Item {
         command: ["qs", "ipc", "-c", "dock", "call", "dock", "reloadConfig"]
     }
 
-    // Debounced instant live save timer for sliders
+    // Debounced save timer for sliders
     Timer {
         id: autoSaveTimer
         interval: 120
@@ -146,7 +146,7 @@ Item {
             "pinned_apps": root.pinnedApps
         }
         var jsonStr = JSON.stringify(payload, null, 2)
-        var pyScript = "import json, os; p=os.path.expanduser('~/.hyprconf/quickshell/dock/dock.json'); os.makedirs(os.path.dirname(p), exist_ok=True); open(p, 'w', encoding='utf-8').write('''" + jsonStr + "''')"
+        var pyScript = "import json, os\nfor p in [os.path.expanduser('~/.local/share/hyprconf/dock.json'), os.path.expanduser('~/.hyprconf/quickshell/dock/dock.json')]:\n    try:\n        os.makedirs(os.path.dirname(p), exist_ok=True)\n        with open(p, 'w', encoding='utf-8') as f: f.write('''" + jsonStr + "''')\n    except Exception as e: print(e)\n"
         dockWriter.command = ["python3", "-c", pyScript]
         dockWriter.running = true
     }
@@ -256,7 +256,7 @@ Item {
             width: parent.width
             spacing: 16
 
-            // ── TOP HEADER (WITH LIVE SYNC INDICATOR) ────────────────────────
+            // ── TOP HEADER (WITH MASTER DOCK TOGGLE) ─────────────────────────
             Rectangle {
                 width: parent.width
                 height: 64
@@ -283,48 +283,43 @@ Item {
                         }
 
                         Text {
-                            text: "Dynamic desktop dock with instant live application"
+                            text: "Customizable application dock with stage visibility"
                             color: Theme.alpha(Theme.foreground, 0.60)
                             font.family: "Outfit"
                             font.pixelSize: 11
                         }
                     }
 
-                    // Live Sync Indicator Pill
+                    // Master Toggle Header Pill
                     Rectangle {
-                        width: 136
-                        height: 32
-                        radius: 16
+                        width: 154
+                        height: 34
+                        radius: 17
                         color: Theme.alpha(Theme.surface, 0.90)
                         border.width: 1
-                        border.color: Theme.alpha(Theme.accent, 0.35)
+                        border.color: root.dockEnabled ? Theme.alpha(Theme.accent, 0.40) : Theme.alpha(Theme.foreground, 0.15)
 
-                        Row {
-                            anchors.centerIn: parent
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.leftMargin: 12
+                            anchors.rightMargin: 8
                             spacing: 8
 
-                            Rectangle {
-                                width: 7
-                                height: 7
-                                radius: 3.5
-                                color: root.isSaving ? Theme.accent : "#28c840"
-                                anchors.verticalCenter: parent.verticalCenter
-
-                                SequentialAnimation on opacity {
-                                    running: root.isSaving
-                                    loops: Animation.Infinite
-                                    NumberAnimation { from: 0.3; to: 1.0; duration: 400 }
-                                    NumberAnimation { from: 1.0; to: 0.3; duration: 400 }
-                                }
-                            }
-
                             Text {
-                                text: root.isSaving ? "Applying..." : "Live Applied"
-                                color: Theme.foreground
+                                Layout.fillWidth: true
+                                text: root.dockEnabled ? "Dock Enabled" : "Dock Disabled"
+                                color: root.dockEnabled ? Theme.foreground : Theme.alpha(Theme.foreground, 0.50)
                                 font.family: "Outfit"
                                 font.pixelSize: 11
                                 font.weight: Font.DemiBold
-                                anchors.verticalCenter: parent.verticalCenter
+                            }
+
+                            CapsuleSwitch {
+                                checked: root.dockEnabled
+                                onToggled: {
+                                    root.dockEnabled = checked
+                                    root.triggerAutoSave()
+                                }
                             }
                         }
                     }
@@ -355,10 +350,51 @@ Item {
                 }
             }
 
-            // ── LIVE INTERACTIVE PREVIEW CARD ────────────────────────────────
+            // ── MASTER DOCK CONTROL CARD ─────────────────────────────────────
             SettingCard {
-                title: "Live Dock Preview"
-                description: "Interactive real-time preview reflecting your active dock settings"
+                title: "Dock State & Master Control"
+                description: "Turn the desktop application dock on or off across all connected displays"
+
+                RowLayout {
+                    width: parent.width
+                    spacing: 12
+
+                    Column {
+                        Layout.fillWidth: true
+                        spacing: 2
+
+                        Text {
+                            text: root.dockEnabled ? "Dock is Turned On" : "Dock is Turned Off"
+                            color: Theme.foreground
+                            font.family: "Outfit"
+                            font.pixelSize: 13
+                            font.weight: Font.DemiBold
+                        }
+
+                        Text {
+                            text: root.dockEnabled 
+                                ? "Dock is active at the screen edge and responds to stage visibility rules."
+                                : "Dock window, edge sensors, and click masks are completely deactivated."
+                            color: Theme.alpha(Theme.foreground, 0.50)
+                            font.family: "Outfit"
+                            font.pixelSize: 11
+                        }
+                    }
+
+                    CapsuleSwitch {
+                        checked: root.dockEnabled
+                        onToggled: {
+                            root.dockEnabled = checked
+                            root.triggerAutoSave()
+                        }
+                    }
+                }
+            }
+
+            // ── INTERACTIVE PREVIEW CARD ─────────────────────────────────────
+            SettingCard {
+                title: "Interactive Dock Preview"
+                description: "Real-time preview reflecting your active dock settings"
 
                 Rectangle {
                     width: parent.width
@@ -1051,7 +1087,7 @@ Item {
             // ── CURRENTLY OPEN WINDOWS (1-CLICK PIN) ──────────────────────────
             SettingCard {
                 title: "Currently Open Windows"
-                description: "Live detection of running applications with one-click pin to dock"
+                description: "Automatic detection of running applications with one-click pin to dock"
 
                 Column {
                     width: parent.width

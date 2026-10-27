@@ -85,7 +85,7 @@ ShellRoot {
     // ── READ DOCK CONFIG ─────────────────────────────────────────────────────
     Process {
         id: configReader
-        command: ["python3", "-c", "import json, os; p=os.path.expanduser('~/.hyprconf/quickshell/dock/dock.json'); print(open(p, encoding='utf-8').read() if os.path.exists(p) else '{}')"]
+        command: ["python3", "-c", "import json, os; p1=os.path.expanduser('~/.local/share/hyprconf/dock.json'); p2=os.path.expanduser('~/.hyprconf/quickshell/dock/dock.json'); p=p1 if os.path.exists(p1) else p2; print(open(p, encoding='utf-8').read() if os.path.exists(p) else '{}')"]
         running: true
         stdout: StdioCollector {
             onTextChanged: {
@@ -93,6 +93,7 @@ ShellRoot {
                 try {
                     var parsed = JSON.parse(text.trim())
                     var cfg = Object.assign({}, root.config, parsed)
+                    if (cfg.enabled === undefined) cfg.enabled = true
                     if (!cfg.pinned_apps) cfg.pinned_apps = []
                     root.config = cfg
                     root.updateDockItems()
@@ -114,7 +115,7 @@ ShellRoot {
     function saveDockConfig(newConfig) {
         root.config = newConfig
         var jsonStr = JSON.stringify(newConfig, null, 2)
-        var pyScript = "import json, os; p=os.path.expanduser('~/.hyprconf/quickshell/dock/dock.json'); os.makedirs(os.path.dirname(p), exist_ok=True); open(p, 'w', encoding='utf-8').write('''" + jsonStr + "''')"
+        var pyScript = "import json, os\nfor p in [os.path.expanduser('~/.local/share/hyprconf/dock.json'), os.path.expanduser('~/.hyprconf/quickshell/dock/dock.json')]:\n    try:\n        os.makedirs(os.path.dirname(p), exist_ok=True)\n        with open(p, 'w', encoding='utf-8') as f: f.write('''" + jsonStr + "''')\n    except Exception as e: print(e)\n"
         configWriter.command = ["python3", "-c", pyScript]
         configWriter.running = true
     }
@@ -509,16 +510,19 @@ ShellRoot {
 
                 // Reserved workspace margin in Always On mode
                 exclusiveZone: {
-                    if (root.config.mode === "always_on" && root.config.enabled) {
+                    if (root.config.mode === "always_on" && root.config.enabled !== false) {
                         return (isHorizontal ? dockContainer.height : dockContainer.width) + 12
                     }
                     return 0
                 }
 
+                visible: root.config.enabled !== false
+
                 // Input Mask: Only edge trigger (3px) and active dock container receive clicks
                 mask: Region {
-                    Region { item: edgeTrigger }
-                    Region { item: dockWin.isDockOpen ? dockContainer : null }
+                    Region { item: (root.config.enabled !== false) ? edgeTrigger : null }
+                    Region { item: (root.config.enabled !== false && dockWin.isDockOpen) ? dockContainer : null }
+                    Region { item: (root.config.enabled !== false && contextMenu.visible) ? contextMenu : null }
                 }
 
                 // ── VISIBILITY & STAGE MECHANICS ────────────────────────────
@@ -529,13 +533,13 @@ ShellRoot {
                     }
                 }
 
-                readonly property bool isHovered: edgeHH.hovered || dockHH.hovered || (contextMenu.visible && contextMenu.isHovered)
+                readonly property bool isHovered: (edgeHH.hovered || dockHH.hovered || (contextMenu.visible && contextMenu.isHovered)) && (root.config.enabled !== false)
 
                 // Accurately detect if focused workspace has any open windows
                 readonly property bool hasWindowsOnWorkspace: root.currentWsWindowCount > 0
 
                 readonly property bool shouldBeVisible: {
-                    if (!root.config.enabled) return false
+                    if (root.config.enabled === false) return false
 
                     // Stage 1: Always On
                     if (root.config.mode === "always_on") {
@@ -572,23 +576,27 @@ ShellRoot {
                     }
                 }
 
-                readonly property bool isDockOpen: dockWin.shouldBeVisible || hideTimer.running
+                readonly property bool isDockOpen: (root.config.enabled !== false) && (dockWin.shouldBeVisible || hideTimer.running)
 
-                // ── EDGE TRIGGER SENSOR (STRICTLY 3PX AT SCREEN EDGE) ─────────
+                // ── EDGE TRIGGER SENSOR (STRICTLY 3PX AT SCREEN EDGE, SIZED TO DOCK) ─────────
                 Item {
                     id: edgeTrigger
                     z: 99
 
-                    anchors.top: isHorizontal ? (pos === "top" ? parent.top : undefined) : parent.top
-                    anchors.bottom: isHorizontal ? (pos === "bottom" ? parent.bottom : undefined) : parent.bottom
-                    anchors.left: !isHorizontal ? (pos === "left" ? parent.left : undefined) : parent.left
-                    anchors.right: !isHorizontal ? (pos === "right" ? parent.right : undefined) : parent.right
+                    anchors.top: isHorizontal ? (pos === "top" ? parent.top : undefined) : undefined
+                    anchors.bottom: isHorizontal ? (pos === "bottom" ? parent.bottom : undefined) : undefined
+                    anchors.left: !isHorizontal ? (pos === "left" ? parent.left : undefined) : undefined
+                    anchors.right: !isHorizontal ? (pos === "right" ? parent.right : undefined) : undefined
 
-                    width: isHorizontal ? parent.width : 3
-                    height: isHorizontal ? 3 : parent.height
+                    anchors.horizontalCenter: isHorizontal ? parent.horizontalCenter : undefined
+                    anchors.verticalCenter: !isHorizontal ? parent.verticalCenter : undefined
+
+                    width: isHorizontal ? Math.max(160, dockContainer.width + 32) : 3
+                    height: isHorizontal ? 3 : Math.max(160, dockContainer.height + 32)
 
                     HoverHandler {
                         id: edgeHH
+                        enabled: root.config.enabled !== false
                     }
                 }
 
@@ -638,6 +646,7 @@ ShellRoot {
 
                     HoverHandler {
                         id: dockHH
+                        enabled: root.config.enabled !== false
                     }
 
                     // Background click dismisser for context menu & clicks

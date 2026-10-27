@@ -56,11 +56,12 @@ Item {
     }
 
     // ── Config Loader ───────────────────────────────────────────────────────
-    readonly property string configFilePath: window.homeDir + "/.local/share/hyprconf/island.json"
+    readonly property string configFilePath: window.homeDir + "/.hyprconf/quickshell/island/config.json"
+    property bool isInitialized: false
 
     Process {
         id: configReader
-        command: ["python3", "-c", "import json, os; p=os.path.expanduser('~/.local/share/hyprconf/island.json'); print(open(p).read() if os.path.exists(p) else '{}')"]
+        command: ["python3", "-c", "import json, os; p1=os.path.expanduser('~/.local/share/hyprconf/island.json'); p2=os.path.expanduser('~/.hyprconf/quickshell/island/config.json'); p=p1 if os.path.exists(p1) else p2; print(open(p, encoding='utf-8').read() if os.path.exists(p) else '{}')"]
         running: true
         stdout: StdioCollector {
             onTextChanged: {
@@ -77,7 +78,7 @@ Item {
                         if (data.visualizer.style) root.visualizerStyle = data.visualizer.style
                         if (data.visualizer.move_to_bottom_on_hover !== undefined) root.visualizerMoveOnHover = data.visualizer.move_to_bottom_on_hover
                     }
-                    root.isDirty = false
+                    root.isInitialized = true
                 } catch(e) {
                     console.log("[IslandSection] Error loading config.json:", e)
                 }
@@ -85,15 +86,23 @@ Item {
         }
     }
 
-    // ── Config Saver ────────────────────────────────────────────────────────
+    // ── Debounced Auto-Saver & IPC Reload ────────────────────────────────────
+    Timer {
+        id: autoSaveTimer
+        interval: 100
+        repeat: false
+        onTriggered: root.saveSettings()
+    }
+
+    function triggerAutoSave() {
+        if (!root.isInitialized) return
+        autoSaveTimer.restart()
+    }
+
     Process {
         id: configWriter
         onExited: {
-            root.isDirty = false
-            window.toastMessage = "Island Settings Applied"
-            window.showSaveToast = true
-            toastTimer.restart()
-            // Signal running Island daemon to hot-reload immediately via IPC
+            // Hot-reload island daemon immediately via IPC
             islandReloader.running = true
         }
     }
@@ -101,15 +110,6 @@ Item {
     Process {
         id: islandReloader
         command: ["qs", "ipc", "-c", "island", "call", "island", "reloadConfig"]
-    }
-
-    Timer {
-        id: toastTimer
-        interval: 2200
-        repeat: false
-        onTriggered: {
-            window.showSaveToast = false
-        }
     }
 
     function saveSettings() {
@@ -126,9 +126,21 @@ Item {
             }
         }
         var jsonStr = JSON.stringify(payload, null, 2)
-        var pyScript = "import json, os; p=os.path.expanduser('~/.local/share/hyprconf/island.json'); os.makedirs(os.path.dirname(p), exist_ok=True); open(p, 'w').write('''" + jsonStr + "''')"
+        var pyScript = "import json, os\nfor p in [os.path.expanduser('~/.local/share/hyprconf/island.json'), os.path.expanduser('~/.hyprconf/quickshell/island/config.json')]:\n    try:\n        os.makedirs(os.path.dirname(p), exist_ok=True)\n        with open(p, 'w', encoding='utf-8') as f: f.write('''" + jsonStr + "''')\n    except Exception as e: print(e)\n"
         configWriter.command = ["python3", "-c", pyScript]
         configWriter.running = true
+    }
+
+    function resetDefaults() {
+        root.islandPosition = "top"
+        root.islandAutoHide = true
+        root.islandStyle = "pill"
+        root.matrixStreamEnabled = true
+        root.visualizerEnabled = true
+        root.visualizerBarCount = 8
+        root.visualizerStyle = "wave"
+        root.visualizerMoveOnHover = true
+        root.triggerAutoSave()
     }
 
     // ── Main Scrollable Area ────────────────────────────────────────────────
@@ -193,43 +205,27 @@ Item {
                         }
                     }
 
-                    // Save / Apply Button
+                    // Reset Defaults Button
                     Rectangle {
-                        Layout.preferredWidth: 148
-                        Layout.preferredHeight: 36
-                        radius: 18
-                        color: root.isDirty ? Theme.accent : Theme.alpha(Theme.surface, 0.85)
-                        border.color: root.isDirty ? Theme.accent : Theme.alpha(Theme.accent, 0.40)
+                        Layout.preferredWidth: 110
+                        Layout.preferredHeight: 32
+                        radius: 8
+                        color: Theme.alpha(Theme.surface, 0.85)
                         border.width: 1
+                        border.color: Theme.alpha(Theme.foreground, 0.15)
 
-                        Behavior on color { ColorAnimation { duration: 150 } }
-
-                        Row {
+                        Text {
                             anchors.centerIn: parent
-                            spacing: 8
-
-                            Image {
-                                anchors.verticalCenter: parent.verticalCenter
-                                width: 14
-                                height: 14
-                                source: root.saveSvg
-                            }
-
-                            Text {
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: root.isDirty ? "Save Changes" : "Save & Reload"
-                                color: root.isDirty ? Theme.on_primary : Theme.accent
-                                font.family: "Outfit"
-                                font.pixelSize: 12
-                                font.weight: Font.Bold
-                            }
+                            text: "Reset Defaults"
+                            color: Theme.alpha(Theme.foreground, 0.85)
+                            font.family: "Outfit"
+                            font.pixelSize: 11
                         }
 
                         MouseArea {
                             anchors.fill: parent
                             cursorShape: Qt.PointingHandCursor
-                            hoverEnabled: true
-                            onClicked: root.saveSettings()
+                            onClicked: root.resetDefaults()
                         }
                     }
                 }
@@ -859,8 +855,7 @@ Item {
                                 hoverEnabled: true
                                 onClicked: {
                                     root.islandStyle = modelData.id
-                                    root.isDirty = true
-                                    root.saveSettings()
+                                    root.triggerAutoSave()
                                 }
                             }
                         }
@@ -928,7 +923,7 @@ Item {
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: {
                                     root.islandPosition = "top"
-                                    root.isDirty = true
+                                    root.triggerAutoSave()
                                 }
                             }
                         }
@@ -959,7 +954,7 @@ Item {
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: {
                                     root.islandPosition = "bottom"
-                                    root.isDirty = true
+                                    root.triggerAutoSave()
                                 }
                             }
                         }
@@ -1002,7 +997,7 @@ Item {
                         checked: root.islandAutoHide
                         onToggled: {
                             root.islandAutoHide = checked
-                            root.isDirty = true
+                            root.triggerAutoSave()
                         }
                     }
                 }
@@ -1043,7 +1038,7 @@ Item {
                         checked: root.visualizerMoveOnHover
                         onToggled: {
                             root.visualizerMoveOnHover = checked
-                            root.isDirty = true
+                            root.triggerAutoSave()
                         }
                     }
                 }
@@ -1084,7 +1079,7 @@ Item {
                         checked: root.matrixStreamEnabled
                         onToggled: {
                             root.matrixStreamEnabled = checked
-                            root.isDirty = true
+                            root.triggerAutoSave()
                         }
                     }
                 }
@@ -1124,7 +1119,7 @@ Item {
                         checked: root.visualizerEnabled
                         onToggled: {
                             root.visualizerEnabled = checked
-                            root.isDirty = true
+                            root.triggerAutoSave()
                         }
                     }
                 }
@@ -1202,7 +1197,7 @@ Item {
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: {
                                     root.visualizerStyle = "wave"
-                                    root.isDirty = true
+                                    root.triggerAutoSave()
                                 }
                             }
                         }
@@ -1247,7 +1242,7 @@ Item {
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: {
                                     root.visualizerStyle = "cava"
-                                    root.isDirty = true
+                                    root.triggerAutoSave()
                                 }
                             }
                         }
@@ -1292,7 +1287,7 @@ Item {
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: {
                                     root.visualizerStyle = "dots"
-                                    root.isDirty = true
+                                    root.triggerAutoSave()
                                 }
                             }
                         }
@@ -1368,7 +1363,7 @@ Item {
                                     cursorShape: Qt.PointingHandCursor
                                     onClicked: {
                                         root.visualizerBarCount = modelData.count
-                                        root.isDirty = true
+                                        root.triggerAutoSave()
                                     }
                                 }
                             }
@@ -1377,9 +1372,9 @@ Item {
                 }
             }
 
-            // ── Setting Card 3: Interactive Live Preview & Simulation ────────
+            // ── Setting Card 3: Interactive Spectrum Preview & Simulation ────
             SettingCard {
-                title: "Live Spectrum Simulation & Preview"
+                title: "Spectrum Simulation & Preview"
                 description: "Test rendering physics, attack/decay rates, and responsive styling in real time."
 
                 // Preview Box
