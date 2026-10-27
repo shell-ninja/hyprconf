@@ -261,9 +261,14 @@ Item {
     readonly property string rebootSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>')
     readonly property string shutdownSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.error + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>')
 
+    readonly property string userName: {
+        var u = Quickshell.env("USER")
+        return (u && u.length > 0) ? u : "user"
+    }
+
     readonly property string homeDir: {
         var h = Quickshell.env("HOME")
-        return (h && h.length > 0) ? h : "/home/shell-ninja"
+        return (h && h.length > 0) ? h : ("/home/" + root.userName)
     }
 
     Process { id: powerProc }
@@ -364,7 +369,7 @@ Item {
                     spacing: 5
                     Rectangle { width: 5; height: 5; radius: 2.5; color: Theme.accent; anchors.verticalCenter: parent.verticalCenter }
                     Text {
-                        text: "shell-ninja"
+                        text: root.userName
                         font.family: "Outfit"
                         font.pixelSize: 11
                         font.weight: Font.Medium

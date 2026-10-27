@@ -455,12 +455,12 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
             spacing: 8
 
-            // Dot 1: Page 1 (Home)
+            // Dot 1: Page 1 (Weather)
             Rectangle {
                 width: 6
                 height: 5
                 radius: 2.5
-                color: dot1Mouse.containsMouse ? Theme.foreground : Theme.alpha(Theme.foreground, 0.35)
+                color: dot1Mouse.containsMouse ? "#38bdf8" : Theme.alpha(Theme.foreground, 0.25)
                 Behavior on color { ColorAnimation { duration: 150 } }
 
                 MouseArea {
@@ -472,7 +472,7 @@ Item {
                 }
             }
 
-            // Dot 2: Page 2 (Status)
+            // Dot 2: Page 2 (Control Center)
             Rectangle {
                 width: 6
                 height: 5
@@ -489,7 +489,7 @@ Item {
                 }
             }
 
-            // Dot 3: Page 3 (Process Network) - Active
+            // Dot 3: Page 3 (System Info / App Speeds) - Active
             Rectangle {
                 width: 18
                 height: 5

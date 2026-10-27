@@ -11,6 +11,8 @@ Item {
     implicitHeight: 496
 
     property bool active: false
+    property bool showingNetworkDetail: false
+    property alias networkDetailPage: networkDetailPage
     signal backClicked()
     signal pageDotClicked(int pageIndex)
     signal openNetworkDetail()
@@ -134,15 +136,24 @@ Item {
     }
 
     onActiveChanged: {
+        if (!root.active) {
+            root.showingNetworkDetail = false
+        }
         if (root.active && !monitorProc.running) {
             monitorProc.running = true
         }
     }
 
-    // ── MAIN LAYOUT ──────────────────────────────────────────────────────────
+    // ── MAIN STATUS VIEW (PAGE 3: SYSTEM INFO) ────────────────────────────────
     Column {
+        id: statusMainView
         anchors.fill: parent
         spacing: 8
+        visible: opacity > 0.001
+        opacity: root.showingNetworkDetail ? 0.0 : 1.0
+        x: root.showingNetworkDetail ? -28 : 0
+        Behavior on opacity { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+        Behavior on x { NumberAnimation { duration: 240; easing.type: Easing.OutCubic } }
 
         // ── 1. HEADER ROW ────────────────────────────────────────────────────
         RowLayout {
@@ -671,7 +682,10 @@ Item {
                 anchors.fill: parent
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
-                onClicked: root.openNetworkDetail()
+                onClicked: {
+                    root.showingNetworkDetail = true
+                    root.openNetworkDetail()
+                }
             }
         }
 
@@ -866,17 +880,17 @@ Item {
             }
         }
 
-        // ── 6. PAGINATION DOTS PILL ──────────────────────────────────────────
+        // ── 6. PAGINATION DOTS PILL (3 PAGES: 1=Weather, 2=Control Center, 3=System Info) ────
         Row {
             anchors.horizontalCenter: parent.horizontalCenter
             spacing: 8
 
-            // Dot 1: Page 1 (Home)
+            // Dot 1: Page 1 (Weather)
             Rectangle {
                 width: 6
                 height: 5
                 radius: 2.5
-                color: dot1Mouse.containsMouse ? Theme.foreground : Theme.alpha(Theme.foreground, 0.35)
+                color: dot1Mouse.containsMouse ? "#38bdf8" : Theme.alpha(Theme.foreground, 0.25)
                 Behavior on color { ColorAnimation { duration: 150 } }
 
                 MouseArea {
@@ -888,7 +902,24 @@ Item {
                 }
             }
 
-            // Dot 2: Page 2 (Status) - Active
+            // Dot 2: Page 2 (Control Center)
+            Rectangle {
+                width: 6
+                height: 5
+                radius: 2.5
+                color: dot2Mouse.containsMouse ? Theme.foreground : Theme.alpha(Theme.foreground, 0.35)
+                Behavior on color { ColorAnimation { duration: 150 } }
+
+                MouseArea {
+                    id: dot2Mouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: root.pageDotClicked(1)
+                }
+            }
+
+            // Dot 3: Page 3 (System Info) - Active
             Rectangle {
                 width: 18
                 height: 5
@@ -896,23 +927,27 @@ Item {
                 color: Theme.accent
                 Behavior on width { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
             }
+        }
+    }
 
-            // Dot 3: Page 3 (Process Network)
-            Rectangle {
-                width: 6
-                height: 5
-                radius: 2.5
-                color: dot3Mouse.containsMouse ? "#06b6d4" : Theme.alpha(Theme.foreground, 0.25)
-                Behavior on color { ColorAnimation { duration: 150 } }
+    // ── SUB-PAGE: PER-PROCESS NETWORK DETAIL ─────────────────────────────────
+    NetworkDetailPage {
+        id: networkDetailPage
+        anchors.fill: parent
+        active: root.active && root.showingNetworkDetail
+        visible: opacity > 0.001
+        opacity: root.showingNetworkDetail ? 1.0 : 0.0
+        x: root.showingNetworkDetail ? 0 : 28
 
-                MouseArea {
-                    id: dot3Mouse
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.openNetworkDetail()
-                }
-            }
+        Behavior on opacity { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+        Behavior on x { NumberAnimation { duration: 240; easing.type: Easing.OutCubic } }
+
+        onBackClicked: {
+            root.showingNetworkDetail = false
+        }
+        onPageDotClicked: function(pageIdx) {
+            root.showingNetworkDetail = false
+            root.pageDotClicked(pageIdx)
         }
     }
 }

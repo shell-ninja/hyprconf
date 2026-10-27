@@ -11,8 +11,8 @@ Item {
 
     property bool active: false
     signal powerClicked()
+    signal navigateToWeather()
     signal navigateToPage2()
-    signal navigateToPage3()
 
     property var notificationList: []
     property real wallpaperTimestamp: Date.now()
@@ -35,6 +35,7 @@ Item {
     }
 
     readonly property string arrowRightSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.foreground + '" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>')
+    readonly property string arrowLeftSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.foreground + '" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>')
     readonly property string volumeSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.foreground + '" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>')
     readonly property string muteSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.error + '" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>')
     readonly property string brightnessSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.foreground + '" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>')
@@ -311,6 +312,7 @@ Item {
             onDismissNotification: function(notifId) {
                 root.dismissNotification(notifId)
             }
+            onOpenWeatherRequested: root.navigateToWeather()
         }
 
         // 4. Pagination & Navigation Bar
@@ -320,42 +322,89 @@ Item {
             height: 24
             opacity: 0.0
 
-            // Centered Pagination Dots
+            // Left: Prev Page Button (← Weather, switches to 1st page)
+            Rectangle {
+                anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
+                height: 24
+                width: weatherBtnRow.width + 16
+                radius: 12
+                color: weatherBtnMouse.containsMouse ? Theme.alpha(Theme.accent, 0.22) : Theme.alpha(Theme.surface, 0.6)
+                border.width: 1
+                border.color: weatherBtnMouse.containsMouse ? Theme.accent : Theme.alpha(Theme.foreground, 0.12)
+                scale: weatherBtnMouse.pressed ? 0.94 : (weatherBtnMouse.containsMouse ? 1.05 : 1.0)
+                Behavior on scale { NumberAnimation { duration: 120 } }
+                Behavior on color { ColorAnimation { duration: 120 } }
+                Behavior on border.color { ColorAnimation { duration: 120 } }
+
+                Row {
+                    id: weatherBtnRow
+                    anchors.centerIn: parent
+                    spacing: 4
+
+                    Image {
+                        width: 10
+                        height: 10
+                        source: root.arrowLeftSvg
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+
+                    Text {
+                        text: "Weather"
+                        font.family: "Outfit"
+                        font.pixelSize: 10
+                        font.weight: Font.DemiBold
+                        color: weatherBtnMouse.containsMouse ? Theme.accent : Theme.alpha(Theme.foreground, 0.8)
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                }
+
+                MouseArea {
+                    id: weatherBtnMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: root.navigateToWeather()
+                }
+            }
+
+            // Centered 3 Pagination Dots (1: Weather, 2: Control Center [Active], 3: System Info)
             Row {
                 anchors.centerIn: parent
                 spacing: 8
 
-                // Dot 1: Home (active)
+                // Dot 1: Weather (Page 1) - Clickable
+                Rectangle {
+                    width: 6
+                    height: 5
+                    radius: 2.5
+                    color: dot1Mouse.containsMouse ? "#38bdf8" : Theme.alpha(Theme.foreground, 0.25)
+                    Behavior on color { ColorAnimation { duration: 150 } }
+
+                    MouseArea {
+                        id: dot1Mouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.navigateToWeather()
+                    }
+                }
+
+                // Dot 2: Control Center (Page 2) - ACTIVE
                 Rectangle {
                     width: 18
                     height: 5
                     radius: 2.5
                     color: Theme.accent
+                    Behavior on width { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
                 }
 
-                // Dot 2: Status (Page 2) - Clickable
+                // Dot 3: System Info (Page 3) - Clickable
                 Rectangle {
                     width: 6
                     height: 5
                     radius: 2.5
-                    color: dot2Mouse.containsMouse ? Theme.foreground : Theme.alpha(Theme.foreground, 0.35)
-                    Behavior on color { ColorAnimation { duration: 150 } }
-
-                    MouseArea {
-                        id: dot2Mouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: root.navigateToPage2()
-                    }
-                }
-
-                // Dot 3: Network Traffic (Page 3) - Clickable
-                Rectangle {
-                    width: 6
-                    height: 5
-                    radius: 2.5
-                    color: dot3Mouse.containsMouse ? "#06b6d4" : Theme.alpha(Theme.foreground, 0.25)
+                    color: dot3Mouse.containsMouse ? Theme.foreground : Theme.alpha(Theme.foreground, 0.35)
                     Behavior on color { ColorAnimation { duration: 150 } }
 
                     MouseArea {
@@ -363,7 +412,7 @@ Item {
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: root.navigateToPage3()
+                        onClicked: root.navigateToPage2()
                     }
                 }
             }

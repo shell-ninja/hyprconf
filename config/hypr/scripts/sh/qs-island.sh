@@ -21,13 +21,16 @@ if [[ -d "$island_dir" && -d "$launcher_dir" ]]; then
     done
 fi
 
-# Ensure island qmldir includes KeybindsView & WifiNetworkDialog
+# Ensure island qmldir includes KeybindsView, WifiNetworkDialog & WeatherPage
 if [[ -f "$island_dir/qmldir" ]]; then
     if ! grep -q "KeybindsView" "$island_dir/qmldir"; then
         echo "KeybindsView 1.0 KeybindsView.qml" >> "$island_dir/qmldir"
     fi
     if ! grep -q "WifiNetworkDialog" "$island_dir/qmldir"; then
         echo "WifiNetworkDialog 1.0 WifiNetworkDialog.qml" >> "$island_dir/qmldir"
+    fi
+    if ! grep -q "WeatherPage" "$island_dir/qmldir"; then
+        echo "WeatherPage 1.0 WeatherPage.qml" >> "$island_dir/qmldir"
     fi
 fi
 
@@ -139,6 +142,18 @@ if [[ "$1" == "--keybinds" ]]; then
         qs -c island -d
         sleep 0.35
         qs ipc -c island call island openKeybinds
+        exit 0
+    fi
+fi
+
+if [[ "$1" == "--weather" ]]; then
+    if pgrep -f "qs -c island" >/dev/null 2>&1; then
+        qs ipc -c island call island openWeather
+        exit 0
+    else
+        qs -c island -d
+        sleep 0.35
+        qs ipc -c island call island openWeather
         exit 0
     fi
 fi

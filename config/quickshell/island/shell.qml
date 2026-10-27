@@ -387,7 +387,7 @@ PanelWindow {
             root.isClosingWallpaper = false
             if (expandedContent) {
                 expandedContent.currentView = 0
-                expandedContent.dashboardPage = 0
+                expandedContent.dashboardPage = 1
             }
         }
     }
@@ -779,7 +779,7 @@ PanelWindow {
             root.expanded = true
             if (expandedContent) {
                 expandedContent.currentView = 0
-                expandedContent.dashboardPage = 0
+                expandedContent.dashboardPage = 1
             }
         }
         function expandPinned() {
@@ -788,7 +788,7 @@ PanelWindow {
             root.expanded = true
             if (expandedContent) {
                 expandedContent.currentView = 0
-                expandedContent.dashboardPage = 0
+                expandedContent.dashboardPage = 1
             }
         }
         function unpin() {
@@ -799,7 +799,10 @@ PanelWindow {
             root.expanded = true
             if (expandedContent) {
                 expandedContent.currentView = 0
-                expandedContent.dashboardPage = 1
+                expandedContent.dashboardPage = 2
+                if (expandedContent.statusPage) {
+                    expandedContent.statusPage.showingNetworkDetail = false
+                }
             }
         }
         function openProcessNet() {
@@ -807,6 +810,16 @@ PanelWindow {
             if (expandedContent) {
                 expandedContent.currentView = 0
                 expandedContent.dashboardPage = 2
+                if (expandedContent.statusPage) {
+                    expandedContent.statusPage.showingNetworkDetail = true
+                }
+            }
+        }
+        function openWeather() {
+            root.expanded = true
+            if (expandedContent) {
+                expandedContent.currentView = 0
+                expandedContent.dashboardPage = 0
             }
         }
         function openWifi() {
@@ -815,7 +828,7 @@ PanelWindow {
             root.expanded = true
             if (expandedContent) {
                 expandedContent.currentView = 0
-                expandedContent.dashboardPage = 0
+                expandedContent.dashboardPage = 1
                 if (expandedContent.homePage) {
                     expandedContent.homePage.openWifiDialog()
                 }
@@ -984,7 +997,7 @@ PanelWindow {
             root.expanded = true
             if (expandedContent) {
                 expandedContent.currentView = 0
-                expandedContent.dashboardPage = 1
+                expandedContent.dashboardPage = 2
             }
         }
         function reloadWallpaper() {
@@ -1048,7 +1061,7 @@ PanelWindow {
                 closeTimer.stop()
                 if (expandedContent) {
                     expandedContent.currentView = 0
-                    expandedContent.dashboardPage = 0
+                    expandedContent.dashboardPage = 1
                 }
                 root.expanded = true
             }
@@ -1769,7 +1782,7 @@ PanelWindow {
                 closeTimer.stop()
                 if (expandedContent) {
                     expandedContent.currentView = 0
-                    expandedContent.dashboardPage = 0
+                    expandedContent.dashboardPage = 1
                 }
                 root.expanded = true
             }

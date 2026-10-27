@@ -16,10 +16,30 @@ Rectangle {
     property real wallpaperTimestamp: Date.now()
     property real avatarTimestamp: Date.now()
 
+    readonly property string userName: {
+        var u = Quickshell.env("USER")
+        return (u && u.length > 0) ? u : "user"
+    }
+
+    property string hostName: "archlinux"
+
     readonly property string homeDir: {
         var h = Quickshell.env("HOME")
-        return (h && h.length > 0) ? h : "/home/shell-ninja"
+        return (h && h.length > 0) ? h : ("/home/" + root.userName)
     }
+
+    // Dynamic Hostname Reader
+    Process {
+        id: hostReader
+        command: ["bash", "-c", "cat /etc/hostname 2>/dev/null || hostname 2>/dev/null || uname -n"]
+        running: true
+        stdout: StdioCollector {
+            onTextChanged: {
+                if (text && text.trim().length > 0) root.hostName = text.trim()
+            }
+        }
+    }
+
 
     signal powerClicked()
 
@@ -291,19 +311,21 @@ Rectangle {
             spacing: 3
 
             Text {
-                text: "shell-ninja"
+                text: root.userName
                 font.family: "Outfit"
                 font.pixelSize: 16
                 font.weight: Font.Bold
                 color: Theme.foreground
+                elide: Text.ElideRight
             }
 
             Text {
-                text: "shell-ninja@archlinux"
+                text: root.userName + "@" + root.hostName
                 font.family: "Outfit"
                 font.pixelSize: 12
                 font.weight: Font.Medium
                 color: Theme.alpha(Theme.foreground, 0.65)
+                elide: Text.ElideRight
             }
 
             Text {

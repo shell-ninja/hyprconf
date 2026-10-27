@@ -59,5 +59,3 @@ if command -v wl-paste &>/dev/null && command -v cliphist &>/dev/null; then
     fi
 fi
 
-# start my ftp server.
-"$HOME/.local/bin/ftpsrv.py" --start

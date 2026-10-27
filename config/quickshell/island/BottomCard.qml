@@ -16,6 +16,8 @@ Rectangle {
     border.width: 1
     clip: true
 
+    signal openWeatherRequested()
+
     function svgUrl(svgContent) {
         return "data:image/svg+xml;utf8," + encodeURIComponent(svgContent)
     }
@@ -294,24 +296,49 @@ Rectangle {
                 }
             }
 
-            // Weather pill
+            // Weather pill (Clickable to open Weather Page)
             Rectangle {
                 height: 20
-                width: weatherText.width + 12
+                width: weatherRow.width + 16
                 radius: 10
-                color: Theme.alpha(Theme.surface, 0.8)
-                border.color: Theme.alpha(Theme.foreground, 0.08)
+                color: weatherMouse.containsMouse ? Theme.alpha(Theme.accent, 0.20) : Theme.alpha(Theme.surface, 0.8)
+                border.color: weatherMouse.containsMouse ? Theme.accent : Theme.alpha(Theme.foreground, 0.08)
                 border.width: 1
                 anchors.verticalCenter: parent.verticalCenter
+                scale: weatherMouse.pressed ? 0.95 : (weatherMouse.containsMouse ? 1.04 : 1.0)
+                Behavior on scale { NumberAnimation { duration: 120 } }
+                Behavior on color { ColorAnimation { duration: 150 } }
+                Behavior on border.color { ColorAnimation { duration: 150 } }
 
-                Text {
-                    id: weatherText
+                Row {
+                    id: weatherRow
                     anchors.centerIn: parent
-                    text: "🌤 " + root.weatherString
-                    font.family: "Outfit"
-                    font.pixelSize: 10
-                    font.weight: Font.Medium
-                    color: Theme.alpha(Theme.foreground, 0.85)
+                    spacing: 5
+
+                    Image {
+                        width: 11
+                        height: 11
+                        source: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + (weatherMouse.containsMouse ? Theme.accent : Theme.foreground) + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9z"/></svg>')
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+
+                    Text {
+                        id: weatherText
+                        text: root.weatherString
+                        font.family: "Outfit"
+                        font.pixelSize: 10
+                        font.weight: Font.Medium
+                        color: weatherMouse.containsMouse ? Theme.accent : Theme.alpha(Theme.foreground, 0.85)
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                }
+
+                MouseArea {
+                    id: weatherMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: root.openWeatherRequested()
                 }
             }
         }

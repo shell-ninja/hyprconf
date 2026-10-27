@@ -1074,6 +1074,7 @@ AudioVisualizer 1.0 AudioVisualizer.qml
 EmojiView 1.0 EmojiView.qml
 KeybindsView 1.0 KeybindsView.qml
 WifiNetworkDialog 1.0 WifiNetworkDialog.qml
+WeatherPage 1.0 WeatherPage.qml
 """,
             "lockscreen": """singleton Theme 1.0 Theme.qml
 LockscreenSystemGraph 1.0 LockscreenSystemGraph.qml

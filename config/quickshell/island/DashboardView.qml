@@ -43,8 +43,9 @@ Item {
     }
 
     // For currentView === 0 (Main Dashboard):
-    // 0: HomePage (Page 1), 1: StatusPage (Page 2), 2: NetworkDetailPage (Page 3)
-    property int dashboardPage: 0
+    // 3 Main Pages: 0: WeatherPage (Page 1), 1: HomePage / Control Center (Page 2, initial on hover), 2: StatusPage (Page 3)
+    // Note: Internet speed / process network detail is a subpage of StatusPage.
+    property int dashboardPage: 1
 
     function handleKey(event) {
         if (root.currentView === 1) {
@@ -69,13 +70,20 @@ Item {
                 }
             }
         } else if (root.currentView === 0) {
-            if (root.dashboardPage === 0 && homePage.isWifiDialogOpen) {
+            if (root.dashboardPage === 1 && homePage.isWifiDialogOpen) {
                 if (event.key === Qt.Key_Escape) {
                     homePage.closeWifiDialog()
                     event.accepted = true
                     return true
                 }
                 return true
+            }
+            if (root.dashboardPage === 2 && statusPage.showingNetworkDetail) {
+                if (event.key === Qt.Key_Escape || event.key === Qt.Key_Left) {
+                    statusPage.showingNetworkDetail = false
+                    event.accepted = true
+                    return true
+                }
             }
             if (event.key === Qt.Key_Right) {
                 if (root.dashboardPage === 0) {
@@ -164,7 +172,8 @@ Item {
 
     property alias homePage: homePage
     property alias statusPage: statusPage
-    property alias networkDetailPage: networkDetailPage
+    property alias networkDetailPage: statusPage.networkDetailPage
+    property alias weatherPage: weatherPage
     property alias wallpaperView: wallpaperView
     property alias launcherView: launcherView
     property alias themeSwitcherView: themeSwitcherView
@@ -188,16 +197,47 @@ Item {
     property int systemBrightness: -1
     property int systemVolume: -1
 
-    // ── 1. HOME DASHBOARD PAGE (PAGE 1) ──────────────────────────────────────
-    HomePage {
-        id: homePage
-        wallpaperTimestamp: root.wallpaperTimestamp
+    // ── 1A. WEATHER FORECAST PAGE (PAGE 1 / INDEX 0) ─────────────────────────
+    WeatherPage {
+        id: weatherPage
         anchors.fill: parent
         active: root.active && root.currentView === 0 && root.dashboardPage === 0
         visible: opacity > 0.001
         opacity: (root.currentView === 0 && root.dashboardPage === 0) ? 1.0 : 0.0
         scale: (root.currentView === 0 && root.dashboardPage === 0) ? 1.0 : 0.95
         x: (root.dashboardPage === 0) ? 0 : -28
+
+        Behavior on opacity {
+            NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
+        }
+        Behavior on scale {
+            NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
+        }
+        Behavior on x {
+            NumberAnimation { duration: 240; easing.type: Easing.OutCubic }
+        }
+
+        onBackClicked: {
+            root.dashboardPage = 1
+        }
+        onNavigateToControl: {
+            root.dashboardPage = 1
+        }
+        onPageDotClicked: function(pageIdx) {
+            root.dashboardPage = pageIdx
+        }
+    }
+
+    // ── 1B. HOME / CONTROL CENTER (PAGE 2 / INDEX 1 - INITIAL HOVER PAGE) ────
+    HomePage {
+        id: homePage
+        wallpaperTimestamp: root.wallpaperTimestamp
+        anchors.fill: parent
+        active: root.active && root.currentView === 0 && root.dashboardPage === 1
+        visible: opacity > 0.001
+        opacity: (root.currentView === 0 && root.dashboardPage === 1) ? 1.0 : 0.0
+        scale: (root.currentView === 0 && root.dashboardPage === 1) ? 1.0 : 0.95
+        x: (root.dashboardPage === 1) ? 0 : ((root.dashboardPage === 0) ? 28 : -28)
 
         externalBrightness: root.systemBrightness
         externalVolume: root.systemVolume
@@ -228,48 +268,17 @@ Item {
         onPowerClicked: {
             root.currentView = 1
         }
-        onNavigateToPage2: {
-            root.dashboardPage = 1
-        }
-        onNavigateToPage3: {
-            root.dashboardPage = 2
-        }
-    }
-
-    // ── 1B. SYSTEM STATUS PAGE (PAGE 2) ──────────────────────────────────────
-    StatusPage {
-        id: statusPage
-        anchors.fill: parent
-        active: root.active && root.currentView === 0 && root.dashboardPage === 1
-        visible: opacity > 0.001
-        opacity: (root.currentView === 0 && root.dashboardPage === 1) ? 1.0 : 0.0
-        scale: (root.currentView === 0 && root.dashboardPage === 1) ? 1.0 : 0.95
-        x: (root.dashboardPage === 1) ? 0 : ((root.dashboardPage === 0) ? 28 : -28)
-
-        Behavior on opacity {
-            NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
-        }
-        Behavior on scale {
-            NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
-        }
-        Behavior on x {
-            NumberAnimation { duration: 240; easing.type: Easing.OutCubic }
-        }
-
-        onBackClicked: {
+        onNavigateToWeather: {
             root.dashboardPage = 0
         }
-        onOpenNetworkDetail: {
+        onNavigateToPage2: {
             root.dashboardPage = 2
-        }
-        onPageDotClicked: function(pageIdx) {
-            root.dashboardPage = pageIdx
         }
     }
 
-    // ── 1C. PER-PROCESS NETWORK DETAIL PAGE (PAGE 3) ─────────────────────────
-    NetworkDetailPage {
-        id: networkDetailPage
+    // ── 1C. SYSTEM STATUS & METRICS (PAGE 3 / INDEX 2) ───────────────────────
+    StatusPage {
+        id: statusPage
         anchors.fill: parent
         active: root.active && root.currentView === 0 && root.dashboardPage === 2
         visible: opacity > 0.001

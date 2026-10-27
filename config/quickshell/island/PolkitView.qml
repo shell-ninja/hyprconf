@@ -22,9 +22,14 @@ Item {
     implicitWidth: preferredWidth
     implicitHeight: preferredHeight
 
+    readonly property string userName: {
+        var u = Quickshell.env("USER")
+        return (u && u.length > 0) ? u : "user"
+    }
+
     readonly property string homeDir: {
         var h = Quickshell.env("HOME")
-        return (h && h.length > 0) ? h : "/home/shell-ninja"
+        return (h && h.length > 0) ? h : ("/home/" + root.userName)
     }
 
     readonly property string avatarPath: "file://" + homeDir + "/.hyprconf/hypr/.cache/.face"
@@ -254,7 +259,7 @@ Item {
                 spacing: 1
 
                 Text {
-                    text: "shell-ninja"
+                    text: root.userName
                     font.family: "Outfit"
                     font.pixelSize: 12
                     font.weight: Font.Medium

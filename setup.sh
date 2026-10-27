@@ -160,7 +160,6 @@ dirs=(
 backup_dir="$HOME/.temp-back"
 wallpapers_backup="$backup_dir/Wallpaper"
 hypr_cache_backup="$backup_dir/.cache"
-hypr_config_backup="$backup_dir/configs.lua"
 
 # Find pre-existing hypr directory (could be ~/.hyprconf/hypr or ~/.config/hypr)
 wallpapers="$HOME/.hyprconf/hypr/Wallpaper"
@@ -169,28 +168,24 @@ wallpapers="$HOME/.hyprconf/hypr/Wallpaper"
 hypr_cache="$HOME/.hyprconf/hypr/.cache"
 [[ ! -d "$hypr_cache" && -d "$HOME/.config/hypr/.cache" ]] && hypr_cache="$HOME/.config/hypr/.cache"
 
-hypr_config="$HOME/.hyprconf/hypr/configs/configs.lua"
-[[ ! -f "$hypr_config" && -f "$HOME/.config/hypr/configs/configs.lua" ]] && hypr_config="$HOME/.config/hypr/configs/configs.lua"
-
 mkdir -p "$backup_dir"
 
-# Function to handle pre-installation backup of user configurations
-backup_or_restore() {
-    local file_path="$1"
-    local file_type="$2"
+# Function to handle pre-installation backup of user wallpaper directory
+backup_wallpapers() {
+    local wall_path="$1"
 
-    if [[ -e "$file_path" ]]; then
+    if [[ -d "$wall_path" ]]; then
         echo
-        msg att "An existing $file_type was found."
+        msg att "An existing wallpaper directory was found."
         local action="n"
         if command -v gum &> /dev/null; then
-            if gum confirm "Would you like to back up your existing $file_type to restore it after installation?" \
+            if gum confirm "Would you like to back up your existing wallpaper directory to restore custom wallpapers after installation?" \
                 --affirmative "Yes, back it up" \
                 --negative "No, skip backup"; then
                 action="y"
             fi
         else
-            msg ask "Would you like to back up your existing $file_type to restore it after installation? [y/N]"
+            msg ask "Would you like to back up your existing wallpaper directory to restore custom wallpapers after installation? [y/N]"
             read -r -p "$(echo -e '\e[1;32mSelect: \e[0m')" choice
             if [[ "$choice" =~ ^[Yy]$ ]]; then
                 action="y"
@@ -198,17 +193,18 @@ backup_or_restore() {
         fi
 
         if [[ "$action" == "y" ]]; then
-            msg act "Backing up existing $file_type to temporary directory..."
-            cp -r "$file_path" "$backup_dir/"
+            msg act "Backing up existing wallpapers to temporary directory..."
+            mkdir -p "$wallpapers_backup"
+            cp -a "$wall_path/." "$wallpapers_backup/"
+            msg dn "Backed up existing wallpapers."
         else
-            msg skp "Skipped backing up $file_type."
+            msg skp "Skipped backing up wallpaper directory."
         fi
     fi
 }
 
-# Prompt user for backing up custom wallpaper / hypr config
-backup_or_restore "$wallpapers" "wallpaper directory"
-backup_or_restore "$hypr_config" "hyprland config file"
+# Prompt user for backing up custom wallpapers
+backup_wallpapers "$wallpapers"
 
 [[ -e "$hypr_cache" ]] && cp -r "$hypr_cache" "$backup_dir/"
 
@@ -405,8 +401,14 @@ if [[ "$dir" != "$HOME/.hyprconf" ]]; then
     # Also copy setup.sh, .version, extras, and local if present in root of repo
     [[ -f "$dir/setup.sh" ]] && cp -f "$dir/setup.sh" "$HOME/.hyprconf/setup.sh" 2>/dev/null || true
     [[ -f "$dir/.version" ]] && cp -f "$dir/.version" "$HOME/.hyprconf/.version" 2>/dev/null || true
-    [[ -d "$dir/extras" ]] && cp -a "$dir/extras" "$HOME/.hyprconf/" 2>/dev/null || true
-    [[ -d "$dir/local" ]] && cp -a "$dir/local" "$HOME/.hyprconf/" 2>/dev/null || true
+    if [[ -d "$dir/extras" ]]; then
+        mkdir -p "$HOME/.hyprconf/extras"
+        cp -a "$dir/extras/." "$HOME/.hyprconf/extras/" 2>/dev/null || true
+    fi
+    if [[ -d "$dir/local" ]]; then
+        mkdir -p "$HOME/.hyprconf/local"
+        cp -a "$dir/local/." "$HOME/.hyprconf/local/" 2>/dev/null || true
+    fi
     msg dn "Configuration tree installed to $HOME/.hyprconf"
 fi
 
@@ -505,8 +507,9 @@ if [[ -n "$local_hyprconf" && -d "$local_hyprconf" ]]; then
     for tmpl in "$local_hyprconf"/*; do
         [[ -f "$tmpl" ]] || continue
         base=$(basename "$tmpl")
+        [[ -L "$user_state_dir/$base" && ! -e "$user_state_dir/$base" ]] && rm -f "$user_state_dir/$base"
         if [[ ! -e "$user_state_dir/$base" ]]; then
-            cp "$tmpl" "$user_state_dir/$base"
+            cp -f "$tmpl" "$user_state_dir/$base"
         fi
     done
     if [[ -d "$local_hyprconf/.cache" ]]; then
@@ -515,6 +518,7 @@ if [[ -n "$local_hyprconf" && -d "$local_hyprconf" ]]; then
             [[ -e "$cf" ]] || continue
             cbase=$(basename "$cf")
             case "$cbase" in .|..) continue ;; esac
+            [[ -L "$user_state_dir/.cache/$cbase" && ! -e "$user_state_dir/.cache/$cbase" ]] && rm -f "$user_state_dir/.cache/$cbase"
             if [[ ! -e "$user_state_dir/.cache/$cbase" ]]; then
                 cp -a "$cf" "$user_state_dir/.cache/$cbase"
             fi
@@ -619,11 +623,13 @@ fi
 
 # Extra files setup (dolphinstaterc, konsole, fastfetch)
 if [[ -f "$HOME/.local/state/dolphinstaterc" ]]; then
-    mv "$HOME/.local/state/dolphinstaterc" "$HOME/.local/state/dolphinstaterc.back"
+    rm -f "$HOME/.local/state/dolphinstaterc.back" 2>/dev/null || true
+    mv -f "$HOME/.local/state/dolphinstaterc" "$HOME/.local/state/dolphinstaterc.back"
 fi
 
 if [[ -d "$HOME/.local/share/konsole" ]]; then
-    mv "$HOME/.local/share/konsole" "$HOME/.local/share/konsole.back"
+    rm -rf "$HOME/.local/share/konsole.back" 2>/dev/null || true
+    mv -f "$HOME/.local/share/konsole" "$HOME/.local/share/konsole.back"
 fi
 
 mkdir -p "$HOME/.local/state" "$HOME/.local/share"
@@ -632,8 +638,11 @@ local_src=""
 [[ -z "$local_src" && -d "$HOME/.hyprconf/local" ]] && local_src="$HOME/.hyprconf/local"
 
 if [[ -n "$local_src" ]]; then
-    [[ -f "$local_src/state/dolphinstaterc" ]] && cp -r "$local_src/state/dolphinstaterc" "$HOME/.local/state/"
-    [[ -d "$local_src/share/konsole" ]] && cp -r "$local_src/share/konsole" "$HOME/.local/share/"
+    [[ -f "$local_src/state/dolphinstaterc" ]] && cp -f "$local_src/state/dolphinstaterc" "$HOME/.local/state/"
+    if [[ -d "$local_src/share/konsole" ]]; then
+        mkdir -p "$HOME/.local/share/konsole"
+        cp -a "$local_src/share/konsole/." "$HOME/.local/share/konsole/"
+    fi
     if [[ -d "$local_src/share/fastfetch" ]]; then
         mkdir -p "$HOME/.local/share/fastfetch"
         cp -a "$local_src/share/fastfetch/." "$HOME/.local/share/fastfetch/"
@@ -644,8 +653,9 @@ if [[ -n "$local_src" ]]; then
         for f in "$local_src/share/hyprconf"/*; do
             [[ -f "$f" ]] || continue
             fname=$(basename "$f")
+            [[ -L "$HOME/.local/share/hyprconf/$fname" && ! -e "$HOME/.local/share/hyprconf/$fname" ]] && rm -f "$HOME/.local/share/hyprconf/$fname"
             if [[ ! -e "$HOME/.local/share/hyprconf/$fname" ]]; then
-                cp "$f" "$HOME/.local/share/hyprconf/$fname"
+                cp -f "$f" "$HOME/.local/share/hyprconf/$fname"
             fi
         done
         if [[ -d "$local_src/share/hyprconf/.cache" ]]; then
@@ -654,6 +664,7 @@ if [[ -n "$local_src" ]]; then
                 [[ -e "$f" ]] || continue
                 fname=$(basename "$f")
                 case "$fname" in .|..) continue ;; esac
+                [[ -L "$HOME/.local/share/hyprconf/.cache/$fname" && ! -e "$HOME/.local/share/hyprconf/.cache/$fname" ]] && rm -f "$HOME/.local/share/hyprconf/.cache/$fname"
                 if [[ ! -e "$HOME/.local/share/hyprconf/.cache/$fname" ]]; then
                     cp -a "$f" "$HOME/.local/share/hyprconf/.cache/$fname"
                 fi
@@ -684,7 +695,7 @@ if [[ -n "$extras_src" ]]; then
         sudo mkdir -p "$wayland_session_dir"
     fi
     if [[ -f "$extras_src/hyprland.desktop" ]]; then
-        sudo cp "$extras_src/hyprland.desktop" "$wayland_session_dir/"
+        sudo cp -f "$extras_src/hyprland.desktop" "$wayland_session_dir/"
         msg dn "Hyprland desktop entry copied to $wayland_session_dir"
     fi
 
@@ -694,7 +705,7 @@ if [[ -n "$extras_src" ]]; then
     desktop_files=("Hyprconf.desktop" "sysupdate.desktop")
     for file in "${desktop_files[@]}"; do
         if [[ -f "$extras_src/$file" ]]; then
-            cp "$extras_src/$file" "$applications_dir/"
+            cp -f "$extras_src/$file" "$applications_dir/"
             sed -i "s|/home/shell-ninja|$HOME|g; s|/home/[^/]*|$HOME|g" "$applications_dir/$file"
             msg dn "Installed $file to $applications_dir"
         fi
@@ -704,32 +715,30 @@ if [[ -n "$extras_src" ]]; then
     fi
 fi
 
-# Function to restore temporary backups
-restore_backup() {
-    local backup_path="$1"
-    local original_path="$2"
-    local file_type="$3"
+# Restore custom wallpapers from backup (only copying wallpapers that do NOT exist in the new config)
+if [[ -d "$wallpapers_backup" ]]; then
+    target_wallpapers="$HOME/.hyprconf/hypr/Wallpaper"
+    mkdir -p "$target_wallpapers"
+    restored_wallpapers=0
+    skipped_wallpapers=0
 
-    if [[ -e "$backup_path" ]]; then
-        if [[ -e "$original_path" ]]; then
-            mv "$original_path" "${original_path}.backup"
-        fi
-
-        if cp -an "$backup_path" "$original_path"; then
-            msg dn "Restored previous $file_type to $original_path"
+    for wall_entry in "$wallpapers_backup"/*; do
+        [[ -e "$wall_entry" ]] || continue
+        wall_name=$(basename "$wall_entry")
+        if [[ ! -e "$target_wallpapers/$wall_name" && ! -L "$target_wallpapers/$wall_name" ]]; then
+            cp -a "$wall_entry" "$target_wallpapers/"
+            ((restored_wallpapers++))
         else
-            msg err "Could not restore $file_type"
+            ((skipped_wallpapers++))
         fi
+    done
 
-        if [[ -e "${original_path}.backup" ]]; then
-            rm -rf "${original_path}.backup"
-        fi
+    if [[ $restored_wallpapers -gt 0 ]]; then
+        msg dn "Restored $restored_wallpapers custom wallpaper(s) from backup to $target_wallpapers (preserved new configuration wallpapers)."
+    else
+        msg dn "Wallpaper backup checked; all wallpapers already exist in the newly installed configuration."
     fi
-}
-
-# Restore pre-installation user backups
-restore_backup "$wallpapers_backup" "$wallpapers" "wallpaper directory"
-restore_backup "$hypr_config_backup" "$hypr_config" "hyprland config file"
+fi
 
 if [[ -e "$hypr_cache_backup" ]]; then
     cp -rn "$hypr_cache_backup/." "$user_state_dir/.cache/" 2>/dev/null || true

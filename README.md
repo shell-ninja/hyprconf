@@ -86,13 +86,23 @@ A streamlined, obsidian-styled **Hyprland** desktop environment powered natively
 
 ### Dynamic Island (`quickshell/island`)
 - **Adaptive Collapsed Notch**: Floats cleanly at top-center (or bottom dock). Shows live CAVA audio visualizer wings during playback, track titles, active workspace dots, minimal clock, and battery/network badges.
-- **Morphing Dashboard**: Smooth spring physics expand the notch into a full command center:
-  - **Overview**: System volume, brightness, player controls, media cover art, and quick toggles (DND, Night Light, Performance profile, Wi-Fi, Bluetooth).
-  - **Status & Diagnostics**: Real-time CPU, RAM, GPU, storage metrics, and 5-day weather forecasts.
-  - **Process Network Monitor**: Live per-process bandwidth and socket tracking.
+- **3-Page Carousel Dashboard**: Smooth spring physics expand the notch into a full 3-page command center:
+  - **Page 1: Weather**: 7-day forecast and hourly metrics powered by Open-Meteo with minimal obsidian vector SVGs (no generic emojis).
+  - **Page 2: Control Center**: Instant hover default with dynamic `$USER@$HOSTNAME`, audio diagnostics, volume/brightness sliders, and quick toggles (DND, Night Light, Caffeine, Wi-Fi, Bluetooth).
+  - **Page 3: System Status & Process Network**: Real-time CPU, RAM, GPU, storage metrics, and an embedded sub-page for live per-process network traffic and socket tracking.
 - **Fullscreen Auto-Hide**: Detects when games, media players, or browser F11 fullscreen modes are active, immediately unmapping the layer shell surface and releasing the exclusive zone so games and videos enjoy 100% unimpeded display.
 - **Native Polkit Agent**: Password authorization flows morph seamlessly right out of the island notch.
 - **Quick Reload**: Press <kbd>Ctrl</kbd> + <kbd>Esc</kbd> anytime to restart the Island and all desktop widgets.
+
+### Quickshell Application Dock (`quickshell/dock`)
+- **Native Wayland Layer Shell**: High-performance obsidian glass dock built natively with Quickshell and Qt6 QML.
+- **Dynamic Window Tracking**: Subscribes to `Hyprland.toplevels` to track active windows with dynamic running dots and active window highlights.
+- **3 Adaptive Visibility Modes**:
+  - **Always On**: Sets exclusive zones to reserve desktop workspace margin.
+  - **Auto Hide**: Slides off-screen and smoothly reveals when cursor touches the 3px edge trigger strip.
+  - **Smart Hide (Window Dodge)**: Intelligently stays visible on empty workspaces, then automatically slides off-screen when windows open.
+- **Obsidian Glass Context Menu**: Right-click any app to toggle "Pin to Dock", launch a new instance, or close active windows.
+- **Settings Studio Customization**: Configure dock position (Bottom, Top, Left, Right), opacity, icon sizes (32px - 64px), pill radius, hide delays, and hover physics (Parabolic Zoom, Float & Lift, Accent Glow, Flat) via the Quickshell Settings App (`DockSection.qml`).
 
 ### Noctalia M3 Dynamic Colorscheme (`hypr-colors.py`)
 - **Wallpaper Hue Clustering**: Groups wallpaper pixels into 24 discrete hue bins (15° separation) to discover contrasting color harmonies present in the image.
@@ -130,6 +140,7 @@ A streamlined, obsidian-styled **Hyprland** desktop environment powered natively
 |---|---|---|
 | <kbd>Super</kbd> + <kbd>Return</kbd> | Terminal | Open Kitty terminal |
 | <kbd>Super</kbd> + <kbd>Space</kbd> / <kbd>Super</kbd> + <kbd>D</kbd> | App Launcher | Open Quickshell application launcher |
+| <kbd>Super</kbd> + <kbd>Alt</kbd> + <kbd>Space</kbd> | **Toggle Dock** | **Show / hide Quickshell Application Dock** |
 | <kbd>Super</kbd> + <kbd>W</kbd> | Wallpaper Picker | Open Quickshell Dynamic Island wallpaper selector |
 | <kbd>Ctrl</kbd> + <kbd>Esc</kbd> | **Reload Shell** | **Restart Quickshell & Dynamic Island** |
 | <kbd>Super</kbd> + <kbd>F</kbd> | Fullscreen | Toggle fullscreen mode (auto-hides island) |
@@ -166,10 +177,14 @@ All dotfiles reside under `~/.hyprconf/`:
 │   │   └── animations.lua     # Bezier curves and animation curves
 │   ├── scripts/
 │   │   ├── py/hypr-colors.py  # Noctalia M3 color harmony extraction engine
+│   │   ├── py/weather.py      # Open-Meteo weather fetcher & daemon
+│   │   ├── sh/qs-dock.sh      # Quickshell Dock lifecycle daemon
+│   │   ├── sh/qs-island.sh    # Dynamic Island controller
 │   │   └── sh/qs-reload.sh    # Quickshell & Island reload supervisor
 │   └── Wallpaper/             # Static & Live wallpaper collections
 ├── quickshell/
-│   ├── island/                # Dynamic Island notch, HUD, & WallpaperView
+│   ├── dock/                  # Application Dock layer shell & context menu
+│   ├── island/                # 3-Page Dynamic Island notch (Weather, Control, System)
 │   ├── launcher/              # Custom app launcher (Style 1 & 2)
 │   ├── lockscreen/            # Morphing PAM lockscreen
 │   ├── widgets/               # Desktop System Monitor, Weather & Visualizer
@@ -177,8 +192,11 @@ All dotfiles reside under `~/.hyprconf/`:
 │   └── Theme.qml              # Live-reloaded reactive theme tokens
 ├── kitty/                     # Terminal configs & auto-synced colorscheme
 ├── nvim/                      # Neovim configuration & dynamic palette
-└── .version                   # Active version release tag (v1.0.0)
+└── .version                   # Active version release tag (v1.0.1)
 ```
+
+> [!NOTE]
+> AI coding assistants and contributors should refer to **[AGENTS.md](AGENTS.md)** for exhaustive details on project structure, QML theming contracts, state persistence, and script workflows before making modifications.
 
 ---
 
@@ -186,7 +204,7 @@ All dotfiles reside under `~/.hyprconf/`:
 
 ## Updates & Versioning
 
-Hyprconf follows a clean release model (`v1.0.0+`):
+Hyprconf follows a clean release model (`v1.0.1`):
 
 - **Background Watchdog**: Runs automatically via `hyprconf.sh --daemon`, checking every 6 hours for new updates against [shell-ninja/hyprconf](https://github.com/shell-ninja/hyprconf).
 - **Notifications**: When an update is detected, a desktop notification with an **"Update Now"** button and audio chime is sent.
@@ -199,14 +217,15 @@ Hyprconf follows a clean release model (`v1.0.0+`):
 
 <a id="contributing"></a>
 
-## Contributing
+## Contributing & Developer Guidelines
 
 Contributions, bug reports, and suggestions are welcome!
 
-1. Fork the repository.
-2. Create a topic branch: `git checkout -b feature/my-enhancement`.
-3. Commit your changes: `git commit -m "feat: Add new feature"`.
-4. Push to your fork and submit a Pull Request against the `development` branch.
+1. Read **[AGENTS.md](AGENTS.md)** to understand the architecture, state isolation, and styling standards.
+2. Fork the repository.
+3. Create a topic branch: `git checkout -b feature/my-enhancement`.
+4. Commit your changes: `git commit -m "feat: Add new feature"`.
+5. Push to your fork and submit a Pull Request against the `main` or release branch.
 
 ---
 
