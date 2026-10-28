@@ -45,21 +45,24 @@ ClippingRectangle {
         focusInput()
     }
 
-    // BeforeItem: card-level Escape intercept fires before Qt native handling
-    Keys.priority: Keys.BeforeItem
-    Keys.onPressed: function(event) {
-        if (event.key === Qt.Key_Escape) {
-            event.accepted = true
-            if (rootWindow && typeof rootWindow.closeRequested === "function") rootWindow.closeRequested()
-            return
+    function triggerClose() {
+        if (rootWindow) {
+            if (typeof rootWindow.closeRequested === "function") rootWindow.closeRequested()
+            else if (typeof rootWindow.requestClose === "function") rootWindow.requestClose()
         }
     }
 
-    Shortcut {
-        sequence: "Escape"
-        enabled: rootWindow ? (rootWindow.active !== undefined ? (rootWindow.active && !rootWindow.isClosing) : true) : true
-        onActivated: {
-            if (rootWindow && typeof rootWindow.closeRequested === "function") rootWindow.closeRequested()
+    // BeforeItem: card-level Escape intercept fires before Qt native handling
+    Keys.priority: Keys.BeforeItem
+    Keys.onEscapePressed: function(event) {
+        event.accepted = true
+        card.triggerClose()
+    }
+    Keys.onPressed: function(event) {
+        if (event.key === Qt.Key_Escape) {
+            event.accepted = true
+            card.triggerClose()
+            return
         }
     }
 
@@ -377,10 +380,14 @@ ClippingRectangle {
                     // BeforeItem: fires BEFORE Qt's native TextInput C++ handler
                     // which may internally accept/consume Escape (for IME cancellation)
                     Keys.priority: Keys.BeforeItem
+                    Keys.onEscapePressed: function(event) {
+                        event.accepted = true
+                        card.triggerClose()
+                    }
                     Keys.onPressed: function(event) {
                         if (event.key === Qt.Key_Escape) {
                             event.accepted = true
-                            if (rootWindow && typeof rootWindow.closeRequested === "function") rootWindow.closeRequested()
+                            card.triggerClose()
                             return
                         }
                     }

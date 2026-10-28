@@ -764,21 +764,6 @@ Item {
         return false
     }
 
-    Shortcut {
-        sequence: "Escape"
-        enabled: true
-        onActivated: {
-            if (variantSelector.isDropdownOpen) {
-                variantSelector.isDropdownOpen = false
-            } else if (root.isBrowsingDirs) {
-                root.closeDirBrowser()
-            } else {
-                applyTimer.stop()
-                applyBtn.isApplying = false
-                root.backClicked()
-            }
-        }
-    }
 
     // ── MAIN OBSIDIAN BACKGROUND PANEL ───────────────────────────────────────
     // Remains visible and expands/collapses with the window while preview items fade in/out

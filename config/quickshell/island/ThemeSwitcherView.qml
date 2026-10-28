@@ -94,10 +94,6 @@ Item {
         return false
     }
 
-    Shortcut {
-        sequence: "Escape"
-        onActivated: root.closeRequested()
-    }
 
     // ── EXPANDING OBSIDIAN ISLAND CONTAINER BACKGROUND ──────────────────────
     Rectangle {

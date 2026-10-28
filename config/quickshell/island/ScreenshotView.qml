@@ -96,11 +96,6 @@ Item {
         return false
     }
 
-    Shortcut {
-        sequence: "Escape"
-        enabled: root.active && !root.isClosing
-        onActivated: root.closeRequested()
-    }
 
     Shortcut {
         sequence: "1"

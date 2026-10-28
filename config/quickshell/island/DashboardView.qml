@@ -164,11 +164,6 @@ Item {
         }
     }
 
-    Shortcut {
-        sequence: "Escape"
-        enabled: root.active && !root.isClosingWallpaper && !(root.currentView === 2 && wallpaperView && wallpaperView.isBrowsingDirs)
-        onActivated: root.closeRequested()
-    }
 
     property alias homePage: homePage
     property alias statusPage: statusPage

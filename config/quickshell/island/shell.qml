@@ -1436,24 +1436,31 @@ PanelWindow {
 
         // Global keyboard interceptor — BeforeItem priority ensures Escape fires
         // even when a child TextInput (search box) has active focus.
-        // For non-Escape keys, event.accepted = false lets the event propagate
-        // naturally to whichever child (TextInput, list, etc.) has active focus.
         Keys.priority: Keys.BeforeItem
+        Keys.onEscapePressed: function(event) {
+            event.accepted = true
+            if (root.expanded && expandedContent && expandedContent.handleKey(event)) {
+                return
+            }
+            root.closeIsland()
+        }
         Keys.onPressed: function(event) {
-            // First allow active expanded child view to process hotkeys/navigation
+            if (event.key === Qt.Key_Escape) {
+                event.accepted = true
+                if (root.expanded && expandedContent && expandedContent.handleKey(event)) {
+                    return
+                }
+                root.closeIsland()
+                return
+            }
+
+            // Allow active expanded child view to process hotkeys/navigation
             event.accepted = false
             if (root.expanded && expandedContent) {
                 if (expandedContent.handleKey(event)) {
                     event.accepted = true
                     return
                 }
-            }
-
-            if (event.key === Qt.Key_Escape) {
-                // Intercept Escape globally — close whatever is open
-                event.accepted = true
-                root.closeIsland()
-                return
             }
         }
 

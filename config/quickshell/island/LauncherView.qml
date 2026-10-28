@@ -271,11 +271,6 @@ Item {
         }
     }
 
-    Shortcut {
-        sequence: "Escape"
-        enabled: root.active && !root.isClosing
-        onActivated: root.closeRequested()
-    }
 
     onActiveChanged: {
         if (active) {

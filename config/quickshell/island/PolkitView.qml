@@ -65,11 +65,6 @@ Item {
         return false
     }
 
-    Shortcut {
-        sequence: "Escape"
-        enabled: root.active && !root.isClosing
-        onActivated: cancelAuth()
-    }
 
     function submitAuth() {
         if (flow) {

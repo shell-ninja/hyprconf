@@ -359,6 +359,9 @@ PanelWindow {
         closeAnim.restart()
     }
 
+    signal closeRequested()
+    onCloseRequested: root.requestClose()
+
     IpcHandler {
         target: "launcher"
         function close() {

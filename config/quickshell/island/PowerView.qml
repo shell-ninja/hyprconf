@@ -245,11 +245,6 @@ Item {
         return false
     }
 
-    Shortcut {
-        sequence: "Escape"
-        enabled: root.active && !root.isCountingDown
-        onActivated: root.backClicked()
-    }
 
     function svgUrl(svgContent) {
         return "data:image/svg+xml;utf8," + encodeURIComponent(svgContent)
