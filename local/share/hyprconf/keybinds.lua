@@ -33,6 +33,7 @@ hl.bind(mainMod .. " + W", hl.dsp.exec_cmd(qsIsland .. " --wallpaper"))
 
 -- ── Screenshots / Studio ───────────────────────────────────────────────────────
 hl.bind("print", hl.dsp.exec_cmd(qsScreenshot))
+hl.bind(mainMod .. " + end", hl.dsp.exec_cmd(qsScreenshot))
 
 -- ── Help / Keybinds Cheatsheet ────────────────────────────────────────────────
 hl.bind(mainMod .. " + SHIFT + H", hl.dsp.exec_cmd(qsKeybinds))
@@ -71,7 +72,7 @@ hl.bind(mainMod .. " + CTRL + W", hl.dsp.exec_cmd(qsIsland .. " --wallpaper"))
 hl.bind(mainMod .. " + ALT + B", hl.dsp.exec_cmd(qsReload))
 hl.bind(mainMod .. " + SHIFT + comma", hl.dsp.exec_cmd(sh_dir .. "/qs-settings.sh"))
 hl.bind(mainMod .. " + CTRL + R", hl.dsp.exec_cmd("hyprctl reload && notify-send 'Done' 'Hyprland reload'"))
-hl.bind(ctrl .. " + U", hl.dsp.exec_cmd(py_dir .. "/pkgupdate-gui.py"))
+hl.bind(ctrl .. " + U", hl.dsp.exec_cmd(sh_dir .. "/qs-updater.sh"))
 hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd(sh_dir .. "/startup.sh &> /dev/null"))
 hl.bind(mainMod .. " + S", hl.dsp.exec_cmd(sh_dir .. "/qs-settings.sh"))
 hl.bind(mainMod .. " + F1", hl.dsp.exec_cmd(sh_dir .. "/animations_toggle.sh"))

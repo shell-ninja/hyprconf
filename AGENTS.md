@@ -138,6 +138,14 @@ Each subproject under `config/quickshell/` runs as an independent Quickshell app
 
 ---
 
+### 5. Package Updater (`quickshell/updater/`)
+- **Main App**: [`config/quickshell/updater/shell.qml`](config/quickshell/updater/shell.qml) (`qs-updater.sh`).
+- **Surface**: Centered floating XDG toplevel window (`FloatingWindow`) styled with obsidian glass.
+- **Source Inspection**: Concurrently queries official Pacman (`checkupdates`), AUR (`paru -Qua` / `yay -Qua`), and Flatpak through [`config/hypr/scripts/py/pkg-check.py`](config/hypr/scripts/py/pkg-check.py).
+- **Update Execution & Polkit Integration**: Runs [`config/hypr/scripts/sh/pkg-apply.sh`](config/hypr/scripts/sh/pkg-apply.sh) using `pkexec`, triggering Quickshell Dynamic Island's native Polkit agent (`quickshell/island/PolkitView.qml`) when password authentication is required. Live terminal output is streamed directly into the bottom log preview container.
+
+---
+
 ## 5. Scripts and Daemons
 
 All helper scripts reside under `config/hypr/scripts/`:
@@ -148,6 +156,9 @@ All helper scripts reside under `config/hypr/scripts/`:
 | `sh/qs-island.sh` | Island supervisor and dynamic user resolver |
 | `sh/qs-reload.sh` | Clean reload supervisor: restarts Island, Dock, and Widgets in sequence |
 | `sh/qs-settings.sh` | Launches Quickshell Settings Studio modal |
+| `sh/qs-updater.sh` | Launches native Quickshell Package Updater modal |
+| `sh/pkg-apply.sh` | Streaming package upgrade runner using Polkit pkexec elevation |
+| `py/pkg-check.py` | Fast parallel package updates scanner (Pacman, AUR, Flatpak) |
 | `py/hypr-colors.py` | Extracts wallpaper color scheme and broadcasts tokens to all tools |
 | `py/weather.py` | Open-Meteo weather background worker and JSON cache updater |
 | `sh/caffeine-manager.sh` | Toggles Hypridle inhibition for uninterrupted display |

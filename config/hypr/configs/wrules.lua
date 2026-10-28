@@ -63,6 +63,12 @@ hl.window_rule({
     "monitor_w*0.48 monitor_h*0.80"
 })
 hl.window_rule({
+    match = { class = "^(org.quickshell)$", title = "^(System Package Updater)$" },
+    float = true,
+    center = true,
+    size = "920 740",
+})
+hl.window_rule({
     match = { class = "^(dev.shellninja.welcome)$" },
     float = true,
     center = true,

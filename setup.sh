@@ -449,6 +449,7 @@ settings_dir="$HOME/.hyprconf/quickshell/settings"
 widgets_dir="$HOME/.hyprconf/quickshell/widgets"
 lockscreen_dir="$HOME/.hyprconf/quickshell/lockscreen"
 dock_dir="$HOME/.hyprconf/quickshell/dock"
+updater_dir="$HOME/.hyprconf/quickshell/updater"
 
 # 1. Dynamic Island launcher morphing styles
 if [[ -d "$island_dir" && -d "$launcher_dir" ]]; then
@@ -526,7 +527,7 @@ if [[ -n "$local_hyprconf" && -d "$local_hyprconf" ]]; then
     fi
 fi
 
-mkdir -p "$widgets_dir" "$island_dir" "$launcher_dir" "$lockscreen_dir" "$dock_dir" "$HOME/.hyprconf/hypr/configs"
+mkdir -p "$widgets_dir" "$island_dir" "$launcher_dir" "$lockscreen_dir" "$dock_dir" "$updater_dir" "$HOME/.hyprconf/hypr/configs"
 ln -sfn "$user_state_dir/lockscreen.json" "$HOME/.hyprconf/quickshell/lockscreen.json"
 ln -sfn "$user_state_dir/widgets.json" "$widgets_dir/widgets.json"
 ln -sfn "$user_state_dir/island.json" "$island_dir/config.json"

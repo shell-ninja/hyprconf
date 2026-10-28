@@ -246,7 +246,7 @@ KEYBIND_SECTIONS = [
     ]),
     ("System", [
         ("sliders", "Settings", "Open Hyprconf settings panel", ["SUPER", "S"], "qs-settings.sh"),
-        ("refresh", "Package Updater", "Check and apply system updates", ["CTRL", "U"], "pkgupdate-gui.py"),
+        ("refresh", "Package Updater", "Check and apply system updates", ["CTRL", "U"], "qs-updater.sh"),
         ("keyboard", "Keybinds Cheatsheet", "Show all configured shortcuts", ["SUPER", "SHIFT", "H"], None),
     ]),
 ]
@@ -255,7 +255,7 @@ APPS = [
     {
         "icon": "refresh",
         "name": "Package Updater",
-        "file": "pkgupdate-gui.py",
+        "file": "qs-updater.sh",
         "desc": "Check and install updates for pacman, AUR helpers, and Flatpak packages.",
         "shortcut": ["CTRL", "U"],
     },
