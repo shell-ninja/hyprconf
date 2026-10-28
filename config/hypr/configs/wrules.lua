@@ -76,6 +76,12 @@ hl.window_rule({
     "monitor_w*0.40 monitor_h*0.80"
 })
 hl.window_rule({
+    match = { class = "^(org.quickshell)$", title = "^(Welcome to Hyprconf)$" },
+    float = true,
+    center = true,
+    size = "920 660",
+})
+hl.window_rule({
     match = { title = "^(System Update)$" },
     float = true,
     center = true,

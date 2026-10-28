@@ -1043,6 +1043,8 @@ Style2 1.0 Style2.qml
 """,
             "updater": """singleton Theme 1.0 Theme.qml
 """,
+            "welcome": """singleton Theme 1.0 Theme.qml
+""",
             "widgets": """singleton Theme 1.0 Theme.qml
 DesktopClock 1.0 DesktopClock.qml
 DesktopVisualizer 1.0 DesktopVisualizer.qml

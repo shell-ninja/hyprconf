@@ -146,6 +146,18 @@ Each subproject under `config/quickshell/` runs as an independent Quickshell app
 
 ---
 
+### 6. Welcome App (`quickshell/welcome/`)
+- **Main App**: [`config/quickshell/welcome/shell.qml`](config/quickshell/welcome/shell.qml) (`qs-welcome.sh`).
+- **Surface**: Centered floating XDG toplevel window (`FloatingWindow`) styled with obsidian glass (`920x660`).
+- **Pages**:
+  - `Overview`: Shell-Ninja ambient halo brand logo, tagline, and desktop core pillar cards (Pure Quickshell, Obsidian Harmony, Spring Physics).
+  - `What's New in v1.0.1`: Release milestones breakdown (Island Weather System, Native Package Updater, Dynamic Island Polkit, Single-Event Escape Logic).
+  - `Shortcuts`: Interactive, searchable keybindings matrix with direct click-to-execute test runners.
+  - `Built-in Applications`: Launch controls for Settings Studio, Package Updater, and Keybinds Cheatsheet alongside core documentation links.
+  - `Get Started`: System ready confirmation with `show_on_startup` toggle and state persistence to `welcome-app.json`.
+
+---
+
 ## 5. Scripts and Daemons
 
 All helper scripts reside under `config/hypr/scripts/`:
@@ -157,6 +169,7 @@ All helper scripts reside under `config/hypr/scripts/`:
 | `sh/qs-reload.sh` | Clean reload supervisor: restarts Island, Dock, and Widgets in sequence |
 | `sh/qs-settings.sh` | Launches Quickshell Settings Studio modal |
 | `sh/qs-updater.sh` | Launches native Quickshell Package Updater modal |
+| `sh/qs-welcome.sh` | Launches native Quickshell Welcome onboarding modal (with `--autostart` check) |
 | `sh/pkg-apply.sh` | Streaming package upgrade runner using Polkit pkexec elevation |
 | `py/pkg-check.py` | Fast parallel package updates scanner (Pacman, AUR, Flatpak) |
 | `py/hypr-colors.py` | Extracts wallpaper color scheme and broadcasts tokens to all tools |

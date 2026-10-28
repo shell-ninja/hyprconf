@@ -450,6 +450,7 @@ widgets_dir="$HOME/.hyprconf/quickshell/widgets"
 lockscreen_dir="$HOME/.hyprconf/quickshell/lockscreen"
 dock_dir="$HOME/.hyprconf/quickshell/dock"
 updater_dir="$HOME/.hyprconf/quickshell/updater"
+welcome_dir="$HOME/.hyprconf/quickshell/welcome"
 
 # 1. Dynamic Island launcher morphing styles
 if [[ -d "$island_dir" && -d "$launcher_dir" ]]; then
@@ -527,7 +528,7 @@ if [[ -n "$local_hyprconf" && -d "$local_hyprconf" ]]; then
     fi
 fi
 
-mkdir -p "$widgets_dir" "$island_dir" "$launcher_dir" "$lockscreen_dir" "$dock_dir" "$updater_dir" "$HOME/.hyprconf/hypr/configs"
+mkdir -p "$widgets_dir" "$island_dir" "$launcher_dir" "$lockscreen_dir" "$dock_dir" "$updater_dir" "$welcome_dir" "$HOME/.hyprconf/hypr/configs"
 ln -sfn "$user_state_dir/lockscreen.json" "$HOME/.hyprconf/quickshell/lockscreen.json"
 ln -sfn "$user_state_dir/widgets.json" "$widgets_dir/widgets.json"
 ln -sfn "$user_state_dir/island.json" "$island_dir/config.json"
@@ -535,6 +536,7 @@ ln -sfn "$user_state_dir/launcher.json" "$launcher_dir/config.json"
 ln -sfn "$user_state_dir/dock.json" "$dock_dir/dock.json"
 ln -sfn "$user_state_dir/monitor.lua" "$HOME/.hyprconf/hypr/configs/monitor.lua"
 ln -sfn "$user_state_dir/keybinds.lua" "$HOME/.hyprconf/hypr/configs/keybinds.lua"
+ln -sfn "$user_state_dir/welcome-app.json" "$HOME/.hyprconf/hypr/welcome-app.json"
 # Symlink ~/.hyprconf/hypr/.cache -> ~/.local/share/hyprconf/.cache
 mkdir -p "$user_state_dir/.cache"
 rm -rf "$HOME/.hyprconf/hypr/.cache" 2>/dev/null || true
