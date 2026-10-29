@@ -20,7 +20,7 @@ Item {
 
     readonly property string homeDir: {
         var h = Quickshell.env("HOME")
-        return (h && h.length > 0) ? h : "/home/shell-ninja"
+        return (h && h.length > 0) ? h : (Quickshell.env("USER") ? ("/home/" + Quickshell.env("USER")) : "/home")
     }
 
     property var liveBars: []
@@ -72,7 +72,7 @@ Item {
     Process {
         id: cavaProc
         command: ["cava", "-p", root.homeDir + "/.hyprconf/hypr/.cache/cava-island.conf"]
-        running: !root.previewMode && root.visible
+        running: !root.previewMode && root.visible && (root.isMediaPlaying || root.hasActiveAudio)
         stdout: SplitParser {
             splitMarker: "\n"
             onRead: data => {
@@ -102,14 +102,14 @@ Item {
         onTriggered: root.hasActiveAudio = false
     }
 
-    // Idle organic harmonic breathing animation
+    // Idle organic harmonic breathing animation (only in preview/interactive mode)
     property real phase: 0.0
     NumberAnimation on phase {
         from: 0.0
         to: Math.PI * 2
         duration: 3200
         loops: Animation.Infinite
-        running: root.previewMode || (!root.hasActiveAudio && !root.isMediaPlaying && root.visible)
+        running: root.previewMode && root.visible
     }
 
     // Obsidian Glass Container
@@ -157,9 +157,7 @@ Item {
                         var curved = Math.pow(Math.min(1.0, raw * 1.35), 0.85)
                         return Math.max(0.08 * tier, Math.min(1.0, curved * tier))
                     }
-                    // Idle breathing
-                    var breath = 0.25 + 0.18 * Math.sin(root.phase + u * Math.PI)
-                    return Math.max(0.08, breath * tier)
+                    return 0.08 * tier
                 }
 
                 width: 8
@@ -185,6 +183,7 @@ Item {
                     }
 
                     Behavior on height {
+                        enabled: root.hasActiveAudio || root.isMediaPlaying || root.previewMode
                         NumberAnimation { duration: 65; easing.type: Easing.OutQuad }
                     }
                 }

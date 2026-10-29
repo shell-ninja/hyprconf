@@ -52,10 +52,10 @@ Rectangle {
     readonly property string cameraSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.foreground + '" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>')
     readonly property string cameraMiniSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.background + '" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>')
 
-    // Live Uptime Reader
+    // Live Uptime Reader (direct awk on /proc/uptime, zero-overhead)
     Process {
         id: uptimeReader
-        command: ["bash", "-c", "python3 -c 'with open(\"/proc/uptime\") as f: s=float(f.read().split()[0]); h=int(s//3600); m=int((s%3600)//60); print(f\"Uptime – {h} hours {m} minutes\")'"]
+        command: ["awk", "{s=int($1); h=int(s/3600); m=int((s%3600)/60); printf \"Uptime – %d hours %d minutes\", h, m}", "/proc/uptime"]
         running: true
         stdout: StdioCollector {
             onTextChanged: {
@@ -65,7 +65,7 @@ Rectangle {
     }
 
     Timer {
-        interval: 30000
+        interval: 60000
         running: true
         repeat: true
         onTriggered: {
@@ -125,7 +125,9 @@ Rectangle {
         anchors.fill: parent
         source: "file://" + root.homeDir + "/.hyprconf/hypr/.cache/current_wallpaper.png"
         fillMode: Image.PreserveAspectCrop
-        cache: false
+        sourceSize: Qt.size(444, 120)
+        cache: true
+        asynchronous: true
         smooth: true
         visible: false
     }

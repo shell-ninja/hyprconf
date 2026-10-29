@@ -21,17 +21,13 @@ _CONFIG_HYPR = Path.home() / ".config" / "hypr" / "configs"
 _HYPRCONF = Path.home() / ".hyprconf" / "hypr" / "configs"
 CONFIGS_DIR = _CONFIG_HYPR if _CONFIG_HYPR.exists() else _HYPRCONF
 
-_USER_STATE_DIR = Path.home() / ".local" / "share" / "hyprconf"
-_USER_MONITOR = _USER_STATE_DIR / "monitor.lua"
-_USER_KEYBINDS = _USER_STATE_DIR / "keybinds.lua"
-
 CONFIGS_LUA = CONFIGS_DIR / "configs.lua"
 DECORATION_LUA = CONFIGS_DIR / "decoration.lua"
-MONITOR_LUA = _USER_MONITOR if _USER_MONITOR.exists() else (CONFIGS_DIR / "monitor.lua")
+MONITOR_LUA = CONFIGS_DIR / "monitor.lua"
 ANIMATION_LUA = CONFIGS_DIR / "animation.lua"
 SETTINGS_LUA = CONFIGS_DIR / "settings.lua"
 ENVIRONMENT_LUA = CONFIGS_DIR / "environment.lua"
-KEYBINDS_LUA = _USER_KEYBINDS if _USER_KEYBINDS.exists() else (CONFIGS_DIR / "keybinds.lua")
+KEYBINDS_LUA = CONFIGS_DIR / "keybinds.lua"
 
 # Updated in the background, never shown in the UI.
 _KITTY_CFG = Path.home() / ".config" / "kitty" / "kitty.conf"
@@ -692,14 +688,9 @@ def _apply_appearance(pending, result):
 
 
 def _apply_monitor(pending, result):
-    global MONITOR_LUA
     monitors = pending.get("monitor")
     if not monitors:
         return
-    if not MONITOR_LUA.is_file():
-        if _USER_STATE_DIR.is_dir() and (CONFIGS_DIR / "monitor.lua").is_file():
-            shutil.copy(CONFIGS_DIR / "monitor.lua", _USER_MONITOR)
-            MONITOR_LUA = _USER_MONITOR
     if not MONITOR_LUA.is_file():
         result.err("monitor.lua not found — display changes skipped")
         return
@@ -861,16 +852,11 @@ def _apply_environment(pending, result):
 
 
 def _apply_keybinds(pending, result):
-    global KEYBINDS_LUA
     edits = pending.get("keybind_edit", {})
     removes = pending.get("keybind_remove", set())
     adds = pending.get("keybind_add", [])
     if not (edits or removes or adds):
         return
-    if not KEYBINDS_LUA.is_file():
-        if _USER_STATE_DIR.is_dir() and (CONFIGS_DIR / "keybinds.lua").is_file():
-            shutil.copy(CONFIGS_DIR / "keybinds.lua", _USER_KEYBINDS)
-            KEYBINDS_LUA = _USER_KEYBINDS
     if not KEYBINDS_LUA.is_file():
         result.err("keybinds.lua not found — keybind changes skipped")
         return

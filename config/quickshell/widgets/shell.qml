@@ -20,16 +20,16 @@ PanelWindow {
 
     readonly property string homeDir: {
         var h = Quickshell.env("HOME")
-        return (h && h.length > 0) ? h : "/home/shell-ninja"
+        return (h && h.length > 0) ? h : (Quickshell.env("USER") ? ("/home/" + Quickshell.env("USER")) : "/home")
     }
 
-    readonly property string configPath: homeDir + "/.local/share/hyprconf/widgets.json"
+    readonly property string configPath: homeDir + "/.hyprconf/quickshell/widgets/widgets.json"
     property var widgetsConfig: ({})
 
     // Load widgets configuration
     Process {
         id: configLoader
-        command: ["python3", "-c", "import json, os; p=os.path.expanduser('~/.local/share/hyprconf/widgets.json'); print(open(p, encoding='utf-8').read() if os.path.exists(p) else '{}')"]
+        command: ["python3", "-c", "import json, os; p=os.path.expanduser('~/.hyprconf/quickshell/widgets/widgets.json'); print(open(p, encoding='utf-8').read() if os.path.exists(p) else '{}')"]
         running: true
         stdout: StdioCollector {
             onTextChanged: {
@@ -45,7 +45,7 @@ PanelWindow {
 
     function reloadConfig() {
         configLoader.running = false
-        configLoader.command = ["python3", "-c", "import json, os; p=os.path.expanduser('~/.local/share/hyprconf/widgets.json'); print(open(p, encoding='utf-8').read() if os.path.exists(p) else '{}')"]
+        configLoader.command = ["python3", "-c", "import json, os; p=os.path.expanduser('~/.hyprconf/quickshell/widgets/widgets.json'); print(open(p, encoding='utf-8').read() if os.path.exists(p) else '{}')"]
         configLoader.running = true
     }
 

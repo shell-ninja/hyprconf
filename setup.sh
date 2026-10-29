@@ -709,7 +709,7 @@ if [[ -n "$extras_src" ]]; then
     for file in "${desktop_files[@]}"; do
         if [[ -f "$extras_src/$file" ]]; then
             cp -f "$extras_src/$file" "$applications_dir/"
-            sed -i "s|/home/shell-ninja|$HOME|g; s|/home/[^/]*|$HOME|g" "$applications_dir/$file"
+            sed -i "s|/home/[^/]*|$HOME|g" "$applications_dir/$file"
             msg dn "Installed $file to $applications_dir"
         fi
     done

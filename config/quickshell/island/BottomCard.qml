@@ -112,7 +112,7 @@ Rectangle {
 
     readonly property string homeDir: {
         var h = Quickshell.env("HOME")
-        return (h && h.length > 0) ? h : "/home/shell-ninja"
+        return (h && h.length > 0) ? h : (Quickshell.env("USER") ? ("/home/" + Quickshell.env("USER")) : "/home")
     }
 
     // ── LIVE WEATHER INTEGRATION ─────────────────────────────────────────────
@@ -584,6 +584,9 @@ Rectangle {
                     anchors.fill: parent
                     source: (root.activePlayer && root.activePlayer.trackArtUrl) ? root.activePlayer.trackArtUrl : ""
                     fillMode: Image.PreserveAspectCrop
+                    sourceSize: Qt.size(128, 128)
+                    asynchronous: true
+                    cache: true
                     visible: source.toString().length > 0
                 }
 

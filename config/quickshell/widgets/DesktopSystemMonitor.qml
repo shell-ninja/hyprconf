@@ -98,7 +98,7 @@ Item {
     }
 
     Timer {
-        interval: 3000
+        interval: 4000
         repeat: true
         running: !root.editMode && (root.widgetConfig ? root.widgetConfig.enabled !== false : true) && root.visible
         onTriggered: {

@@ -256,7 +256,7 @@ PanelWindow {
 
     Timer {
         id: sinkCheckTimer
-        interval: 500
+        interval: 3000
         repeat: true
         running: !root.isMediaPlaying
         onTriggered: {
@@ -266,7 +266,7 @@ PanelWindow {
 
     Process {
         id: sinkCheckProc
-        command: ["bash", "-c", "(pactl list sinks short 2>/dev/null | grep -q RUNNING || pactl list sink-inputs 2>/dev/null | grep -q 'Corked: no') && echo 1 || echo 0"]
+        command: ["bash", "-c", "pactl list sinks short 2>/dev/null | grep -q RUNNING && echo 1 || echo 0"]
         stdout: SplitParser {
             splitMarker: "\n"
             onRead: data => {
@@ -279,7 +279,7 @@ PanelWindow {
 
     readonly property string homeDir: {
         var h = Quickshell.env("HOME")
-        return (h && h.length > 0) ? h : "/home/shell-ninja"
+        return (h && h.length > 0) ? h : (Quickshell.env("USER") ? ("/home/" + Quickshell.env("USER")) : "/home")
     }
 
     // ── LIVE AUDIO FREQUENCY VISUALIZER (CAVA INTEGRATION) ───────────────────
@@ -288,7 +288,7 @@ PanelWindow {
     Process {
         id: cavaProc
         command: ["cava", "-p", root.homeDir + "/.hyprconf/hypr/.cache/cava-island.conf"]
-        running: root.isAudioPlaying && root.visualizerEnabled
+        running: root.isAudioPlaying && root.visualizerEnabled && (root.expanded || root.islandStyle === "capsule") && !root.hasFullscreenWindow
         stdout: SplitParser {
             splitMarker: "\n"
             onRead: data => {
@@ -1374,7 +1374,7 @@ PanelWindow {
 
     Process {
         id: ramReader
-        command: ["bash", "-c", "python3 -c 'with open(\"/proc/meminfo\") as f: l=dict(x.split(\":\") for x in f); t=int(l[\"MemTotal\"].split()[0]); a=int(l[\"MemAvailable\"].split()[0]); print(f\"RAM {((t-a)/(1024*1024)):.1f} GB\")'"]
+        command: ["awk", "/MemTotal/{t=$2} /MemAvailable/{a=$2} END {printf \"RAM %.1f GB\", (t-a)/1048576}", "/proc/meminfo"]
         running: true
         stdout: StdioCollector {
             onTextChanged: {
@@ -1384,7 +1384,7 @@ PanelWindow {
     }
 
     Timer {
-        interval: 8000
+        interval: 10000
         running: true
         repeat: true
         onTriggered: {

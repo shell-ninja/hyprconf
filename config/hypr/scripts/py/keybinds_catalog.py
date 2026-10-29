@@ -281,6 +281,13 @@ CATALOG = [
         "icon": "refresh",
         "desc": "Soft-reload Quickshell processes",
     },
+    {
+        "combo": "SUPER + ALT + SPACE",
+        "action": "Toggle Application Dock",
+        "category": "Quickshell",
+        "icon": "grid",
+        "desc": "Toggle Application Dock visibility",
+    },
 
     # ── AUDIO & MEDIA & HARDWARE ─────────────────────────────────────────────
     {

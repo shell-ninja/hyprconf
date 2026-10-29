@@ -85,6 +85,9 @@ Item {
         }
         if (sum > 0.015) {
             root.hasRealAudio = true
+            if (root.active && !animTimer.running) {
+                animTimer.restart()
+            }
             fallbackTimer.restart()
         }
     }
@@ -190,12 +193,12 @@ Item {
         }
     }
 
-    // 30fps animation loop with harmonic audio physics
+    // 30fps animation loop with harmonic audio physics (stops completely when silent to save CPU)
     Timer {
         id: animTimer
         interval: 33
         repeat: true
-        running: root.active || (root.barHeights.length > 0 && root.barHeights[0] > 3.3)
+        running: root.active && (root.hasRealAudio || (root.barHeights.length > 0 && root.barHeights[0] > 3.3))
 
         onTriggered: {
             var minH = 3.2
@@ -235,7 +238,7 @@ Item {
                     updated.push(nextH)
                 }
                 root.barHeights = updated
-                if (!isStillMoving && !root.active) {
+                if (!isStillMoving && (!root.hasRealAudio || !root.active)) {
                     animTimer.stop()
                 }
             }

@@ -216,4 +216,4 @@ if command -v fzf >/dev/null 2>&1
 end
 
 # opencode
-fish_add_path /home/shell-ninja/.opencode/bin
+test -d "$HOME/.opencode/bin" && fish_add_path "$HOME/.opencode/bin"

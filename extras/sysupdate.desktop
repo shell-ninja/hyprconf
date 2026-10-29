@@ -1,7 +1,7 @@
 [Desktop Entry]
 Type=Application
 Name=Package Update
-Exec=/home/shell-ninja/.hyprconf/hypr/scripts/py/pkgupdate-gui.py
+Exec=sh -c '"$HOME/.hyprconf/hypr/scripts/sh/qs-updater.sh"'
 Icon=system-software-update
 Terminal=false
 Categories=Utility;

@@ -1,7 +1,7 @@
 [Desktop Entry]
 Type=Application
 Name=Hyprconf Settings
-Exec=/home/shell-ninja/.hyprconf/hypr/scripts/sh/qs-settings.sh
+Exec=sh -c '"$HOME/.hyprconf/hypr/scripts/sh/qs-settings.sh"'
 Icon=preferences-system
 Terminal=false
 Categories=Utility;

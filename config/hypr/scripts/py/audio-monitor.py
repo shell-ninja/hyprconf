@@ -52,6 +52,35 @@ def emit_source(force=False):
         sys.stdout.write(f"source:{state}\n")
         sys.stdout.flush()
 
+import atexit
+import ctypes
+import signal
+
+# Ensure process terminates immediately if parent dies
+try:
+    libc = ctypes.CDLL("libc.so.6")
+    libc.prctl(1, 15)  # PR_SET_PDEATHSIG = 1, SIGTERM = 15
+except Exception:
+    pass
+
+proc = None
+
+def cleanup(*args):
+    global proc
+    if proc:
+        try:
+            proc.terminate()
+            proc.kill()
+        except Exception:
+            pass
+    sys.exit(0)
+
+signal.signal(signal.SIGTERM, cleanup)
+signal.signal(signal.SIGINT, cleanup)
+signal.signal(signal.SIGHUP, cleanup)
+signal.signal(signal.SIGPIPE, cleanup)
+atexit.register(cleanup)
+
 if __name__ == "__main__":
     emit_sink(force=True)
     emit_source(force=True)
@@ -67,3 +96,5 @@ if __name__ == "__main__":
                     emit_source()
     except Exception:
         pass
+    finally:
+        cleanup()

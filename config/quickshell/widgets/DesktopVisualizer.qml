@@ -19,7 +19,7 @@ Item {
 
     readonly property string homeDir: {
         var h = Quickshell.env("HOME")
-        return (h && h.length > 0) ? h : "/home/shell-ninja"
+        return (h && h.length > 0) ? h : (Quickshell.env("USER") ? ("/home/" + Quickshell.env("USER")) : "/home")
     }
 
     implicitWidth: 520
@@ -78,7 +78,7 @@ Item {
     Process {
         id: cavaProc
         command: ["cava", "-p", root.homeDir + "/.hyprconf/hypr/.cache/cava-island.conf"]
-        running: !root.editMode && (root.widgetConfig ? root.widgetConfig.enabled !== false : true) && root.visible
+        running: !root.editMode && (root.widgetConfig ? root.widgetConfig.enabled !== false : true) && root.visible && (root.isMediaPlaying || root.hasActiveAudio)
         stdout: SplitParser {
             splitMarker: "\n"
             onRead: data => {

@@ -1,4 +1,3 @@
 # This file contains fish universal variable definitions.
 # VERSION: 3.0
 SETUVAR ffconfig:minimal
-SETUVAR fish_user_paths:/home/shell\x2dninja/\x2eopencode/bin\x1e/home/shell\x2dninja/\x2elocal/bin

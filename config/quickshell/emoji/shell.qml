@@ -27,7 +27,7 @@ PanelWindow {
 
     readonly property string homeDir: {
         var h = Quickshell.env("HOME")
-        return (h && h.length > 0) ? h : "/home/shell-ninja"
+        return (h && h.length > 0) ? h : (Quickshell.env("USER") ? ("/home/" + Quickshell.env("USER")) : "/home")
     }
 
     readonly property string emojisJsonPath: homeDir + "/.hyprconf/quickshell/emoji/emojis.json"

@@ -18,52 +18,16 @@
       "name": "Kitty",
       "exec": "kitty",
       "icon": "kitty",
-      "icon_path": "file:///home/shell-ninja/.local/share/icons/kora/apps/scalable/kitty.svg",
-      "match": [
-        "kitty"
-      ]
+      "icon_path": "file://~/.local/share/icons/kora/apps/scalable/kitty.svg",
+      "match": ["kitty"]
     },
     {
       "id": "org.kde.dolphin.desktop",
       "name": "Dolphin",
       "exec": "dolphin",
       "icon": "org.kde.dolphin",
-      "icon_path": "file:///home/shell-ninja/.local/share/icons/kora/apps/scalable/org.kde.dolphin.svg",
-      "match": [
-        "dolphin",
-        "org.kde.dolphin"
-      ]
-    },
-    {
-      "id": "brave-origin.desktop",
-      "name": "Brave Origin",
-      "exec": "brave-origin",
-      "icon": "brave-origin",
-      "icon_path": "file:///usr/share/icons/hicolor/48x48/apps/brave-origin.png",
-      "match": [
-        "brave-origin"
-      ]
-    },
-    {
-      "id": "antigravity-ide.desktop",
-      "name": "Antigravity IDE",
-      "exec": "antigravity-ide",
-      "icon": "antigravity-ide",
-      "icon_path": "file:///home/shell-ninja/.local/share/icons/kora/apps/scalable/antigravity-ide.svg",
-      "match": [
-        "antigravity-ide",
-        "code"
-      ]
-    },
-    {
-      "id": "localsend.desktop",
-      "name": "LocalSend",
-      "exec": "localsend",
-      "icon": "localsend",
-      "icon_path": "file:///home/shell-ninja/.local/share/icons/kora/apps/scalable/localsend.svg",
-      "match": [
-        "org.localsend.localsend_app"
-      ]
+      "icon_path": "file://~/.local/share/icons/kora/apps/scalable/org.kde.dolphin.svg",
+      "match": ["dolphin", "org.kde.dolphin"]
     }
   ]
 }

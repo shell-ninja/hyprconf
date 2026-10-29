@@ -22,7 +22,7 @@ Scope {
         return (h && h.length > 0) ? h : ("/home/" + userName)
     }
 
-    readonly property string configPath: homeDir + "/.local/share/hyprconf/lockscreen.json"
+    readonly property string configPath: homeDir + "/.hyprconf/quickshell/lockscreen.json"
 
     function getDefaultConfig() {
         return {
@@ -152,7 +152,7 @@ Scope {
     }
 
     Timer {
-        interval: 1000
+        interval: 3000
         repeat: true
         running: true
         onTriggered: {
@@ -251,7 +251,7 @@ Scope {
 
     Timer {
         id: reloadCfgTimer
-        interval: 2000
+        interval: 10000
         repeat: true
         running: true
         onTriggered: {

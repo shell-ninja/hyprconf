@@ -20,9 +20,13 @@ if [[ ! -e "$HOME/.config/quickshell" && -d "$HOME/.hyprconf/quickshell" ]]; the
     ln -sfn "$HOME/.hyprconf/quickshell" "$HOME/.config/quickshell"
 fi
 
-# 1. Terminate running Quickshell instances cleanly
+# 1. Terminate running Quickshell instances and children cleanly
 pkill -x qs 2>/dev/null || true
 pkill -x quickshell 2>/dev/null || true
+pkill -9 -f "[a]udio-monitor.py" 2>/dev/null || true
+pkill -9 -f "[n]etwork-speed.py" 2>/dev/null || true
+pkill -9 -f "[p]actl subscribe" 2>/dev/null || true
+pkill -x cava 2>/dev/null || true
 
 # Wait until processes have fully terminated to avoid race condition on restart
 for _ in {1..15}; do

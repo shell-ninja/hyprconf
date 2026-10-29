@@ -414,7 +414,7 @@ Item {
         onlineScanner.running = false
         onlineScanner.command = [
             "python3",
-            "/home/shell-ninja/.hyprconf/hypr/scripts/py/wallhaven-bridge.py",
+            root.homeDir + "/.hyprconf/hypr/scripts/py/wallhaven-bridge.py",
             "search",
             "--query", q,
             "--sorting", sort,

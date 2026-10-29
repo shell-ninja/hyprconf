@@ -1,7 +1,25 @@
 #!/usr/bin/env python3
 import time
 import sys
+import os
 import json
+import ctypes
+import signal
+
+# Ensure process terminates immediately if parent dies
+try:
+    libc = ctypes.CDLL("libc.so.6")
+    libc.prctl(1, 15)  # PR_SET_PDEATHSIG = 1, SIGTERM = 15
+except Exception:
+    pass
+
+def sig_handler(*args):
+    sys.exit(0)
+
+signal.signal(signal.SIGTERM, sig_handler)
+signal.signal(signal.SIGINT, sig_handler)
+signal.signal(signal.SIGHUP, sig_handler)
+signal.signal(signal.SIGPIPE, sig_handler)
 
 def get_net_bytes():
     rx, tx = 0, 0
@@ -42,7 +60,11 @@ def main():
 
     while True:
         try:
+            if os.getppid() == 1:
+                break
             time.sleep(1.5)
+            if os.getppid() == 1:
+                break
             now_time = time.time()
             rx, tx = get_net_bytes()
             dt = max(0.2, now_time - prev_time)
@@ -55,7 +77,7 @@ def main():
                 "up": fmt_speed(tx_speed)
             }
             print(json.dumps(data), flush=True)
-        except (KeyboardInterrupt, SystemExit):
+        except (KeyboardInterrupt, SystemExit, BrokenPipeError, IOError):
             break
         except Exception:
             time.sleep(2.0)

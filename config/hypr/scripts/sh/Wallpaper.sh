@@ -4,13 +4,11 @@
 scripts_dir="$HOME/.hyprconf/hypr/scripts"
 sh_dir="$scripts_dir/sh"
 py_dir="$scripts_dir/py"
-cache_dir="$HOME/.local/share/hyprconf/.cache"
-[[ ! -d "$cache_dir" && -d "$HOME/.hyprconf/hypr/.cache" ]] && cache_dir="$HOME/.hyprconf/hypr/.cache"
+cache_dir="$HOME/.hyprconf/hypr/.cache"
 wallCache="$cache_dir/.wallpaper"
 liveWallCache="$cache_dir/.live_wallpaper"
 wallpaper_dir="$HOME/.hyprconf/hypr/Wallpaper"
-config_file="$HOME/.local/share/hyprconf/wallpaper_config.json"
-[[ ! -f "$config_file" && -f "$cache_dir/wallpaper_config.json" ]] && config_file="$cache_dir/wallpaper_config.json"
+config_file="$cache_dir/wallpaper_config.json"
 if [[ -f "$config_file" ]]; then
     saved_dir=$(grep -oP '"wallpaper_dir"\s*:\s*"\K[^"]+' "$config_file" 2>/dev/null || true)
     if [[ -n "$saved_dir" && -d "$saved_dir" ]]; then
@@ -167,7 +165,7 @@ if [[ $live_mode -eq 1 ]]; then
     # Persist in config JSON
     python3 -c "
 import json, os
-p = os.path.expanduser('~/.local/share/hyprconf/wallpaper_config.json')
+p = os.path.expanduser('~/.hyprconf/hypr/.cache/wallpaper_config.json')
 try:
     d = json.load(open(p)) if os.path.exists(p) else {}
 except Exception:
@@ -215,7 +213,7 @@ else
     # Persist in config JSON
     python3 -c "
 import json, os
-p = os.path.expanduser('~/.local/share/hyprconf/wallpaper_config.json')
+p = os.path.expanduser('~/.hyprconf/hypr/.cache/wallpaper_config.json')
 try:
     d = json.load(open(p)) if os.path.exists(p) else {}
 except Exception:

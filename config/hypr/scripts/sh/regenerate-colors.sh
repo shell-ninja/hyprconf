@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 
 scriptsDir="$HOME/.hyprconf/hypr/scripts/py"
-cacheDir="$HOME/.local/share/hyprconf/.cache"
-[[ ! -d "$cacheDir" && -d "$HOME/.hyprconf/hypr/.cache" ]] && cacheDir="$HOME/.hyprconf/hypr/.cache"
+cacheDir="$HOME/.hyprconf/hypr/.cache"
 icon="preferences-desktop-theme"
 msg="Re-generating Colors"
 

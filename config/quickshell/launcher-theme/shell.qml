@@ -27,10 +27,10 @@ PanelWindow {
 
     readonly property string homeDir: {
         var h = Quickshell.env("HOME")
-        return (h && h.length > 0) ? h : "/home/shell-ninja"
+        return (h && h.length > 0) ? h : (Quickshell.env("USER") ? ("/home/" + Quickshell.env("USER")) : "/home")
     }
 
-    readonly property string configPath: homeDir + "/.local/share/hyprconf/launcher.json"
+    readonly property string configPath: homeDir + "/.hyprconf/quickshell/launcher/config.json"
     property real wallpaperTimestamp: Date.now()
     readonly property string quadWallPath: "file://" + homeDir + "/.hyprconf/hypr/.cache/wall.quad"
     readonly property string wallpaperPath: "file://" + homeDir + "/.hyprconf/hypr/.cache/current_wallpaper.png"

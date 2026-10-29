@@ -14,10 +14,8 @@ from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
 
 HOME = Path(os.environ.get("HOME", str(Path.home())))
-LOCAL_CACHE = HOME / ".local" / "share" / "hyprconf" / ".cache"
-CACHE_DIR = LOCAL_CACHE if (LOCAL_CACHE.exists() or LOCAL_CACHE.parent.exists()) else (HOME / ".hyprconf" / "hypr" / ".cache")
-USER_CONFIG = HOME / ".local" / "share" / "hyprconf" / "wallpaper_config.json"
-CONFIG_FILE = USER_CONFIG if (USER_CONFIG.exists() or USER_CONFIG.parent.exists()) else (CACHE_DIR / "wallpaper_config.json")
+CACHE_DIR = HOME / ".hyprconf" / "hypr" / ".cache"
+CONFIG_FILE = CACHE_DIR / "wallpaper_config.json"
 DEFAULT_WALLPAPER_DIR = str(HOME / ".hyprconf" / "hypr" / "Wallpaper")
 DEFAULT_LIVE_DIR = str(HOME / ".hyprconf" / "hypr" / "Wallpaper" / "Live")
 DEFAULT_WALLHAVEN_DIR = str(HOME / ".hyprconf" / "hypr" / "Wallpaper" / "wallhaven")

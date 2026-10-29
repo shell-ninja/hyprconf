@@ -19,19 +19,18 @@ Item {
     readonly property string chevronRightSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>')
     readonly property string wifiSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1.2" fill="currentColor"/></svg>')
 
+    readonly property string wifiSvgDisabled: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.58 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1.2" fill="currentColor"/></svg>')
+    readonly property string wifiSvgHigh: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1.2" fill="currentColor"/></svg>')
+    readonly property string wifiSvgMid: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1.2" fill="currentColor"/></svg>')
+    readonly property string wifiSvgLow: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1.2" fill="currentColor"/></svg>')
+    readonly property string wifiSvgMin: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="20" r="1.8" fill="currentColor"/></svg>')
+
     function getWifiSvg(signal, isEnabled) {
-        if (!isEnabled) {
-            return svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.58 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1.2" fill="currentColor"/></svg>')
-        }
-        if (signal >= 75) {
-            return svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1.2" fill="currentColor"/></svg>')
-        } else if (signal >= 50) {
-            return svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1.2" fill="currentColor"/></svg>')
-        } else if (signal >= 25) {
-            return svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1.2" fill="currentColor"/></svg>')
-        } else {
-            return svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="20" r="1.8" fill="currentColor"/></svg>')
-        }
+        if (!isEnabled) return root.wifiSvgDisabled
+        if (signal >= 75) return root.wifiSvgHigh
+        if (signal >= 50) return root.wifiSvgMid
+        if (signal >= 25) return root.wifiSvgLow
+        return root.wifiSvgMin
     }
 
     readonly property string btSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6.5 6.5 17.5 17.5 12 23 12 1 17.5 6.5 6.5 17.5"/></svg>')
@@ -42,10 +41,11 @@ Item {
 
     readonly property string homeDir: {
         var h = Quickshell.env("HOME")
-        return (h && h.length > 0) ? h : "/home/shell-ninja"
+        return (h && h.length > 0) ? h : (Quickshell.env("USER") ? ("/home/" + Quickshell.env("USER")) : "/home")
     }
 
     // ── STATES ───────────────────────────────────────────────────────────────
+    property bool active: false
     property bool networkConnected: false
     property string networkType: "none" // "ethernet", "wifi", "none"
     property string networkName: "Wi-Fi"
@@ -91,10 +91,10 @@ Item {
         }
     }
 
-    // DND Reader (Native Quickshell Island State)
+    // DND Reader (Native Quickshell Island State - ultra lightweight bash grep)
     Process {
         id: dndReader
-        command: ["python3", "-c", "import json, os; p=os.path.expanduser('~/.hyprconf/hypr/.cache/dnd_state.json'); print('on' if os.path.exists(p) and json.load(open(p)).get('dnd') else 'off')"]
+        command: ["bash", "-c", "grep -q '\"dnd\":\\s*true' ~/.hyprconf/hypr/.cache/dnd_state.json 2>/dev/null && echo on || echo off"]
         running: true
         stdout: StdioCollector {
             onTextChanged: {
@@ -152,17 +152,26 @@ Item {
         }
     }
 
+    function refreshState() {
+        if (!statusReader.running) statusReader.running = true
+        if (!btReader.running) btReader.running = true
+        if (!caffeineReader.running) caffeineReader.running = true
+        if (!nightLightReader.running) nightLightReader.running = true
+        if (!dndReader.running) dndReader.running = true
+        if (!perfReader.running) perfReader.running = true
+    }
+
+    // Only poll when Island is actually open and visible!
     Timer {
-        interval: 2500
-        running: true
+        interval: 4000
+        running: root.active
         repeat: true
-        onTriggered: {
-            if (!statusReader.running) statusReader.running = true
-            if (!btReader.running) btReader.running = true
-            if (!caffeineReader.running) caffeineReader.running = true
-            if (!nightLightReader.running) nightLightReader.running = true
-            if (!dndReader.running) dndReader.running = true
-            if (!perfReader.running) perfReader.running = true
+        onTriggered: root.refreshState()
+    }
+
+    onActiveChanged: {
+        if (active) {
+            root.refreshState()
         }
     }
 

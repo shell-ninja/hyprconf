@@ -3,9 +3,8 @@
 
 export QS_NO_RELOAD_POPUP=1
 
-cache_dir="$HOME/.local/share/hyprconf/.cache"
-[[ ! -d "$cache_dir" ]] && cache_dir="$HOME/.hyprconf/hypr/.cache"
-if [[ ! -f "$cache_dir/wall.quad" ]]; then
+# Ensure quad image is up to date if missing
+if [[ ! -f "$HOME/.hyprconf/hypr/.cache/wall.quad" ]]; then
     "$HOME/.hyprconf/hypr/scripts/sh/wallcache.sh" &>/dev/null &
 fi
 

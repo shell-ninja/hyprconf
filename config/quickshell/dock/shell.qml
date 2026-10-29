@@ -12,7 +12,7 @@ ShellRoot {
 
     readonly property string homeDir: {
         var h = Quickshell.env("HOME")
-        return (h && h.length > 0) ? h : "/home/shell-ninja"
+        return (h && h.length > 0) ? h : (Quickshell.env("USER") ? ("/home/" + Quickshell.env("USER")) : "/home")
     }
 
     readonly property string dockConfigPath: homeDir + "/.hyprconf/quickshell/dock/dock.json"
@@ -214,6 +214,21 @@ ShellRoot {
     }
 
     // ── UPDATE DOCK ITEMS (PINNED + RUNNING) ─────────────────────────────────
+    function resolveAppIcon(p) {
+        var raw = p.icon_path || ""
+        if (raw) {
+            if (raw.indexOf("/home/") !== -1) {
+                return raw.replace(/file:\/\/\/home\/[^\/]+/, "file://" + root.homeDir).replace(/\/home\/[^\/]+/, root.homeDir)
+            }
+            if (raw.startsWith("file://~") || raw.startsWith("~")) {
+                return "file://" + root.homeDir + raw.replace(/^file:\/\/~/, "").replace(/^~/, "")
+            }
+            return raw
+        }
+        var resolved = findAppForClass((p.id || "").replace(".desktop", ""), p.name)
+        return resolved && resolved.icon_path ? resolved.icon_path : ""
+    }
+
     function updateDockItems() {
         var pinnedList = root.config.pinned_apps || []
         var pItems = []
@@ -226,7 +241,7 @@ ShellRoot {
                 name: p.name || "App",
                 exec: p.exec || "",
                 icon: p.icon || "",
-                icon_path: p.icon_path || "",
+                icon_path: resolveAppIcon(p),
                 match: p.match || [(p.id || "").replace(".desktop", ""), (p.exec || "").split(" ")[0]],
                 isPinned: true,
                 isRunning: false,
@@ -395,8 +410,9 @@ ShellRoot {
         }
     }
 
+    // Watchdog fallback sync (events handle real-time updates)
     Timer {
-        interval: 1200
+        interval: 6000
         running: true
         repeat: true
         onTriggered: {

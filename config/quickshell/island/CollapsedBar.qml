@@ -12,7 +12,7 @@ Item {
     readonly property real requiredWidth: {
         if (root.islandStyle === "split_wings") return (splitWingsItem && splitWingsItem.width > 0) ? Math.ceil(splitWingsItem.width + 16) : 412
         if (root.islandStyle === "orbital") return (orbitalItem && orbitalItem.width > 0) ? Math.ceil(orbitalItem.width + 16) : 340
-        if (root.islandStyle === "minimal_rail") return (minimalRailItem && minimalRailItem.width > 0) ? Math.ceil(minimalRailItem.width + 16) : 582
+        if (root.islandStyle === "minimal_rail") return 586
         return (capsuleRow && capsuleRow.width > 0) ? Math.ceil(capsuleRow.width + 56) : 316
     }
     implicitWidth: requiredWidth
@@ -118,19 +118,18 @@ Item {
     readonly property string ethernetSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.accent + '" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v10c0 1.1-.9 2-2 2h-4v2h2v2H6v-2h2v-2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="M7 9h2v4H7zM11 9h2v4h-2zM15 9h2v4h-2z"/></svg>')
     readonly property string wifiSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.accent + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1.2" fill="' + Theme.accent + '"/></svg>')
 
+    readonly property string wifiSvgDisabled: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.muted + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.58 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1.2" fill="' + Theme.muted + '"/></svg>')
+    readonly property string wifiSvgHigh: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.accent + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1.2" fill="' + Theme.accent + '"/></svg>')
+    readonly property string wifiSvgMid: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.accent + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1.2" fill="' + Theme.accent + '"/></svg>')
+    readonly property string wifiSvgLow: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.accent + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1.2" fill="' + Theme.accent + '"/></svg>')
+    readonly property string wifiSvgMin: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.accent + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="20" r="1.8" fill="' + Theme.accent + '"/></svg>')
+
     function getWifiSvg(signal, isEnabled) {
-        if (!isEnabled) {
-            return svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.muted + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.58 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1.2" fill="' + Theme.muted + '"/></svg>')
-        }
-        if (signal >= 75) {
-            return svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.accent + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1.2" fill="' + Theme.accent + '"/></svg>')
-        } else if (signal >= 50) {
-            return svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.accent + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1.2" fill="' + Theme.accent + '"/></svg>')
-        } else if (signal >= 25) {
-            return svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.accent + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1.2" fill="' + Theme.accent + '"/></svg>')
-        } else {
-            return svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.accent + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="20" r="1.8" fill="' + Theme.accent + '"/></svg>')
-        }
+        if (!isEnabled) return root.wifiSvgDisabled
+        if (signal >= 75) return root.wifiSvgHigh
+        if (signal >= 50) return root.wifiSvgMid
+        if (signal >= 25) return root.wifiSvgLow
+        return root.wifiSvgMin
     }
 
     property var occupiedWorkspaces: []
@@ -160,7 +159,7 @@ Item {
 
     Timer {
         id: occupiedPollTimer
-        interval: 2500
+        interval: 10000
         repeat: true
         running: true
         onTriggered: {
@@ -265,16 +264,19 @@ Item {
     // ── HARDWARE STATUS (BATTERY DETECTION) ──────────────────────────────────
     Process {
         id: batFetcher
-        command: ["python3", "-c", "import glob, os, json; bats = glob.glob('/sys/class/power_supply/BAT*/capacity'); has_bat = bool(bats and os.path.exists(bats[0])); bat_pct = int(open(bats[0]).read().strip()) if has_bat else -1; print(json.dumps({'has_bat': has_bat, 'bat_pct': bat_pct}))"]
+        command: ["bash", "-c", "if compgen -G '/sys/class/power_supply/BAT*/capacity' >/dev/null; then cat /sys/class/power_supply/BAT*/capacity 2>/dev/null | head -1; else echo -1; fi"]
         running: true
         stdout: StdioCollector {
             onTextChanged: {
                 if (text && text.trim().length > 0) {
-                    try {
-                        var d = JSON.parse(text.trim())
-                        if (d.has_bat !== undefined) root.hasBattery = d.has_bat
-                        if (d.bat_pct !== undefined) root.batteryPct = d.bat_pct
-                    } catch(e) {}
+                    var pct = parseInt(text.trim(), 10)
+                    if (!isNaN(pct) && pct >= 0) {
+                        root.hasBattery = true
+                        root.batteryPct = pct
+                    } else {
+                        root.hasBattery = false
+                        root.batteryPct = -1
+                    }
                 }
             }
         }
@@ -304,11 +306,11 @@ Item {
 
     Timer {
         id: batPollTimer
-        interval: 10000
+        interval: 12000
         repeat: true
         running: true
         onTriggered: {
-            if (!batFetcher.running) batFetcher.running = true
+            if (root.hasBattery && !batFetcher.running) batFetcher.running = true
             if (!barNetFetcher.running) barNetFetcher.running = true
         }
     }
@@ -358,7 +360,7 @@ Item {
             AudioVisualizer {
                 id: leftVisualizer
                 anchors.verticalCenter: parent.verticalCenter
-                active: root.isAudioPlaying && root.visualizerEnabled
+                active: root.isAudioPlaying && root.visualizerEnabled && !root.expanded && root.visible && (root.islandStyle === "capsule")
                 wingMode: "left"
                 barCount: Math.max(2, Math.floor(root.visualizerBarCount / 2))
                 style: root.effectiveVizStyle
@@ -526,11 +528,7 @@ Item {
                         radius: 3
                         color: Theme.accent
                         anchors.verticalCenter: parent.verticalCenter
-                        SequentialAnimation on opacity {
-                            loops: Animation.Infinite
-                            NumberAnimation { to: 0.35; duration: 1400; easing.type: Easing.InOutQuad }
-                            NumberAnimation { to: 1.0; duration: 1400; easing.type: Easing.InOutQuad }
-                        }
+                        opacity: 0.85
                     }
 
                     Text {
@@ -554,7 +552,7 @@ Item {
             AudioVisualizer {
                 id: rightVisualizer
                 anchors.verticalCenter: parent.verticalCenter
-                active: root.isAudioPlaying && root.visualizerEnabled
+                active: root.isAudioPlaying && root.visualizerEnabled && !root.expanded && root.visible && (root.islandStyle === "capsule")
                 wingMode: "right"
                 barCount: Math.max(2, Math.floor(root.visualizerBarCount / 2))
                 style: root.effectiveVizStyle
@@ -1268,11 +1266,7 @@ Item {
                         radius: 2.5
                         color: Theme.accent
                         anchors.verticalCenter: parent.verticalCenter
-                        SequentialAnimation on opacity {
-                            loops: Animation.Infinite
-                            NumberAnimation { to: 0.35; duration: 1400; easing.type: Easing.InOutQuad }
-                            NumberAnimation { to: 1.0; duration: 1400; easing.type: Easing.InOutQuad }
-                        }
+                        opacity: 0.85
                     }
 
                     // B. Time Text (11:21 PM)
@@ -1469,7 +1463,7 @@ Item {
                         to: 1.0
                         duration: bridgeItem.streamDuration
                         loops: Animation.Infinite
-                        running: root.matrixStreamEnabled && minimalRailItem.visible
+                        running: root.matrixStreamEnabled && minimalRailItem.visible && !root.expanded && root.visible
                         easing.type: Easing.Linear
                     }
 
@@ -1500,7 +1494,7 @@ Item {
                             // Alternating particle styles: index 0 & 2 are glowing halo nodes, index 1 is satellite dots
                             readonly property bool isHaloNode: (index % 2 === 0)
 
-                            // ── GLOWING HALO PARTICLE (Like in Reference Image) ──
+                            // ── GLOWING HALO PARTICLE ──
                             Item {
                                 anchors.centerIn: parent
                                 width: 14
@@ -1535,7 +1529,7 @@ Item {
                                 }
                             }
 
-                            // ── SATELLITE MICRO-PARTICLES (Paired dots on line) ──
+                            // ── SATELLITE PARTICLE ──
                             Row {
                                 anchors.centerIn: parent
                                 spacing: 5
@@ -1561,21 +1555,14 @@ Item {
                                         radius: 4
                                         color: Theme.alpha(Theme.accent, 0.35)
                                     }
+
                                     Rectangle {
                                         anchors.centerIn: parent
-                                        width: 3.2
-                                        height: 3.2
-                                        radius: 1.6
-                                        color: Theme.accent
+                                        width: 2.6
+                                        height: 2.6
+                                        radius: 1.3
+                                        color: "#ffffff"
                                     }
-                                }
-
-                                Rectangle {
-                                    width: 2.2
-                                    height: 2.2
-                                    radius: 1.1
-                                    color: Theme.alpha(Theme.accent, 0.85)
-                                    anchors.verticalCenter: parent.verticalCenter
                                 }
                             }
                         }
@@ -1761,7 +1748,7 @@ Item {
                 // ── Module 3: Internet Bandwidth Badge (Capsule 3) ─────────
                 Rectangle {
                     id: minimalNetBadge
-                    width: Math.max(136, netContentRow.implicitWidth + 24)
+                    width: 140
                     height: 28
                     radius: 14
                     color: Theme.alpha(Theme.background, 0.92)

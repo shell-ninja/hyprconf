@@ -1,11 +1,9 @@
 #!/usr/bin/env bash
 # hyprsunset-manager.sh — 3-Stage Night Light Manager (Off, Always On, Scheduled)
 
-cache_dir="$HOME/.local/share/hyprconf/.cache"
-[[ ! -d "$cache_dir" && -d "$HOME/.hyprconf/hypr/.cache" ]] && cache_dir="$HOME/.hyprconf/hypr/.cache"
-STATE_FILE="$cache_dir/nightlight_state.json"
+STATE_FILE="$HOME/.hyprconf/hypr/.cache/nightlight_state.json"
 SCHEDULER_PID_FILE="/tmp/hyprsunset_scheduler.pid"
-mkdir -p "$cache_dir"
+mkdir -p "$HOME/.hyprconf/hypr/.cache"
 
 is_hyprsunset_running() {
     pgrep -x "hyprsunset" >/dev/null 2>&1

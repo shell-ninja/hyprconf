@@ -12,7 +12,7 @@ import json
 import re
 from pathlib import Path
 
-HOME = Path(os.environ.get("HOME", "/home/shell-ninja"))
+HOME = Path(os.environ.get("HOME", str(Path.home())))
 MOCK_FILE = HOME / ".hyprconf" / "hypr" / ".cache" / "mock_wifi.json"
 
 def run_cmd(args, timeout=10):

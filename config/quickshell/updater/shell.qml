@@ -16,7 +16,7 @@ FloatingWindow {
 
     readonly property string homeDir: {
         var h = Quickshell.env("HOME")
-        return (h && h.length > 0) ? h : "/home/shell-ninja"
+        return (h && h.length > 0) ? h : (Quickshell.env("USER") ? ("/home/" + Quickshell.env("USER")) : "/home")
     }
 
     // ── STATE VARIABLES ──────────────────────────────────────────────────────
@@ -27,20 +27,28 @@ FloatingWindow {
 
     property var osInfo: ({ name: "Arch Linux", id: "arch" })
     property int totalUpdates: 0
-    property int pacmanCount: 0
+
+    property string nativeType: "pacman"
+    property string nativeName: "Pacman"
+    property string nativeDesc: "Official Arch Linux repositories"
+    property int nativeCount: 0
+    property var nativePkgs: []
+    property bool nativeChecked: true
+
+    // Backwards-compatible pacman aliases
+    readonly property int pacmanCount: nativeCount
+    readonly property var pacmanPkgs: nativePkgs
+    property alias pacmanChecked: window.nativeChecked
+
     property int aurCount: 0
-    property int flatpakCount: 0
-
-    property var pacmanPkgs: []
     property var aurPkgs: []
-    property var flatpakPkgs: []
-
-    property bool pacmanChecked: true
     property bool aurChecked: true
-    property bool flatpakChecked: false
-
     property bool aurAvailable: false
     property string aurHelper: "paru"
+
+    property int flatpakCount: 0
+    property var flatpakPkgs: []
+    property bool flatpakChecked: false
     property bool flatpakAvailable: false
 
     // Bottom View Tab: 0 = Pending Packages Preview, 1 = Live Terminal Output
@@ -50,9 +58,9 @@ FloatingWindow {
     // Computed total selected updates
     readonly property int selectedCount: {
         var cnt = 0
-        if (pacmanChecked) cnt += pacmanCount
-        if (aurChecked) cnt += aurCount
-        if (flatpakChecked) cnt += flatpakCount
+        if (nativeChecked) cnt += nativeCount
+        if (aurChecked && aurAvailable) cnt += aurCount
+        if (flatpakChecked && flatpakAvailable) cnt += flatpakCount
         return cnt
     }
 
@@ -74,6 +82,27 @@ FloatingWindow {
     readonly property string trashSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.muted + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>')
     readonly property string shieldSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.accent + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>')
     readonly property string successCheckSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>')
+
+    readonly property string aptSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.accent + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 10 10 0 0 0 9.5-13.5"/></svg>')
+    readonly property string dnfSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.accent + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.28 1.28L3 12l5.8 1.9a2 2 0 0 1 1.28 1.28L12 21l1.9-5.8a2 2 0 0 1 1.28-1.28L21 12l-5.8-1.9a2 2 0 0 1-1.28-1.28L12 3z"/></svg>')
+    readonly property string zypperSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.accent + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><circle cx="12" cy="12" r="3"/></svg>')
+
+    function nativeManagerSvg(type) {
+        if (type === "apt") return window.aptSvg
+        if (type === "dnf" || type === "dnf5") return window.dnfSvg
+        if (type === "zypper") return window.zypperSvg
+        return window.pacmanSvg
+    }
+
+    function packageTabSvg(active) {
+        var col = active ? Theme.accent : Theme.muted
+        return svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + col + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>')
+    }
+
+    function terminalTabSvg(active) {
+        var col = active ? Theme.accent : Theme.muted
+        return svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + col + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>')
+    }
 
     // ── IPC HANDLER ──────────────────────────────────────────────────────────
     IpcHandler {
@@ -119,8 +148,163 @@ FloatingWindow {
         id: logModel
     }
 
+    function color256ToHex(n) {
+        n = parseInt(n, 10)
+        if (isNaN(n) || n < 0 || n > 255) return "#94a3b8"
+        if (n < 16) {
+            var std = ["#000000","#ef4444","#22c55e","#eab308","#38bdf8","#a855f7","#06b6d4","#e2e8f0",
+                       "#64748b","#f87171","#4ade80","#fde047","#60a5fa","#c084fc","#22d3ee","#ffffff"]
+            return std[n]
+        }
+        if (n >= 232) {
+            var g = Math.round((n - 232) * 10 + 8).toString(16)
+            if (g.length === 1) g = "0" + g
+            return "#" + g + g + g
+        }
+        var c = n - 16
+        var b = (c % 6) * 51
+        var g = (Math.floor(c / 6) % 6) * 51
+        var r = Math.floor(c / 36) * 51
+        var hex = function(v) { var s = v.toString(16); return s.length === 1 ? "0" + s : s }
+        return "#" + hex(r) + hex(g) + hex(b)
+    }
+
+    function parseAnsi(text) {
+        if (!text) return ""
+
+        // 1. Handle carriage returns (pacman progress lines)
+        if (text.indexOf("\r") !== -1) {
+            var parts = text.split("\r")
+            for (var p = parts.length - 1; p >= 0; p--) {
+                if (parts[p].trim().length > 0) {
+                    text = parts[p]
+                    break
+                }
+            }
+        }
+
+        // 2. Strip OSC terminal title/status sequences (\x1b]...\x07 or \x1b]...\x1b\)
+        text = text.replace(/\x1b\][^\x07\x1b]*(\x07|\x1b\\)/g, "")
+
+        // 3. Strip non-SGR ANSI escape codes (cursor navigation, clear screen/line, etc.)
+        text = text.replace(/\x1b\[\??[0-9;]*[a-ln-zA-LN-Z]/g, "")
+        text = text.replace(/\x1b\([a-zA-Z]/g, "")
+
+        // 4. Strip unprintable ASCII control characters (keep tab and newline)
+        text = text.replace(/[\x00-\x08\x0b\x0c\x0e-\x1a\x1c-\x1f\x7f]/g, "")
+
+        var hasEscape = text.indexOf("\x1b") !== -1
+
+        // 5. HTML entity escaping before wrapping tags
+        text = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+
+        if (!hasEscape) {
+            var trimmed = text.trim()
+            if (trimmed.indexOf("✓") !== -1 || trimmed.indexOf("successfully") !== -1) {
+                return "<font color=\"#22c55e\">" + text + "</font>"
+            }
+            if (trimmed.indexOf("✗") !== -1 || trimmed.indexOf("failed") !== -1 || trimmed.indexOf("error") !== -1) {
+                return "<font color=\"#ef4444\">" + text + "</font>"
+            }
+            if (trimmed.indexOf("::") === 0 || trimmed.indexOf("==") === 0) {
+                return "<font color=\"" + Theme.accent + "\">" + text + "</font>"
+            }
+            if (trimmed.indexOf("━") !== -1) {
+                return "<font color=\"" + Theme.alpha(Theme.foreground, 0.25) + "\">" + text + "</font>"
+            }
+            return text
+        }
+
+        // 6. Parse ANSI SGR codes: \x1b\[([0-9;]*)m
+        var regex = /\x1b\[([0-9;]*)m/g
+        var result = ""
+        var lastIdx = 0
+        var isBold = false
+        var currentColor = null
+
+        var match
+        while ((match = regex.exec(text)) !== null) {
+            result += text.substring(lastIdx, match.index)
+            lastIdx = regex.lastIndex
+
+            var codeStr = match[1] || "0"
+            var codes = codeStr.split(";")
+
+            for (var i = 0; i < codes.length; i++) {
+                var c = parseInt(codes[i], 10)
+                if (isNaN(c) || c === 0) {
+                    if (currentColor) { result += "</font>"; currentColor = null }
+                    if (isBold) { result += "</b>"; isBold = false }
+                } else if (c === 1) {
+                    if (!isBold) { result += "<b>"; isBold = true }
+                } else if (c === 22) {
+                    if (isBold) { result += "</b>"; isBold = false }
+                } else if (c === 38 && codes[i+1] === "5" && codes[i+2]) {
+                    var hex256 = color256ToHex(codes[i+2])
+                    i += 2
+                    if (currentColor) result += "</font>"
+                    result += "<font color=\"" + hex256 + "\">"
+                    currentColor = hex256
+                } else if (c === 38 && codes[i+1] === "2" && codes[i+4]) {
+                    var r = Math.min(255, Math.max(0, parseInt(codes[i+2], 10) || 0))
+                    var g = Math.min(255, Math.max(0, parseInt(codes[i+3], 10) || 0))
+                    var b = Math.min(255, Math.max(0, parseInt(codes[i+4], 10) || 0))
+                    var toH = function(n) { var s = n.toString(16); return s.length === 1 ? "0" + s : s }
+                    var hexRgb = "#" + toH(r) + toH(g) + toH(b)
+                    i += 4
+                    if (currentColor) result += "</font>"
+                    result += "<font color=\"" + hexRgb + "\">"
+                    currentColor = hexRgb
+                } else if (c >= 30 && c <= 37) {
+                    var standardColors = ["#4b5563", "#ef4444", "#22c55e", "#eab308", "#38bdf8", "#c084fc", "#2dd4bf", "#e2e8f0"]
+                    var hexStd = standardColors[c - 30]
+                    if (currentColor) result += "</font>"
+                    result += "<font color=\"" + hexStd + "\">"
+                    currentColor = hexStd
+                } else if (c === 39) {
+                    if (currentColor) { result += "</font>"; currentColor = null }
+                } else if (c >= 90 && c <= 97) {
+                    var brightColors = ["#94a3b8", "#f87171", "#4ade80", "#fde047", "#60a5fa", "#e879f9", "#67e8f9", "#ffffff"]
+                    var hexBright = brightColors[c - 90]
+                    if (currentColor) result += "</font>"
+                    result += "<font color=\"" + hexBright + "\">"
+                    currentColor = hexBright
+                }
+            }
+        }
+
+        result += text.substring(lastIdx)
+        if (currentColor) result += "</font>"
+        if (isBold) result += "</b>"
+
+        // 7. Final safety purge of any unhandled escape sequences or control chars
+        result = result.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, "").replace(/\x1b/g, "")
+        return result
+    }
+
+    property bool lastLineWasProgress: false
+
     function appendLog(line) {
-        logModel.append({ "line": line })
+        if (typeof line !== "string") return
+        var trimmed = line.trim()
+        if (trimmed.length === 0) return
+
+        var formatted = parseAnsi(line)
+        if (formatted.length === 0) return
+
+        // Detect if this line is an in-place progress update (curl / pacman / download progress)
+        var isProgress = /^\s*\d+\s+\d+[kMGT]?/i.test(trimmed) || 
+                         /\[[#\s=-]+\]\s*\d+%/i.test(trimmed) ||
+                         /ETA:\s*\d+/i.test(trimmed) ||
+                         /^(\d{1,3}%|\(\d+\/\d+\))/i.test(trimmed)
+
+        if (isProgress && lastLineWasProgress && logModel.count > 0) {
+            logModel.set(logModel.count - 1, { "line": formatted })
+        } else {
+            logModel.append({ "line": formatted })
+            lastLineWasProgress = isProgress
+        }
+
         if (logListView.count > 0) {
             logListView.positionViewAtEnd()
         }
@@ -128,6 +312,7 @@ FloatingWindow {
 
     function clearLog() {
         logModel.clear()
+        lastLineWasProgress = false
     }
 
     Process {
@@ -141,16 +326,29 @@ FloatingWindow {
                     if (data.os) window.osInfo = data.os
                     window.totalUpdates = data.total || 0
 
-                    if (data.pacman) {
-                        window.pacmanCount = data.pacman.count || 0
-                        window.pacmanPkgs = data.pacman.packages || []
+                    if (data.nativeType) window.nativeType = data.nativeType
+                    if (data.nativeName) window.nativeName = data.nativeName
+                    if (data.nativeDesc) window.nativeDesc = data.nativeDesc
+
+                    if (data.native) {
+                        window.nativeCount = data.native.count || 0
+                        window.nativePkgs = data.native.packages || []
+                    } else if (data.pacman) {
+                        window.nativeCount = data.pacman.count || 0
+                        window.nativePkgs = data.pacman.packages || []
                     }
+
                     if (data.aur) {
                         window.aurAvailable = data.aur.available || false
                         window.aurHelper = data.aur.helper || "paru"
                         window.aurCount = data.aur.count || 0
                         window.aurPkgs = data.aur.packages || []
+                    } else {
+                        window.aurAvailable = false
+                        window.aurCount = 0
+                        window.aurPkgs = []
                     }
+
                     if (data.flatpak) {
                         window.flatpakAvailable = data.flatpak.available || false
                         window.flatpakCount = data.flatpak.count || 0
@@ -219,9 +417,9 @@ FloatingWindow {
         appendLog(":: Preparing update pipeline...")
 
         var args = ["stdbuf", "-oL", "-eL", "bash", homeDir + "/.hyprconf/hypr/scripts/sh/pkg-apply.sh"]
-        if (pacmanChecked && pacmanCount > 0) args.push("--pacman")
-        if (aurChecked && aurCount > 0) args.push("--aur")
-        if (flatpakChecked && flatpakCount > 0) args.push("--flatpak")
+        if (nativeChecked && nativeCount > 0) args.push("--" + nativeType)
+        if (aurChecked && aurCount > 0 && aurAvailable) args.push("--aur")
+        if (flatpakChecked && flatpakCount > 0 && flatpakAvailable) args.push("--flatpak")
 
         applyProc.command = args
         applyProc.running = false
@@ -306,7 +504,7 @@ FloatingWindow {
                             text: "System Package Updater"
                             font.pixelSize: 15
                             font.bold: true
-                            font.family: "Inter"
+                            font.family: "Outfit"
                             color: Theme.foreground
                         }
 
@@ -354,7 +552,7 @@ FloatingWindow {
                     Text {
                         text: window.osInfo.name + " • Quickshell Native Desktop Shell"
                         font.pixelSize: 11
-                        font.family: "Inter"
+                        font.family: "Outfit"
                         color: Theme.muted
                     }
                 }
@@ -399,7 +597,7 @@ FloatingWindow {
                         text: "Keep your system fresh"
                         font.pixelSize: 20
                         font.bold: true
-                        font.family: "Inter"
+                        font.family: "Outfit"
                         font.letterSpacing: -0.3
                         color: Theme.foreground
                     }
@@ -407,7 +605,7 @@ FloatingWindow {
                     Text {
                         text: "Review package updates from all configured sources and apply them securely via Polkit."
                         font.pixelSize: 12
-                        font.family: "Inter"
+                        font.family: "Outfit"
                         color: Theme.muted
                         wrapMode: Text.WordWrap
                         Layout.maximumWidth: 380
@@ -449,7 +647,7 @@ FloatingWindow {
                         }
                     }
 
-                    // Stat Card: Pacman
+                    // Stat Card: Native Manager (Pacman / APT / DNF / Zypper)
                     Rectangle {
                         width: 90
                         height: 64
@@ -463,14 +661,14 @@ FloatingWindow {
                             spacing: 1
 
                             Text {
-                                text: window.isChecking ? "…" : window.pacmanCount.toString()
+                                text: window.isChecking ? "…" : window.nativeCount.toString()
                                 font.pixelSize: 22
                                 font.bold: true
-                                color: window.pacmanCount > 0 ? Theme.accent : Theme.muted
+                                color: window.nativeCount > 0 ? Theme.accent : Theme.muted
                                 Layout.alignment: Qt.AlignHCenter
                             }
                             Text {
-                                text: "PACMAN"
+                                text: window.nativeName.toUpperCase()
                                 font.pixelSize: 9
                                 font.bold: true
                                 font.letterSpacing: 0.8
@@ -480,8 +678,9 @@ FloatingWindow {
                         }
                     }
 
-                    // Stat Card: AUR
+                    // Stat Card: AUR (Visible only on Arch)
                     Rectangle {
+                        visible: window.aurAvailable
                         width: 90
                         height: 64
                         radius: 12
@@ -510,6 +709,38 @@ FloatingWindow {
                             }
                         }
                     }
+
+                    // Stat Card: Flatpak (Visible if installed)
+                    Rectangle {
+                        visible: window.flatpakAvailable || window.flatpakCount > 0
+                        width: 90
+                        height: 64
+                        radius: 12
+                        color: Theme.alpha(Theme.surface, 0.70)
+                        border.color: Theme.alpha(Theme.foreground, 0.08)
+                        border.width: 1
+
+                        ColumnLayout {
+                            anchors.centerIn: parent
+                            spacing: 1
+
+                            Text {
+                                text: window.isChecking ? "…" : window.flatpakCount.toString()
+                                font.pixelSize: 22
+                                font.bold: true
+                                color: window.flatpakCount > 0 ? Theme.accent : Theme.muted
+                                Layout.alignment: Qt.AlignHCenter
+                            }
+                            Text {
+                                text: "FLATPAK"
+                                font.pixelSize: 9
+                                font.bold: true
+                                font.letterSpacing: 0.8
+                                color: Theme.muted
+                                Layout.alignment: Qt.AlignHCenter
+                            }
+                        }
+                    }
                 }
             }
 
@@ -530,15 +761,15 @@ FloatingWindow {
                     Layout.fillWidth: true
                     spacing: 10
 
-                    // 1. Pacman Card
+                    // 1. Native Package Manager Card
                     Rectangle {
                         Layout.fillWidth: true
                         height: 62
                         radius: 12
-                        color: pacmanArea.containsMouse
+                        color: nativeArea.containsMouse
                                ? Theme.alpha(Theme.surface, 0.90)
-                               : (window.pacmanChecked ? Theme.alpha(Theme.accent, 0.06) : Theme.alpha(Theme.surface, 0.50))
-                        border.color: window.pacmanChecked
+                               : (window.nativeChecked ? Theme.alpha(Theme.accent, 0.06) : Theme.alpha(Theme.surface, 0.50))
+                        border.color: window.nativeChecked
                                       ? Theme.alpha(Theme.accent, 0.40)
                                       : Theme.alpha(Theme.foreground, 0.08)
                         border.width: 1
@@ -549,7 +780,7 @@ FloatingWindow {
                             anchors.rightMargin: 14
                             spacing: 12
 
-                            // Pacman SVG icon container
+                            // Native SVG icon container
                             Rectangle {
                                 width: 34
                                 height: 34
@@ -562,7 +793,7 @@ FloatingWindow {
                                     anchors.centerIn: parent
                                     width: 18
                                     height: 18
-                                    source: window.pacmanSvg
+                                    source: window.nativeManagerSvg(window.nativeType)
                                 }
                             }
 
@@ -573,29 +804,29 @@ FloatingWindow {
                                 RowLayout {
                                     spacing: 8
                                     Text {
-                                        text: "Pacman"
+                                        text: window.nativeName
                                         font.pixelSize: 13
                                         font.bold: true
                                         color: Theme.foreground
                                     }
                                     Rectangle {
                                         height: 16
-                                        implicitWidth: pacBadge.implicitWidth + 8
+                                        implicitWidth: nativeBadge.implicitWidth + 8
                                         radius: 8
-                                        color: window.pacmanCount > 0 ? Theme.alpha(Theme.accent, 0.20) : Theme.alpha("#22c55e", 0.15)
+                                        color: window.nativeCount > 0 ? Theme.alpha(Theme.accent, 0.20) : Theme.alpha("#22c55e", 0.15)
                                         Text {
-                                            id: pacBadge
+                                            id: nativeBadge
                                             anchors.centerIn: parent
-                                            text: window.isChecking ? "checking" : (window.pacmanCount > 0 ? (window.pacmanCount + " updates") : "up to date")
+                                            text: window.isChecking ? "checking" : (window.nativeCount > 0 ? (window.nativeCount + " updates") : "up to date")
                                             font.pixelSize: 8
                                             font.bold: true
-                                            color: window.pacmanCount > 0 ? Theme.accent : "#22c55e"
+                                            color: window.nativeCount > 0 ? Theme.accent : "#22c55e"
                                         }
                                     }
                                 }
 
                                 Text {
-                                    text: "Official Arch Linux repositories"
+                                    text: window.nativeDesc
                                     font.pixelSize: 10
                                     color: Theme.muted
                                 }
@@ -606,8 +837,8 @@ FloatingWindow {
                                 width: 22
                                 height: 22
                                 radius: 6
-                                color: window.pacmanChecked ? Theme.accent : "transparent"
-                                border.color: window.pacmanChecked ? Theme.accent : Theme.alpha(Theme.foreground, 0.30)
+                                color: window.nativeChecked ? Theme.accent : "transparent"
+                                border.color: window.nativeChecked ? Theme.accent : Theme.alpha(Theme.foreground, 0.30)
                                 border.width: 1.5
 
                                 Image {
@@ -615,24 +846,25 @@ FloatingWindow {
                                     width: 12
                                     height: 12
                                     source: window.checkSvg
-                                    visible: window.pacmanChecked
+                                    visible: window.nativeChecked
                                 }
                             }
                         }
 
                         MouseArea {
-                            id: pacmanArea
+                            id: nativeArea
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
                             onClicked: {
-                                window.pacmanChecked = !window.pacmanChecked
+                                window.nativeChecked = !window.nativeChecked
                             }
                         }
                     }
 
-                    // 2. AUR Card
+                    // 2. AUR Card (Visible only when available)
                     Rectangle {
+                        visible: window.aurAvailable
                         Layout.fillWidth: true
                         height: 62
                         radius: 12
@@ -917,7 +1149,7 @@ FloatingWindow {
                     Text {
                         text: "Polkit island authentication supported"
                         font.pixelSize: 10
-                        font.family: "Inter"
+                        font.family: "Outfit"
                         color: Theme.muted
                     }
                 }
@@ -961,73 +1193,116 @@ FloatingWindow {
 
                             Item { Layout.fillWidth: true }
 
-                            // Tab Switcher: [ Pending Packages ] | [ Live Output ]
-                            RowLayout {
-                                spacing: 4
+                            // Segmented Tab Switcher: [ Pending Packages ] | [ Live Output ]
+                            Rectangle {
+                                height: 30
+                                radius: 8
+                                color: Theme.alpha(Theme.surface, 0.45)
+                                border.color: Theme.alpha(Theme.foreground, 0.08)
+                                border.width: 1
+                                implicitWidth: tabRow.implicitWidth + 8
 
-                                // Tab 0: Pending Packages
-                                Rectangle {
-                                    height: 24
-                                    implicitWidth: tab0Text.implicitWidth + 16
-                                    radius: 6
-                                    color: window.activeBottomTab === 0
-                                           ? Theme.alpha(Theme.accent, 0.20)
-                                           : (tab0Area.containsMouse ? Theme.alpha(Theme.foreground, 0.06) : "transparent")
-                                    border.color: window.activeBottomTab === 0 ? Theme.alpha(Theme.accent, 0.40) : "transparent"
-                                    border.width: 1
+                                Row {
+                                    id: tabRow
+                                    anchors.centerIn: parent
+                                    spacing: 4
 
-                                    Text {
-                                        id: tab0Text
-                                        anchors.centerIn: parent
-                                        text: "Pending Packages (" + window.totalUpdates + ")"
-                                        font.pixelSize: 10
-                                        font.bold: true
-                                        color: window.activeBottomTab === 0 ? Theme.accent : Theme.muted
-                                    }
+                                    // Tab 0: Pending Packages
+                                    Rectangle {
+                                        id: tab0Btn
+                                        height: 24
+                                        implicitWidth: tab0Content.implicitWidth + 20
+                                        radius: 6
+                                        color: window.activeBottomTab === 0
+                                               ? Theme.alpha(Theme.accent, 0.22)
+                                               : (tab0Area.containsMouse ? Theme.alpha(Theme.foreground, 0.06) : "transparent")
+                                        border.color: window.activeBottomTab === 0 ? Theme.alpha(Theme.accent, 0.45) : "transparent"
+                                        border.width: 1
 
-                                    MouseArea {
-                                        id: tab0Area
-                                        anchors.fill: parent
-                                        hoverEnabled: true
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: window.activeBottomTab = 0
-                                    }
-                                }
+                                        Behavior on color { ColorAnimation { duration: 140 } }
+                                        Behavior on border.color { ColorAnimation { duration: 140 } }
 
-                                // Tab 1: Live Output
-                                Rectangle {
-                                    height: 24
-                                    implicitWidth: tab1Text.implicitWidth + 16
-                                    radius: 6
-                                    color: window.activeBottomTab === 1
-                                           ? Theme.alpha(Theme.accent, 0.20)
-                                           : (tab1Area.containsMouse ? Theme.alpha(Theme.foreground, 0.06) : "transparent")
-                                    border.color: window.activeBottomTab === 1 ? Theme.alpha(Theme.accent, 0.40) : "transparent"
-                                    border.width: 1
+                                        Row {
+                                            id: tab0Content
+                                            anchors.centerIn: parent
+                                            spacing: 6
 
-                                    RowLayout {
-                                        anchors.centerIn: parent
-                                        spacing: 5
-                                        Image {
-                                            width: 11
-                                            height: 11
-                                            source: window.terminalSvg
+                                            Image {
+                                                width: 13
+                                                height: 13
+                                                sourceSize: Qt.size(13, 13)
+                                                fillMode: Image.PreserveAspectFit
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                source: window.packageTabSvg(window.activeBottomTab === 0)
+                                            }
+
+                                            Text {
+                                                id: tab0Text
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                text: "Pending Packages (" + window.totalUpdates + ")"
+                                                font.pixelSize: 11
+                                                font.family: "Outfit"
+                                                font.bold: window.activeBottomTab === 0
+                                                color: window.activeBottomTab === 0 ? Theme.accent : Theme.muted
+                                            }
                                         }
-                                        Text {
-                                            id: tab1Text
-                                            text: "Live Output"
-                                            font.pixelSize: 10
-                                            font.bold: true
-                                            color: window.activeBottomTab === 1 ? Theme.accent : Theme.muted
+
+                                        MouseArea {
+                                            id: tab0Area
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: window.activeBottomTab = 0
                                         }
                                     }
 
-                                    MouseArea {
-                                        id: tab1Area
-                                        anchors.fill: parent
-                                        hoverEnabled: true
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: window.activeBottomTab = 1
+                                    // Tab 1: Live Output
+                                    Rectangle {
+                                        id: tab1Btn
+                                        height: 24
+                                        implicitWidth: tab1Content.implicitWidth + 20
+                                        radius: 6
+                                        color: window.activeBottomTab === 1
+                                               ? Theme.alpha(Theme.accent, 0.22)
+                                               : (tab1Area.containsMouse ? Theme.alpha(Theme.foreground, 0.06) : "transparent")
+                                        border.color: window.activeBottomTab === 1 ? Theme.alpha(Theme.accent, 0.45) : "transparent"
+                                        border.width: 1
+
+                                        Behavior on color { ColorAnimation { duration: 140 } }
+                                        Behavior on border.color { ColorAnimation { duration: 140 } }
+
+                                        Row {
+                                            id: tab1Content
+                                            anchors.centerIn: parent
+                                            spacing: 6
+
+                                            Image {
+                                                width: 13
+                                                height: 13
+                                                sourceSize: Qt.size(13, 13)
+                                                fillMode: Image.PreserveAspectFit
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                source: window.terminalTabSvg(window.activeBottomTab === 1)
+                                            }
+
+                                            Text {
+                                                id: tab1Text
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                text: "Live Output"
+                                                font.pixelSize: 11
+                                                font.family: "Outfit"
+                                                font.bold: window.activeBottomTab === 1
+                                                color: window.activeBottomTab === 1 ? Theme.accent : Theme.muted
+                                            }
+                                        }
+
+                                        MouseArea {
+                                            id: tab1Area
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: window.activeBottomTab = 1
+                                        }
                                     }
                                 }
                             }
@@ -1074,13 +1349,13 @@ FloatingWindow {
                             // Filtered package list helper
                             readonly property var allItems: {
                                 var res = []
-                                for (var i = 0; i < window.pacmanPkgs.length; i++) {
+                                for (var i = 0; i < window.nativePkgs.length; i++) {
                                     res.push({
-                                        source: "pacman",
-                                        sourceLabel: "PACMAN",
-                                        name: window.pacmanPkgs[i].name,
-                                        oldVersion: window.pacmanPkgs[i].old,
-                                        newVersion: window.pacmanPkgs[i].new
+                                        source: window.nativeType,
+                                        sourceLabel: window.nativeName.toUpperCase(),
+                                        name: window.nativePkgs[i].name,
+                                        oldVersion: window.nativePkgs[i].old || "",
+                                        newVersion: window.nativePkgs[i].new || "latest"
                                     })
                                 }
                                 for (var j = 0; j < window.aurPkgs.length; j++) {
@@ -1088,8 +1363,8 @@ FloatingWindow {
                                         source: "aur",
                                         sourceLabel: "AUR",
                                         name: window.aurPkgs[j].name,
-                                        oldVersion: window.aurPkgs[j].old,
-                                        newVersion: window.aurPkgs[j].new
+                                        oldVersion: window.aurPkgs[j].old || "",
+                                        newVersion: window.aurPkgs[j].new || "latest"
                                     })
                                 }
                                 for (var k = 0; k < window.flatpakPkgs.length; k++) {
@@ -1097,8 +1372,8 @@ FloatingWindow {
                                         source: "flatpak",
                                         sourceLabel: "FLATPAK",
                                         name: window.flatpakPkgs[k].name,
-                                        oldVersion: window.flatpakPkgs[k].old,
-                                        newVersion: window.flatpakPkgs[k].new
+                                        oldVersion: window.flatpakPkgs[k].old || "",
+                                        newVersion: window.flatpakPkgs[k].new || "latest"
                                     })
                                 }
                                 return res
@@ -1126,7 +1401,7 @@ FloatingWindow {
                                 }
 
                                 Text {
-                                    text: "Your Arch Linux system has no pending updates right now."
+                                    text: "Your " + window.osInfo.name + " system has no pending updates right now."
                                     font.pixelSize: 11
                                     color: Theme.muted
                                     Layout.alignment: Qt.AlignHCenter
@@ -1194,7 +1469,7 @@ FloatingWindow {
                                             text: modelData.name
                                             font.pixelSize: 12
                                             font.bold: true
-                                            font.family: "JetBrains Mono, Fira Code, monospace"
+                                            font.family: "JetBrainsMono Nerd Font"
                                             color: Theme.foreground
                                             Layout.fillWidth: true
                                             elide: Text.ElideRight
@@ -1204,7 +1479,7 @@ FloatingWindow {
                                         Text {
                                             text: modelData.oldVersion.length > 0 ? modelData.oldVersion : "current"
                                             font.pixelSize: 11
-                                            font.family: "JetBrains Mono, Fira Code, monospace"
+                                            font.family: "JetBrainsMono Nerd Font"
                                             color: Theme.muted
                                         }
 
@@ -1220,7 +1495,7 @@ FloatingWindow {
                                             text: modelData.newVersion
                                             font.pixelSize: 11
                                             font.bold: true
-                                            font.family: "JetBrains Mono, Fira Code, monospace"
+                                            font.family: "JetBrainsMono Nerd Font"
                                             color: Theme.accent
                                         }
                                     }
@@ -1245,7 +1520,7 @@ FloatingWindow {
                                 visible: logModel.count === 0 && !window.isUpdating
                                 text: "Click 'Update Selected' to begin applying package updates."
                                 font.pixelSize: 12
-                                font.family: "JetBrains Mono, monospace"
+                                font.family: "JetBrainsMono Nerd Font"
                                 color: Theme.muted
                             }
 
@@ -1260,16 +1535,14 @@ FloatingWindow {
                                 delegate: Text {
                                     width: logListView.width
                                     text: model.line
-                                    font.pixelSize: 11
-                                    font.family: "JetBrains Mono, Fira Code, monospace"
-                                    color: {
-                                        var l = model.line
-                                        if (l.indexOf("✓") !== -1 || l.indexOf("successfully") !== -1) return "#22c55e"
-                                        if (l.indexOf("✗") !== -1 || l.indexOf("failed") !== -1 || l.indexOf("error") !== -1) return "#ef4444"
-                                        if (l.indexOf("::") === 0 || l.indexOf("==") === 0) return Theme.accent
-                                        if (l.indexOf("━") !== -1) return Theme.alpha(Theme.foreground, 0.20)
-                                        return Theme.alpha(Theme.foreground, 0.85)
-                                    }
+                                    textFormat: Text.StyledText
+                                    font.pixelSize: 12
+                                    font.family: "JetBrainsMono Nerd Font Mono, JetBrainsMono Nerd Font, monospace"
+                                    renderType: Text.QtRendering
+                                    antialiasing: true
+                                    lineHeight: 1.25
+                                    lineHeightMode: Text.ProportionalHeight
+                                    color: Theme.alpha(Theme.foreground, 0.90)
                                     wrapMode: Text.WrapAnywhere
                                 }
                             }

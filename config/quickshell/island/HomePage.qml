@@ -63,7 +63,7 @@ Item {
 
     Timer {
         interval: 3000
-        running: true
+        running: root.active
         repeat: true
         onTriggered: {
             if (!volReader.running) volReader.running = true
@@ -250,6 +250,7 @@ Item {
                 id: quickToggles
                 width: 280
                 height: 165
+                active: root.active
                 onOpenWifiDialogRequested: {
                     wifiDialog.open()
                 }
@@ -483,7 +484,7 @@ Item {
 
             AudioVisualizer {
                 anchors.centerIn: parent
-                active: root.isAudioPlaying && root.visualizerEnabled
+                active: root.active && root.isAudioPlaying && root.visualizerEnabled
                 wingMode: "full"
                 barCount: root.visualizerBarCount
                 style: root.visualizerStyle

@@ -8,14 +8,11 @@ local shift           = "SHIFT"
 
 local scripts_dir     = os.getenv("HOME") .. "/.hyprconf/hypr/scripts"
 local sh_dir          = scripts_dir .. "/sh"
-local py_dir          = scripts_dir .. "/py"
 
 -- Paths to scripts
 local terminal        = "kitty"
 local file_man        = "dolphin || thunar"
 local term_file_man   = "yazi"
-local wallpaper       = sh_dir .. "/Wallpaper.sh"
-local help            = sh_dir .. "/keybinds.sh"
 local volumeCTRL      = sh_dir .. "/volumecontrol.sh"
 local brightnessCTRL  = sh_dir .. "/brightness.sh"
 local qsLauncher      = sh_dir .. "/qs-launcher.sh"
@@ -34,6 +31,7 @@ hl.bind(mainMod .. " + W", hl.dsp.exec_cmd(qsIsland .. " --wallpaper"))
 -- ── Screenshots / Studio ───────────────────────────────────────────────────────
 hl.bind("print", hl.dsp.exec_cmd(qsScreenshot))
 hl.bind(mainMod .. " + end", hl.dsp.exec_cmd(qsScreenshot))
+hl.bind(mainMod .. " + SHIFT + S", hl.dsp.exec_cmd(qsScreenshot))
 
 -- ── Help / Keybinds Cheatsheet ────────────────────────────────────────────────
 hl.bind(mainMod .. " + SHIFT + H", hl.dsp.exec_cmd(qsKeybinds))
@@ -44,7 +42,7 @@ hl.bind(mainMod .. " + SHIFT + Return", hl.dsp.exec_cmd(terminal .. " --title fl
 hl.bind(mainMod .. " + Q", hl.dsp.window.close())
 hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(file_man))
 hl.bind(mainMod .. " + SHIFT + E", hl.dsp.exec_cmd(terminal .. " --title " .. term_file_man .. " -e " .. term_file_man))
-hl.bind(mainMod .. " + SHIFT + C", hl.dsp.exec_cmd(qsClipboard))
+hl.bind(mainMod .. " + ALT + C", hl.dsp.exec_cmd(qsClipboard))
 hl.bind(mainMod .. " + V", hl.dsp.window.float({ action = "toggle" }))
 hl.bind(mainMod .. " + ALT + V", hl.dsp.exec_cmd("hyprctl dispatch workspaceopt allfloat"))
 hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen())

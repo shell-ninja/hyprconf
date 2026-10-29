@@ -70,7 +70,11 @@ fi
 
 if [[ "$1" == "--restart" ]]; then
     pkill -f "qs -c island" 2>/dev/null || true
-    sleep 0.4
+    pkill -9 -f "[a]udio-monitor.py" 2>/dev/null || true
+    pkill -9 -f "[n]etwork-speed.py" 2>/dev/null || true
+    pkill -9 -f "[p]actl subscribe" 2>/dev/null || true
+    pkill -x cava 2>/dev/null || true
+    sleep 0.35
     exec qs -c island -d
 fi
 

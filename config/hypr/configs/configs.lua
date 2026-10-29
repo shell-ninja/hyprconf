@@ -2,31 +2,23 @@
 -- Shared visual configuration variables.
 -- Colors imported from theme.lua
 local status, theme = pcall(require, "theme")
-local colors = (status and theme and theme.colors) or {
-    primary = "rgb(103, 170, 228)",
-    surface = "rgb(22, 31, 39)",
-    on_surface = "rgb(242, 242, 243)",
-    secondary = "rgb(92, 96, 214)",
-    on_secondary = "rgb(31, 24, 37)",
-    error = "rgb(253, 70, 99)",
-    on_error = "rgb(31, 24, 37)",
-}
 
-opacity_act   = 0.8
-opacity_deact = 0.75
-blur_size     = 4
-blur_pass     = 4
-shadow_range  = 0
-rounding      = 13
-border        = 2
-inner_gap     = 4
-outer_gap     = 8
+opacity_act         = 0.9
+opacity_deact       = 0.85
+blur_size           = 4
+blur_pass           = 4
+shadow_range        = 0
+rounding            = 13
+border              = 2
+inner_gap           = 4
+outer_gap           = 8
 
 -- Border and theme colors from Noctalia
-act_border    = colors.primary
-inact_border  = colors.surface
+act_border          = colors.primary
+inact_border        = colors.surface
 
 -- Noctalia palette table & backward compatibility globals
-noctalia_colors = colors
-active          = act_border
-inactive        = inact_border
+noctalia_colors     = colors
+active              = act_border
+inactive            = inact_border
+

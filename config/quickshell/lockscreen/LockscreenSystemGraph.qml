@@ -59,7 +59,7 @@ Item {
         id: fallback1sTimer
         interval: 1000
         repeat: true
-        running: !root.statsData || root.previewMode
+        running: (!root.statsData || root.previewMode) && root.visible
         onTriggered: {
             if (root.statsData && !root.previewMode) return
             // Organic realistic random walk

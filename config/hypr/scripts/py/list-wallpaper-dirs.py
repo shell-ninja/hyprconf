@@ -13,8 +13,7 @@ import subprocess
 from pathlib import Path
 
 HOME = Path(os.environ.get("HOME", str(Path.home())))
-USER_CONFIG = HOME / ".local" / "share" / "hyprconf" / "wallpaper_config.json"
-CONFIG_FILE = USER_CONFIG if (USER_CONFIG.exists() or USER_CONFIG.parent.exists()) else (HOME / ".hyprconf" / "hypr" / ".cache" / "wallpaper_config.json")
+CONFIG_FILE = HOME / ".hyprconf" / "hypr" / ".cache" / "wallpaper_config.json"
 DEFAULT_WALLPAPER_DIR = str(HOME / ".hyprconf" / "hypr" / "Wallpaper")
 THUMB_CACHE_DIR = HOME / ".cache" / "quickshell-wallpaper-panel" / "thumbnails"
 

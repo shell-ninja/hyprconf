@@ -11,3 +11,4 @@ __pycache__/
 
 # Logs
 *.log
+*.bak

@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 
-cache_dir="$HOME/.local/share/hyprconf/.cache"
-[[ ! -d "$cache_dir" && -d "$HOME/.hyprconf/hypr/.cache" ]] && cache_dir="$HOME/.hyprconf/hypr/.cache"
-browser_cache="$cache_dir/.browser"
+browser_cache="$HOME/.hyprconf/hypr/.cache/.browser"
 scripts_dir="$HOME/.hyprconf/hypr/scripts/sh"
 
 [[ ! -f "$browser_cache" ]] && touch "$browser_cache"
