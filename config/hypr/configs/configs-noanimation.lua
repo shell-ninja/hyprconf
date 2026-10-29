@@ -3,6 +3,7 @@
 -- Swap this file in place of configs.lua for a lightweight session.
 
 local status, theme = pcall(require, "theme")
+local colors        = theme.colors
 
 opacity_act         = 1.0
 opacity_deact       = 1.0

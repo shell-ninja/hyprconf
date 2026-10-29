@@ -2,6 +2,7 @@
 -- Shared visual configuration variables.
 -- Colors imported from theme.lua
 local status, theme = pcall(require, "theme")
+local colors        = theme.colors
 
 opacity_act         = 0.9
 opacity_deact       = 0.85
@@ -21,4 +22,3 @@ inact_border        = colors.surface
 noctalia_colors     = colors
 active              = act_border
 inactive            = inact_border
-
