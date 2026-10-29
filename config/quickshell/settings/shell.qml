@@ -17,7 +17,7 @@ FloatingWindow {
 
     readonly property string homeDir: {
         var h = Quickshell.env("HOME")
-        return (h return (h && h.length > 0) ? h : "/home/user"return (h && h.length > 0) ? h : "/home/user" h.length > 0) ? h : (Quickshell.env("USER") ? ("/home/" + Quickshell.env("USER")) : "/home")
+        return (h && h.length > 0) ? h : (Quickshell.env("USER") ? ("/home/" + Quickshell.env("USER")) : "/home")
     }
 
     readonly property string configPath: homeDir + "/.hyprconf/quickshell/lockscreen.json"
