@@ -19,6 +19,11 @@ Item {
     implicitHeight: 36
     clip: false
 
+    readonly property string homeDir: {
+        var h = Quickshell.env("HOME")
+        return (h && h.length > 0) ? h : (Quickshell.env("USER") ? ("/home/" + Quickshell.env("USER")) : "/home")
+    }
+
     property string timeString: "12:00 PM"
     property int activeWorkspace: (Hyprland.focusedWorkspace && Hyprland.focusedWorkspace.id > 0) ? Hyprland.focusedWorkspace.id : 1
     property bool isBottom: false
@@ -77,12 +82,16 @@ Item {
     property real animProgress: 0.0
     property bool matrixStreamEnabled: true
 
-    // Volume & Battery Hardware State for Split Wings
+    // Hardware & Media Status
     property real currentVolume: 0.50
     property bool isDraggingVolume: false
     property bool isMuted: false
     property bool hasBattery: false
     property int batteryPct: -1
+    property string batteryStatus: "Discharging"
+    property bool isCharging: false
+    property bool isScreenRecording: false
+    property bool isMicActive: false
 
     signal clockClicked()
     signal notificationClicked()
@@ -253,6 +262,10 @@ Item {
                         }
                         root.lastSourceState = rest
                     }
+                } else if (line.indexOf("rec_active:") === 0) {
+                    root.isScreenRecording = (line.substring(11).trim() === "1")
+                } else if (line.indexOf("mic_active:") === 0) {
+                    root.isMicActive = (line.substring(11).trim() === "1")
                 }
                 if (!root.audioMonitorInitialized && root.lastSinkState.length > 0 && root.lastSourceState.length > 0) {
                     root.audioMonitorInitialized = true
@@ -264,19 +277,36 @@ Item {
     // ── HARDWARE STATUS (BATTERY DETECTION) ──────────────────────────────────
     Process {
         id: batFetcher
-        command: ["bash", "-c", "if compgen -G '/sys/class/power_supply/BAT*/capacity' >/dev/null; then cat /sys/class/power_supply/BAT*/capacity 2>/dev/null | head -1; else echo -1; fi"]
+        command: ["python3", root.homeDir + "/.hyprconf/hypr/scripts/py/island-battery.py"]
         running: true
         stdout: StdioCollector {
             onTextChanged: {
                 if (text && text.trim().length > 0) {
-                    var pct = parseInt(text.trim(), 10)
-                    if (!isNaN(pct) && pct >= 0) {
-                        root.hasBattery = true
-                        root.batteryPct = pct
-                    } else {
-                        root.hasBattery = false
-                        root.batteryPct = -1
-                    }
+                    try {
+                        var d = JSON.parse(text.trim())
+                        root.hasBattery = Boolean(d.has_battery)
+                        root.batteryPct = (d.percent !== undefined) ? d.percent : -1
+                        root.batteryStatus = d.status || "Discharging"
+                        root.isCharging = Boolean(d.is_charging)
+                    } catch(e) {}
+                }
+            }
+        }
+    }
+
+    // ── MEDIA & RECORDING STATUS FALLBACK FETCHER ────────────────────────────
+    Process {
+        id: mediaStatusFetcher
+        command: ["python3", root.homeDir + "/.hyprconf/hypr/scripts/py/island-media-status.py"]
+        running: true
+        stdout: StdioCollector {
+            onTextChanged: {
+                if (text && text.trim().length > 0) {
+                    try {
+                        var m = JSON.parse(text.trim())
+                        root.isScreenRecording = Boolean(m.recording)
+                        root.isMicActive = Boolean(m.mic_captured)
+                    } catch(e) {}
                 }
             }
         }
@@ -306,12 +336,13 @@ Item {
 
     Timer {
         id: batPollTimer
-        interval: 12000
+        interval: 6000
         repeat: true
         running: true
         onTriggered: {
-            if (root.hasBattery && !batFetcher.running) batFetcher.running = true
+            if (!batFetcher.running) batFetcher.running = true
             if (!barNetFetcher.running) barNetFetcher.running = true
+            if (!mediaStatusFetcher.running) mediaStatusFetcher.running = true
         }
     }
 
@@ -540,6 +571,23 @@ Item {
                         font.letterSpacing: 0.5
                         anchors.verticalCenter: parent.verticalCenter
                     }
+
+                    // Live Screen Recording & Microphone Indicators beside the clock
+                    IslandMediaIndicators {
+                        isScreenRecording: root.isScreenRecording
+                        isMicActive: root.isMicActive
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+
+                    // Laptop Battery Indicator beside the clock
+                    IslandBatteryIndicator {
+                        hasBattery: root.hasBattery
+                        batteryPct: root.batteryPct
+                        batteryStatus: root.batteryStatus
+                        isCharging: root.isCharging
+                        anchors.verticalCenter: parent.verticalCenter
+                        onClicked: root.clockClicked()
+                    }
                 }
 
                 MouseArea {
@@ -578,7 +626,7 @@ Item {
         Item {
             id: orbitalItem
             anchors.centerIn: parent
-            width: 328
+            width: Math.max(328, orbitalContentRow.implicitWidth + 32)
             height: 34
             clip: false
             visible: root.islandStyle === "orbital"
@@ -815,18 +863,40 @@ Item {
                     }
                 }
 
-                // 5. Time Text (11:08 PM)
-                Text {
-                    text: root.timeString
-                    font.family: "Outfit"
-                    font.pixelSize: 12
-                    font.weight: Font.Bold
-                    color: Theme.accent
+                // 5. Clock Area with Media & Battery Indicators
+                Row {
+                    spacing: 6
                     anchors.verticalCenter: parent.verticalCenter
 
-                    MouseArea {
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
+                    Text {
+                        text: root.timeString
+                        font.family: "Outfit"
+                        font.pixelSize: 12
+                        font.weight: Font.Bold
+                        color: Theme.accent
+                        anchors.verticalCenter: parent.verticalCenter
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.clockClicked()
+                        }
+                    }
+
+                    // Live Screen Recording & Microphone Indicators beside the clock
+                    IslandMediaIndicators {
+                        isScreenRecording: root.isScreenRecording
+                        isMicActive: root.isMicActive
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+
+                    // Laptop Battery Indicator beside the clock
+                    IslandBatteryIndicator {
+                        hasBattery: root.hasBattery
+                        batteryPct: root.batteryPct
+                        batteryStatus: root.batteryStatus
+                        isCharging: root.isCharging
+                        anchors.verticalCenter: parent.verticalCenter
                         onClicked: root.clockClicked()
                     }
                 }
@@ -1286,6 +1356,13 @@ Item {
                         }
                     }
 
+                    // Live Screen Recording & Microphone Indicators beside the clock
+                    IslandMediaIndicators {
+                        isScreenRecording: root.isScreenRecording
+                        isMicActive: root.isMicActive
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+
                     // C. Vertical Hairline Divider |
                     Rectangle {
                         width: 1
@@ -1310,59 +1387,14 @@ Item {
                         }
                     }
 
-                    // If Laptop / Battery Exists: Battery Icon + 78% (Matching LAPTOP Image)
-                    Row {
-                        spacing: 4
+                    // If Laptop / Battery Exists: Dynamic Animated Battery Module
+                    IslandBatteryIndicator {
+                        hasBattery: root.hasBattery
+                        batteryPct: root.batteryPct
+                        batteryStatus: root.batteryStatus
+                        isCharging: root.isCharging
                         anchors.verticalCenter: parent.verticalCenter
-                        visible: root.hasBattery && root.batteryPct >= 0
-
-                        // Vector Battery Gauge
-                        Item {
-                            width: 22
-                            height: 12
-                            anchors.verticalCenter: parent.verticalCenter
-
-                            // Battery Shell
-                            Rectangle {
-                                width: 19
-                                height: 11
-                                radius: 2.5
-                                color: "transparent"
-                                border.color: Theme.accent
-                                border.width: 1.2
-                                anchors.verticalCenter: parent.verticalCenter
-
-                                // Fill Level
-                                Rectangle {
-                                    x: 2
-                                    y: 2
-                                    width: Math.max(1, Math.min(15, 15 * (root.batteryPct / 100.0)))
-                                    height: 7
-                                    radius: 1
-                                    color: (root.batteryPct <= 15) ? Theme.error : Theme.accent
-                                }
-                            }
-
-                            // Battery Terminal Nub
-                            Rectangle {
-                                x: 19
-                                width: 2
-                                height: 5
-                                radius: 0.8
-                                color: Theme.accent
-                                anchors.verticalCenter: parent.verticalCenter
-                            }
-                        }
-
-                        // Battery Percentage Text (78%)
-                        Text {
-                            text: (root.batteryPct >= 0 ? root.batteryPct : 78) + "%"
-                            color: Theme.accent
-                            font.family: "Outfit"
-                            font.pixelSize: 11
-                            font.weight: Font.Bold
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
+                        onClicked: root.clockClicked()
                     }
                 }
             }
@@ -1704,7 +1736,7 @@ Item {
                 // ── Module 2: Swiss Minimal Clock & Day (Capsule 2) ────────
                 Rectangle {
                     id: minimalClockModule
-                    width: minimalClockText.implicitWidth + 28
+                    width: minimalClockRow.implicitWidth + 24
                     height: 28
                     radius: 14
                     color: clockHover.hovered ? Theme.alpha(Theme.background, 0.98) : Theme.alpha(Theme.background, 0.92)
@@ -1715,14 +1747,37 @@ Item {
                     Behavior on border.color { ColorAnimation { duration: 150 } }
                     Behavior on color { ColorAnimation { duration: 150 } }
 
-                    Text {
-                        id: minimalClockText
+                    Row {
+                        id: minimalClockRow
                         anchors.centerIn: parent
-                        text: root.timeString + " • " + root.dayOfWeek
-                        color: Theme.accent
-                        font.family: "Outfit"
-                        font.pixelSize: 12
-                        font.weight: Font.Bold
+                        spacing: 6
+
+                        Text {
+                            id: minimalClockText
+                            text: root.timeString + " • " + root.dayOfWeek
+                            color: Theme.accent
+                            font.family: "Outfit"
+                            font.pixelSize: 12
+                            font.weight: Font.Bold
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+
+                        // Live Screen Recording & Microphone Indicators beside the clock
+                        IslandMediaIndicators {
+                            isScreenRecording: root.isScreenRecording
+                            isMicActive: root.isMicActive
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+
+                        // Laptop Battery Indicator beside the clock
+                        IslandBatteryIndicator {
+                            hasBattery: root.hasBattery
+                            batteryPct: root.batteryPct
+                            batteryStatus: root.batteryStatus
+                            isCharging: root.isCharging
+                            anchors.verticalCenter: parent.verticalCenter
+                            onClicked: root.clockClicked()
+                        }
                     }
 
                     HoverHandler {

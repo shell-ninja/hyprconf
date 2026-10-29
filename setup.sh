@@ -498,6 +498,12 @@ if [[ -f "$island_dir/qmldir" ]]; then
     if ! grep -q "WifiNetworkDialog" "$island_dir/qmldir"; then
         echo "WifiNetworkDialog 1.0 WifiNetworkDialog.qml" >> "$island_dir/qmldir"
     fi
+    if ! grep -q "IslandBatteryIndicator" "$island_dir/qmldir"; then
+        echo "IslandBatteryIndicator 1.0 IslandBatteryIndicator.qml" >> "$island_dir/qmldir"
+    fi
+    if ! grep -q "IslandMediaIndicators" "$island_dir/qmldir"; then
+        echo "IslandMediaIndicators 1.0 IslandMediaIndicators.qml" >> "$island_dir/qmldir"
+    fi
 fi
 
 # 4. Bootstrap user settings and sync symlinks into ~/.hyprconf

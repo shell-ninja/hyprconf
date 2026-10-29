@@ -1079,6 +1079,8 @@ EmojiView 1.0 EmojiView.qml
 KeybindsView 1.0 KeybindsView.qml
 WifiNetworkDialog 1.0 WifiNetworkDialog.qml
 WeatherPage 1.0 WeatherPage.qml
+IslandBatteryIndicator 1.0 IslandBatteryIndicator.qml
+IslandMediaIndicators 1.0 IslandMediaIndicators.qml
 """,
             "lockscreen": """singleton Theme 1.0 Theme.qml
 LockscreenSystemGraph 1.0 LockscreenSystemGraph.qml

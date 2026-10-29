@@ -21,7 +21,7 @@ if [[ -d "$island_dir" && -d "$launcher_dir" ]]; then
     done
 fi
 
-# Ensure island qmldir includes KeybindsView, WifiNetworkDialog & WeatherPage
+# Ensure island qmldir includes KeybindsView, WifiNetworkDialog, WeatherPage, IslandBatteryIndicator & IslandMediaIndicators
 if [[ -f "$island_dir/qmldir" ]]; then
     if ! grep -q "KeybindsView" "$island_dir/qmldir"; then
         echo "KeybindsView 1.0 KeybindsView.qml" >> "$island_dir/qmldir"
@@ -31,6 +31,12 @@ if [[ -f "$island_dir/qmldir" ]]; then
     fi
     if ! grep -q "WeatherPage" "$island_dir/qmldir"; then
         echo "WeatherPage 1.0 WeatherPage.qml" >> "$island_dir/qmldir"
+    fi
+    if ! grep -q "IslandBatteryIndicator" "$island_dir/qmldir"; then
+        echo "IslandBatteryIndicator 1.0 IslandBatteryIndicator.qml" >> "$island_dir/qmldir"
+    fi
+    if ! grep -q "IslandMediaIndicators" "$island_dir/qmldir"; then
+        echo "IslandMediaIndicators 1.0 IslandMediaIndicators.qml" >> "$island_dir/qmldir"
     fi
 fi
 
@@ -70,6 +76,8 @@ fi
 
 if [[ "$1" == "--restart" ]]; then
     pkill -f "qs -c island" 2>/dev/null || true
+    pkill -f "quickshell -c island" 2>/dev/null || true
+    pkill -f "quickshell.*island" 2>/dev/null || true
     pkill -9 -f "[a]udio-monitor.py" 2>/dev/null || true
     pkill -9 -f "[n]etwork-speed.py" 2>/dev/null || true
     pkill -9 -f "[p]actl subscribe" 2>/dev/null || true

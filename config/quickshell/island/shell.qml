@@ -1333,6 +1333,13 @@ PanelWindow {
     property string netDownString: "0B"
     property string netUpString: "0B"
 
+    readonly property bool hasBattery: Boolean(collapsedBar && collapsedBar.hasBattery)
+    readonly property int batteryPct: collapsedBar ? collapsedBar.batteryPct : -1
+    readonly property string batteryStatus: collapsedBar ? collapsedBar.batteryStatus : "Discharging"
+    readonly property bool isScreenRecording: Boolean(collapsedBar && collapsedBar.isScreenRecording)
+    readonly property bool isMicActive: Boolean(collapsedBar && collapsedBar.isMicActive)
+    readonly property bool isCharging: Boolean(collapsedBar && collapsedBar.isCharging)
+
     Process {
         id: netSpeedReader
         command: ["python3", "-u", root.homeDir + "/.hyprconf/hypr/scripts/py/network-speed.py"]
@@ -1633,6 +1640,22 @@ PanelWindow {
                     font.family: "Outfit"
                     font.pixelSize: 12
                     font.weight: Font.Medium
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+
+                // Live Screen Recording & Microphone Indicators beside the clock
+                IslandMediaIndicators {
+                    isScreenRecording: root.isScreenRecording
+                    isMicActive: root.isMicActive
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+
+                // Laptop Battery Indicator beside the clock
+                IslandBatteryIndicator {
+                    hasBattery: root.hasBattery
+                    batteryPct: root.batteryPct
+                    batteryStatus: root.batteryStatus
+                    isCharging: root.isCharging
                     anchors.verticalCenter: parent.verticalCenter
                 }
             }
