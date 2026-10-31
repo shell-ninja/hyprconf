@@ -25,6 +25,17 @@ if test -f "$HOME/.config/fish/alias.fish"
     source "$HOME/.config/fish/alias.fish"
 end
 
+# Fastfetch cached preset (persists user style across sessions & git updates)
+set -l ff_cache "$HOME/.local/share/hyprconf/.cache/ffconfig.fish"
+set -l ff_raw_cache "$HOME/.local/share/hyprconf/.cache/ffconfig"
+if test -f "$ff_cache"
+    source "$ff_cache"
+else if test -f "$ff_raw_cache"
+    set -g ffconfig (cat "$ff_raw_cache" | string trim)
+else if not set -q ffconfig
+    set -g ffconfig minimal
+end
+
 # Disable fish greeting
 set -g fish_greeting
 
@@ -169,11 +180,6 @@ if status is-interactive
 
     # Fastfetch on launch
     if command -v fastfetch >/dev/null 2>&1
-        # Clear any inherited global variable shadowing universal ffconfig
-        set -e -g ffconfig
-        if not set -q ffconfig
-            set -U ffconfig minimal
-        end
         fastfetch
     end
 end

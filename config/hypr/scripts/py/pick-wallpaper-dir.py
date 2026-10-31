@@ -87,16 +87,19 @@ def save_live_dir(new_dir: str):
         json.dump(cfg, f, indent=2)
 
 
-def choose_dir():
-    """Open folder chooser dialog and return chosen path."""
+def choose_dir(is_live: bool = False):
+    """Open native folder chooser dialog and return chosen path."""
     import gi
     gi.require_version("Gtk", "3.0")
     from gi.repository import Gtk
 
-    initial_dir = get_current_dir()
+    initial_dir = get_live_dir() if is_live else get_current_dir()
+    if not os.path.isdir(initial_dir):
+        initial_dir = str(HOME)
 
+    title = "Select Live Wallpaper Directory" if is_live else "Select Wallpaper Directory"
     native = Gtk.FileChooserNative.new(
-        "Select Wallpaper Directory",
+        title,
         None,
         Gtk.FileChooserAction.SELECT_FOLDER,
         "_Select Folder",
@@ -109,8 +112,15 @@ def choose_dir():
         chosen = native.get_filename()
         native.destroy()
         if chosen and os.path.isdir(chosen):
-            save_dir(chosen)
-            print(json.dumps({"status": "success", "path": chosen}), flush=True)
+            if is_live:
+                save_live_dir(chosen)
+            else:
+                save_dir(chosen)
+            print(json.dumps({
+                "status": "success",
+                "path": os.path.abspath(chosen),
+                "type": "live" if is_live else "wallpaper"
+            }), flush=True)
             return
 
     native.destroy()
@@ -159,7 +169,15 @@ def choose_video():
         if chosen and os.path.isfile(chosen):
             script_path = str(HOME / ".hyprconf" / "hypr" / "scripts" / "sh" / "Wallpaper.sh")
             subprocess.run(["bash", script_path, "--live", chosen])
-            print(json.dumps({"status": "success", "file": chosen, "is_video": True}), flush=True)
+            # Also save its parent directory as live_dir
+            parent_dir = str(Path(chosen).parent)
+            save_live_dir(parent_dir)
+            print(json.dumps({
+                "status": "success",
+                "file": chosen,
+                "path": parent_dir,
+                "is_video": True
+            }), flush=True)
             return
 
     native.destroy()
@@ -203,20 +221,24 @@ if __name__ == "__main__":
             json.dump(cfg_data, f, indent=2)
         print(json.dumps({"status": "success", "color_variant": new_v}), flush=True)
     elif len(sys.argv) > 2 and sys.argv[1] == "--set":
-        new_d = sys.argv[2]
+        new_d = os.path.abspath(os.path.expanduser(sys.argv[2]))
         if os.path.isdir(new_d):
             save_dir(new_d)
-            print(json.dumps({"status": "success", "path": os.path.abspath(new_d)}), flush=True)
+            print(json.dumps({"status": "success", "path": new_d}), flush=True)
         else:
             print(json.dumps({"status": "error", "message": f"Directory not found: {new_d}"}), flush=True)
     elif len(sys.argv) > 2 and sys.argv[1] == "--set-live":
-        new_d = sys.argv[2]
+        new_d = os.path.abspath(os.path.expanduser(sys.argv[2]))
         if os.path.isdir(new_d):
             save_live_dir(new_d)
-            print(json.dumps({"status": "success", "path": os.path.abspath(new_d)}), flush=True)
+            print(json.dumps({"status": "success", "path": new_d}), flush=True)
         else:
             print(json.dumps({"status": "error", "message": f"Directory not found: {new_d}"}), flush=True)
+    elif len(sys.argv) > 1 and sys.argv[1] in ("--pick-live-dir", "--pick-live-folder"):
+        choose_dir(is_live=True)
+    elif len(sys.argv) > 1 and sys.argv[1] in ("--pick-dir", "--pick-folder"):
+        choose_dir(is_live=False)
     elif len(sys.argv) > 1 and sys.argv[1] in ("--pick-video", "--pick-file"):
         choose_video()
     else:
-        choose_dir()
+        choose_dir(is_live=False)

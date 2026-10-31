@@ -74,7 +74,7 @@ hl.config({
 -- Cursor
 hl.config({
     cursor = {
-        inactive_timeout        = 30,
+        inactive_timeout        = 20,
         sync_gsettings_theme    = true,
         no_hardware_cursors     = false,
         enable_hyprcursor       = true,

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 list-wallpaper-dirs.py — Scan directories for wallpaper images, video wallpapers, and subdirectories.
-Outputs structured JSON for Quickshell in-app directory navigation and video wallpaper selection.
+Outputs structured JSON for Quickshell in-app directory navigation and wallpaper/video selection.
 """
 
 import os
@@ -15,6 +15,8 @@ from pathlib import Path
 HOME = Path(os.environ.get("HOME", str(Path.home())))
 CONFIG_FILE = HOME / ".hyprconf" / "hypr" / ".cache" / "wallpaper_config.json"
 DEFAULT_WALLPAPER_DIR = str(HOME / ".hyprconf" / "hypr" / "Wallpaper")
+DEFAULT_LIVE_DIR = str(HOME / ".hyprconf" / "hypr" / "Wallpaper" / "Live")
+DEFAULT_WALLHAVEN_DIR = str(HOME / ".hyprconf" / "hypr" / "Wallpaper" / "wallhaven")
 THUMB_CACHE_DIR = HOME / ".cache" / "quickshell-wallpaper-panel" / "thumbnails"
 
 IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".bmp"}
@@ -36,6 +38,20 @@ def get_default_dir() -> str:
         except Exception:
             pass
     return DEFAULT_WALLPAPER_DIR
+
+
+def get_saved_live_dir() -> str:
+    """Read saved live directory from config or fallback to default."""
+    if CONFIG_FILE.exists():
+        try:
+            with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                d = data.get("live_dir")
+                if d and os.path.isdir(d):
+                    return os.path.abspath(os.path.expanduser(d))
+        except Exception:
+            pass
+    return DEFAULT_LIVE_DIR
 
 
 def count_wallpapers(dir_path: str) -> int:
@@ -103,6 +119,40 @@ def get_video_thumb(video_path: str, mtime: float) -> str:
     return ""
 
 
+def get_wallpapers_in_dir(dir_path: str, limit: int = 150) -> list:
+    """Scan and return wallpaper image previews inside dir_path."""
+    wallpapers = []
+    try:
+        with os.scandir(dir_path) as it:
+            for entry in it:
+                try:
+                    if entry.is_file(follow_symlinks=True):
+                        ext = os.path.splitext(entry.name)[1].lower()
+                        if ext in IMAGE_EXTENSIONS:
+                            st = entry.stat()
+                            base_name = os.path.splitext(entry.name)[0]
+                            size_mb = round(st.st_size / (1024 * 1024), 1)
+                            thumb_uri = "file://" + entry.path
+                            wallpapers.append({
+                                "name": entry.name,
+                                "title": base_name,
+                                "path": entry.path,
+                                "ext": ext.upper().lstrip("."),
+                                "size_mb": size_mb,
+                                "thumb": thumb_uri,
+                                "source": thumb_uri,
+                                "is_video": False,
+                                "is_gif": False
+                            })
+                except (PermissionError, FileNotFoundError, OSError):
+                    continue
+    except (PermissionError, FileNotFoundError, OSError):
+        pass
+
+    wallpapers.sort(key=lambda x: x["name"].lower())
+    return wallpapers[:limit]
+
+
 def get_videos_in_dir(dir_path: str) -> list:
     """Scan and return video wallpapers inside dir_path."""
     videos = []
@@ -155,10 +205,6 @@ def check_has_subdirs(dir_path: str, include_hidden: bool = False) -> bool:
     return False
 
 
-DEFAULT_LIVE_DIR = str(HOME / ".hyprconf" / "hypr" / "Wallpaper" / "Live")
-DEFAULT_WALLHAVEN_DIR = str(HOME / ".hyprconf" / "hypr" / "Wallpaper" / "wallhaven")
-
-
 def get_bookmarks() -> list:
     """Return common quick-jump bookmark paths."""
     candidates = [
@@ -170,11 +216,21 @@ def get_bookmarks() -> list:
         {"name": "Downloads", "path": str(HOME / "Downloads"), "icon": "󰇚"},
         {"name": "Home", "path": str(HOME), "icon": "󰋜"}
     ]
+
+    # Include saved custom wallpaper dir if different
+    cur_wall = get_default_dir()
+    if cur_wall and os.path.isdir(cur_wall) and cur_wall not in [c["path"] for c in candidates]:
+        candidates.insert(0, {"name": os.path.basename(cur_wall), "path": cur_wall, "icon": "󰉋"})
+
+    cur_live = get_saved_live_dir()
+    if cur_live and os.path.isdir(cur_live) and cur_live not in [c["path"] for c in candidates]:
+        candidates.insert(1, {"name": os.path.basename(cur_live), "path": cur_live, "icon": "󰕧"})
+
     return [b for b in candidates if os.path.isdir(b["path"])]
 
 
 def list_directory(target_path: str, show_hidden: bool = False) -> dict:
-    """Inspect target_path and return directory information and video wallpapers."""
+    """Inspect target_path and return directory information, wallpaper images, and video wallpapers."""
     target = os.path.abspath(os.path.expanduser(target_path))
     if not os.path.exists(target) or not os.path.isdir(target):
         return {
@@ -185,6 +241,7 @@ def list_directory(target_path: str, show_hidden: bool = False) -> dict:
             "current_wall_count": 0,
             "current_video_count": 0,
             "directories": [],
+            "wallpapers": [],
             "videos": [],
             "bookmarks": get_bookmarks()
         }
@@ -218,12 +275,14 @@ def list_directory(target_path: str, show_hidden: bool = False) -> dict:
             "current_wall_count": 0,
             "current_video_count": 0,
             "directories": [],
+            "wallpapers": [],
             "videos": [],
             "bookmarks": get_bookmarks()
         }
 
     subdirs.sort(key=lambda x: x["name"].lower())
     parent = str(Path(target).parent) if target != "/" else None
+    wallpapers = get_wallpapers_in_dir(target)
     videos = get_videos_in_dir(target)
 
     return {
@@ -233,6 +292,7 @@ def list_directory(target_path: str, show_hidden: bool = False) -> dict:
         "current_wall_count": count_wallpapers(target),
         "current_video_count": len(videos),
         "directories": subdirs,
+        "wallpapers": wallpapers,
         "videos": videos,
         "bookmarks": get_bookmarks()
     }

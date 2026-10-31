@@ -803,9 +803,14 @@ function ffstyle
 
     printf "Setting %s as fastfetch style...\n" "$selected"
 
-    # Erase any shadowing global variable so universal variable is active
-    set -e -g ffconfig
-    # Persist across sessions via universal variable (unexported)
+    # Persist in user cache directory across git pulls and setup runs
+    set -l ff_cache_dir "$HOME/.local/share/hyprconf/.cache"
+    mkdir -p "$ff_cache_dir"
+    printf 'set -g ffconfig %s\n' "$selected" > "$ff_cache_dir/ffconfig.fish"
+    printf '%s\n' "$selected" > "$ff_cache_dir/ffconfig"
+
+    # Update session and universal variable
+    set -g ffconfig "$selected"
     set -U ffconfig "$selected"
 
     # Keep ~/.config/fastfetch/config.jsonc in sync

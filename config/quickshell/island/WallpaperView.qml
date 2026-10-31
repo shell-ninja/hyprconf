@@ -8,6 +8,8 @@ import "."
 Item {
     id: root
 
+    readonly property string homeDir: Quickshell.env("HOME") || "/home/" + Quickshell.env("USER")
+
     property bool active: false
     property bool isClosing: false
     property real animProgress: 1.0
@@ -68,17 +70,17 @@ Item {
     }
 
     // ── ACTIVE WALLPAPER DIRECTORIES & CONFIG ───────────────────────────────
-    property string currentWallpaperDir: Quickshell.env("HOME") + "/.hyprconf/hypr/Wallpaper"
-    property string currentLiveDir: Quickshell.env("HOME") + "/.hyprconf/hypr/Wallpaper/Live"
+    property string currentWallpaperDir: root.homeDir + "/.hyprconf/hypr/Wallpaper"
+    property string currentLiveDir: root.homeDir + "/.hyprconf/hypr/Wallpaper/Live"
     property string colorVariant: "vibrant"
     property bool isVariantUpdating: false
 
     Process {
         id: configReader
-        command: ["python3", Quickshell.env("HOME") + "/.hyprconf/hypr/scripts/py/pick-wallpaper-dir.py", "--config"]
+        command: ["python3", root.homeDir + "/.hyprconf/hypr/scripts/py/pick-wallpaper-dir.py", "--config"]
         running: true
         stdout: StdioCollector {
-            onTextChanged: {
+            onStreamFinished: {
                 if (!text || text.trim().length === 0) return
                 try {
                     var cfg = JSON.parse(text.trim())
@@ -109,7 +111,7 @@ Item {
         // Persist variant via pick-wallpaper-dir.py using Quickshell.execDetached
         Quickshell.execDetached([
             "python3",
-            Quickshell.env("HOME") + "/.hyprconf/hypr/scripts/py/pick-wallpaper-dir.py",
+            root.homeDir + "/.hyprconf/hypr/scripts/py/pick-wallpaper-dir.py",
             "--set-variant", newVariant
         ])
 
@@ -122,14 +124,14 @@ Item {
         if (wallPath && wallPath.length > 0 && wallPath.indexOf("http") !== 0) {
             variantUpdater.command = [
                 "python3",
-                Quickshell.env("HOME") + "/.hyprconf/hypr/scripts/py/hypr-colors.py",
+                root.homeDir + "/.hyprconf/hypr/scripts/py/hypr-colors.py",
                 wallPath,
                 "--variant", newVariant
             ]
         } else {
             variantUpdater.command = [
                 "python3",
-                Quickshell.env("HOME") + "/.hyprconf/hypr/scripts/py/hypr-colors.py",
+                root.homeDir + "/.hyprconf/hypr/scripts/py/hypr-colors.py",
                 "--variant", newVariant
             ]
         }
@@ -143,11 +145,13 @@ Item {
     property int browsingCurrentWallCount: 0
     property int browsingCurrentVideoCount: 0
     property var browsingSubdirs: []
+    property var browsingWallpapers: []
     property var browsingVideos: []
     property var browsingBookmarks: []
     property int dirSelectedIndex: 0
+    property int wallpaperSelectedIndex: 0
     property int videoSelectedIndex: 0
-    property string dirBrowserTab: "folders" // "folders" or "videos"
+    property string dirBrowserTab: "folders" // "folders", "wallpapers", "videos"
     property bool isDirLoading: false
 
     Process {
@@ -155,12 +159,15 @@ Item {
         property string targetPath: ""
         command: [
             "python3",
-            Quickshell.env("HOME") + "/.hyprconf/hypr/scripts/py/list-wallpaper-dirs.py",
+            root.homeDir + "/.hyprconf/hypr/scripts/py/list-wallpaper-dirs.py",
             "--path", targetPath
         ]
         running: false
+        onExited: function(exitCode, exitStatus) {
+            root.isDirLoading = false
+        }
         stdout: StdioCollector {
-            onTextChanged: {
+            onStreamFinished: {
                 root.isDirLoading = false
                 if (!text || text.trim().length === 0) return
                 try {
@@ -171,12 +178,33 @@ Item {
                         root.browsingCurrentWallCount = res.current_wall_count || 0
                         root.browsingCurrentVideoCount = res.current_video_count || 0
                         root.browsingSubdirs = res.directories || []
+                        root.browsingWallpapers = res.wallpapers || []
                         root.browsingVideos = res.videos || []
                         root.browsingBookmarks = res.bookmarks || []
                         root.dirSelectedIndex = 0
+                        root.wallpaperSelectedIndex = 0
                         root.videoSelectedIndex = 0
-                        if (root.browsingSubdirs.length === 0 && root.browsingVideos.length > 0) {
-                            root.dirBrowserTab = "videos"
+
+                        if (root.activeMode === "live") {
+                            if (root.browsingVideos.length > 0) {
+                                root.dirBrowserTab = "videos"
+                            } else if (root.browsingSubdirs.length > 0) {
+                                root.dirBrowserTab = "folders"
+                            } else {
+                                root.dirBrowserTab = "videos"
+                            }
+                        } else {
+                            if (root.browsingSubdirs.length === 0 && root.browsingWallpapers.length > 0) {
+                                root.dirBrowserTab = "wallpapers"
+                            } else if (root.browsingSubdirs.length > 0) {
+                                root.dirBrowserTab = "folders"
+                            } else if (root.browsingWallpapers.length > 0) {
+                                root.dirBrowserTab = "wallpapers"
+                            } else if (root.browsingVideos.length > 0) {
+                                root.dirBrowserTab = "videos"
+                            } else {
+                                root.dirBrowserTab = "folders"
+                            }
                         }
                     }
                 } catch(e) {
@@ -189,14 +217,10 @@ Item {
     Process {
         id: dirSaverProc
         property string pathToSave: ""
-        command: [
-            "python3",
-            Quickshell.env("HOME") + "/.hyprconf/hypr/scripts/py/pick-wallpaper-dir.py",
-            "--set", pathToSave
-        ]
+        command: []
         running: false
         stdout: StdioCollector {
-            onTextChanged: {
+            onStreamFinished: {
                 if (!text || text.trim().length === 0) return
                 try {
                     var parsed = JSON.parse(text.trim())
@@ -214,19 +238,53 @@ Item {
     }
 
     Process {
+        id: folderChooserProc
+        command: []
+        running: false
+        stdout: StdioCollector {
+            onStreamFinished: {
+                if (!text || text.trim().length === 0) return
+                try {
+                    var res = JSON.parse(text.trim())
+                    if (res.status === "success" && res.path) {
+                        if (root.activeMode === "live" || res.type === "live") {
+                            root.currentLiveDir = res.path
+                        } else {
+                            root.currentWallpaperDir = res.path
+                        }
+                        root.closeDirBrowser()
+                        root.refreshWallpapers()
+                    }
+                } catch(e) {}
+            }
+        }
+    }
+
+    function chooseFolderViaDialog() {
+        folderChooserProc.running = false
+        folderChooserProc.command = [
+            "python3",
+            root.homeDir + "/.hyprconf/hypr/scripts/py/pick-wallpaper-dir.py",
+            (root.activeMode === "live") ? "--pick-live-dir" : "--pick-dir"
+        ]
+        folderChooserProc.running = true
+    }
+
+    Process {
         id: videoChooserProc
         command: [
             "python3",
-            Quickshell.env("HOME") + "/.hyprconf/hypr/scripts/py/pick-wallpaper-dir.py",
+            root.homeDir + "/.hyprconf/hypr/scripts/py/pick-wallpaper-dir.py",
             "--pick-video"
         ]
         running: false
         stdout: StdioCollector {
-            onTextChanged: {
+            onStreamFinished: {
                 if (!text || text.trim().length === 0) return
                 try {
                     var res = JSON.parse(text.trim())
                     if (res.status === "success" && res.file) {
+                        if (res.path) root.currentLiveDir = res.path
                         root.closeDirBrowser()
                         root.backClicked()
                         root.refreshWallpapers()
@@ -241,7 +299,7 @@ Item {
         id: wallScanner
         running: false
         stdout: StdioCollector {
-            onTextChanged: {
+            onStreamFinished: {
                 if (!text || text.trim().length === 0) return
                 try {
                     var parsed = JSON.parse(text.trim())
@@ -268,7 +326,7 @@ Item {
         command: ["bash", "-c", "cat \"$HOME/.hyprconf/hypr/.cache/.wallpaper\" 2>/dev/null || true"]
         running: false
         stdout: StdioCollector {
-            onTextChanged: {
+            onStreamFinished: {
                 if (!text) return
                 var activeName = text.trim()
                 if (activeName.length > 0 && root.allWallpapers.length > 0 && root.activeMode === "wallpaper") {
@@ -289,7 +347,7 @@ Item {
         command: ["bash", "-c", "cat \"$HOME/.hyprconf/hypr/.cache/.live_wallpaper\" 2>/dev/null || true"]
         running: false
         stdout: StdioCollector {
-            onTextChanged: {
+            onStreamFinished: {
                 if (!text) return
                 var activePath = text.trim()
                 if (activePath.length > 0 && root.allWallpapers.length > 0 && root.activeMode === "live") {
@@ -309,26 +367,44 @@ Item {
     Process {
         id: onlineScanner
         running: false
+        onExited: function(exitCode, exitStatus) {
+            root.isSearchingOnline = false
+        }
         stdout: StdioCollector {
-            onTextChanged: {
+            onStreamFinished: {
                 root.isSearchingOnline = false
-                if (!text || text.trim().length === 0) return
+                if (!text || text.trim().length === 0) {
+                    if (root.onlinePage === 1) {
+                        root.allWallpapers = []
+                        root.applyFilter()
+                    }
+                    return
+                }
                 try {
                     var parsed = JSON.parse(text.trim())
-                    if (Array.isArray(parsed) && parsed.length > 0) {
-                        if (root.onlinePage > 1) {
-                            root.allWallpapers = root.allWallpapers.concat(parsed)
-                        } else {
-                            root.allWallpapers = parsed
-                        }
-                        root.applyFilter()
-                        if (root.onlinePage === 1) {
-                            root.selectedIndex = 0
-                            root.visualPosition = 0
+                    if (Array.isArray(parsed)) {
+                        if (parsed.length > 0) {
+                            if (root.onlinePage > 1) {
+                                root.allWallpapers = root.allWallpapers.concat(parsed)
+                            } else {
+                                root.allWallpapers = parsed
+                            }
+                            root.applyFilter()
+                            if (root.onlinePage === 1) {
+                                root.selectedIndex = 0
+                                root.visualPosition = 0
+                            }
+                        } else if (root.onlinePage === 1) {
+                            root.allWallpapers = []
+                            root.applyFilter()
                         }
                     }
                 } catch(e) {
                     console.error("Wallhaven JSON parse error:", e)
+                    if (root.onlinePage === 1) {
+                        root.allWallpapers = []
+                        root.applyFilter()
+                    }
                 }
             }
         }
@@ -341,16 +417,21 @@ Item {
         onTriggered: {
             if (applyProc.targetPath && applyProc.targetPath.length > 0) {
                 if (applyProc.targetPath.indexOf("http://") === 0 || applyProc.targetPath.indexOf("https://") === 0) {
-                    applyProc.command = [
+                    var havenCmd = [
                         "python3",
-                        Quickshell.env("HOME") + "/.hyprconf/hypr/scripts/py/wallhaven-bridge.py",
+                        root.homeDir + "/.hyprconf/hypr/scripts/py/wallhaven-bridge.py",
                         "apply",
                         "--url", applyProc.targetPath
                     ]
+                    if (root.colorVariant && root.colorVariant.length > 0) {
+                        havenCmd.push("--variant")
+                        havenCmd.push(root.colorVariant)
+                    }
+                    applyProc.command = havenCmd
                 } else {
                     var applyArgs = [
                         "bash",
-                        Quickshell.env("HOME") + "/.hyprconf/hypr/scripts/sh/Wallpaper.sh",
+                        root.homeDir + "/.hyprconf/hypr/scripts/sh/Wallpaper.sh",
                         applyProc.isLive ? "--live" : "--static"
                     ]
                     if (root.colorVariant && root.colorVariant.length > 0) {
@@ -385,7 +466,7 @@ Item {
         wallScanner.running = false
         wallScanner.command = [
             "python3",
-            Quickshell.env("HOME") + "/.hyprconf/hypr/scripts/py/scan-wallpapers.py",
+            root.homeDir + "/.hyprconf/hypr/scripts/py/scan-wallpapers.py",
             "--dir", targetDir,
             "--type", scanType,
             "--depth", "1"
@@ -395,9 +476,21 @@ Item {
 
     function applyVideoWallpaper(path) {
         if (!path) return
+        root.selectCurrentDirectory(root.browsingPath)
         applyBtn.isApplying = true
         applyProc.targetPath = path
         applyProc.isLive = true
+        root.closeDirBrowser()
+        root.backClicked()
+        applyTimer.restart()
+    }
+
+    function applyWallpaperFromBrowser(item) {
+        if (!item || !item.path) return
+        root.selectCurrentDirectory(root.browsingPath)
+        applyBtn.isApplying = true
+        applyProc.targetPath = item.path
+        applyProc.isLive = false
         root.closeDirBrowser()
         root.backClicked()
         applyTimer.restart()
@@ -407,6 +500,12 @@ Item {
         if (page === undefined) page = 1
         root.onlinePage = page
         root.isSearchingOnline = true
+        if (page === 1) {
+            root.allWallpapers = []
+            root.filteredWallpapers = []
+            root.selectedIndex = 0
+            root.visualPosition = 0
+        }
         var q = root.searchQuery.trim()
         var sort = root.activeSort
         var cat = (root.catGeneral ? "1" : "0") + (root.catAnime ? "1" : "0") + (root.catPeople ? "1" : "0")
@@ -436,8 +535,8 @@ Item {
     function openDirBrowser() {
         root.isBrowsingDirs = true
         root.browsingPath = (root.activeMode === "live") ? root.currentLiveDir : root.currentWallpaperDir
-        root.dirBrowserTab = (root.activeMode === "live") ? "videos" : "folders"
         root.dirSelectedIndex = 0
+        root.wallpaperSelectedIndex = 0
         root.videoSelectedIndex = 0
         root.fetchDirectory(root.browsingPath)
     }
@@ -454,7 +553,7 @@ Item {
         dirListerProc.targetPath = path
         dirListerProc.command = [
             "python3",
-            Quickshell.env("HOME") + "/.hyprconf/hypr/scripts/py/list-wallpaper-dirs.py",
+            root.homeDir + "/.hyprconf/hypr/scripts/py/list-wallpaper-dirs.py",
             "--path", path
         ]
         dirListerProc.running = true
@@ -468,14 +567,14 @@ Item {
         if (root.activeMode === "live") {
             dirSaverProc.command = [
                 "python3",
-                Quickshell.env("HOME") + "/.hyprconf/hypr/scripts/py/pick-wallpaper-dir.py",
+                root.homeDir + "/.hyprconf/hypr/scripts/py/pick-wallpaper-dir.py",
                 "--set-live", p
             ]
             root.currentLiveDir = p
         } else {
             dirSaverProc.command = [
                 "python3",
-                Quickshell.env("HOME") + "/.hyprconf/hypr/scripts/py/pick-wallpaper-dir.py",
+                root.homeDir + "/.hyprconf/hypr/scripts/py/pick-wallpaper-dir.py",
                 "--set", p
             ]
             root.currentWallpaperDir = p
@@ -608,10 +707,12 @@ Item {
                 root.closeDirBrowser()
                 return true
             }
-            // Tab or t key: toggle between folders and videos tabs
+            // Tab or t key: cycle between folders, wallpapers, and videos tabs
             if (event.key === Qt.Key_Tab || event.key === Qt.Key_T) {
                 event.accepted = true
-                root.dirBrowserTab = (root.dirBrowserTab === "folders") ? "videos" : "folders"
+                var tabs = ["folders", "wallpapers", "videos"]
+                var curIdx = tabs.indexOf(root.dirBrowserTab)
+                root.dirBrowserTab = tabs[(curIdx + 1) % tabs.length]
                 return true
             }
             if (event.key === Qt.Key_Backspace || event.key === Qt.Key_U) {
@@ -621,6 +722,92 @@ Item {
                 }
                 return true
             }
+            // 1. Folders Tab navigation
+            if (root.dirBrowserTab === "folders") {
+                var totalDirs = root.browsingSubdirs ? root.browsingSubdirs.length : 0
+                // Space: select highlighted folder directly (or current folder if none)
+                if (event.key === Qt.Key_Space) {
+                    event.accepted = true
+                    if (totalDirs > 0 && root.dirSelectedIndex >= 0 && root.dirSelectedIndex < totalDirs) {
+                        root.selectCurrentDirectory(root.browsingSubdirs[root.dirSelectedIndex].path)
+                    } else {
+                        root.selectCurrentDirectory(root.browsingPath)
+                    }
+                    return true
+                }
+                // Ctrl+Enter: confirm selection of current browsing folder
+                if (event.key === Qt.Key_Return && (event.modifiers & Qt.ControlModifier)) {
+                    event.accepted = true
+                    root.selectCurrentDirectory(root.browsingPath)
+                    return true
+                }
+                // Enter: enter highlighted folder, or select current if empty
+                if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                    event.accepted = true
+                    if (totalDirs > 0 && root.dirSelectedIndex >= 0 && root.dirSelectedIndex < totalDirs) {
+                        var target = root.browsingSubdirs[root.dirSelectedIndex].path
+                        root.fetchDirectory(target)
+                    } else {
+                        root.selectCurrentDirectory(root.browsingPath)
+                    }
+                    return true
+                }
+                // 3-column navigation
+                if (totalDirs > 0) {
+                    var cols = 3
+                    if (event.key === Qt.Key_Left || event.key === Qt.Key_H) {
+                        event.accepted = true
+                        root.dirSelectedIndex = Math.max(0, root.dirSelectedIndex - 1)
+                        return true
+                    } else if (event.key === Qt.Key_Right || event.key === Qt.Key_L) {
+                        event.accepted = true
+                        root.dirSelectedIndex = Math.min(totalDirs - 1, root.dirSelectedIndex + 1)
+                        return true
+                    } else if (event.key === Qt.Key_Up || event.key === Qt.Key_K) {
+                        event.accepted = true
+                        root.dirSelectedIndex = Math.max(0, root.dirSelectedIndex - cols)
+                        return true
+                    } else if (event.key === Qt.Key_Down || event.key === Qt.Key_J) {
+                        event.accepted = true
+                        root.dirSelectedIndex = Math.min(totalDirs - 1, root.dirSelectedIndex + cols)
+                        return true
+                    }
+                }
+                return false
+            }
+            // 2. Wallpapers Tab navigation
+            if (root.dirBrowserTab === "wallpapers") {
+                var totalWalls = root.browsingWallpapers ? root.browsingWallpapers.length : 0
+                if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {
+                    event.accepted = true
+                    if (totalWalls > 0 && root.wallpaperSelectedIndex >= 0 && root.wallpaperSelectedIndex < totalWalls) {
+                        root.applyWallpaperFromBrowser(root.browsingWallpapers[root.wallpaperSelectedIndex])
+                    }
+                    return true
+                }
+                if (totalWalls > 0) {
+                    var wcols = 4
+                    if (event.key === Qt.Key_Left || event.key === Qt.Key_H) {
+                        event.accepted = true
+                        root.wallpaperSelectedIndex = Math.max(0, root.wallpaperSelectedIndex - 1)
+                        return true
+                    } else if (event.key === Qt.Key_Right || event.key === Qt.Key_L) {
+                        event.accepted = true
+                        root.wallpaperSelectedIndex = Math.min(totalWalls - 1, root.wallpaperSelectedIndex + 1)
+                        return true
+                    } else if (event.key === Qt.Key_Up || event.key === Qt.Key_K) {
+                        event.accepted = true
+                        root.wallpaperSelectedIndex = Math.max(0, root.wallpaperSelectedIndex - wcols)
+                        return true
+                    } else if (event.key === Qt.Key_Down || event.key === Qt.Key_J) {
+                        event.accepted = true
+                        root.wallpaperSelectedIndex = Math.min(totalWalls - 1, root.wallpaperSelectedIndex + wcols)
+                        return true
+                    }
+                }
+                return false
+            }
+            // 3. Videos Tab navigation
             if (root.dirBrowserTab === "videos") {
                 var totalVids = root.browsingVideos ? root.browsingVideos.length : 0
                 if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {
@@ -630,65 +817,27 @@ Item {
                     }
                     return true
                 }
-                var vcols = 3
-                if (event.key === Qt.Key_Left || event.key === Qt.Key_H) {
-                    event.accepted = true
-                    root.videoSelectedIndex = Math.max(0, root.videoSelectedIndex - 1)
-                    return true
-                } else if (event.key === Qt.Key_Right || event.key === Qt.Key_L) {
-                    event.accepted = true
-                    root.videoSelectedIndex = Math.min(totalVids - 1, root.videoSelectedIndex + 1)
-                    return true
-                } else if (event.key === Qt.Key_Up || event.key === Qt.Key_K) {
-                    event.accepted = true
-                    root.videoSelectedIndex = Math.max(0, root.videoSelectedIndex - vcols)
-                    return true
-                } else if (event.key === Qt.Key_Down || event.key === Qt.Key_J) {
-                    event.accepted = true
-                    root.videoSelectedIndex = Math.min(totalVids - 1, root.videoSelectedIndex + vcols)
-                    return true
+                if (totalVids > 0) {
+                    var vcols = 3
+                    if (event.key === Qt.Key_Left || event.key === Qt.Key_H) {
+                        event.accepted = true
+                        root.videoSelectedIndex = Math.max(0, root.videoSelectedIndex - 1)
+                        return true
+                    } else if (event.key === Qt.Key_Right || event.key === Qt.Key_L) {
+                        event.accepted = true
+                        root.videoSelectedIndex = Math.min(totalVids - 1, root.videoSelectedIndex + 1)
+                        return true
+                    } else if (event.key === Qt.Key_Up || event.key === Qt.Key_K) {
+                        event.accepted = true
+                        root.videoSelectedIndex = Math.max(0, root.videoSelectedIndex - vcols)
+                        return true
+                    } else if (event.key === Qt.Key_Down || event.key === Qt.Key_J) {
+                        event.accepted = true
+                        root.videoSelectedIndex = Math.min(totalVids - 1, root.videoSelectedIndex + vcols)
+                        return true
+                    }
                 }
                 return false
-            }
-            // Space or Ctrl+Enter: confirm directory selection
-            if ((event.key === Qt.Key_Return && (event.modifiers & Qt.ControlModifier)) || event.key === Qt.Key_Space) {
-                event.accepted = true
-                root.selectCurrentDirectory(root.browsingPath)
-                return true
-            }
-            // Enter key: enter highlighted directory or select current if empty
-            if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                event.accepted = true
-                if (root.browsingSubdirs && root.browsingSubdirs.length > 0 &&
-                    root.dirSelectedIndex >= 0 && root.dirSelectedIndex < root.browsingSubdirs.length) {
-                    var target = root.browsingSubdirs[root.dirSelectedIndex].path
-                    root.fetchDirectory(target)
-                } else {
-                    root.selectCurrentDirectory(root.browsingPath)
-                }
-                return true
-            }
-            // Arrow & vim navigation in directory grid (3 columns)
-            var total = root.browsingSubdirs ? root.browsingSubdirs.length : 0
-            if (total > 0) {
-                var cols = 3
-                if (event.key === Qt.Key_Left || event.key === Qt.Key_H) {
-                    event.accepted = true
-                    root.dirSelectedIndex = Math.max(0, root.dirSelectedIndex - 1)
-                    return true
-                } else if (event.key === Qt.Key_Right || event.key === Qt.Key_L) {
-                    event.accepted = true
-                    root.dirSelectedIndex = Math.min(total - 1, root.dirSelectedIndex + 1)
-                    return true
-                } else if (event.key === Qt.Key_Up || event.key === Qt.Key_K) {
-                    event.accepted = true
-                    root.dirSelectedIndex = Math.max(0, root.dirSelectedIndex - cols)
-                    return true
-                } else if (event.key === Qt.Key_Down || event.key === Qt.Key_J) {
-                    event.accepted = true
-                    root.dirSelectedIndex = Math.min(total - 1, root.dirSelectedIndex + cols)
-                    return true
-                }
             }
             return false
         }
@@ -1049,6 +1198,93 @@ Item {
                 }
             }
 
+            // ── ONLINE LOADING INDICATOR (WALLHAVEN) ─────────────────────────
+            Rectangle {
+                anchors.centerIn: parent
+                anchors.verticalCenterOffset: 12
+                width: 250
+                height: 56
+                radius: 14
+                color: Theme.alpha(Theme.surface, 0.90)
+                border.color: Theme.alpha(Theme.accent, 0.45)
+                border.width: 1.2
+                visible: root.isSearchingOnline && root.filteredWallpapers.length === 0
+                z: 150
+
+                Row {
+                    anchors.centerIn: parent
+                    spacing: 10
+                    Text {
+                        text: "󰑮"
+                        font.pixelSize: 20
+                        color: Theme.accent
+                        anchors.verticalCenter: parent.verticalCenter
+                        RotationAnimation on rotation {
+                            from: 0; to: 360; duration: 900; loops: Animation.Infinite; running: root.isSearchingOnline
+                        }
+                    }
+                    Column {
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: 2
+                        Text {
+                            text: "Connecting to Wallhaven"
+                            font.family: "Outfit"
+                            font.pixelSize: 12
+                            font.weight: Font.Bold
+                            color: Theme.foreground
+                        }
+                        Text {
+                            text: "Fetching high-res wallpapers..."
+                            font.family: "Outfit"
+                            font.pixelSize: 10
+                            color: Theme.alpha(Theme.foreground, 0.55)
+                        }
+                    }
+                }
+            }
+
+            // ── EMPTY STATE FOR WALLHAVEN ────────────────────────────────────
+            Rectangle {
+                anchors.centerIn: parent
+                anchors.verticalCenterOffset: 12
+                width: 260
+                height: 56
+                radius: 14
+                color: Theme.alpha(Theme.surface, 0.90)
+                border.color: Theme.alpha(Theme.foreground, 0.16)
+                border.width: 1.2
+                visible: !root.isSearchingOnline && root.filteredWallpapers.length === 0 && root.activeMode === "wallhaven"
+                z: 150
+
+                Row {
+                    anchors.centerIn: parent
+                    spacing: 10
+                    Text {
+                        text: "★"
+                        font.pixelSize: 22
+                        color: Theme.alpha(Theme.foreground, 0.40)
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                    Column {
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: 2
+                        Text {
+                            text: "No Wallhaven Wallpapers"
+                            font.family: "Outfit"
+                            font.pixelSize: 12
+                            font.weight: Font.Bold
+                            color: Theme.foreground
+                        }
+                        Text {
+                            text: "Try changing filters or search terms"
+                            font.family: "Outfit"
+                            font.pixelSize: 10
+                            color: Theme.alpha(Theme.foreground, 0.50)
+                        }
+                    }
+                }
+            }
+
             // ── SELECTED WALLPAPER TITLE PILL ────────────────────────────────
             Rectangle {
                 id: titlePill
@@ -1056,31 +1292,48 @@ Item {
                 anchors.top: parent.top
                 anchors.topMargin: 196
                 height: 24
-                width: Math.max(80, titleText.implicitWidth + 24)
+                width: Math.max(80, titleRow.implicitWidth + 24)
                 radius: 12
                 color: Theme.alpha(Theme.surface, 0.92)
                 border.color: Theme.alpha(Theme.accent, 0.55)
                 border.width: 1.2
                 z: 110
-                visible: root.filteredWallpapers.length > 0 || root.isSearchingOnline
+                visible: root.filteredWallpapers.length > 0 || root.isSearchingOnline || root.activeMode === "wallhaven"
 
-                Text {
-                    id: titleText
+                Row {
+                    id: titleRow
                     anchors.centerIn: parent
-                    text: {
-                        var base = root.selectedWallpaperTitle
-                        if (root.filteredWallpapers.length > 0 && root.selectedIndex >= 0 && root.selectedIndex < root.filteredWallpapers.length) {
-                            var cur = root.filteredWallpapers[root.selectedIndex]
-                            if (cur && cur.is_video) {
-                                return "▶ " + base + " • LIVE"
-                            }
+                    spacing: 6
+
+                    Text {
+                        text: "󰑮"
+                        font.pixelSize: 11
+                        color: Theme.accent
+                        visible: root.isSearchingOnline
+                        anchors.verticalCenter: parent.verticalCenter
+                        RotationAnimation on rotation {
+                            from: 0; to: 360; duration: 900; loops: Animation.Infinite; running: root.isSearchingOnline
                         }
-                        return base
                     }
-                    font.family: "Outfit"
-                    font.pixelSize: 11
-                    font.weight: Font.Bold
-                    color: root.isSearchingOnline ? Theme.accent : Theme.foreground
+
+                    Text {
+                        id: titleText
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: {
+                            var base = root.selectedWallpaperTitle
+                            if (root.filteredWallpapers.length > 0 && root.selectedIndex >= 0 && root.selectedIndex < root.filteredWallpapers.length) {
+                                var cur = root.filteredWallpapers[root.selectedIndex]
+                                if (cur && cur.is_video) {
+                                    return "▶ " + base + " • LIVE"
+                                }
+                            }
+                            return base
+                        }
+                        font.family: "Outfit"
+                        font.pixelSize: 11
+                        font.weight: Font.Bold
+                        color: root.isSearchingOnline ? Theme.accent : Theme.foreground
+                    }
                 }
             }
         }
@@ -1667,6 +1920,9 @@ Item {
                         font.pixelSize: 11
                         color: root.isSearchingOnline ? Theme.accent : Theme.alpha(Theme.foreground, 0.50)
                         anchors.verticalCenter: parent.verticalCenter
+                        RotationAnimation on rotation {
+                            from: 0; to: 360; duration: 900; loops: Animation.Infinite; running: root.isSearchingOnline
+                        }
                     }
 
                     TextInput {
@@ -2147,7 +2403,7 @@ Item {
                 id: dirPathPill
                 anchors.left: dirUpBtn.visible ? dirUpBtn.right : dirBackBtn.right
                 anchors.leftMargin: 8
-                anchors.right: dirPickVideoBtn.left
+                anchors.right: (dirPickVideoBtn.visible ? dirPickVideoBtn.left : dirBrowseSystemBtn.left)
                 anchors.rightMargin: 8
                 anchors.verticalCenter: parent.verticalCenter
                 height: 36
@@ -2261,15 +2517,16 @@ Item {
                 }
             }
 
-            // Pick Video File Button (󰕧 Pick Video...)
+            // Pick Video File Button (active in live mode or videos tab)
             Rectangle {
                 id: dirPickVideoBtn
-                anchors.right: dirSelectCurrentBtn.left
+                anchors.right: dirBrowseSystemBtn.left
                 anchors.rightMargin: 8
                 anchors.verticalCenter: parent.verticalCenter
-                width: dirPickVideoContent.implicitWidth + 20
+                width: visible ? (dirPickVideoContent.implicitWidth + 20) : 0
                 height: 36
                 radius: 10
+                visible: root.activeMode === "live" || root.dirBrowserTab === "videos"
                 color: dirPickVideoMouse.containsMouse ? Theme.alpha(Theme.surface, 0.95) : Theme.alpha(Theme.surface, 0.70)
                 border.color: dirPickVideoMouse.containsMouse ? Theme.accent : Theme.alpha(Theme.accent, 0.40)
                 border.width: 1
@@ -2303,6 +2560,48 @@ Item {
                         videoChooserProc.running = false
                         videoChooserProc.running = true
                     }
+                }
+            }
+
+            // Native Folder Picker Button (󰉋 Browse System...)
+            Rectangle {
+                id: dirBrowseSystemBtn
+                anchors.right: dirSelectCurrentBtn.left
+                anchors.rightMargin: 8
+                anchors.verticalCenter: parent.verticalCenter
+                width: dirBrowseContent.implicitWidth + 20
+                height: 36
+                radius: 10
+                color: dirBrowseMouse.containsMouse ? Theme.alpha(Theme.surface, 0.95) : Theme.alpha(Theme.surface, 0.70)
+                border.color: dirBrowseMouse.containsMouse ? Theme.accent : Theme.alpha(Theme.foreground, 0.14)
+                border.width: 1
+
+                Row {
+                    id: dirBrowseContent
+                    anchors.centerIn: parent
+                    spacing: 5
+                    Text {
+                        text: "󰉋"
+                        font.pixelSize: 12
+                        color: Theme.accent
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                    Text {
+                        text: "Browse..."
+                        font.family: "Outfit"
+                        font.pixelSize: 11
+                        font.weight: Font.Bold
+                        color: Theme.foreground
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                }
+
+                MouseArea {
+                    id: dirBrowseMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: root.chooseFolderViaDialog()
                 }
             }
 
@@ -2347,7 +2646,7 @@ Item {
             }
         }
 
-        // 2. QUICK BOOKMARKS BAR
+        // 2. QUICK BOOKMARKS BAR (Horizontally scrollable)
         Item {
             id: dirBookmarksBar
             anchors.top: dirHeaderBar.bottom
@@ -2356,64 +2655,78 @@ Item {
             anchors.right: parent.right
             height: 28
 
-            Row {
+            Text {
+                id: quickJumpLabel
+                text: "QUICK JUMP:"
+                font.family: "Outfit"
+                font.pixelSize: 9
+                font.weight: Font.Bold
+                color: Theme.alpha(Theme.foreground, 0.40)
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: 8
+            }
 
-                Text {
-                    text: "QUICK JUMP:"
-                    font.family: "Outfit"
-                    font.pixelSize: 9
-                    font.weight: Font.Bold
-                    color: Theme.alpha(Theme.foreground, 0.40)
+            Flickable {
+                anchors.left: quickJumpLabel.right
+                anchors.leftMargin: 8
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                contentWidth: bookmarksRow.implicitWidth
+                contentHeight: height
+                clip: true
+                boundsBehavior: Flickable.StopAtBounds
+
+                Row {
+                    id: bookmarksRow
                     anchors.verticalCenter: parent.verticalCenter
-                }
+                    spacing: 8
 
-                Repeater {
-                    model: root.browsingBookmarks
-                    Rectangle {
-                        property bool isCurrent: root.browsingPath === modelData.path
-                        width: bmContent.implicitWidth + 18
-                        height: 26
-                        radius: 7
-                        color: isCurrent ? Theme.alpha(Theme.accent, 0.22) : (bmMouse.containsMouse ? Theme.alpha(Theme.surface, 0.90) : Theme.alpha(Theme.surface, 0.50))
-                        border.color: isCurrent ? Theme.accent : (bmMouse.containsMouse ? Theme.alpha(Theme.accent, 0.40) : Theme.alpha(Theme.foreground, 0.10))
-                        border.width: 1
+                    Repeater {
+                        model: root.browsingBookmarks
+                        Rectangle {
+                            property bool isCurrent: root.browsingPath === modelData.path
+                            width: bmContent.implicitWidth + 18
+                            height: 26
+                            radius: 7
+                            color: isCurrent ? Theme.alpha(Theme.accent, 0.22) : (bmMouse.containsMouse ? Theme.alpha(Theme.surface, 0.90) : Theme.alpha(Theme.surface, 0.50))
+                            border.color: isCurrent ? Theme.accent : (bmMouse.containsMouse ? Theme.alpha(Theme.accent, 0.40) : Theme.alpha(Theme.foreground, 0.10))
+                            border.width: 1
 
-                        Row {
-                            id: bmContent
-                            anchors.centerIn: parent
-                            spacing: 5
-                            Text {
-                                text: modelData.icon || "󰉋"
-                                font.pixelSize: 11
-                                color: parent.parent.isCurrent ? Theme.accent : Theme.alpha(Theme.foreground, 0.70)
-                                anchors.verticalCenter: parent.verticalCenter
+                            Row {
+                                id: bmContent
+                                anchors.centerIn: parent
+                                spacing: 5
+                                Text {
+                                    text: modelData.icon || "󰉋"
+                                    font.pixelSize: 11
+                                    color: parent.parent.isCurrent ? Theme.accent : Theme.alpha(Theme.foreground, 0.70)
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
+                                Text {
+                                    text: modelData.name
+                                    font.family: "Outfit"
+                                    font.pixelSize: 10
+                                    font.weight: Font.Bold
+                                    color: parent.parent.isCurrent ? Theme.accent : Theme.alpha(Theme.foreground, 0.85)
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
                             }
-                            Text {
-                                text: modelData.name
-                                font.family: "Outfit"
-                                font.pixelSize: 10
-                                font.weight: Font.Bold
-                                color: parent.parent.isCurrent ? Theme.accent : Theme.alpha(Theme.foreground, 0.85)
-                                anchors.verticalCenter: parent.verticalCenter
-                            }
-                        }
 
-                        MouseArea {
-                            id: bmMouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: root.fetchDirectory(modelData.path)
+                            MouseArea {
+                                id: bmMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: root.fetchDirectory(modelData.path)
+                            }
                         }
                     }
                 }
             }
         }
 
-        // 2.5 TAB SELECTOR (Folders vs Video Wallpapers)
+        // 2.5 TAB SELECTOR (Folders vs Wallpapers vs Video Wallpapers)
         Item {
             id: dirTabSelector
             anchors.top: dirBookmarksBar.bottom
@@ -2427,12 +2740,13 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: 8
 
+                // Tab 1: Folders
                 Rectangle {
                     property bool isSelected: root.dirBrowserTab === "folders"
                     width: tabFoldersContent.implicitWidth + 18
                     height: 26
                     radius: 7
-                    color: isSelected ? Theme.alpha(Theme.accent, 0.24) : Theme.alpha(Theme.surface, 0.50)
+                    color: isSelected ? Theme.alpha(Theme.accent, 0.24) : (tabFoldersMouse.containsMouse ? Theme.alpha(Theme.surface, 0.80) : Theme.alpha(Theme.surface, 0.50))
                     border.color: isSelected ? Theme.accent : Theme.alpha(Theme.foreground, 0.12)
                     border.width: 1
 
@@ -2457,18 +2771,60 @@ Item {
                     }
 
                     MouseArea {
+                        id: tabFoldersMouse
                         anchors.fill: parent
+                        hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onClicked: root.dirBrowserTab = "folders"
                     }
                 }
 
+                // Tab 2: Wallpapers
+                Rectangle {
+                    property bool isSelected: root.dirBrowserTab === "wallpapers"
+                    width: tabWallsContent.implicitWidth + 18
+                    height: 26
+                    radius: 7
+                    color: isSelected ? Theme.alpha(Theme.accent, 0.24) : (tabWallsMouse.containsMouse ? Theme.alpha(Theme.surface, 0.80) : Theme.alpha(Theme.surface, 0.50))
+                    border.color: isSelected ? Theme.accent : Theme.alpha(Theme.foreground, 0.12)
+                    border.width: 1
+
+                    Row {
+                        id: tabWallsContent
+                        anchors.centerIn: parent
+                        spacing: 5
+                        Text {
+                            text: "󰸉"
+                            font.pixelSize: 12
+                            color: parent.parent.isSelected ? Theme.accent : Theme.alpha(Theme.foreground, 0.6)
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                        Text {
+                            text: "Wallpapers (" + (root.browsingWallpapers ? root.browsingWallpapers.length : root.browsingCurrentWallCount) + ")"
+                            font.family: "Outfit"
+                            font.pixelSize: 10
+                            font.weight: Font.Bold
+                            color: parent.parent.isSelected ? Theme.accent : Theme.alpha(Theme.foreground, 0.85)
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
+
+                    MouseArea {
+                        id: tabWallsMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.dirBrowserTab = "wallpapers"
+                    }
+                }
+
+                // Tab 3: Videos
                 Rectangle {
                     property bool isSelected: root.dirBrowserTab === "videos"
                     width: tabVideosContent.implicitWidth + 18
                     height: 26
                     radius: 7
-                    color: isSelected ? Theme.alpha(Theme.accent, 0.24) : Theme.alpha(Theme.surface, 0.50)
+                    color: isSelected ? Theme.alpha(Theme.accent, 0.24) : (tabVideosMouse.containsMouse ? Theme.alpha(Theme.surface, 0.80) : Theme.alpha(Theme.surface, 0.50))
                     border.color: isSelected ? Theme.accent : Theme.alpha(Theme.foreground, 0.12)
                     border.width: 1
 
@@ -2493,7 +2849,9 @@ Item {
                     }
 
                     MouseArea {
+                        id: tabVideosMouse
                         anchors.fill: parent
+                        hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onClicked: root.dirBrowserTab = "videos"
                     }
@@ -2501,7 +2859,7 @@ Item {
             }
         }
 
-        // 3. CONTENT AREA (SUBDIRECTORIES OR VIDEO WALLPAPERS)
+        // 3. CONTENT AREA (SUBDIRECTORIES, WALLPAPERS, OR VIDEO WALLPAPERS)
         Item {
             id: dirContentArea
             anchors.top: dirTabSelector.bottom
@@ -2511,7 +2869,7 @@ Item {
             anchors.left: parent.left
             anchors.right: parent.right
 
-            // Populated Subdirectories Grid
+            // Populated Subdirectories Grid (Folders Tab)
             Flickable {
                 id: dirFlick
                 anchors.fill: parent
@@ -2541,19 +2899,19 @@ Item {
 
                             Row {
                                 anchors.fill: parent
-                                anchors.leftMargin: 12
-                                anchors.rightMargin: 12
-                                spacing: 10
+                                anchors.leftMargin: 10
+                                anchors.rightMargin: 8
+                                spacing: 8
 
                                 Text {
                                     text: (modelData.video_count > 0) ? "󰕧" : ((modelData.wall_count > 0) ? "󰉍" : "󰉋")
-                                    font.pixelSize: 20
+                                    font.pixelSize: 18
                                     color: folderCard.isHighlighted ? Theme.accent : (cardMouse.containsMouse ? Qt.lighter(Theme.accent, 1.2) : Theme.accent)
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
 
                                 Column {
-                                    width: parent.width - 60
+                                    width: parent.width - 26 - (useFolderBtn.visible ? 56 : 24)
                                     anchors.verticalCenter: parent.verticalCenter
                                     spacing: 2
 
@@ -2571,22 +2929,55 @@ Item {
                                         width: parent.width
                                         text: {
                                             if (modelData.video_count > 0 && modelData.wall_count > 0) {
-                                                return modelData.wall_count + " walls • " + modelData.video_count + " videos"
+                                                return modelData.wall_count + " walls • " + modelData.video_count + " vids"
                                             } else if (modelData.video_count > 0) {
-                                                return modelData.video_count + (modelData.video_count === 1 ? " video wallpaper" : " video wallpapers")
+                                                return modelData.video_count + (modelData.video_count === 1 ? " video" : " videos")
                                             } else if (modelData.wall_count > 0) {
-                                                return modelData.wall_count + (modelData.wall_count === 1 ? " wallpaper" : " wallpapers")
+                                                return modelData.wall_count + (modelData.wall_count === 1 ? " wall" : " walls")
                                             }
-                                            return modelData.has_sub ? "Contains folders" : "Empty folder"
+                                            return modelData.has_sub ? "Subfolders" : "Empty folder"
                                         }
                                         font.family: "Outfit"
-                                        font.pixelSize: 10
+                                        font.pixelSize: 9
                                         color: (modelData.video_count > 0 || modelData.wall_count > 0) ? Theme.accent : Theme.alpha(Theme.foreground, 0.45)
                                         elide: Text.ElideRight
                                     }
                                 }
 
+                                // Quick Use Button (selects this folder without having to navigate inside)
+                                Rectangle {
+                                    id: useFolderBtn
+                                    visible: cardMouse.containsMouse || folderCard.isHighlighted || (modelData.wall_count > 0 && root.activeMode !== "live") || (modelData.video_count > 0 && root.activeMode === "live")
+                                    width: 48
+                                    height: 24
+                                    radius: 6
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    color: useBtnMouse.containsMouse ? Theme.accent : Theme.alpha(Theme.accent, 0.20)
+                                    border.color: Theme.accent
+                                    border.width: 1
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: "✓ Use"
+                                        font.family: "Outfit"
+                                        font.pixelSize: 9
+                                        font.weight: Font.Bold
+                                        color: useBtnMouse.containsMouse ? Theme.on_primary : Theme.accent
+                                    }
+
+                                    MouseArea {
+                                        id: useBtnMouse
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            root.selectCurrentDirectory(modelData.path)
+                                        }
+                                    }
+                                }
+
                                 Text {
+                                    visible: !useFolderBtn.visible
                                     text: "→"
                                     font.pixelSize: 12
                                     font.bold: true
@@ -2603,6 +2994,217 @@ Item {
                                 onClicked: {
                                     root.dirSelectedIndex = index
                                     root.fetchDirectory(modelData.path)
+                                }
+                                onDoubleClicked: {
+                                    root.selectCurrentDirectory(modelData.path)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Populated Wallpapers Grid (Wallpapers Tab)
+            Flickable {
+                id: wallpapersFlick
+                anchors.fill: parent
+                contentWidth: width
+                contentHeight: wallpapersGrid.implicitHeight
+                clip: true
+                boundsBehavior: Flickable.StopAtBounds
+                visible: root.dirBrowserTab === "wallpapers" && root.browsingWallpapers && root.browsingWallpapers.length > 0
+
+                Grid {
+                    id: wallpapersGrid
+                    columns: 4
+                    spacing: 8
+                    width: parent.width
+
+                    Repeater {
+                        model: root.browsingWallpapers
+                        Rectangle {
+                            id: wallpaperCard
+                            property bool isHighlighted: root.wallpaperSelectedIndex === index
+                            property bool isCurrentActive: root.currentWallpaperPath === modelData.path
+                            width: Math.floor((wallpapersGrid.width - 24) / 4)
+                            height: 110
+                            radius: 12
+                            color: Theme.surface
+                            border.color: isCurrentActive ? Theme.accent : (isHighlighted ? Theme.accent : (wallCardMouse.containsMouse ? Theme.alpha(Theme.accent, 0.5) : Theme.alpha(Theme.foreground, 0.15)))
+                            border.width: (isCurrentActive || isHighlighted) ? 2.0 : 1.0
+                            clip: true
+
+                            // Masked Image Thumbnail
+                            Item {
+                                anchors.fill: parent
+                                anchors.margins: 2
+
+                                Image {
+                                    id: wallThumbImg
+                                    anchors.fill: parent
+                                    source: "file://" + modelData.path
+                                    fillMode: Image.PreserveAspectCrop
+                                    smooth: true
+                                    asynchronous: true
+                                    visible: false
+                                }
+
+                                Item {
+                                    id: wallThumbMask
+                                    anchors.fill: parent
+                                    layer.enabled: true
+                                    visible: false
+                                    Rectangle {
+                                        anchors.fill: parent
+                                        radius: 10
+                                        color: "#ffffff"
+                                    }
+                                }
+
+                                MultiEffect {
+                                    anchors.fill: parent
+                                    source: wallThumbImg
+                                    visible: wallThumbImg.status === Image.Ready
+                                    maskEnabled: true
+                                    maskSource: wallThumbMask
+                                    autoPaddingEnabled: false
+                                }
+
+                                // Dark gradient scrim for legibility
+                                Rectangle {
+                                    anchors.fill: parent
+                                    radius: 10
+                                    gradient: Gradient {
+                                        GradientStop { position: 0.0; color: "transparent" }
+                                        GradientStop { position: 0.45; color: "transparent" }
+                                        GradientStop { position: 1.0; color: Theme.alpha(Theme.background, 0.92) }
+                                    }
+                                }
+                            }
+
+                            // Top-left Active Badge
+                            Rectangle {
+                                anchors.top: parent.top
+                                anchors.topMargin: 6
+                                anchors.left: parent.left
+                                anchors.leftMargin: 6
+                                height: 18
+                                width: activeBadgeTxt.implicitWidth + 10
+                                radius: 5
+                                color: Theme.accent
+                                visible: wallpaperCard.isCurrentActive
+
+                                Text {
+                                    id: activeBadgeTxt
+                                    anchors.centerIn: parent
+                                    text: "ACTIVE"
+                                    font.family: "Outfit"
+                                    font.pixelSize: 8
+                                    font.weight: Font.Bold
+                                    color: Theme.on_primary
+                                }
+                            }
+
+                            // Top-right Tag (PNG, JPG, etc.)
+                            Rectangle {
+                                anchors.top: parent.top
+                                anchors.topMargin: 6
+                                anchors.right: parent.right
+                                anchors.rightMargin: 6
+                                height: 18
+                                width: wallBadgeTxt.implicitWidth + 10
+                                radius: 5
+                                color: Theme.alpha(Theme.background, 0.88)
+                                border.color: Theme.alpha(Theme.accent, 0.6)
+                                border.width: 1
+
+                                Text {
+                                    id: wallBadgeTxt
+                                    anchors.centerIn: parent
+                                    text: modelData.ext || "IMG"
+                                    font.family: "Outfit"
+                                    font.pixelSize: 8
+                                    font.weight: Font.Bold
+                                    color: Theme.foreground
+                                }
+                            }
+
+                            // Bottom Title & Size Banner
+                            Column {
+                                anchors.bottom: parent.bottom
+                                anchors.bottomMargin: 6
+                                anchors.left: parent.left
+                                anchors.leftMargin: 8
+                                anchors.right: parent.right
+                                anchors.rightMargin: 8
+                                spacing: 1
+
+                                Text {
+                                    width: parent.width
+                                    text: modelData.title || modelData.name
+                                    font.family: "Outfit"
+                                    font.pixelSize: 10
+                                    font.weight: Font.Bold
+                                    color: Theme.foreground
+                                    elide: Text.ElideRight
+                                }
+
+                                Row {
+                                    spacing: 6
+                                    Text {
+                                        text: modelData.size_mb ? (modelData.size_mb + " MB") : ""
+                                        font.family: "Outfit"
+                                        font.pixelSize: 9
+                                        color: Theme.alpha(Theme.foreground, 0.6)
+                                    }
+                                }
+                            }
+
+                            // Hover Action Bar
+                            Rectangle {
+                                anchors.fill: parent
+                                radius: 12
+                                color: Theme.alpha(Theme.background, 0.75)
+                                visible: wallCardMouse.containsMouse
+                                z: 50
+
+                                Rectangle {
+                                    anchors.centerIn: parent
+                                    height: 28
+                                    width: setBtnContent.implicitWidth + 16
+                                    radius: 8
+                                    color: Theme.accent
+
+                                    Row {
+                                        id: setBtnContent
+                                        anchors.centerIn: parent
+                                        spacing: 5
+                                        Text {
+                                            text: "󰸉"
+                                            font.pixelSize: 11
+                                            color: Theme.on_primary
+                                            anchors.verticalCenter: parent.verticalCenter
+                                        }
+                                        Text {
+                                            text: "Set Wallpaper"
+                                            font.family: "Outfit"
+                                            font.pixelSize: 10
+                                            font.weight: Font.Bold
+                                            color: Theme.on_primary
+                                            anchors.verticalCenter: parent.verticalCenter
+                                        }
+                                    }
+                                }
+                            }
+
+                            MouseArea {
+                                id: wallCardMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    root.wallpaperSelectedIndex = index
+                                    root.applyWallpaperFromBrowser(modelData)
                                 }
                             }
                         }
@@ -2819,8 +3421,8 @@ Item {
             // Empty State Box (when folder has 0 subdirectories in Folders Tab)
             Rectangle {
                 anchors.centerIn: parent
-                width: 440
-                height: 140
+                width: 480
+                height: 150
                 radius: 14
                 color: Theme.alpha(Theme.surface, 0.60)
                 border.color: Theme.alpha(Theme.foreground, 0.12)
@@ -2853,11 +3455,11 @@ Item {
                             if (root.browsingCurrentVideoCount > 0 && root.browsingCurrentWallCount > 0) {
                                 return "Found " + root.browsingCurrentWallCount + " wallpapers and " + root.browsingCurrentVideoCount + " videos here."
                             } else if (root.browsingCurrentVideoCount > 0) {
-                                return "Found " + root.browsingCurrentVideoCount + " video wallpapers here. Check the Videos tab!"
+                                return "Found " + root.browsingCurrentVideoCount + " video wallpapers here."
                             } else if (root.browsingCurrentWallCount > 0) {
-                                return "Found " + root.browsingCurrentWallCount + " wallpapers here. Ready to use!"
+                                return "Found " + root.browsingCurrentWallCount + " wallpapers in this folder."
                             }
-                            return "Navigate up or select a quick bookmark above."
+                            return "Choose a bookmark above or use the system file dialog to pick another folder."
                         }
                         font.family: "Outfit"
                         font.pixelSize: 10
@@ -2869,11 +3471,48 @@ Item {
                         spacing: 8
 
                         Rectangle {
+                            width: emptyWallViewBtnText.implicitWidth + 24
+                            height: 28
+                            radius: 8
+                            color: Theme.alpha(Theme.accent, 0.25)
+                            border.color: Theme.accent
+                            border.width: 1
+                            visible: root.browsingCurrentWallCount > 0
+
+                            Row {
+                                id: emptyWallViewBtnText
+                                anchors.centerIn: parent
+                                spacing: 5
+                                Text {
+                                    text: "󰸉"
+                                    font.pixelSize: 11
+                                    color: Theme.accent
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
+                                Text {
+                                    text: "View " + root.browsingCurrentWallCount + " Wallpapers"
+                                    font.family: "Outfit"
+                                    font.pixelSize: 10
+                                    font.bold: true
+                                    color: Theme.accent
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: root.dirBrowserTab = "wallpapers"
+                            }
+                        }
+
+                        Rectangle {
                             width: emptyBtnText.implicitWidth + 24
                             height: 28
                             radius: 8
                             color: emptyMouse.containsMouse ? Qt.lighter(Theme.accent, 1.1) : Theme.accent
-                            visible: root.browsingCurrentWallCount > 0
+                            visible: root.browsingCurrentWallCount > 0 || root.activeMode !== "live"
 
                             Text {
                                 id: emptyBtnText
@@ -2903,14 +3542,24 @@ Item {
                             border.width: 1
                             visible: root.browsingCurrentVideoCount > 0
 
-                            Text {
+                            Row {
                                 id: emptyTabBtnText
                                 anchors.centerIn: parent
-                                text: "▶ View " + root.browsingCurrentVideoCount + " Videos"
-                                font.family: "Outfit"
-                                font.pixelSize: 10
-                                font.bold: true
-                                color: Theme.accent
+                                spacing: 5
+                                Text {
+                                    text: "▶"
+                                    font.pixelSize: 10
+                                    color: Theme.accent
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
+                                Text {
+                                    text: "View " + root.browsingCurrentVideoCount + " Videos"
+                                    font.family: "Outfit"
+                                    font.pixelSize: 10
+                                    font.bold: true
+                                    color: Theme.accent
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
                             }
 
                             MouseArea {
@@ -2920,6 +3569,161 @@ Item {
                                 onClicked: root.dirBrowserTab = "videos"
                             }
                         }
+
+                        Rectangle {
+                            width: emptyBrowseSysBtnText.implicitWidth + 20
+                            height: 28
+                            radius: 8
+                            color: Theme.alpha(Theme.surface, 0.90)
+                            border.color: Theme.alpha(Theme.foreground, 0.20)
+                            border.width: 1
+                            visible: root.browsingCurrentWallCount === 0 && root.browsingCurrentVideoCount === 0
+
+                            Row {
+                                id: emptyBrowseSysBtnText
+                                anchors.centerIn: parent
+                                spacing: 5
+                                Text {
+                                    text: "󰉋"
+                                    font.pixelSize: 11
+                                    color: Theme.foreground
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
+                                Text {
+                                    text: "Browse System Folder..."
+                                    font.family: "Outfit"
+                                    font.pixelSize: 10
+                                    font.bold: true
+                                    color: Theme.foreground
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: root.chooseFolderViaDialog()
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Empty State Box (when folder has 0 wallpapers in Wallpapers Tab)
+            Rectangle {
+                anchors.centerIn: parent
+                width: 480
+                height: 150
+                radius: 14
+                color: Theme.alpha(Theme.surface, 0.60)
+                border.color: Theme.alpha(Theme.foreground, 0.12)
+                border.width: 1
+                visible: root.dirBrowserTab === "wallpapers" && !root.isDirLoading && (!root.browsingWallpapers || root.browsingWallpapers.length === 0)
+
+                Column {
+                    anchors.centerIn: parent
+                    spacing: 8
+
+                    Text {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        text: "󰸉"
+                        font.pixelSize: 32
+                        color: Theme.alpha(Theme.accent, 0.80)
+                    }
+
+                    Text {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        text: "No wallpaper images in this location"
+                        font.family: "Outfit"
+                        font.pixelSize: 12
+                        font.weight: Font.Bold
+                        color: Theme.foreground
+                    }
+
+                    Text {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        text: "This folder contains no JPG, PNG, or WEBP images."
+                        font.family: "Outfit"
+                        font.pixelSize: 10
+                        color: Theme.alpha(Theme.foreground, 0.60)
+                    }
+
+                    Row {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        spacing: 8
+
+                        Rectangle {
+                            width: emptyWallsFolderBtnText.implicitWidth + 24
+                            height: 28
+                            radius: 8
+                            color: Theme.alpha(Theme.accent, 0.25)
+                            border.color: Theme.accent
+                            border.width: 1
+                            visible: root.browsingSubdirs && root.browsingSubdirs.length > 0
+
+                            Row {
+                                id: emptyWallsFolderBtnText
+                                anchors.centerIn: parent
+                                spacing: 5
+                                Text {
+                                    text: "󰉋"
+                                    font.pixelSize: 11
+                                    color: Theme.accent
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
+                                Text {
+                                    text: "Check Subfolders (" + root.browsingSubdirs.length + ")"
+                                    font.family: "Outfit"
+                                    font.pixelSize: 10
+                                    font.bold: true
+                                    color: Theme.accent
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: root.dirBrowserTab = "folders"
+                            }
+                        }
+
+                        Rectangle {
+                            width: emptyWallsPickBtnText.implicitWidth + 24
+                            height: 28
+                            radius: 8
+                            color: emptyWallsPickMouse.containsMouse ? Qt.lighter(Theme.accent, 1.1) : Theme.accent
+
+                            Row {
+                                id: emptyWallsPickBtnText
+                                anchors.centerIn: parent
+                                spacing: 6
+                                Text {
+                                    text: "󰉋"
+                                    font.pixelSize: 11
+                                    color: Theme.on_primary
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
+                                Text {
+                                    text: "Browse System Folder..."
+                                    font.family: "Outfit"
+                                    font.pixelSize: 10
+                                    font.bold: true
+                                    color: Theme.on_primary
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
+                            }
+
+                            MouseArea {
+                                id: emptyWallsPickMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: root.chooseFolderViaDialog()
+                            }
+                        }
                     }
                 }
             }
@@ -2927,8 +3731,8 @@ Item {
             // Empty State Box (when folder has 0 videos in Videos Tab)
             Rectangle {
                 anchors.centerIn: parent
-                width: 440
-                height: 140
+                width: 480
+                height: 150
                 radius: 14
                 color: Theme.alpha(Theme.surface, 0.60)
                 border.color: Theme.alpha(Theme.foreground, 0.12)
@@ -2957,7 +3761,7 @@ Item {
 
                     Text {
                         anchors.horizontalCenter: parent.horizontalCenter
-                        text: "Navigate to ~/Videos or ~/Downloads, or pick any video file directly."
+                        text: "Navigate to a video directory or pick any video file directly."
                         font.family: "Outfit"
                         font.pixelSize: 10
                         color: Theme.alpha(Theme.foreground, 0.60)
@@ -3019,7 +3823,7 @@ Item {
                 spacing: 6
 
                 Text {
-                    text: "[hjkl / Arrows] Navigate  •  [Tab / t] Folders/Videos  •  [Enter / Space] Select  •  [Backspace / u] Up  •  [Esc] Cancel"
+                    text: "[hjkl / Arrows] Navigate  •  [Tab / t] Tabs  •  [Space] Use Folder  •  [Enter] Open / Apply  •  [Backspace / u] Up  •  [Esc] Cancel"
                     font.family: "Outfit"
                     font.pixelSize: 10
                     color: Theme.alpha(Theme.foreground, 0.40)
@@ -3037,6 +3841,8 @@ Item {
                         if (root.isDirLoading) return "󰑮 Loading..."
                         if (root.dirBrowserTab === "videos") {
                             return (root.browsingVideos ? root.browsingVideos.length : 0) + " videos"
+                        } else if (root.dirBrowserTab === "wallpapers") {
+                            return (root.browsingWallpapers ? root.browsingWallpapers.length : 0) + " wallpapers"
                         }
                         return (root.browsingSubdirs ? root.browsingSubdirs.length : 0) + " subfolders"
                     }

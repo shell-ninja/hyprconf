@@ -132,7 +132,6 @@ msg act "Setting up the pre-installed Hyprland configuration..."
 mkdir -p ~/.config
 dirs=(
     btop
-    fastfetch
     fish
     gtk-3.0
     gtk-4.0
@@ -280,6 +279,77 @@ existing_btop_theme=$(find_first_existing_file "$HOME/.config/btop/themes/noctal
 [[ -n "$existing_kitty_colors" ]] && cp "$existing_kitty_colors" "$colors_backup/colors-kitty.conf"
 [[ -n "$existing_qt6ct_colors" ]] && cp "$existing_qt6ct_colors" "$colors_backup/theme.conf"
 [[ -n "$existing_btop_theme" ]] && cp "$existing_btop_theme" "$colors_backup/noctalia.theme"
+
+# Detect and preserve existing fastfetch configuration
+existing_fastfetch_config=""
+
+# 0. Check persistent cache file in ~/.local/share/hyprconf/.cache/
+ff_cache_file="$user_state_dir/.cache/ffconfig.fish"
+ff_raw_file="$user_state_dir/.cache/ffconfig"
+if [[ -f "$ff_cache_file" ]]; then
+    detected_cfg=$(grep -E '^\s*set\s+(-[a-zA-Z]+\s+)*ffconfig\s+' "$ff_cache_file" 2>/dev/null | sed -E 's/.*ffconfig\s+([^#[:space:]]+).*/\1/' | head -n 1)
+    detected_cfg="${detected_cfg%\"}"
+    detected_cfg="${detected_cfg#\"}"
+    detected_cfg="${detected_cfg%\'}"
+    detected_cfg="${detected_cfg#\'}"
+    [[ -n "$detected_cfg" ]] && existing_fastfetch_config="$detected_cfg"
+elif [[ -f "$ff_raw_file" ]]; then
+    detected_cfg=$(cat "$ff_raw_file" 2>/dev/null | tr -d '[:space:]')
+    [[ -n "$detected_cfg" ]] && existing_fastfetch_config="$detected_cfg"
+fi
+
+# 1. Check user's shell: ~/.hyprconf/fish/config.fish and ~/.config/fish/config.fish
+if [[ -z "$existing_fastfetch_config" ]]; then
+    for fish_cfg in "$HOME/.hyprconf/fish/config.fish" "$HOME/.config/fish/config.fish"; do
+        if [[ -f "$fish_cfg" ]]; then
+            detected_cfg=$(grep -E '^\s*set\s+(-[a-zA-Z]+\s+)*ffconfig\s+' "$fish_cfg" 2>/dev/null | sed -E 's/.*ffconfig\s+([^#[:space:]]+).*/\1/' | head -n 1)
+            detected_cfg="${detected_cfg%\"}"
+            detected_cfg="${detected_cfg#\"}"
+            detected_cfg="${detected_cfg%\'}"
+            detected_cfg="${detected_cfg#\'}"
+            if [[ -n "$detected_cfg" && "$detected_cfg" != "minimal" && "$detected_cfg" != "\$ffconfig" ]]; then
+                existing_fastfetch_config="$detected_cfg"
+                break
+            fi
+        fi
+    done
+fi
+
+# 2. Check fish universal variables (SETUVAR ffconfig:...)
+if [[ -z "$existing_fastfetch_config" ]]; then
+    for fvar in "$HOME/.hyprconf/fish/fish_variables" "$HOME/.config/fish/fish_variables"; do
+        if [[ -f "$fvar" ]]; then
+            detected_cfg=$(grep -E '^SETUVAR ffconfig:' "$fvar" 2>/dev/null | sed -E 's/^SETUVAR ffconfig://' | head -n 1)
+            detected_cfg=$(printf '%b' "${detected_cfg//\\x/\\x}")
+            if [[ -n "$detected_cfg" && "$detected_cfg" != "minimal" ]]; then
+                existing_fastfetch_config="$detected_cfg"
+                break
+            fi
+        fi
+    done
+fi
+
+# 3. Check active fastfetch symlink in ~/.config/fastfetch/config.jsonc
+if [[ -z "$existing_fastfetch_config" ]]; then
+    if [[ -L "$HOME/.config/fastfetch/config.jsonc" ]]; then
+        ff_target=$(readlink -f "$HOME/.config/fastfetch/config.jsonc" 2>/dev/null || true)
+        if [[ -n "$ff_target" && -f "$ff_target" ]]; then
+            detected_cfg=$(basename "$ff_target" .jsonc)
+            if [[ -n "$detected_cfg" && "$detected_cfg" != "minimal" ]]; then
+                existing_fastfetch_config="$detected_cfg"
+            fi
+        fi
+    fi
+fi
+
+# Back up user cache files to temporary backup directory
+[[ -f "$ff_cache_file" ]] && cp -f "$ff_cache_file" "$backup_dir/ffconfig.fish"
+[[ -f "$ff_raw_file" ]] && cp -f "$ff_raw_file" "$backup_dir/ffconfig"
+
+# Backup custom non-symlink config.jsonc if user created a standalone config
+if [[ -f "$HOME/.config/fastfetch/config.jsonc" && ! -L "$HOME/.config/fastfetch/config.jsonc" ]]; then
+    cp -f "$HOME/.config/fastfetch/config.jsonc" "$backup_dir/user_fastfetch_config.jsonc"
+fi
 
 # Migrate existing configurations to ~/.local/share/hyprconf if present as regular files
 migrate_to_state() {
@@ -580,8 +650,10 @@ fi
 
 # Fastfetch cleanup from ~/.hyprconf if present from legacy installs
 if [[ -d "$HOME/.hyprconf/fastfetch" ]]; then
-    mkdir -p "$HOME/.local/share/fastfetch"
-    cp -a "$HOME/.hyprconf/fastfetch/." "$HOME/.local/share/fastfetch/" 2>/dev/null || true
+    if [[ ! -d "$HOME/.local/share/fastfetch" ]]; then
+        mkdir -p "$HOME/.local/share/fastfetch"
+        cp -a "$HOME/.hyprconf/fastfetch/." "$HOME/.local/share/fastfetch/" 2>/dev/null || true
+    fi
     rm -rf "$HOME/.hyprconf/fastfetch"
 fi
 
@@ -652,10 +724,14 @@ if [[ -n "$local_src" ]]; then
         mkdir -p "$HOME/.local/share/konsole"
         cp -a "$local_src/share/konsole/." "$HOME/.local/share/konsole/"
     fi
-    if [[ -d "$local_src/share/fastfetch" ]]; then
-        mkdir -p "$HOME/.local/share/fastfetch"
-        cp -a "$local_src/share/fastfetch/." "$HOME/.local/share/fastfetch/"
-        msg dn "Installed fastfetch presets and assets to $HOME/.local/share/fastfetch"
+    if [[ ! -d "$HOME/.local/share/fastfetch" ]]; then
+        if [[ -d "$local_src/share/fastfetch" ]]; then
+            mkdir -p "$HOME/.local/share/fastfetch"
+            cp -a "$local_src/share/fastfetch/." "$HOME/.local/share/fastfetch/"
+            msg dn "Installed fastfetch presets and assets to $HOME/.local/share/fastfetch"
+        fi
+    else
+        msg skp "Existing fastfetch configuration found in ~/.local/share/fastfetch. Preserving user presets and assets."
     fi
     if [[ -d "$local_src/share/hyprconf" ]]; then
         mkdir -p "$HOME/.local/share/hyprconf"
@@ -683,12 +759,44 @@ if [[ -n "$local_src" ]]; then
     fi
 fi
 
-# Initialize default fastfetch configuration symlink if not present
+# Initialize default fastfetch configuration symlink and restore user preset
 if [[ -d "$HOME/.local/share/fastfetch/presets" ]]; then
     [[ -L "$HOME/.config/fastfetch" ]] && rm -f "$HOME/.config/fastfetch"
     mkdir -p "$HOME/.config/fastfetch"
-    if [[ ! -e "$HOME/.config/fastfetch/config.jsonc" && -f "$HOME/.local/share/fastfetch/presets/minimal.jsonc" ]]; then
+    [[ -L "$HOME/.config/fastfetch/config.jsonc" && ! -e "$HOME/.config/fastfetch/config.jsonc" ]] && rm -f "$HOME/.config/fastfetch/config.jsonc"
+
+    # Restore cached ffconfig files if present in backup
+    mkdir -p "$user_state_dir/.cache"
+    [[ -f "$backup_dir/ffconfig.fish" && ! -f "$user_state_dir/.cache/ffconfig.fish" ]] && cp -f "$backup_dir/ffconfig.fish" "$user_state_dir/.cache/ffconfig.fish"
+    [[ -f "$backup_dir/ffconfig" && ! -f "$user_state_dir/.cache/ffconfig" ]] && cp -f "$backup_dir/ffconfig" "$user_state_dir/.cache/ffconfig"
+
+    if [[ -f "$backup_dir/user_fastfetch_config.jsonc" ]]; then
+        cp -f "$backup_dir/user_fastfetch_config.jsonc" "$HOME/.config/fastfetch/config.jsonc"
+        msg dn "Restored user standalone fastfetch configuration to ~/.config/fastfetch/config.jsonc"
+    elif [[ -n "$existing_fastfetch_config" && -f "$HOME/.local/share/fastfetch/presets/${existing_fastfetch_config}.jsonc" ]]; then
+        ln -sf "$HOME/.local/share/fastfetch/presets/${existing_fastfetch_config}.jsonc" "$HOME/.config/fastfetch/config.jsonc"
+
+        # Write to persistent user cache file
+        echo "set -g ffconfig $existing_fastfetch_config" > "$user_state_dir/.cache/ffconfig.fish"
+        echo "$existing_fastfetch_config" > "$user_state_dir/.cache/ffconfig"
+
+        # Apply user preset to fish universal variables as well
+        if [[ -f "$HOME/.hyprconf/fish/fish_variables" ]]; then
+            encoded_ff=$(printf '%s' "$existing_fastfetch_config" | sed 's/-/\\x2d/g')
+            if grep -q '^SETUVAR ffconfig:' "$HOME/.hyprconf/fish/fish_variables"; then
+                sed -i "s|^SETUVAR ffconfig:.*|SETUVAR ffconfig:$encoded_ff|" "$HOME/.hyprconf/fish/fish_variables"
+            else
+                echo "SETUVAR ffconfig:$encoded_ff" >> "$HOME/.hyprconf/fish/fish_variables"
+            fi
+        fi
+        if command -v fish &>/dev/null; then
+            fish -c "set -U ffconfig $existing_fastfetch_config" &>/dev/null || true
+        fi
+        msg dn "Preserved user fastfetch preset: '$existing_fastfetch_config' in cache ($user_state_dir/.cache/ffconfig.fish) and config."
+    elif [[ ! -e "$HOME/.config/fastfetch/config.jsonc" && -f "$HOME/.local/share/fastfetch/presets/minimal.jsonc" ]]; then
         ln -sf "$HOME/.local/share/fastfetch/presets/minimal.jsonc" "$HOME/.config/fastfetch/config.jsonc"
+        echo "set -g ffconfig minimal" > "$user_state_dir/.cache/ffconfig.fish"
+        echo "minimal" > "$user_state_dir/.cache/ffconfig"
     fi
 fi
 
