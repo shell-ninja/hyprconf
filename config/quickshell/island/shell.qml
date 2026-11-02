@@ -167,7 +167,11 @@ PanelWindow {
 
     readonly property real targetCollapsedWidth: {
         if (root.isScreenshotTimerActive && !root.expanded) return timerCollapsedWidth
-        if (root.hasNotificationPopup && !root.expanded) return notifCollapsedWidth
+        if (root.hasNotificationPopup && !root.expanded) {
+            var b = (root.currentPopupNotification && root.currentPopupNotification.body) ? root.currentPopupNotification.body : ""
+            var isMono = b.indexOf("╭") >= 0 || b.indexOf("┌") >= 0 || b.indexOf("│") >= 0
+            return isMono ? 490 : notifCollapsedWidth
+        }
         if (root.hasOsdPopup && !root.expanded) return osdCollapsedWidth
         if (root.isAudioPlaying && !root.expanded && root.islandStyle !== "minimal_rail") {
             var req = (collapsedBar && collapsedBar.requiredWidth > 0) ? collapsedBar.requiredWidth : musicCollapsedWidth
@@ -1318,6 +1322,8 @@ PanelWindow {
 
             root.currentPopupNotification = item
             root.hasNotificationPopup = true
+            var isLongContent = bodyText.indexOf("╭") >= 0 || bodyText.indexOf("┌") >= 0 || bodyText.indexOf("\n") >= 0
+            notifPopupTimer.interval = isLongContent ? 6500 : 4800
             notifPopupTimer.restart()
         }
     }

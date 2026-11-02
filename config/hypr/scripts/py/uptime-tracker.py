@@ -51,7 +51,7 @@ def get_session_metrics():
 
 def format_box(metrics, action="Shutdown"):
     title = f"PC SESSION SUMMARY ({action.upper()})"
-    width = 44
+    width = 42
     pad_title = title.center(width - 2)
 
     boot_str = metrics["boot_str"]
@@ -62,12 +62,12 @@ def format_box(metrics, action="Shutdown"):
     box = (
         f"╭{'─' * (width - 2)}╮\n"
         f"│{pad_title}│\n"
-        f"├{'─' * 18}┬{'─' * (width - 21)}┤\n"
-        f"│ Startup Time     │ {boot_str:<{width - 23}} │\n"
-        f"│ {action:<16} │ {now_str:<{width - 23}} │\n"
-        f"│ Session Duration │ {dur_str:<{width - 23}} │\n"
-        f"│ Total Usage      │ {hours_dec_str:<{width - 23}} │\n"
-        f"╰{'─' * 18}┴{'─' * (width - 21)}╯"
+        f"├{'─' * 16}┬{'─' * (width - 19)}┤\n"
+        f"│ Startup Time   │ {boot_str:<{width - 21}} │\n"
+        f"│ {action:<14} │ {now_str:<{width - 21}} │\n"
+        f"│ Session Time   │ {dur_str:<{width - 21}} │\n"
+        f"│ Total Usage    │ {hours_dec_str:<{width - 21}} │\n"
+        f"╰{'─' * 16}┴{'─' * (width - 19)}╯"
     )
     return box
 
@@ -199,7 +199,7 @@ def main():
         send_notification(metrics, "Shutdown")
         play_sound("shutdown")
         print(format_box(metrics, "Shutdown"))
-        time.sleep(1.2)
+        time.sleep(2.2)
         subprocess.run(["systemctl", "poweroff"])
         return
 
@@ -209,7 +209,7 @@ def main():
         send_notification(metrics, "Reboot")
         play_sound("reboot")
         print(format_box(metrics, "Reboot"))
-        time.sleep(1.2)
+        time.sleep(2.2)
         subprocess.run(["systemctl", "reboot"])
         return
 

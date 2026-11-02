@@ -1903,7 +1903,9 @@ Item {
                 color: Theme.alpha(Theme.accent, 0.16)
                 border.color: Theme.alpha(Theme.accent, 0.38)
                 border.width: 1
-                anchors.verticalCenter: parent.verticalCenter
+                anchors.top: (notifBodyText && notifBodyText.isMonoBox) ? parent.top : undefined
+                anchors.topMargin: (notifBodyText && notifBodyText.isMonoBox) ? 2 : 0
+                anchors.verticalCenter: (notifBodyText && notifBodyText.isMonoBox) ? undefined : parent.verticalCenter
                 clip: true
 
                 Image {
@@ -1983,17 +1985,19 @@ Item {
 
                 // Detailed Message Body (Wrapped for full viewing)
                 Text {
+                    id: notifBodyText
+                    readonly property bool isMonoBox: text.indexOf("╭") >= 0 || text.indexOf("┌") >= 0 || text.indexOf("│") >= 0
                     text: {
                         if (!root.currentNotification) return ""
                         return root.currentNotification.body || ""
                     }
-                    font.family: "Outfit"
-                    font.pixelSize: 11
+                    font.family: isMonoBox ? "JetBrainsMono Nerd Font, monospace" : "Outfit"
+                    font.pixelSize: isMonoBox ? 9.5 : 11
                     font.weight: Font.Normal
-                    lineHeight: 1.15
-                    color: Theme.alpha(Theme.foreground, 0.78)
-                    wrapMode: Text.Wrap
-                    maximumLineCount: 2
+                    lineHeight: isMonoBox ? 1.05 : 1.15
+                    color: Theme.alpha(Theme.foreground, 0.85)
+                    wrapMode: isMonoBox ? Text.NoWrap : Text.Wrap
+                    maximumLineCount: isMonoBox ? 14 : 3
                     elide: Text.ElideRight
                     width: parent.width
                     visible: text.length > 0
@@ -2069,7 +2073,9 @@ Item {
                 color: dismissMouse.containsMouse ? Theme.alpha("#ef4444", 0.20) : Theme.alpha(Theme.foreground, 0.08)
                 border.width: 1
                 border.color: dismissMouse.containsMouse ? Theme.alpha("#ef4444", 0.40) : "transparent"
-                anchors.verticalCenter: parent.verticalCenter
+                anchors.top: (notifBodyText && notifBodyText.isMonoBox) ? parent.top : undefined
+                anchors.topMargin: (notifBodyText && notifBodyText.isMonoBox) ? 2 : 0
+                anchors.verticalCenter: (notifBodyText && notifBodyText.isMonoBox) ? undefined : parent.verticalCenter
 
                 Image {
                     anchors.centerIn: parent

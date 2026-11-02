@@ -19,7 +19,7 @@ Item {
     anchors.topMargin: (typeof bar !== "undefined" && bar) ? (bar.marginTop + bar.barH + 12) : 56
     anchors.rightMargin: 16
 
-    width: 340
+    width: (root.notifItem && root.notifItem.body && (root.notifItem.body.indexOf("╭") >= 0 || root.notifItem.body.indexOf("┌") >= 0)) ? 410 : 340
     implicitHeight: cardBg.implicitHeight
     height: implicitHeight
     z: 100
@@ -224,15 +224,16 @@ Item {
 
             // Body Text
             Text {
+                readonly property bool isMonoBox: text.indexOf("╭") >= 0 || text.indexOf("┌") >= 0 || text.indexOf("│") >= 0
                 Layout.fillWidth: true
                 text: root.notifItem ? (root.notifItem.body || "") : ""
-                font.family: "Outfit"
-                font.pixelSize: 11
-                color: Theme.alpha(Theme.foreground, 0.70)
-                wrapMode: Text.Wrap
-                maximumLineCount: 3
+                font.family: isMonoBox ? "JetBrainsMono Nerd Font, monospace" : "Outfit"
+                font.pixelSize: isMonoBox ? 9.5 : 11
+                color: Theme.alpha(Theme.foreground, 0.85)
+                wrapMode: isMonoBox ? Text.NoWrap : Text.Wrap
+                maximumLineCount: isMonoBox ? 14 : 4
                 elide: Text.ElideRight
-                lineHeight: 1.2
+                lineHeight: isMonoBox ? 1.05 : 1.2
                 visible: text.length > 0
             }
 
