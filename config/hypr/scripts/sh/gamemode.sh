@@ -26,8 +26,11 @@ get_state() {
 }
 
 enable_gamemode() {
-    # 1. Apply Hyprland runtime settings via native Lua API
-    hyprctl eval "hl.config({ general = { allow_tearing = true }, decoration = { blur = { enabled = false }, shadow = { enabled = false } }, animations = { enabled = false } })" >/dev/null 2>&1 || true
+    # 1. Apply Hyprland runtime settings via native Lua API:
+    #    - Opacity 1.0 for all windows (active & inactive)
+    #    - allow_tearing = true for 0ms direct scanout
+    #    - animations = false, blur & shadow = false
+    hyprctl eval "hl.config({ general = { allow_tearing = true }, decoration = { blur = { enabled = false }, shadow = { enabled = false }, active_opacity = 1.0, inactive_opacity = 1.0 }, animations = { enabled = false } }) hl.window_rule({ match = { tag = 'file-manager' }, opacity = '1.0 1.0' }) hl.window_rule({ match = { tag = 'browser' }, opacity = '1.0 1.0' })" >/dev/null 2>&1 || true
 
     # 2. Switch power profile to performance
     if command -v powerprofilesctl >/dev/null 2>&1; then
@@ -44,15 +47,15 @@ enable_gamemode() {
 
     # 5. OSD Notification
     if [[ -x "$scripts_dir/osd-notify.sh" ]]; then
-        bash "$scripts_dir/osd-notify.sh" "gamepad" "1" "Game Mode ON" "gamepad" "0ms Latency • Blur & Anim Off • Performance Profile" >/dev/null 2>&1 || true
+        bash "$scripts_dir/osd-notify.sh" "gamepad" "1" "Game Mode ON" "gamepad" "100% Opacity • 0ms Latency • Blur & Anim Off" >/dev/null 2>&1 || true
     else
-        notify-send -a "Hyprconf Game Mode" -t 2500 "Game Mode Enabled" "0ms Latency • Blur & Anim Off • Performance Profile" 2>/dev/null || true
+        notify-send -a "Hyprconf Game Mode" -t 2500 "Game Mode Enabled" "100% Opacity • 0ms Latency • Blur & Anim Off" 2>/dev/null || true
     fi
 }
 
 disable_gamemode() {
-    # 1. Restore Hyprland obsidian glass settings via native Lua API
-    hyprctl eval "hl.config({ general = { allow_tearing = false }, decoration = { blur = { enabled = true }, shadow = { enabled = true } }, animations = { enabled = true } })" >/dev/null 2>&1 || true
+    # 1. Restore Hyprland obsidian glass and user's actual opacity settings via native Lua API
+    hyprctl eval "pcall(dofile, os.getenv('HOME') .. '/.hyprconf/hypr/configs/configs.lua') hl.config({ general = { allow_tearing = false }, decoration = { blur = { enabled = true }, shadow = { enabled = true }, active_opacity = opacity_act or 0.9, inactive_opacity = opacity_deact or 0.85 }, animations = { enabled = true } }) hl.window_rule({ match = { tag = 'file-manager' }, opacity = string.format('%.2f %.2f', opacity_act or 0.9, opacity_deact or 0.85) }) hl.window_rule({ match = { tag = 'browser' }, opacity = string.format('1.0 %.2f', opacity_deact or 0.85) })" >/dev/null 2>&1 || true
 
     # 2. Restore power profile to balanced
     if command -v powerprofilesctl >/dev/null 2>&1; then
@@ -69,9 +72,9 @@ disable_gamemode() {
 
     # 5. OSD Notification
     if [[ -x "$scripts_dir/osd-notify.sh" ]]; then
-        bash "$scripts_dir/osd-notify.sh" "gamepad" "0" "Game Mode OFF" "gamepad" "Obsidian Glass Restored • Animations & Blur On" >/dev/null 2>&1 || true
+        bash "$scripts_dir/osd-notify.sh" "gamepad" "0" "Game Mode OFF" "gamepad" "Actual Opacity Restored • Obsidian Glass Active" >/dev/null 2>&1 || true
     else
-        notify-send -a "Hyprconf Game Mode" -t 2500 "Game Mode Disabled" "Obsidian Glass Restored • Animations & Blur On" 2>/dev/null || true
+        notify-send -a "Hyprconf Game Mode" -t 2500 "Game Mode Disabled" "Actual Opacity Restored • Obsidian Glass Active" 2>/dev/null || true
     fi
 }
 
