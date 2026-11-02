@@ -6,7 +6,78 @@ Outputs JSON with overall CPU%, per-core CPU%, RAM breakdown, NVMe/Disk stats, a
 import sys
 import json
 import os
+import subprocess
 import psutil
+
+def get_gpu_stats(cpu_temp):
+    # 1. NVIDIA via nvidia-smi
+    try:
+        res = subprocess.run([
+            "nvidia-smi",
+            "--query-gpu=utilization.gpu,temperature.gpu,memory.used,memory.total",
+            "--format=csv,noheader,nounits"
+        ], capture_output=True, text=True, timeout=0.4)
+        if res.returncode == 0 and res.stdout.strip():
+            parts = [p.strip() for p in res.stdout.strip().split(",")]
+            if len(parts) >= 4:
+                used = float(parts[2])
+                tot = float(parts[3])
+                return {
+                    "type": "NVIDIA",
+                    "load": float(parts[0]),
+                    "temp": float(parts[1]),
+                    "vram_used": round(used / 1024, 1),
+                    "vram_total": round(tot / 1024, 1),
+                    "vram_percent": round((used / tot) * 100, 1) if tot > 0 else 0
+                }
+    except Exception:
+        pass
+
+    # 2. AMD GPU via sysfs
+    try:
+        for card in os.listdir("/sys/class/drm"):
+            base = os.path.join("/sys/class/drm", card, "device")
+            busy_p = os.path.join(base, "gpu_busy_percent")
+            if os.path.exists(busy_p):
+                load = float(open(busy_p).read().strip())
+                temp = 45.0
+                hwmon = os.path.join(base, "hwmon")
+                if os.path.exists(hwmon):
+                    for h in os.listdir(hwmon):
+                        t_p = os.path.join(hwmon, h, "temp1_input")
+                        if os.path.exists(t_p):
+                            temp = round(int(open(t_p).read().strip()) / 1000.0, 1)
+                return {
+                    "type": "AMD",
+                    "load": load,
+                    "temp": temp,
+                    "vram_used": 0,
+                    "vram_total": 0,
+                    "vram_percent": 0
+                }
+    except Exception:
+        pass
+
+    # 3. Intel GPU via sysfs
+    try:
+        for card in ["card1", "card0"]:
+            p = f"/sys/class/drm/{card}/gt_act_freq_mhz"
+            max_p = f"/sys/class/drm/{card}/gt_max_freq_mhz"
+            if os.path.exists(p) and os.path.exists(max_p):
+                cur = float(open(p).read().strip())
+                max_f = float(open(max_p).read().strip())
+                load = round((cur / max_f) * 100, 1) if max_f > 0 else 0.0
+                return {
+                    "type": "Intel",
+                    "load": min(100.0, load),
+                    "temp": cpu_temp,
+                    "freq_mhz": int(cur),
+                    "max_freq_mhz": int(max_f)
+                }
+    except Exception:
+        pass
+
+    return None
 
 def get_cpu_temp():
     try:
@@ -66,10 +137,14 @@ def main():
         except Exception:
             pass
 
+        # GPU Telemetry
+        gpu_stats = get_gpu_stats(cpu_temp)
+
         data = {
             "total_cpu": total_cpu,
             "cores": [round(c, 1) for c in cores],
             "cpu_temp": cpu_temp,
+            "gpu": gpu_stats,
             "mem_used_gib": mem_used_gib,
             "mem_total_gib": mem_total_gib,
             "mem_percent": mem_percent,

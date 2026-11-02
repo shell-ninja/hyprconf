@@ -176,6 +176,7 @@ hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
 
 -- ── AI Assistant Sidebar (OpenCode, Claude, Gemini) ──────────────────────────
 hl.bind(mainMod .. " + A", hl.dsp.exec_cmd(sh_dir .. "/qs-sidebar.sh --toggle"))
+hl.bind(mainMod .. " + ALT + G", hl.dsp.exec_cmd(sh_dir .. "/gamemode.sh --toggle"))
 hl.bind(mainMod .. " + N", hl.dsp.exec_cmd("pypr toggle_special minimized"))
 hl.bind(mainMod .. " + SHIFT + N", hl.dsp.workspace.toggle_special("minimized"))
 hl.bind(mainMod .. " + SHIFT + Z", hl.dsp.exec_cmd("pypr zoom ++0.5"))

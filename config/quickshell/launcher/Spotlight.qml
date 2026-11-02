@@ -253,6 +253,7 @@ Rectangle {
 
     // ── 5. SYSTEM COMMANDS CATALOG ──────────────────────────────────────────
     readonly property var systemActions: [
+        { id: "gamemode", name: "Game Mode", desc: "Toggle Gaming Mode (0ms Latency & Max Perf)", cmd: "gamemode.sh --toggle", icon: "zap" },
         { id: "lock", name: "Lock Screen", desc: "Launch PAM Lockscreen", cmd: "qs-lock.sh", icon: "lock" },
         { id: "sleep", name: "Sleep / Suspend", desc: "Suspend system to RAM", cmd: "systemctl suspend", icon: "moon" },
         { id: "caffeine", name: "Toggle Caffeine", desc: "Inhibit display sleep & idle", cmd: "caffeine-manager.sh", icon: "coffee" },

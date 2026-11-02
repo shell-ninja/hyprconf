@@ -172,3 +172,9 @@ hl.layer_rule({
     ignore_alpha = 0.1,
 })
 
+-- ── Gaming & Low-Latency Direct Scanout Rules ─────────────────────────────
+hl.window_rule({
+    match = { class = "^(steam_app_.*|gamescope|wine|lutris|heroic|Minecraft.*|cs2|dota2|osu!)$" },
+    immediate = true,
+})
+

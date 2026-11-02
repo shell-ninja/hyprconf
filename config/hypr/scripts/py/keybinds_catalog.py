@@ -370,6 +370,13 @@ CATALOG = [
 
     # ── SYSTEM & POWER ───────────────────────────────────────────────────────
     {
+        "combo": "SUPER + ALT + G",
+        "action": "Toggle Game Mode (Low Latency)",
+        "category": "System",
+        "icon": "zap",
+        "desc": "0ms tearing latency, disable blur & anims, performance profile",
+    },
+    {
         "combo": "SUPER + X",
         "action": "Open Power Menu",
         "category": "System",

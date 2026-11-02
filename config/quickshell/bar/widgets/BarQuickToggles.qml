@@ -9,6 +9,37 @@ Pill {
     spacing: 3
     clickable: false
 
+    // Game Mode
+    Rectangle {
+        id: gameModeBtn
+        implicitWidth: 26
+        implicitHeight: 26
+        radius: 13
+        color: (typeof bar !== "undefined" && bar && bar.gameModeActive)
+               ? Theme.accent
+               : (gameMouse.containsMouse ? Theme.alpha(Theme.accent, 0.18) : "transparent")
+        scale: gameMouse.containsMouse ? (gameMouse.pressed ? 0.90 : 1.12) : 1.0
+        Behavior on color { ColorAnimation { duration: 150 } }
+        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutBack; easing.overshoot: 1.3 } }
+
+        SvgIcon {
+            anchors.centerIn: parent
+            name: "zap"
+            size: 13
+            color: (typeof bar !== "undefined" && bar && bar.gameModeActive)
+                   ? Theme.background
+                   : (gameMouse.containsMouse ? Theme.accent : Theme.alpha(Theme.foreground, 0.75))
+            Behavior on color { ColorAnimation { duration: 150 } }
+        }
+        MouseArea {
+            id: gameMouse
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: if (typeof bar !== "undefined" && bar) bar.toggleGameMode()
+        }
+    }
+
     // Caffeine
     Rectangle {
         id: caffeineBtn

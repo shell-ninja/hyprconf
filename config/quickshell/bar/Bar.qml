@@ -69,11 +69,13 @@ PanelWindow {
     // ── State ───────────────────────────────────────────────────────
     property bool caffeine: false
     property bool nightLight: false
+    property bool gameModeActive: false
     property int profile: 1                       // 0 performance, 1 balanced, 2 saver
     property real cpuUsage: 0
     property var cpuCores: [0, 0, 0, 0, 0, 0, 0, 0]
     property var cpuHistory: [10, 14, 12, 18, 15, 20, 16, 22, 18, 15, 12, 14, 16, 18, 22, 25, 20, 18, 15, 14, 12, 16, 18, 20]
     property real cpuTemp: 40.0
+    property var gpuStats: null
     property real memUsedGiB: 0
     property real memTotalGiB: 0
     property real memPercent: 35.0
@@ -320,6 +322,25 @@ PanelWindow {
     property var audioSources: []
     property bool showDeviceSwitcher: false
 
+    // Per-App Audio Streams Matrix via audio-streams.py
+    property var audioStreams: []
+
+    Process {
+        id: audioStreamsProc
+        command: ["python3", bar.homeDir + "/.hyprconf/hypr/scripts/py/audio-streams.py"]
+        running: true
+        stdout: StdioCollector {
+            onStreamFinished: {
+                if (text && text.trim().length > 0) {
+                    try {
+                        var d = JSON.parse(text.trim())
+                        bar.audioStreams = d.streams || []
+                    } catch(e) {}
+                }
+            }
+        }
+    }
+
     Process {
         id: audioDevicesProc
         command: ["python3", bar.homeDir + "/.hyprconf/hypr/scripts/py/audio-devices.py"]
@@ -400,6 +421,24 @@ PanelWindow {
         onTriggered: if (!clipCountProc.running) clipCountProc.running = true
     }
 
+    // Game Mode State Watcher
+    Process {
+        id: gameModeChecker
+        command: ["sh", "-c", "cat " + bar.homeDir + "/.local/share/hyprconf/.cache/gamemode.state 2>/dev/null || echo '0'"]
+        running: true
+        stdout: StdioCollector {
+            onStreamFinished: {
+                bar.gameModeActive = (text && text.trim() === "1")
+            }
+        }
+    }
+    Timer {
+        interval: 3000
+        running: true
+        repeat: true
+        onTriggered: if (!gameModeChecker.running) gameModeChecker.running = true
+    }
+
     // System stats (CPU / RAM / Disk) via sys-monitor.py
     Process {
         id: statProc
@@ -412,6 +451,7 @@ PanelWindow {
                     bar.cpuUsage = data.total_cpu || 0
                     if (data.cores && Array.isArray(data.cores)) bar.cpuCores = data.cores
                     if (data.cpu_temp !== undefined) bar.cpuTemp = data.cpu_temp
+                    if (data.gpu !== undefined) bar.gpuStats = data.gpu
                     if (data.mem_used_gib !== undefined) bar.memUsedGiB = data.mem_used_gib
                     if (data.mem_total_gib !== undefined) bar.memTotalGiB = data.mem_total_gib
                     if (data.mem_percent !== undefined) bar.memPercent = data.mem_percent
@@ -661,6 +701,11 @@ PanelWindow {
         bar.nightLight = !bar.nightLight
         Quickshell.execDetached([homeDir + "/.hyprconf/hypr/scripts/sh/hyprsunset-manager.sh"])
         osd.show("nightlight", bar.nightLight ? "1" : "0", bar.nightLight ? "Warm (4500K)" : "Off", "moon", bar.nightLight ? "Eye Strain Reduction Active" : "Color Temperature Normal")
+    }
+
+    function toggleGameMode() {
+        bar.gameModeActive = !bar.gameModeActive
+        Quickshell.execDetached([homeDir + "/.hyprconf/hypr/scripts/sh/gamemode.sh", "--toggle"])
     }
 
     function cycleProfile() {
@@ -2112,6 +2157,58 @@ PanelWindow {
                 }
             }
 
+            // GPU Hardware Telemetry Card
+            Rectangle {
+                Layout.fillWidth: true
+                implicitHeight: gpuLayout.implicitHeight + 12
+                radius: 8
+                color: Theme.alpha(Theme.surface, 0.60)
+                border.width: 1; border.color: Theme.alpha(Theme.foreground, 0.08)
+                visible: bar.gpuStats !== null
+
+                ColumnLayout {
+                    id: gpuLayout
+                    anchors.fill: parent
+                    anchors.margins: 6
+                    spacing: 4
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        SvgIcon { name: "zap"; size: 12; color: Theme.accent }
+                        Text {
+                            text: (bar.gpuStats ? bar.gpuStats.type : "GPU") + " Hardware Graphics"
+                            font.family: "Outfit"; font.pixelSize: 10; font.bold: true; color: Theme.foreground
+                        }
+                        Item { Layout.fillWidth: true }
+                        Text {
+                            text: {
+                                if (!bar.gpuStats) return ""
+                                if (bar.gpuStats.vram_used !== undefined && bar.gpuStats.vram_total > 0) {
+                                    return bar.gpuStats.vram_used + " / " + bar.gpuStats.vram_total + " GB (" + Math.round(bar.gpuStats.vram_percent) + "%)"
+                                }
+                                if (bar.gpuStats.freq_mhz !== undefined) {
+                                    return bar.gpuStats.freq_mhz + " MHz • " + Math.round(bar.gpuStats.load) + "%"
+                                }
+                                return Math.round(bar.gpuStats.load) + "% • " + Math.round(bar.gpuStats.temp) + "°C"
+                            }
+                            font.family: "JetBrainsMono Nerd Font, monospace"; font.pixelSize: 9; color: Theme.accent
+                        }
+                    }
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        height: 5; radius: 2.5
+                        color: Theme.alpha(Theme.surface, 0.90)
+
+                        Rectangle {
+                            width: parent.width * Math.min(1.0, Math.max(0.04, (bar.gpuStats ? (bar.gpuStats.vram_percent || bar.gpuStats.load) : 0) / 100))
+                            height: parent.height; radius: 2.5
+                            color: Theme.accent
+                        }
+                    }
+                }
+            }
+
             // Storage / NVMe Bar
             Rectangle {
                 Layout.fillWidth: true
@@ -2163,7 +2260,10 @@ PanelWindow {
         align: "right"
 
         onShownChanged: {
-            if (shown) audioDevicesProc.running = true
+            if (shown) {
+                audioDevicesProc.running = true
+                audioStreamsProc.running = true
+            }
         }
 
         ColumnLayout {
@@ -2292,6 +2392,122 @@ PanelWindow {
                     onWheel: wheel => {
                         var delta = wheel.angleDelta.y > 0 ? 0.05 : -0.05
                         bar.setMicVolume(Math.max(0, Math.min(1.5, bar.micVolume + delta)))
+                    }
+                }
+            }
+
+            // ── APPLICATION AUDIO STREAMS (PER-APP VOLUME) ────────────────────
+            ColumnLayout {
+                Layout.fillWidth: true
+                visible: bar.audioStreams.length > 0
+                spacing: 6
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    height: 1
+                    color: Theme.alpha(Theme.foreground, 0.10)
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    Text {
+                        text: "APPLICATION AUDIO"
+                        font.family: "Outfit"; font.bold: true; font.pixelSize: 10; font.letterSpacing: 0.5; color: Theme.muted
+                    }
+                    Item { Layout.fillWidth: true }
+                    Text {
+                        text: bar.audioStreams.length + " ACTIVE"
+                        font.family: "JetBrainsMono Nerd Font, monospace"; font.pixelSize: 9; color: Theme.accent
+                    }
+                }
+
+                Timer {
+                    id: streamRefreshTimer
+                    interval: 150
+                    repeat: false
+                    onTriggered: audioStreamsProc.running = true
+                }
+
+                Repeater {
+                    model: bar.audioStreams
+                    delegate: ColumnLayout {
+                        id: streamCol
+                        required property var modelData
+                        Layout.fillWidth: true
+                        spacing: 4
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 6
+
+                            Rectangle {
+                                width: 22; height: 22; radius: 5
+                                color: streamCol.modelData.muted ? Theme.alpha(Theme.error, 0.20) : Theme.alpha(Theme.accent, 0.15)
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: streamCol.modelData.muted ? "󰝟" : "󰕾"
+                                    font.family: "JetBrainsMono Nerd Font, monospace"
+                                    font.pixelSize: 11
+                                    color: streamCol.modelData.muted ? Theme.error : Theme.accent
+                                }
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        Quickshell.execDetached(["python3", bar.homeDir + "/.hyprconf/hypr/scripts/py/audio-streams.py", "--toggle-mute", streamCol.modelData.id.toString()])
+                                        streamRefreshTimer.restart()
+                                    }
+                                }
+                            }
+
+                            Text {
+                                Layout.fillWidth: true
+                                text: streamCol.modelData.name
+                                font.family: "Outfit"; font.pixelSize: 11; font.weight: Font.Medium
+                                color: streamCol.modelData.muted ? Theme.muted : Theme.foreground
+                                elide: Text.ElideRight
+                            }
+
+                            MonoText {
+                                text: streamCol.modelData.muted ? "MUTED" : Math.round(streamCol.modelData.volume * 100) + "%"
+                                font.pixelSize: 10; font.bold: true
+                                color: streamCol.modelData.muted ? Theme.error : Theme.foreground
+                            }
+                        }
+
+                        // App volume slider
+                        Rectangle {
+                            Layout.fillWidth: true
+                            height: 6
+                            radius: 3
+                            color: Theme.alpha(Theme.surface, 0.90)
+
+                            Rectangle {
+                                width: parent.width * Math.max(0.0, Math.min(1.0, streamCol.modelData.volume))
+                                height: parent.height
+                                radius: 3
+                                color: streamCol.modelData.muted ? Theme.error : Theme.accent
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                hoverEnabled: true
+                                onClicked: mouse => {
+                                    var pct = Math.round((mouse.x / width) * 100)
+                                    Quickshell.execDetached(["python3", bar.homeDir + "/.hyprconf/hypr/scripts/py/audio-streams.py", "--set-vol", streamCol.modelData.id.toString(), pct.toString()])
+                                    streamRefreshTimer.restart()
+                                }
+                                onWheel: wheel => {
+                                    var delta = wheel.angleDelta.y > 0 ? 5 : -5
+                                    var newPct = Math.max(0, Math.min(150, Math.round(streamCol.modelData.volume * 100) + delta))
+                                    Quickshell.execDetached(["python3", bar.homeDir + "/.hyprconf/hypr/scripts/py/audio-streams.py", "--set-vol", streamCol.modelData.id.toString(), newPct.toString()])
+                                    streamRefreshTimer.restart()
+                                }
+                            }
+                        }
                     }
                 }
             }
