@@ -22,6 +22,8 @@ Pill {
     readonly property var settings: (typeof bar !== "undefined" && bar && bar.widgetSettings && bar.widgetSettings.workspaces) ? bar.widgetSettings.workspaces : ({})
     readonly property string wsStyle: (settings.style !== undefined) ? settings.style : ((typeof bar !== "undefined" && bar && bar.workspaceStyle) ? bar.workspaceStyle : "kanji")
     readonly property int maxSlots: (settings.count !== undefined) ? Math.max(3, Math.min(10, parseInt(settings.count, 10))) : 5
+    readonly property bool showAppIcons: (settings.show_app_icons !== undefined) ? settings.show_app_icons : true
+
     readonly property var wsLabels: {
         if (wsStyle === "number") return ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
         if (wsStyle === "glyph") return ["✦", "◈", "◆", "❖", "⬡", "▲", "●", "★", "■", "⬢"]
@@ -31,6 +33,26 @@ Pill {
 
     function switchWorkspace(id) {
         Quickshell.execDetached(["hyprctl", "eval", "hl.dispatch(hl.dsp.focus({ workspace = " + id + " }))"])
+    }
+
+    function focusWindow(addr) {
+        if (!addr) return
+        Quickshell.execDetached(["hyprctl", "eval", "hl.dispatch(hl.dsp.focus({ window = 'address:" + addr + "' }))"])
+    }
+
+    function getAppGlyph(cls, title) {
+        var c = (cls || "").toLowerCase()
+        var t = (title || "").toLowerCase()
+        if (c.indexOf("kitty") !== -1 || c.indexOf("alacritty") !== -1 || c.indexOf("foot") !== -1 || c.indexOf("terminal") !== -1) return "󰞷"
+        if (c.indexOf("nvim") !== -1 || c.indexOf("code") !== -1 || c.indexOf("vim") !== -1 || c.indexOf("sublime") !== -1 || c.indexOf("antigravity") !== -1) return "󰅩"
+        if (c.indexOf("brave") !== -1 || c.indexOf("firefox") !== -1 || c.indexOf("chrome") !== -1 || c.indexOf("chromium") !== -1 || c.indexOf("edge") !== -1 || c.indexOf("zen") !== -1) return "󰈹"
+        if (c.indexOf("thunar") !== -1 || c.indexOf("dolphin") !== -1 || c.indexOf("nautilus") !== -1 || c.indexOf("yazi") !== -1 || c.indexOf("files") !== -1) return "󰉋"
+        if (c.indexOf("discord") !== -1 || c.indexOf("telegram") !== -1 || c.indexOf("slack") !== -1 || c.indexOf("signal") !== -1 || c.indexOf("wechat") !== -1) return "󰭹"
+        if (c.indexOf("spotify") !== -1 || c.indexOf("music") !== -1 || c.indexOf("mpd") !== -1 || c.indexOf("vlc") !== -1) return "󰝚"
+        if (c.indexOf("gimp") !== -1 || c.indexOf("inkscape") !== -1 || c.indexOf("krita") !== -1 || c.indexOf("figma") !== -1 || c.indexOf("blender") !== -1) return "󰽉"
+        if (c.indexOf("steam") !== -1 || c.indexOf("heroic") !== -1 || c.indexOf("lutris") !== -1 || c.indexOf("game") !== -1) return "󰊴"
+        if (c.indexOf("settings") !== -1 || c.indexOf("control") !== -1 || c.indexOf("pavucontrol") !== -1) return "󰒓"
+        return "󰍹"
     }
 
     // Dynamic occupied workspace & window detection via hyprctl clients
@@ -54,7 +76,8 @@ Pill {
                         byWs[wid].push({
                             title: c.title || c.initialTitle || "Window",
                             class: c.class || c.initialClass || "app",
-                            pid: c.pid
+                            pid: c.pid,
+                            address: c.address
                         })
                     }
                     rootPill.occupiedWorkspaces = occ
@@ -65,7 +88,7 @@ Pill {
     }
 
     Timer {
-        interval: 8000
+        interval: 6000
         repeat: true
         running: true
         onTriggered: if (!occProc.running) occProc.running = true
@@ -90,27 +113,35 @@ Pill {
 
     Item {
         id: wsCluster
-        implicitWidth: rootPill.maxSlots * 26 + (rootPill.maxSlots - 1) * 4
+        implicitWidth: slotsRow.implicitWidth
         implicitHeight: rootPill.pillHeight
 
         // Sliding Glowing Medallion for Active Workspace
         Rectangle {
             id: activeMedallion
-            readonly property int targetIndex: Math.max(0, Math.min(rootPill.maxSlots - 1, rootPill.activeWs - 1))
-            width: 26
+            readonly property Item targetItem: (rootPill.activeWs >= 1 && rootPill.activeWs <= rootPill.maxSlots && slotsRepeater.count >= rootPill.activeWs)
+                ? slotsRepeater.itemAt(rootPill.activeWs - 1)
+                : null
+
+            x: targetItem ? targetItem.x : 0
+            width: targetItem ? targetItem.width : 26
             height: parent.height - 4
             radius: height / 2
             color: Theme.accent
             y: 2
-            z: 2
+            z: 0
             visible: rootPill.activeWs >= 1 && rootPill.activeWs <= rootPill.maxSlots
-            x: targetIndex * (26 + 4)
 
             Behavior on x {
                 NumberAnimation {
-                    duration: 260
-                    easing.type: Easing.OutBack
-                    easing.overshoot: 1.25
+                    duration: 220
+                    easing.type: Easing.OutCubic
+                }
+            }
+            Behavior on width {
+                NumberAnimation {
+                    duration: 220
+                    easing.type: Easing.OutCubic
                 }
             }
 
@@ -123,79 +154,115 @@ Pill {
                 color: Theme.alpha(Theme.accent, 0.22)
                 z: -1
             }
-
-            // Contrasting active numeral
-            Text {
-                anchors.centerIn: parent
-                text: (activeMedallion.targetIndex >= 0 && activeMedallion.targetIndex < rootPill.wsLabels.length)
-                      ? rootPill.wsLabels[activeMedallion.targetIndex]
-                      : rootPill.activeWs.toString()
-                font.family: "Outfit"
-                font.pixelSize: 13
-                font.weight: Font.Bold
-                color: Theme.background
-            }
         }
 
         // Workspace Slots
-        Repeater {
-            model: rootPill.maxSlots
-            delegate: Item {
-                id: slotItem
-                required property int index
-                readonly property int wsId: index + 1
-                readonly property bool isActive: (rootPill.activeWs === wsId)
-                readonly property bool isOccupied: (rootPill.occupiedWorkspaces && rootPill.occupiedWorkspaces.indexOf(wsId) !== -1)
-                readonly property string labelText: (index >= 0 && index < rootPill.wsLabels.length) ? rootPill.wsLabels[index] : wsId.toString()
+        Row {
+            id: slotsRow
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: 4
+            z: 1
 
-                x: index * (26 + 4)
-                width: 26
-                height: parent.height
-                z: 1
+            Repeater {
+                id: slotsRepeater
+                model: rootPill.maxSlots
+                delegate: Item {
+                    id: slotItem
+                    required property int index
+                    readonly property int wsId: index + 1
+                    readonly property bool isActive: (rootPill.activeWs === wsId)
+                    readonly property var winList: rootPill.getWsWindows(wsId)
+                    readonly property bool isOccupied: (winList && winList.length > 0)
+                    readonly property string labelText: (index >= 0 && index < rootPill.wsLabels.length) ? rootPill.wsLabels[index] : wsId.toString()
+                    readonly property int visibleAppCount: (rootPill.showAppIcons && winList) ? Math.min(2, winList.length) : 0
 
-                // Inactive text label
-                Text {
-                    anchors.centerIn: parent
-                    text: slotItem.labelText
-                    font.family: "Outfit"
-                    font.pixelSize: 13
-                    font.weight: Font.Bold
-                    color: slotItem.isOccupied ? Theme.secondary : Theme.foreground
-                    opacity: slotItem.isActive ? 0.0 : (slotMouse.containsMouse ? 1.0 : (slotItem.isOccupied ? 0.90 : 0.45))
-                    scale: slotMouse.containsMouse ? 1.15 : 1.0
+                    height: wsCluster.height
+                    width: Math.max(26, 26 + visibleAppCount * 14)
 
-                    Behavior on opacity { NumberAnimation { duration: 160 } }
-                    Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutBack; easing.overshoot: 1.2 } }
-                    Behavior on color { ColorAnimation { duration: 160 } }
-                }
+                    Behavior on width {
+                        NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
+                    }
 
-                // Occupied micro-dot indicator
-                Rectangle {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.bottom: parent.bottom
-                    anchors.bottomMargin: 1
-                    width: 3
-                    height: 3
-                    radius: 1.5
-                    color: Theme.secondary
-                    visible: slotItem.isOccupied && !slotItem.isActive
-                    opacity: visible ? 0.9 : 0.0
-                    Behavior on opacity { NumberAnimation { duration: 160 } }
-                }
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: (slotItem.visibleAppCount > 0) ? 6 : 0
+                        anchors.rightMargin: (slotItem.visibleAppCount > 0) ? 6 : 0
+                        spacing: 4
 
-                MouseArea {
-                    id: slotMouse
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onEntered: rootPill.hoveredWsId = slotItem.wsId
-                    onExited: {
-                        if (rootPill.hoveredWsId === slotItem.wsId) {
-                            rootPill.hoveredWsId = 0
+                        Text {
+                            Layout.alignment: Qt.AlignVCenter
+                            Layout.fillWidth: (slotItem.visibleAppCount === 0)
+                            horizontalAlignment: (slotItem.visibleAppCount === 0) ? Text.AlignHCenter : Text.AlignLeft
+                            text: slotItem.labelText
+                            font.family: "Outfit"
+                            font.pixelSize: 13
+                            font.weight: Font.Bold
+                            color: slotItem.isActive ? Theme.background : (slotItem.isOccupied ? Theme.secondary : Theme.foreground)
+                            opacity: slotItem.isActive ? 1.0 : (slotMouse.containsMouse ? 1.0 : (slotItem.isOccupied ? 0.90 : 0.45))
+                            scale: slotMouse.containsMouse ? 1.15 : 1.0
+
+                            Behavior on opacity { NumberAnimation { duration: 160 } }
+                            Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutBack; easing.overshoot: 1.2 } }
+                            Behavior on color { ColorAnimation { duration: 160 } }
+                        }
+
+                        // Mini App Icons
+                        Repeater {
+                            model: slotItem.visibleAppCount
+                            delegate: Text {
+                                required property int index
+                                readonly property var appWin: slotItem.winList[index]
+                                Layout.alignment: Qt.AlignVCenter
+                                text: appWin ? rootPill.getAppGlyph(appWin.class, appWin.title) : ""
+                                font.family: "JetBrainsMono Nerd Font, monospace"
+                                font.pixelSize: 11
+                                color: slotItem.isActive ? Theme.background : Theme.accent
+                                opacity: slotItem.isActive ? 0.95 : 0.85
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        if (appWin && appWin.address) {
+                                            rootPill.focusWindow(appWin.address)
+                                        } else {
+                                            rootPill.switchWorkspace(slotItem.wsId)
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
-                    onClicked: {
-                        rootPill.switchWorkspace(slotItem.wsId)
+
+                    // Occupied micro-dot indicator (if no app icons shown)
+                    Rectangle {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        anchors.bottom: parent.bottom
+                        anchors.bottomMargin: 1
+                        width: 3
+                        height: 3
+                        radius: 1.5
+                        color: Theme.secondary
+                        visible: slotItem.isOccupied && !slotItem.isActive && slotItem.visibleAppCount === 0
+                        opacity: visible ? 0.9 : 0.0
+                        Behavior on opacity { NumberAnimation { duration: 160 } }
+                    }
+
+                    MouseArea {
+                        id: slotMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onEntered: rootPill.hoveredWsId = slotItem.wsId
+                        onExited: {
+                            if (rootPill.hoveredWsId === slotItem.wsId) {
+                                rootPill.hoveredWsId = 0
+                            }
+                        }
+                        onClicked: {
+                            rootPill.switchWorkspace(slotItem.wsId)
+                        }
                     }
                 }
             }
@@ -207,9 +274,15 @@ Pill {
             readonly property var winList: rootPill.getWsWindows(rootPill.hoveredWsId)
             visible: rootPill.hoveredWsId > 0 && winList.length > 0
             z: 999
-            x: Math.max(-10, Math.min(wsCluster.width - width + 10, (rootPill.hoveredWsId - 1) * 30 - width / 2 + 13))
+            x: {
+                var item = (rootPill.hoveredWsId >= 1 && rootPill.hoveredWsId <= rootPill.maxSlots && slotsRepeater.count >= rootPill.hoveredWsId)
+                    ? slotsRepeater.itemAt(rootPill.hoveredWsId - 1)
+                    : null
+                if (!item) return 0
+                return Math.max(-10, Math.min(wsCluster.width - width + 10, item.x + item.width / 2 - width / 2))
+            }
             y: parent.height + 8
-            width: Math.max(140, Math.min(260, tooltipCol.implicitWidth + 20))
+            width: Math.max(160, Math.min(280, tooltipCol.implicitWidth + 24))
             implicitHeight: tooltipCol.implicitHeight + 16
             radius: 8
             color: Theme.alpha(Theme.surface, 0.96)
@@ -234,21 +307,46 @@ Pill {
 
                 Repeater {
                     model: wsTooltip.winList
-                    delegate: RowLayout {
+                    delegate: Rectangle {
+                        required property var modelData
                         Layout.fillWidth: true
-                        spacing: 6
+                        height: 22
+                        radius: 4
+                        color: tipMouse.containsMouse ? Theme.alpha(Theme.accent, 0.20) : "transparent"
 
-                        Rectangle {
-                            width: 3; height: 3; radius: 1.5
-                            color: Theme.alpha(Theme.foreground, 0.40)
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.leftMargin: 6; anchors.rightMargin: 6
+                            spacing: 6
+
+                            Text {
+                                text: rootPill.getAppGlyph(modelData.class, modelData.title)
+                                font.family: "JetBrainsMono Nerd Font, monospace"
+                                font.pixelSize: 11
+                                color: Theme.accent
+                            }
+
+                            Text {
+                                Layout.fillWidth: true
+                                text: modelData.title || modelData.class
+                                font.family: "Outfit"; font.pixelSize: 10
+                                color: Theme.foreground
+                                elide: Text.ElideRight
+                            }
                         }
 
-                        Text {
-                            Layout.fillWidth: true
-                            text: modelData.title || modelData.class
-                            font.family: "Outfit"; font.pixelSize: 10
-                            color: Theme.foreground
-                            elide: Text.ElideRight
+                        MouseArea {
+                            id: tipMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                if (modelData.address) {
+                                    rootPill.focusWindow(modelData.address)
+                                } else {
+                                    rootPill.switchWorkspace(rootPill.hoveredWsId)
+                                }
+                            }
                         }
                     }
                 }
@@ -259,7 +357,7 @@ Pill {
     WheelHandler {
         onWheel: function(e) {
             var cur = rootPill.activeWs
-            var nextWs = e.angleDelta.y < 0 ? Math.min(5, cur + 1) : Math.max(1, cur - 1)
+            var nextWs = e.angleDelta.y < 0 ? Math.min(rootPill.maxSlots, cur + 1) : Math.max(1, cur - 1)
             if (nextWs !== cur) {
                 rootPill.switchWorkspace(nextWs)
             }
