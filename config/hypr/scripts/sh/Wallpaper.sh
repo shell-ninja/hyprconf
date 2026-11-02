@@ -201,7 +201,7 @@ with open(p, 'w') as f:
     fi
 
     qs ipc -c island call island reloadWallpaper 2>/dev/null || true
-    notify-send -a "Wallpaper" -i "video-x-generic" "Live Wallpaper Applied" "$filename"
+    notify-send -a "Wallpaper" -i "video-x-generic" "Live Wallpaper Applied" "$filename" 2>/dev/null || true
 
 else
     # ── STATIC WALLPAPER VIA AWWW / SWWW ─────────────────────────────────────
@@ -244,5 +244,5 @@ with open(p, 'w') as f:
 
     # Trigger instant wallpaper reload in running Quickshell Island
     qs ipc -c island call island reloadWallpaper 2>/dev/null || true
-    notify-send -a "Wallpaper" -i "$cache_dir/current_wallpaper.png" "Wallpaper Applied" "$filename"
+    notify-send -a "Wallpaper" -i "$cache_dir/current_wallpaper.png" "Wallpaper Applied" "$filename" 2>/dev/null || true
 fi

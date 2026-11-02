@@ -52,10 +52,7 @@ fi
 # Start clipboard history daemon with cliphist
 if command -v wl-paste &>/dev/null && command -v cliphist &>/dev/null; then
     if ! pgrep -f "cliphist store" >/dev/null 2>&1; then
-        wl-paste --watch cliphist store &>/dev/null &
-        wl-paste --type image --watch cliphist store &>/dev/null &
+        nohup wl-paste --watch cliphist store </dev/null &>/dev/null &
+        nohup wl-paste --type image --watch cliphist store </dev/null &>/dev/null &
     fi
 fi
-
-# start my ftp server.
-"$HOME/.local/bin/ftpsrv.py" --start

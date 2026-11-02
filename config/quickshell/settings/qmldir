@@ -19,3 +19,5 @@ DesktopWeather 1.0 DesktopWeather.qml
 AudioVisualizer 1.0 AudioVisualizer.qml
 LockscreenSystemGraph 1.0 LockscreenSystemGraph.qml
 LockscreenAudioVisualizer 1.0 LockscreenAudioVisualizer.qml
+BarSection 1.0 BarSection.qml
+KeybindsSection 1.0 KeybindsSection.qml

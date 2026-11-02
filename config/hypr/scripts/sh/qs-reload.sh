@@ -42,8 +42,16 @@ if pgrep -x qs >/dev/null 2>&1 || pgrep -x quickshell >/dev/null 2>&1; then
     sleep 0.15
 fi
 
-# 2. Relaunch Quickshell Dynamic Island daemon
-if [[ -f "$sh_dir/qs-island.sh" ]]; then
+# 2. Relaunch Active Top Interface (Dynamic Island or Full Top Bar)
+top_mode="island"
+bar_cfg="$HOME/.local/share/hyprconf/bar.json"
+if [[ -f "$bar_cfg" ]] && grep -q '"top_panel":\s*"bar"' "$bar_cfg" 2>/dev/null; then
+    top_mode="bar"
+fi
+
+if [[ "$top_mode" == "bar" && -f "$sh_dir/qs-bar.sh" ]]; then
+    nohup bash "$sh_dir/qs-bar.sh" --start >/dev/null 2>&1 &
+elif [[ -f "$sh_dir/qs-island.sh" ]]; then
     nohup bash "$sh_dir/qs-island.sh" --start >/dev/null 2>&1 &
 fi
 
@@ -55,6 +63,11 @@ fi
 # 4. Relaunch Quickshell Dock daemon (if enabled)
 if [[ -f "$sh_dir/qs-dock.sh" ]]; then
     nohup bash "$sh_dir/qs-dock.sh" --start >/dev/null 2>&1 &
+fi
+
+# 5. Relaunch Quickshell Sidebar daemon (standby)
+if [[ -f "$sh_dir/qs-sidebar.sh" ]]; then
+    nohup bash "$sh_dir/qs-sidebar.sh" --start >/dev/null 2>&1 &
 fi
 
 # 5. Notify user of successful reload

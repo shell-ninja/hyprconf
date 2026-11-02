@@ -1,0 +1,1 @@
+../island/WallpaperView.qml

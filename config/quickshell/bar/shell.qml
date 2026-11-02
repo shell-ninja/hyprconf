@@ -3,11 +3,9 @@ import Quickshell.Wayland
 import QtQuick
 
 ShellRoot {
-    // Invisible 1px windows that only reserve screen space (a PanelWindow
-    // anchored on all four edges cannot carry a usable exclusive zone itself).
     component Reserve: PanelWindow {
         property string side: "top"
-        property int zone: 12
+        property int zone: 44
 
         anchors {
             top: side !== "bottom"
@@ -31,11 +29,35 @@ ShellRoot {
             id: scope
             required property var modelData
 
-            Bar { screen: scope.modelData }
-            Reserve { screen: scope.modelData; side: "top"; zone: 44 }
-            Reserve { screen: scope.modelData; side: "left"; zone: 12 }
-            Reserve { screen: scope.modelData; side: "right"; zone: 12 }
-            Reserve { screen: scope.modelData; side: "bottom"; zone: 12 }
+            Bar {
+                id: mainBar
+                screen: scope.modelData
+            }
+
+            Reserve {
+                screen: scope.modelData
+                side: "top"
+                zone: mainBar.totalBarHeight
+            }
+
+            Reserve {
+                screen: scope.modelData
+                side: "left"
+                zone: 12
+                visible: mainBar.enableScreenFrame
+            }
+            Reserve {
+                screen: scope.modelData
+                side: "right"
+                zone: 12
+                visible: mainBar.enableScreenFrame
+            }
+            Reserve {
+                screen: scope.modelData
+                side: "bottom"
+                zone: 12
+                visible: mainBar.enableScreenFrame
+            }
         }
     }
 }

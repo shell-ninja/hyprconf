@@ -68,11 +68,15 @@ get_mode() {
 
 set_mode() {
     local target="$1"
+    local label sub val
     case "$target" in
         "on")
             kill_scheduler
             start_hyprsunset
             echo '{"mode": "on"}' > "$STATE_FILE"
+            val="1"
+            label="Warm (4500K)"
+            sub="Eye Strain Reduction Active"
             echo "on"
             ;;
         "scheduled")
@@ -86,15 +90,23 @@ set_mode() {
             fi
             setsid -f "$0" --daemon </dev/null >/dev/null 2>&1
             echo '{"mode": "scheduled"}' > "$STATE_FILE"
+            val="1"
+            label="Auto Schedule"
+            sub="Sunset to Sunrise (19:00 - 07:00)"
             echo "scheduled"
             ;;
         "off"|*)
             kill_scheduler
             kill_hyprsunset
             echo '{"mode": "off"}' > "$STATE_FILE"
+            val="0"
+            label="Off"
+            sub="Color Temperature Normal"
             echo "off"
             ;;
     esac
+    qs ipc -c bar call bar showOsd "nightlight" "$val" "$label" "moon" "$sub" >/dev/null 2>&1 &
+    qs ipc -c island call island showOsd "nightlight" "$val" "$label" "moon" "$sub" >/dev/null 2>&1 &
 }
 
 toggle_mode() {

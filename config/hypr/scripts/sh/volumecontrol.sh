@@ -34,6 +34,7 @@ notify_island() {
             icon="volume"
         fi
         qs ipc -c island call island showOsd "volume" "$v" "$label" "$icon" "" >/dev/null 2>&1 &
+        qs ipc -c bar call bar showOsd "volume" "$v" "$label" "$icon" "" >/dev/null 2>&1 &
     fi
 }
 
@@ -50,6 +51,7 @@ notify_mic_island() {
             icon="mic"
         fi
         qs ipc -c island call island showOsd "mic" "$v" "$label" "$icon" "" >/dev/null 2>&1 &
+        qs ipc -c bar call bar showOsd "mic" "$v" "$label" "$icon" "" >/dev/null 2>&1 &
     fi
 }
 

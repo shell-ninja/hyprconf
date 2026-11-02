@@ -51,7 +51,7 @@ Item {
             clock: { id: "clock", type: "clock", title: "Desktop Clock", enabled: true, x: 0.50, y: 0.28, width: 360, height: 130, scale: 1.0, format_24h: false, show_seconds: false, show_date: true, show_greeting: true, font_size: 44, font_family: "Outfit", show_background: true, glass_opacity: 0.65 },
             visualizer: { id: "visualizer", type: "visualizer", title: "Audio Visualizer", enabled: true, x: 0.50, y: 0.74, width: 520, height: 90, scale: 1.0, bar_count: 12, style: "bars", show_background: true, glass_opacity: 0.55 },
             system_monitor: { id: "system_monitor", type: "system_monitor", title: "System Monitor", enabled: true, x: 0.84, y: 0.34, width: 280, height: 230, scale: 1.0, show_cpu: true, show_ram: true, show_disk: true, show_temp: true, show_background: true, glass_opacity: 0.65 },
-            audio_player: { id: "audio_player", type: "audio_player", title: "Audio Player", enabled: true, x: 0.16, y: 0.34, width: 340, height: 150, scale: 1.0, compact: false, show_background: true, glass_opacity: 0.65 },
+            audio_player: { id: "audio_player", type: "audio_player", title: "Audio Player", enabled: true, x: 0.16, y: 0.34, width: 380, height: 148, scale: 1.0, compact: false, show_vinyl: true, show_visualizer: true, hide_when_idle: false, show_background: true, glass_opacity: 0.65 },
             weather: { id: "weather", type: "weather", title: "Weather Forecast", enabled: true, x: 0.16, y: 0.65, width: 320, height: 125, scale: 1.0, show_background: true, use_fahrenheit: false, show_details: true, show_location: true, glass_opacity: 0.65 }
         }
     })
@@ -1450,6 +1450,39 @@ Item {
                                         Layout.fillWidth: true
                                         spacing: 8
                                         visible: root.selectedWidgetId === "audio_player"
+
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            Text { text: "Spinning Vinyl Record"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 11 }
+                                            Item { Layout.fillWidth: true }
+                                            CapsuleSwitch {
+                                                id: optAudioVinyl
+                                                checked: Boolean(customizerTab.activeCfg && customizerTab.activeCfg.show_vinyl !== false)
+                                                onToggled: root.updateWidgetOption("audio_player", "show_vinyl", optAudioVinyl.checked)
+                                            }
+                                        }
+
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            Text { text: "Mini Audio Waves"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 11 }
+                                            Item { Layout.fillWidth: true }
+                                            CapsuleSwitch {
+                                                id: optAudioViz
+                                                checked: Boolean(customizerTab.activeCfg && customizerTab.activeCfg.show_visualizer !== false)
+                                                onToggled: root.updateWidgetOption("audio_player", "show_visualizer", optAudioViz.checked)
+                                            }
+                                        }
+
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            Text { text: "Auto-hide When Idle"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 11 }
+                                            Item { Layout.fillWidth: true }
+                                            CapsuleSwitch {
+                                                id: optAudioAutoHide
+                                                checked: Boolean(customizerTab.activeCfg && customizerTab.activeCfg.hide_when_idle === true)
+                                                onToggled: root.updateWidgetOption("audio_player", "hide_when_idle", optAudioAutoHide.checked)
+                                            }
+                                        }
 
                                         RowLayout {
                                             Layout.fillWidth: true

@@ -1028,6 +1028,8 @@ DesktopWeather 1.0 DesktopWeather.qml
 AudioVisualizer 1.0 AudioVisualizer.qml
 LockscreenSystemGraph 1.0 LockscreenSystemGraph.qml
 LockscreenAudioVisualizer 1.0 LockscreenAudioVisualizer.qml
+BarSection 1.0 BarSection.qml
+KeybindsSection 1.0 KeybindsSection.qml
 """,
             "dock": """singleton Theme 1.0 Theme.qml
 DockItem 1.0 DockItem.qml
@@ -1036,12 +1038,22 @@ DockContextMenu 1.0 DockContextMenu.qml
             "launcher": """singleton Theme 1.0 Theme.qml
 Style1 1.0 Style1.qml
 Style2 1.0 Style2.qml
+Spotlight 1.0 Spotlight.qml
+Spotlight 1.0 Spotlight.qml
 """,
             "launcher-theme": """singleton Theme 1.0 Theme.qml
 """,
             "emoji": """singleton Theme 1.0 Theme.qml
 """,
             "updater": """singleton Theme 1.0 Theme.qml
+""",
+            "keybinds": """singleton Theme 1.0 Theme.qml
+""",
+            "screenshot": """singleton Theme 1.0 Theme.qml
+ScreenshotView 1.0 ScreenshotView.qml
+""",
+            "wallpaper": """singleton Theme 1.0 Theme.qml
+WallpaperView 1.0 WallpaperView.qml
 """,
             "welcome": """singleton Theme 1.0 Theme.qml
 """,
@@ -1068,6 +1080,7 @@ BottomCard 1.0 BottomCard.qml
 LauncherView 1.0 LauncherView.qml
 Style1 1.0 Style1.qml
 Style2 1.0 Style2.qml
+Spotlight 1.0 Spotlight.qml
 ThemeSwitcherView 1.0 ThemeSwitcherView.qml
 ScreenshotView 1.0 ScreenshotView.qml
 PolkitView 1.0 PolkitView.qml
@@ -1086,13 +1099,43 @@ IslandMediaIndicators 1.0 IslandMediaIndicators.qml
 LockscreenSystemGraph 1.0 LockscreenSystemGraph.qml
 LockscreenAudioVisualizer 1.0 LockscreenAudioVisualizer.qml
 """,
+            "sidebar": """singleton Theme 1.0 Theme.qml
+SidebarView 1.0 SidebarView.qml
+AiChatMessage 1.0 AiChatMessage.qml
+AiCommandPalette 1.0 AiCommandPalette.qml
+""",
             "bar": """singleton Theme 1.0 Theme.qml
 Bar 1.0 Bar.qml
 BarPopup 1.0 BarPopup.qml
+BarOSD 1.0 BarOSD.qml
+BarNotificationToast 1.0 BarNotificationToast.qml
+BarTrailBridge 1.0 BarTrailBridge.qml
 Pill 1.0 Pill.qml
 ActionButton 1.0 ActionButton.qml
 MonoText 1.0 MonoText.qml
 SvgIcon 1.0 SvgIcon.qml
+BarWidgetLoader 1.0 BarWidgetLoader.qml
+BarLauncher 1.0 widgets/BarLauncher.qml
+BarTray 1.0 widgets/BarTray.qml
+BarWorkspaces 1.0 widgets/BarWorkspaces.qml
+BarWeather 1.0 widgets/BarWeather.qml
+BarPowerProfile 1.0 widgets/BarPowerProfile.qml
+BarMedia 1.0 widgets/BarMedia.qml
+BarClock 1.0 widgets/BarClock.qml
+BarNotification 1.0 widgets/BarNotification.qml
+BarPkgUpdate 1.0 widgets/BarPkgUpdate.qml
+BarQuickToggles 1.0 widgets/BarQuickToggles.qml
+BarCaffeine 1.0 widgets/BarCaffeine.qml
+BarNightlight 1.0 widgets/BarNightlight.qml
+BarClipboard 1.0 widgets/BarClipboard.qml
+BarSystemInfo 1.0 widgets/BarSystemInfo.qml
+BarVolume 1.0 widgets/BarVolume.qml
+BarPower 1.0 widgets/BarPower.qml
+BarBattery 1.0 widgets/BarBattery.qml
+BarNetwork 1.0 widgets/BarNetwork.qml
+BarActiveWindow 1.0 widgets/BarActiveWindow.qml
+BarVisualizer 1.0 widgets/BarVisualizer.qml
+BarDnd 1.0 widgets/BarDnd.qml
 """,
         }
 

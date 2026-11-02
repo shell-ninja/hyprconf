@@ -14,6 +14,7 @@ BottomCard 1.0 BottomCard.qml
 LauncherView 1.0 LauncherView.qml
 Style1 1.0 Style1.qml
 Style2 1.0 Style2.qml
+Spotlight 1.0 Spotlight.qml
 ThemeSwitcherView 1.0 ThemeSwitcherView.qml
 ScreenshotView 1.0 ScreenshotView.qml
 PolkitView 1.0 PolkitView.qml

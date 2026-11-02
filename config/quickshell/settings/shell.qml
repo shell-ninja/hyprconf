@@ -112,6 +112,16 @@ FloatingWindow {
             window.activeSection = 12
             window.visible = true
         }
+        function openBar() {
+            window.activeRootNav = 6
+            window.activeSection = 14
+            window.visible = true
+        }
+        function openKeybinds() {
+            window.activeRootNav = 0
+            window.activeSection = 6
+            window.visible = true
+        }
     }
 
     // Default configuration template for Lockscreen
@@ -179,11 +189,11 @@ FloatingWindow {
         }
     }
 
-    // activeRootNav: 0 for "Hyprconf Settings", 1 for "Dynamic Island", 2 for "Desktop Widgets", 3 for "Weather", 4 for "Lockscreen Canvas", 5 for "Application Dock"
-    property int activeRootNav: (Quickshell.env("QS_SETTINGS_SECTION") === "island" ? 1 : (Quickshell.env("QS_SETTINGS_SECTION") === "widgets" ? 2 : (Quickshell.env("QS_SETTINGS_SECTION") === "dock" ? 5 : (Quickshell.env("QS_SETTINGS_SECTION") === "weather" ? 3 : (Quickshell.env("QS_SETTINGS_SECTION") === "lockscreen" ? 4 : 0)))))
+    // activeRootNav: 0 for "Hyprconf Settings", 1 for "Dynamic Island", 2 for "Desktop Widgets", 3 for "Weather", 4 for "Lockscreen Canvas", 5 for "Application Dock", 6 for "Top Bar Studio"
+    property int activeRootNav: (Quickshell.env("QS_SETTINGS_SECTION") === "keybinds" ? 0 : (Quickshell.env("QS_SETTINGS_SECTION") === "bar" ? 6 : (Quickshell.env("QS_SETTINGS_SECTION") === "island" ? 1 : (Quickshell.env("QS_SETTINGS_SECTION") === "widgets" ? 2 : (Quickshell.env("QS_SETTINGS_SECTION") === "dock" ? 5 : (Quickshell.env("QS_SETTINGS_SECTION") === "weather" ? 3 : (Quickshell.env("QS_SETTINGS_SECTION") === "lockscreen" ? 4 : 0)))))))
     // Sub-sections under Hyprconf Settings:
-    // 0: Overview, 1: Appearance, 2: Display, 3: Animations, 4: Input, 5: Login Avatar
-    property int activeSection: (Quickshell.env("QS_SETTINGS_SECTION") === "island" ? 10 : (Quickshell.env("QS_SETTINGS_SECTION") === "widgets" ? 11 : (Quickshell.env("QS_SETTINGS_SECTION") === "dock" ? 12 : (Quickshell.env("QS_SETTINGS_SECTION") === "weather" ? 7 : (Quickshell.env("QS_SETTINGS_SECTION") === "lockscreen" ? 9 : 0)))))
+    // 0: Overview, 1: Appearance, 2: Display, 3: Animations, 4: Input, 5: Login Avatar, 6: Keybinds
+    property int activeSection: (Quickshell.env("QS_SETTINGS_SECTION") === "keybinds" ? 6 : (Quickshell.env("QS_SETTINGS_SECTION") === "bar" ? 14 : (Quickshell.env("QS_SETTINGS_SECTION") === "island" ? 10 : (Quickshell.env("QS_SETTINGS_SECTION") === "widgets" ? 11 : (Quickshell.env("QS_SETTINGS_SECTION") === "dock" ? 12 : (Quickshell.env("QS_SETTINGS_SECTION") === "weather" ? 7 : (Quickshell.env("QS_SETTINGS_SECTION") === "lockscreen" ? 9 : 0)))))))
     property int activeTab: 0 // Subtab in Lockscreen (0: Layout, 1: Clock, 2: Avatar, 3: Widgets, 4: Backdrop)
     property bool isDirty: false
     property bool showSaveToast: false
@@ -869,6 +879,7 @@ FloatingWindow {
         if (secIdx === 11) return svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + s + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>')
         if (secIdx === 12) return svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + s + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>')
         if (secIdx === 13) return svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + s + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="4"/><circle cx="7" cy="12" r="1.5" fill="' + s + '"/><circle cx="12" cy="12" r="1.5" fill="' + s + '"/><circle cx="17" cy="12" r="1.5" fill="' + s + '"/></svg>')
+        if (secIdx === 14) return svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + s + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="5" rx="1.5"/><rect x="4" y="5" width="2" height="1" fill="' + s + '"/><rect x="8" y="5" width="2" height="1" fill="' + s + '"/><rect x="18" y="5" width="2" height="1" fill="' + s + '"/><rect x="2" y="11" width="20" height="10" rx="2" stroke-dasharray="2 2"/></svg>')
         return svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + s + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>')
     }
 
@@ -957,6 +968,7 @@ FloatingWindow {
                             if (window.activeSection === 3) return "Animations toggle, bezier curve controls, and animation speeds"
                             if (window.activeSection === 4) return "Pointer sensitivity, touchpad tap to click, and natural scroll"
                             if (window.activeSection === 5) return "SDDM login screen avatar and desktop user face icons"
+                            if (window.activeSection === 6) return "Keyboard shortcuts, modifier combinations, and action dispatchers"
                             if (window.activeSection === 7) return "Real-time atmospheric conditions, generative background simulation, and solar trajectory"
                             return "Interactive drag & drop canvas and lockscreen widget placement"
                         }
@@ -1470,6 +1482,66 @@ FloatingWindow {
                                 }
                             }
                         }
+
+                        // 7. Parent Option: Top Bar Studio
+                        Rectangle {
+                            width: parent.width
+                            height: 48
+                            radius: 10
+                            readonly property bool isSelected: window.activeRootNav === 6
+
+                            color: isSelected
+                                ? Theme.accent
+                                : (barNavMouse.containsMouse ? Theme.alpha(Theme.surface, 0.85) : "transparent")
+
+                            Behavior on color { ColorAnimation { duration: 120 } }
+
+                            Row {
+                                anchors.fill: parent
+                                anchors.leftMargin: 12
+                                anchors.rightMargin: 12
+                                spacing: 10
+
+                                Image {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    width: 20
+                                    height: 20
+                                    source: window.getNavSvg(14, parent.parent.isSelected)
+                                    sourceSize: Qt.size(40, 40)
+                                }
+
+                                Column {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    spacing: 2
+
+                                    Text {
+                                        text: "Top Bar Studio"
+                                        color: parent.parent.parent.isSelected ? Theme.on_primary : Theme.foreground
+                                        font.family: "Outfit"
+                                        font.pixelSize: 13
+                                        font.weight: parent.parent.parent.isSelected ? Font.DemiBold : Font.Normal
+                                    }
+
+                                    Text {
+                                        text: "Layout, Modules & Styling"
+                                        color: parent.parent.parent.isSelected ? Theme.alpha(Theme.on_primary, 0.80) : Theme.alpha(Theme.foreground, 0.50)
+                                        font.family: "Outfit"
+                                        font.pixelSize: 10
+                                    }
+                                }
+                            }
+
+                            MouseArea {
+                                id: barNavMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    window.activeRootNav = 6
+                                    window.activeSection = 14
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -1523,6 +1595,7 @@ FloatingWindow {
                                     { name: "Display", iconIdx: 2, secIdx: 2 },
                                     { name: "Animations", iconIdx: 3, secIdx: 3 },
                                     { name: "Input & Touchpad", iconIdx: 4, secIdx: 4 },
+                                    { name: "Keybinds", iconIdx: 5, secIdx: 6 },
                                     { name: "Login Avatar", iconIdx: 7, secIdx: 5 }
                                 ]
 
@@ -3286,6 +3359,14 @@ FloatingWindow {
                     }
                 }
 
+                // =============================================================
+                // SECTION 6: KEYBINDINGS MANAGER
+                // =============================================================
+                KeybindsSection {
+                    anchors.fill: parent
+                    visible: window.activeSection === 6
+                }
+
                 } // End of hyprContentArea
 
                 Process {
@@ -3338,6 +3419,14 @@ FloatingWindow {
                 DockSection {
                     id: dockSection
                     visible: window.activeRootNav === 5
+                }
+
+                // =============================================================
+                // ROOT NAV 6: TOP BAR STUDIO
+                // =============================================================
+                BarSection {
+                    id: barSection
+                    visible: window.activeRootNav === 6
                 }
             }
         }

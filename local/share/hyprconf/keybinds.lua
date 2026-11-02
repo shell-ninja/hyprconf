@@ -18,15 +18,18 @@ local brightnessCTRL  = sh_dir .. "/brightness.sh"
 local qsLauncher      = sh_dir .. "/qs-launcher.sh"
 local qsLauncherTheme = sh_dir .. "/qs-launcher-theme.sh"
 local qsIsland        = sh_dir .. "/qs-island.sh"
+local qsWallpaper     = sh_dir .. "/qs-wallpaper.sh"
+local qsPower         = sh_dir .. "/qs-power.sh"
 local qsScreenshot    = sh_dir .. "/qs-screenshot.sh"
 local qsClipboard     = sh_dir .. "/qs-clipboard.sh"
 local qsEmoji         = sh_dir .. "/qs-emoji.sh"
 local qsKeybinds      = sh_dir .. "/qs-keybinds.sh"
 local qsReload        = sh_dir .. "/qs-reload.sh"
+local qsBar           = sh_dir .. "/qs-bar.sh"
 local inputMethodCTRL = sh_dir .. "/input-method.sh"
 
 -- ── Wallpaper ─────────────────────────────────────────────────────────────────
-hl.bind(mainMod .. " + W", hl.dsp.exec_cmd(qsIsland .. " --wallpaper"))
+hl.bind(mainMod .. " + W", hl.dsp.exec_cmd(qsWallpaper))
 
 -- ── Screenshots / Studio ───────────────────────────────────────────────────────
 hl.bind("print", hl.dsp.exec_cmd(qsScreenshot))
@@ -34,7 +37,8 @@ hl.bind(mainMod .. " + end", hl.dsp.exec_cmd(qsScreenshot))
 hl.bind(mainMod .. " + SHIFT + S", hl.dsp.exec_cmd(qsScreenshot))
 
 -- ── Help / Keybinds Cheatsheet ────────────────────────────────────────────────
-hl.bind(mainMod .. " + SHIFT + H", hl.dsp.exec_cmd(qsKeybinds))
+hl.bind(mainMod .. " + slash", hl.dsp.exec_cmd(sh_dir .. "/qs-keybinds.sh"))
+hl.bind(mainMod .. " + SHIFT + H", hl.dsp.exec_cmd(sh_dir .. "/qs-keybinds.sh"))
 
 -- ── Terminal & core apps ──────────────────────────────────────────────────────
 hl.bind(mainMod .. " + Return", hl.dsp.exec_cmd(terminal .. " --title main"))
@@ -47,15 +51,30 @@ hl.bind(mainMod .. " + V", hl.dsp.window.float({ action = "toggle" }))
 hl.bind(mainMod .. " + ALT + V", hl.dsp.exec_cmd("hyprctl dispatch workspaceopt allfloat"))
 hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen())
 hl.bind(mainMod .. " + D", hl.dsp.exec_cmd(qsLauncher))
-hl.bind(mainMod .. " + SPACE", hl.dsp.exec_cmd(qsLauncher))
+hl.bind(mainMod .. " + SPACE", hl.dsp.exec_cmd(qsLauncher .. " --spotlight"))
 hl.bind(mainMod .. " + ALT + D", hl.dsp.exec_cmd(qsLauncherTheme))
 hl.bind(mainMod .. " + SHIFT + D", hl.dsp.exec_cmd(qsEmoji))
 hl.bind(mainMod .. " + ALT + SPACE", hl.dsp.exec_cmd(sh_dir .. "/qs-dock.sh --toggle"))
 hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
 hl.bind(mainMod .. " + SHIFT + P", hl.dsp.window.pseudo())
+-- ── 3D Card Tilt (hyprtilt) ───────────────────────────────────────────────────
+-- hl.bind(mainMod .. " + T", function()
+--     if hl.plugin and hl.plugin.hyprtilt and hl.plugin.hyprtilt.toggle then
+--         local enabled = hl.plugin.hyprtilt.toggle()
+--         local msg = enabled and "3D Perspective Tilt: ON" or "3D Perspective Tilt: OFF"
+--         hl.exec_cmd("notify-send -t 1500 'hyprtilt' '" .. msg .. "' -i preferences-desktop-theme")
+--     end
+-- end)
+-- hl.bind(mainMod .. " + ALT + T", function()
+--     if hl.plugin and hl.plugin.hyprtilt and hl.plugin.hyprtilt.toggle then
+--         local enabled = hl.plugin.hyprtilt.toggle()
+--         local msg = enabled and "3D Perspective Tilt: ON" or "3D Perspective Tilt: OFF"
+--         hl.exec_cmd("notify-send -t 1500 'hyprtilt' '" .. msg .. "' -i preferences-desktop-theme")
+--     end
+-- end)
 
 -- ── Logout / lock ─────────────────────────────────────────────────────────────
-hl.bind(mainMod .. " + X", hl.dsp.exec_cmd(qsIsland .. " --power"))
+hl.bind(mainMod .. " + X", hl.dsp.exec_cmd(qsPower))
 hl.bind(mainMod .. " + SHIFT + L", hl.dsp.exec_cmd(sh_dir .. "/qs-lock.sh"))
 
 -- ── Browser / apps ───────────────────────────────────────────────────────────
@@ -66,8 +85,9 @@ hl.bind(alt .. " + B", hl.dsp.exec_cmd(sh_dir .. "/default_browser.sh --reset"))
 
 -- ── Layout / config ───────────────────────────────────────────────────────────
 hl.bind(ctrl .. " + Escape", hl.dsp.exec_cmd(qsReload))
-hl.bind(mainMod .. " + CTRL + W", hl.dsp.exec_cmd(qsIsland .. " --wallpaper"))
+hl.bind(mainMod .. " + CTRL + W", hl.dsp.exec_cmd(qsWallpaper))
 hl.bind(mainMod .. " + ALT + B", hl.dsp.exec_cmd(qsReload))
+hl.bind(mainMod .. " + CTRL + B", hl.dsp.exec_cmd(qsBar .. " --toggle"))
 hl.bind(mainMod .. " + SHIFT + comma", hl.dsp.exec_cmd(sh_dir .. "/qs-settings.sh"))
 hl.bind(mainMod .. " + CTRL + R", hl.dsp.exec_cmd("hyprctl reload && notify-send 'Done' 'Hyprland reload'"))
 hl.bind(ctrl .. " + U", hl.dsp.exec_cmd(sh_dir .. "/qs-updater.sh"))
@@ -154,9 +174,10 @@ end
 hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(), { mouse = true })
 hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
 
--- ── Pyprland ──────────────────────────────────────────────────────────────────
-hl.bind(mainMod .. " + A", hl.dsp.exec_cmd("pypr toggle term"))
+-- ── AI Assistant Sidebar (OpenCode, Claude, Gemini) ──────────────────────────
+hl.bind(mainMod .. " + A", hl.dsp.exec_cmd(sh_dir .. "/qs-sidebar.sh --toggle"))
 hl.bind(mainMod .. " + N", hl.dsp.exec_cmd("pypr toggle_special minimized"))
 hl.bind(mainMod .. " + SHIFT + N", hl.dsp.workspace.toggle_special("minimized"))
 hl.bind(mainMod .. " + SHIFT + Z", hl.dsp.exec_cmd("pypr zoom ++0.5"))
 hl.bind(mainMod .. " + Z", hl.dsp.exec_cmd("pypr zoom"))
+hl.bind(mainMod .. " + SHIFT + T", hl.dsp.exec_cmd("hyprctl hyprtilt toggle"))

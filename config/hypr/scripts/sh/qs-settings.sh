@@ -8,10 +8,24 @@ if [[ ! -e "$HOME/.config/quickshell" && -d "$HOME/.hyprconf/quickshell" ]]; the
     ln -sfn "$HOME/.hyprconf/quickshell" "$HOME/.config/quickshell"
 fi
 
-# Ensure settings qmldir includes DockSection
+# Ensure settings qmldir includes DockSection and KeybindsSection
 settings_dir="$HOME/.hyprconf/quickshell/settings"
-if [[ -f "$settings_dir/qmldir" ]] && ! grep -q "DockSection" "$settings_dir/qmldir"; then
-    echo "DockSection 1.0 DockSection.qml" >> "$settings_dir/qmldir"
+if [[ -f "$settings_dir/qmldir" ]]; then
+    if ! grep -q "DockSection" "$settings_dir/qmldir"; then
+        echo "DockSection 1.0 DockSection.qml" >> "$settings_dir/qmldir"
+    fi
+    if ! grep -q "KeybindsSection" "$settings_dir/qmldir"; then
+        echo "KeybindsSection 1.0 KeybindsSection.qml" >> "$settings_dir/qmldir"
+    fi
+fi
+
+if [ "$1" = "--keybinds" ] || [ "$1" = "-k" ]; then
+    export QS_SETTINGS_SECTION="keybinds"
+    # Try IPC if settings app is already running
+    if pgrep -f "qs -c settings" >/dev/null 2>&1; then
+        qs ipc -c settings call settings openKeybinds 2>/dev/null && exit 0
+    fi
+    shift
 fi
 
 if [ "$1" = "--island" ] || [ "$1" = "-i" ]; then
@@ -37,6 +51,15 @@ if [ "$1" = "--dock" ] || [ "$1" = "-d" ]; then
     # Try IPC if settings app is already running
     if pgrep -f "qs -c settings" >/dev/null 2>&1; then
         qs ipc -c settings call settings openDock 2>/dev/null && exit 0
+    fi
+    shift
+fi
+
+if [ "$1" = "--bar" ] || [ "$1" = "-b" ]; then
+    export QS_SETTINGS_SECTION="bar"
+    # Try IPC if settings app is already running
+    if pgrep -f "qs -c settings" >/dev/null 2>&1; then
+        qs ipc -c settings call settings openBar 2>/dev/null && exit 0
     fi
     shift
 fi

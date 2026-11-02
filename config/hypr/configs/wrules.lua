@@ -164,9 +164,9 @@ hl.workspace_rule({ workspace = "3", persistent = true })
 hl.workspace_rule({ workspace = "4", persistent = true })
 hl.workspace_rule({ workspace = "5", persistent = true })
 
--- Quickshell acrylic blur (lockscreen, launcher, launcher theme, island)
+-- Quickshell acrylic blur (lockscreen, launcher, launcher theme, island, wallpaper)
 hl.layer_rule({
-    match = { namespace = "^quickshell.*" },
+    match = { namespace = "^quickshell.*|wallpaper-studio" },
     no_anim = true,
     blur = true,
     ignore_alpha = 0.1,

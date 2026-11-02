@@ -811,6 +811,7 @@ FloatingWindow {
                         { title: "Settings Studio", desc: "Open Quickshell unified Settings Studio", keys: ["Super", "S"], cmd: "bash ~/.hyprconf/hypr/scripts/sh/qs-settings.sh &" },
                         { title: "Package Updater", desc: "Open native Quickshell package updater", keys: ["Ctrl", "U"], cmd: "bash ~/.hyprconf/hypr/scripts/sh/qs-updater.sh &" },
                         { title: "Keybinds Cheatsheet", desc: "Display full interactive cheatsheet overlay", keys: ["Super", "Shift", "H"], cmd: "qs ipc -c island call island openKeybinds" },
+                        { title: "Toggle Top Bar / Island", desc: "Switch seamlessly between Dynamic Island and Full Top Bar", keys: ["Super", "Ctrl", "B"], cmd: "bash ~/.hyprconf/hypr/scripts/sh/qs-bar.sh --toggle &" },
                         { title: "Reload Desktop Shell", desc: "Clean restart Island, Dock, and Widgets in sequence", keys: ["Ctrl", "Esc"], cmd: "bash ~/.hyprconf/hypr/scripts/sh/qs-reload.sh &" }
                     ]
 
@@ -982,7 +983,7 @@ FloatingWindow {
                                 }
 
                                 Text {
-                                    text: "Configure notch physics, dock pinning & auto-hide, draggable lockscreen widgets, and Noctalia wallpaper palettes."
+                                    text: "Configure notch physics, top bar modules & styling, dock pinning & auto-hide, draggable lockscreen widgets, and Noctalia wallpaper palettes."
                                     font.pixelSize: 11
                                     color: Theme.muted
                                     wrapMode: Text.WordWrap

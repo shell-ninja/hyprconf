@@ -62,11 +62,26 @@ ss_sound() {
     fi
 }
 
-# If delay > 1s, send countdown notification
-if (( $(echo "$delay > 1" | bc -l 2>/dev/null || [ "$delay" -gt 1 ] 2>/dev/null) )); then
-    notify-send "Screenshot in ${delay}s" "Preparing capture..." -i camera-photo -r 91189 -t 2000
-    sleep "$delay"
-else
+cleanup_osd() {
+    qs ipc -c bar call bar hideOsd >/dev/null 2>&1
+    qs ipc -c island call island hideOsd >/dev/null 2>&1
+}
+trap cleanup_osd INT TERM
+
+# If delay >= 1s, show countdown in OSD and close immediately before capture
+delay_int="${delay%%.*}"
+if [[ "$delay_int" =~ ^[0-9]+$ && "$delay_int" -ge 1 ]]; then
+    for (( rem=delay_int; rem>=1; rem-- )); do
+        pct=$(( (rem * 100) / delay_int ))
+        qs ipc -c bar call bar showOsd "screenshot" "$pct" "${rem}s" "camera" "Capturing in ${rem}s..." >/dev/null 2>&1 &
+        qs ipc -c island call island showOsd "screenshot" "$pct" "${rem}s" "camera" "Capturing in ${rem}s..." >/dev/null 2>&1 &
+        sleep 1
+    done
+    # Immediately close OSD before capturing so it does not appear in the screenshot
+    cleanup_osd
+    # Allow 220ms for the compositor to unmap the OSD layer surface
+    sleep 0.22
+elif [[ -n "$delay" && "$delay" != "0" ]]; then
     sleep "$delay"
 fi
 

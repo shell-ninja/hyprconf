@@ -29,19 +29,21 @@ SUPER + D  󰶻  Open App Launcher (Quickshell)
 SUPER + ALT + D  󰶻  Open Launcher Theme Switcher
 SUPER + P  󰶻  Toggle Pseudo-Tiling
 SUPER + SHIFT + P  󰶻  Toggle Pseudo-Tiling
+SUPER + T  󰶻  Toggle 3D Window Tilt (hyprtilt)
 SUPER + X  󰶻  Open Power Menu (Dynamic Island)
 SUPER + SHIFT + L  󰶻  Lock Screen
 SUPER + C  󰶻  Open IDE (VS Code / Codium / Antigravity)
 SUPER + B  󰶻  Open Default Browser
 SUPER + SHIFT + B  󰶻  Open Brave (Incognito)
 ALT + B  󰶻  Reset Default Browser
-SUPER + W  󰶻  Change Wallpaper (Random)
+SUPER + W  󰶻  Open Dynamic Island Wallpaper Picker
 SUPER + SHIFT + W  󰶻  Open Dynamic Island Wallpaper Picker
 SUPER + CTRL + SHIFT + W  󰶻  Open Dynamic Island Wallpaper Picker
 SUPER + ALT + W  󰶻  Open Wallpaper Selector Panel
 SUPER + CTRL + W  󰶻  Open Dynamic Island Wallpaper Picker
 CTRL + ESC  󰶻  Reload Island & Entire Quickshell
 SUPER + ALT + B  󰶻  Restart Quickshell Desktop Shell
+SUPER + CTRL + B  󰶻  Toggle Dynamic Island & Full Top Bar
 SUPER + SHIFT + ,  󰶻  Toggle System Settings App
 SUPER + SHIFT + S  󰶻  Open Screenshot Studio
 SUPER + CTRL + R  󰶻  Reload Hyprland Configuration
@@ -91,15 +93,17 @@ execute_action() {
         *"Open App Launcher"*|*"Open Application Menu"*) "$sh_dir/qs-launcher.sh" & ;;
         *"Open Launcher Theme Switcher"*) "$sh_dir/qs-launcher-theme.sh" & ;;
         *"Toggle Pseudo-Tiling"*) hyprctl dispatch pseudo ;;
-        *"Open Power Menu"*) "$sh_dir/qs-island.sh" --power & ;;
+        *"Toggle 3D Window Tilt"*|*"hyprtilt"*) hyprctl repl 'hl.plugin.hyprtilt.toggle()' & ;;
+        *"Open Power Menu"*) "$sh_dir/qs-power.sh" & ;;
         *"Lock Screen"*) qs -c lockscreen & ;;
         *"Open IDE ("*|*"Open Code Editor ("*) "$sh_dir/ide.sh" & ;;
         *"Open Default Browser"*) "$sh_dir/browser.sh" op & ;;
         *"Open Brave (Incognito)"*) brave --incognito & ;;
         *"Reset Default Browser"*) "$sh_dir/default_browser.sh" --reset & ;;
         *"Change Wallpaper (Random)"*) "$sh_dir/Wallpaper.sh" & ;;
-        *"Open Dynamic Island Wallpaper Picker"*|*"Open Wallpaper Selector Panel"*) "$sh_dir/qs-island.sh" --wallpaper & ;;
+        *"Open Dynamic Island Wallpaper Picker"*|*"Open Wallpaper Selector Panel"*|*"Open Wallpaper Selector"*) "$sh_dir/qs-wallpaper.sh" & ;;
         *"Reload Island & Entire Quickshell"*|*"Restart Quickshell Desktop Shell"*) "$sh_dir/qs-reload.sh" & ;;
+        *"Toggle Dynamic Island & Full Top Bar"*) "$sh_dir/qs-bar.sh" --toggle & ;;
         *"Toggle System Settings App"*|*"Open Dotfiles Settings Menu"*) "$sh_dir/qs-settings.sh" & ;;
         *"Toggle Window Animations"*) "$sh_dir/animations_toggle.sh" & ;;
         *"Regenerate Colorscheme"*) "$sh_dir/regenerate-colors.sh" & ;;
@@ -145,6 +149,5 @@ if [[ -n "${1:-}" ]]; then
 fi
 
 # ── Mode 3: Display keybinds summary ─────────────────────────────────────────
-# Default to Quickshell Dynamic Island Keybinds launcher
-exec "$sh_dir/qs-island.sh" --keybinds
+exec "$sh_dir/qs-keybinds.sh"
 

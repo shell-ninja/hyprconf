@@ -4,6 +4,7 @@ import QtQuick.Controls
 import Quickshell
 import Quickshell.Io
 import Quickshell.Widgets
+import "../launcher"
 import "."
 
 Item {
@@ -30,8 +31,8 @@ Item {
     // Active Theme: "style-1" (Slanted Split 880x420) or "style-2" (Panoramic Grid 820x560)
     property string currentTheme: "style-1"
 
-    readonly property real preferredWidth: (currentTheme === "style-2") ? 820 : 880
-    readonly property real preferredHeight: (currentTheme === "style-2") ? 560 : 420
+    readonly property real preferredWidth: (currentTheme === "spotlight") ? 660 : ((currentTheme === "style-2") ? 820 : 880)
+    readonly property real preferredHeight: (currentTheme === "spotlight") ? 480 : ((currentTheme === "style-2") ? 560 : 420)
     implicitWidth: preferredWidth
     implicitHeight: preferredHeight
 
@@ -52,7 +53,7 @@ Item {
                 if (text && text.trim().length > 0) {
                     try {
                         var parsed = JSON.parse(text.trim())
-                        if (parsed.theme && parsed.theme !== root.currentTheme) {
+                        if (parsed.theme && parsed.theme !== root.currentTheme && root.currentTheme !== "spotlight") {
                             root.currentTheme = parsed.theme
                         }
                     } catch(e) {}
@@ -319,12 +320,23 @@ Item {
         Behavior on opacity {
             NumberAnimation { duration: root.isClosing ? 90 : 150; easing.type: Easing.OutCubic }
         }
-        sourceComponent: (root.currentTheme === "style-2") ? style2Component : style1Component
+        sourceComponent: {
+            if (root.currentTheme === "spotlight") return spotlightComponent
+            if (root.currentTheme === "style-2") return style2Component
+            return style1Component
+        }
 
         onLoaded: {
             if (item && typeof item.focusInput === "function") {
                 item.focusInput()
             }
+        }
+    }
+
+    Component {
+        id: spotlightComponent
+        Spotlight {
+            rootWindow: root
         }
     }
 

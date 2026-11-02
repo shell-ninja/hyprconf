@@ -20,7 +20,7 @@ Item {
     property var polkitFlow: null
 
     implicitWidth: {
-        if (currentView === 2) return 920
+        if (currentView === 2) return 960
         if (currentView === 3) return launcherView ? launcherView.preferredWidth : 880
         if (currentView === 4) return 860
         if (currentView === 5) return 620
@@ -31,7 +31,7 @@ Item {
         return 444
     }
     implicitHeight: {
-        if (currentView === 2) return 370
+        if (currentView === 2) return 395
         if (currentView === 3) return launcherView ? launcherView.preferredHeight : 420
         if (currentView === 4) return 500
         if (currentView === 5) return 380

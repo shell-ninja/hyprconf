@@ -35,8 +35,11 @@ PanelWindow {
     readonly property string quadWallPath: "file://" + homeDir + "/.hyprconf/hypr/.cache/wall.quad"
     readonly property string fallbackWallPath: "file://" + homeDir + "/.hyprconf/hypr/.cache/current_wallpaper.png"
 
-    // Active Theme: "style-1" (Slanted Split) or "style-2" (Panoramic Grid)
-    property string currentTheme: "style-1"
+    // Active Theme: "style-1", "style-2", or "spotlight"
+    property string currentTheme: {
+        var envTheme = Quickshell.env("QS_LAUNCHER_THEME")
+        return (envTheme && envTheme.length > 0) ? envTheme : "style-1"
+    }
 
     // Model and filtering state
     property var allApps: []
@@ -55,7 +58,8 @@ PanelWindow {
                 if (text && text.trim().length > 0) {
                     try {
                         var parsed = JSON.parse(text.trim())
-                        if (parsed.theme) {
+                        var envTheme = Quickshell.env("QS_LAUNCHER_THEME")
+                        if (!envTheme && parsed.theme) {
                             root.currentTheme = parsed.theme
                         }
                     } catch(e) {}
@@ -414,11 +418,22 @@ PanelWindow {
         scale: root.animScale
         opacity: root.animOpacity
         transformOrigin: Item.Center
-        sourceComponent: (root.currentTheme === "style-2") ? style2Component : style1Component
+        sourceComponent: {
+            if (root.currentTheme === "spotlight" || root.currentTheme === "style-3") return spotlightComponent
+            if (root.currentTheme === "style-2") return style2Component
+            return style1Component
+        }
         onLoaded: {
             if (item && item.focusInput) {
                 item.focusInput()
             }
+        }
+    }
+
+    Component {
+        id: spotlightComponent
+        Spotlight {
+            rootWindow: root
         }
     }
 

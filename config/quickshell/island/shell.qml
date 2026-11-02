@@ -240,6 +240,21 @@ PanelWindow {
     function reloadConfig() {
         configLoader.running = false
         configLoader.running = true
+        barModeChecker.running = false
+        barModeChecker.running = true
+    }
+
+    Process {
+        id: barModeChecker
+        command: ["python3", "-c", "import json, os; p=os.path.expanduser('~/.local/share/hyprconf/bar.json'); print(json.load(open(p)).get('top_panel', 'island') if os.path.exists(p) else 'island')"]
+        running: true
+        stdout: StdioCollector {
+            onTextChanged: {
+                if (text && text.trim() === "bar") {
+                    Qt.quit()
+                }
+            }
+        }
     }
 
     // ── AUDIO / MEDIA PLAYBACK STATE ─────────────────────────────────────────
@@ -440,7 +455,7 @@ PanelWindow {
     }
 
     function openLauncher() {
-        if (root.expanded && expandedContent && expandedContent.currentView === 3) {
+        if (root.expanded && expandedContent && expandedContent.currentView === 3 && (!expandedContent.launcherView || expandedContent.launcherView.currentTheme !== "spotlight")) {
             closeLauncher()
             return
         }
@@ -449,8 +464,13 @@ PanelWindow {
         closeTimer.stop()
         if (expandedContent) {
             expandedContent.currentView = 3
-            if (expandedContent.launcherView && typeof expandedContent.launcherView.focusLauncher === "function") {
-                expandedContent.launcherView.focusLauncher()
+            if (expandedContent.launcherView) {
+                if (expandedContent.launcherView.currentTheme === "spotlight") {
+                    expandedContent.launcherView.currentTheme = "style-1"
+                }
+                if (typeof expandedContent.launcherView.focusLauncher === "function") {
+                    expandedContent.launcherView.focusLauncher()
+                }
             }
         }
         root.expanded = true
@@ -466,10 +486,38 @@ PanelWindow {
     }
 
     function toggleLauncher() {
-        if (root.expanded && expandedContent && expandedContent.currentView === 3) {
+        if (root.expanded && expandedContent && expandedContent.currentView === 3 && (!expandedContent.launcherView || expandedContent.launcherView.currentTheme !== "spotlight")) {
             closeLauncher()
         } else {
             openLauncher()
+        }
+    }
+
+    function openSpotlight() {
+        if (root.expanded && expandedContent && expandedContent.currentView === 3 && expandedContent.launcherView && expandedContent.launcherView.currentTheme === "spotlight") {
+            closeLauncher()
+            return
+        }
+        root.isClosingWallpaper = false
+        hoverIntentTimer.stop()
+        closeTimer.stop()
+        if (expandedContent) {
+            expandedContent.currentView = 3
+            if (expandedContent.launcherView) {
+                expandedContent.launcherView.currentTheme = "spotlight"
+                if (typeof expandedContent.launcherView.focusLauncher === "function") {
+                    expandedContent.launcherView.focusLauncher()
+                }
+            }
+        }
+        root.expanded = true
+    }
+
+    function toggleSpotlight() {
+        if (root.expanded && expandedContent && expandedContent.currentView === 3 && expandedContent.launcherView && expandedContent.launcherView.currentTheme === "spotlight") {
+            closeLauncher()
+        } else {
+            openSpotlight()
         }
     }
 
@@ -772,6 +820,9 @@ PanelWindow {
     // Native IPC handler to allow external script/keybind control (expand, collapse, toggle, wallpaper, launcher, screenshot, polkit)
     IpcHandler {
         target: "island"
+        function quit() {
+            Qt.quit()
+        }
         function toggle() {
             root.expanded = !root.expanded
         }
@@ -884,6 +935,20 @@ PanelWindow {
         }
         function toggleLauncher() {
             root.toggleLauncher()
+        }
+        function openSpotlight() {
+            root.openSpotlight()
+        }
+        function toggleSpotlight() {
+            root.toggleSpotlight()
+        }
+        function setSpotlightQuery(q: string) {
+            if (!root.expanded || !expandedContent || expandedContent.currentView !== 3 || !expandedContent.launcherView || expandedContent.launcherView.currentTheme !== "spotlight") {
+                root.openSpotlight()
+            }
+            if (expandedContent && expandedContent.launcherView) {
+                expandedContent.launcherView.searchQuery = q
+            }
         }
         function openThemeSwitcher() {
             root.openThemeSwitcher()
@@ -1035,6 +1100,14 @@ PanelWindow {
         }
         function showOsd(type: string, value: string, label: string, icon: string, subLabel: string) {
             root.showOsd(type, value, label, icon, subLabel)
+        }
+        function hideOsd() {
+            root.hasOsdPopup = false
+            osdTimer.stop()
+        }
+        function closeOsd() {
+            root.hasOsdPopup = false
+            osdTimer.stop()
         }
     }
 

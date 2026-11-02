@@ -1,0 +1,1 @@
+../launcher/Spotlight.qml

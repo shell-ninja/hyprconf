@@ -143,47 +143,19 @@ Item {
     }
 
     function captureMode(mode) {
-        // If timer screenshot or delayed mode, delegate countdown to Dynamic Island
-        if (mode === "timer" || root.delaySeconds > 0) {
-            var delay = (mode === "timer") ? 5 : root.delaySeconds
-            var target = (mode === "timer") ? "screen" : mode
-            root.startTimerScreenshot(delay, target, root.useSatty, root.playSound)
-            return
-        }
+        var delaySec = (mode === "timer") ? 5 : (root.delaySeconds > 0 ? root.delaySeconds : 0.25)
+        var target = (mode === "timer") ? "screen" : (mode === "active" ? "active" : (mode === "screen" ? "screen" : "area"))
 
-        // Build arguments for immediate capture
-        var args = ["bash", root.homeDir + "/.hyprconf/hypr/scripts/sh/screenshot.sh", "--delay", "0"]
+        var args = ["bash", root.homeDir + "/.hyprconf/hypr/scripts/sh/screenshot.sh", "--delay", delaySec.toString()]
         if (!root.useSatty) args.push("--no-satty")
         if (!root.playSound) args.push("--no-sound")
+        args.push(target)
 
-        if (mode === "active") {
-            args.push("active")
-        } else if (mode === "screen") {
-            args.push("screen")
-        } else {
-            args.push("area")
-        }
-
-        // Close island launcher first so it disappears from screen before capture
+        // Close UI first so it is dismissed before the capture occurs
         root.closeRequested()
 
-        // Spawn after brief delay allowing island collapse animation to clear the screen
-        captureProc.command = args
-        delayedCaptureTimer.restart()
-    }
-
-    Timer {
-        id: delayedCaptureTimer
-        interval: 280
-        repeat: false
-        onTriggered: {
-            captureProc.running = true
-        }
-    }
-
-    Process {
-        id: captureProc
-        command: []
+        // Execute detached in the OS background so process termination never cancels capture
+        Quickshell.execDetached(args)
     }
 
     function svgUrl(svgContent) {

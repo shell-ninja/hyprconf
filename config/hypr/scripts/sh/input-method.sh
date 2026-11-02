@@ -14,12 +14,14 @@ toggle_fcitx5() {
         sub="Fcitx5 • Inactive"
     fi
     qs ipc -c island call island showOsd "input" "0" "$label" "keyboard" "$sub" >/dev/null 2>&1 &
+    qs ipc -c bar call bar showOsd "input" "0" "$label" "keyboard" "$sub" >/dev/null 2>&1 &
 }
 
 toggle_ibus() {
     local engine
     engine=$(ibus engine 2>/dev/null)
     qs ipc -c island call island showOsd "input" "0" "${engine:-IBus}" "keyboard" "IBus Input Method" >/dev/null 2>&1 &
+    qs ipc -c bar call bar showOsd "input" "0" "${engine:-IBus}" "keyboard" "IBus Input Method" >/dev/null 2>&1 &
 }
 
 toggle_hyprland() {
@@ -36,6 +38,7 @@ except Exception:
     print('English (US)')
 " 2>/dev/null)
     qs ipc -c island call island showOsd "input" "0" "${layout:-English (US)}" "keyboard" "Keyboard Layout" >/dev/null 2>&1 &
+    qs ipc -c bar call bar showOsd "input" "0" "${layout:-English (US)}" "keyboard" "Keyboard Layout" >/dev/null 2>&1 &
 }
 
 # 1. Try fcitx5 if running

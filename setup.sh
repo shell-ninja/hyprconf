@@ -351,12 +351,24 @@ if [[ -f "$HOME/.config/fastfetch/config.jsonc" && ! -L "$HOME/.config/fastfetch
     cp -f "$HOME/.config/fastfetch/config.jsonc" "$backup_dir/user_fastfetch_config.jsonc"
 fi
 
-# Migrate existing configurations to ~/.local/share/hyprconf if present as regular files
+# Migrate existing configurations to ~/.local/share/hyprconf if present
 migrate_to_state() {
     local src="$1"
     local dest="$2"
-    if [[ -f "$src" && ! -L "$src" && ! -f "$dest" ]]; then
-        cp "$src" "$dest"
+    if [[ -e "$src" && ! -f "$dest" ]]; then
+        if [[ -L "$src" ]]; then
+            local target
+            target=$(readlink -f "$src" 2>/dev/null || true)
+            if [[ "$target" == "$dest" ]]; then
+                return 0
+            elif [[ -n "$target" && -f "$target" ]]; then
+                cp -f "$target" "$dest"
+                return 0
+            fi
+        fi
+        if [[ -f "$src" ]]; then
+            cp -f "$src" "$dest"
+        fi
     fi
 }
 
@@ -384,6 +396,7 @@ for base_dir in "$HOME/.hyprconf" "$HOME/.config"; do
     migrate_to_state "$base_dir/quickshell/island/config.json" "$user_state_dir/island.json"
     migrate_to_state "$base_dir/quickshell/launcher/config.json" "$user_state_dir/launcher.json"
     migrate_to_state "$base_dir/quickshell/dock/dock.json" "$user_state_dir/dock.json"
+    migrate_to_state "$base_dir/quickshell/bar/config.json" "$user_state_dir/bar.json"
     migrate_to_state "$base_dir/hypr/configs/monitor.lua" "$user_state_dir/monitor.lua"
     migrate_to_state "$base_dir/hypr/configs/keybinds.lua" "$user_state_dir/keybinds.lua"
     migrate_to_state "$base_dir/hypr/.cache/wallpaper_config.json" "$user_state_dir/wallpaper_config.json"
@@ -521,6 +534,8 @@ lockscreen_dir="$HOME/.hyprconf/quickshell/lockscreen"
 dock_dir="$HOME/.hyprconf/quickshell/dock"
 updater_dir="$HOME/.hyprconf/quickshell/updater"
 welcome_dir="$HOME/.hyprconf/quickshell/welcome"
+bar_dir="$HOME/.hyprconf/quickshell/bar"
+sidebar_dir="$HOME/.hyprconf/quickshell/sidebar"
 
 # 1. Dynamic Island launcher morphing styles
 if [[ -d "$island_dir" && -d "$launcher_dir" ]]; then
@@ -551,15 +566,23 @@ if [[ -d "$settings_dir" && -d "$lockscreen_dir" ]]; then
 fi
 
 # 3. Ensure Theme.qml & colors.json relative symlinks exist in all subprojects
-for sub in "$island_dir" "$launcher_dir" "$launcher_theme_dir" "$settings_dir" "$widgets_dir" "$lockscreen_dir" "$dock_dir"; do
+for sub in "$island_dir" "$launcher_dir" "$launcher_theme_dir" "$settings_dir" "$widgets_dir" "$lockscreen_dir" "$dock_dir" "$bar_dir" "$sidebar_dir" "$updater_dir" "$welcome_dir"; do
     [[ -d "$sub" ]] || continue
     [[ ! -e "$sub/Theme.qml" || ( -L "$sub/Theme.qml" && "$(readlink "$sub/Theme.qml")" =~ /home/ ) ]] && ln -sfn "../Theme.qml" "$sub/Theme.qml"
     [[ ! -e "$sub/colors.json" || ( -L "$sub/colors.json" && "$(readlink "$sub/colors.json")" =~ /home/ ) ]] && ln -sfn "../colors.json" "$sub/colors.json"
 done
 
 # Ensure settings and island qmldir include required components
-if [[ -f "$settings_dir/qmldir" ]] && ! grep -q "DockSection" "$settings_dir/qmldir"; then
-    echo "DockSection 1.0 DockSection.qml" >> "$settings_dir/qmldir"
+if [[ -f "$settings_dir/qmldir" ]]; then
+    if ! grep -q "DockSection" "$settings_dir/qmldir"; then
+        echo "DockSection 1.0 DockSection.qml" >> "$settings_dir/qmldir"
+    fi
+    if ! grep -q "KeybindsSection" "$settings_dir/qmldir"; then
+        echo "KeybindsSection 1.0 KeybindsSection.qml" >> "$settings_dir/qmldir"
+    fi
+    if ! grep -q "BarSection" "$settings_dir/qmldir" && [[ -f "$settings_dir/BarSection.qml" ]]; then
+        echo "BarSection 1.0 BarSection.qml" >> "$settings_dir/qmldir"
+    fi
 fi
 if [[ -f "$island_dir/qmldir" ]]; then
     if ! grep -q "KeybindsView" "$island_dir/qmldir"; then
@@ -604,13 +627,34 @@ if [[ -n "$local_hyprconf" && -d "$local_hyprconf" ]]; then
     fi
 fi
 
-mkdir -p "$widgets_dir" "$island_dir" "$launcher_dir" "$lockscreen_dir" "$dock_dir" "$updater_dir" "$welcome_dir" "$HOME/.hyprconf/hypr/configs"
+mkdir -p "$widgets_dir" "$island_dir" "$launcher_dir" "$lockscreen_dir" "$dock_dir" "$updater_dir" "$welcome_dir" "$bar_dir" "$HOME/.hyprconf/hypr/configs"
 ln -sfn "$user_state_dir/lockscreen.json" "$HOME/.hyprconf/quickshell/lockscreen.json"
 ln -sfn "$user_state_dir/widgets.json" "$widgets_dir/widgets.json"
 ln -sfn "$user_state_dir/island.json" "$island_dir/config.json"
 ln -sfn "$user_state_dir/launcher.json" "$launcher_dir/config.json"
 ln -sfn "$user_state_dir/dock.json" "$dock_dir/dock.json"
+ln -sfn "$user_state_dir/bar.json" "$bar_dir/config.json"
 ln -sfn "$user_state_dir/monitor.lua" "$HOME/.hyprconf/hypr/configs/monitor.lua"
+
+# Ensure user custom keybinds are preserved in ~/.local/share/hyprconf before symlinking
+if [[ ! -f "$user_state_dir/keybinds.lua" ]]; then
+    if [[ -f "$HOME/.hyprconf/hypr/configs/keybinds.lua" && ! -L "$HOME/.hyprconf/hypr/configs/keybinds.lua" ]]; then
+        cp -f "$HOME/.hyprconf/hypr/configs/keybinds.lua" "$user_state_dir/keybinds.lua"
+        msg dn "Migrated existing keybinds.lua to $user_state_dir/keybinds.lua"
+    elif [[ -f "$HOME/.config/hypr/configs/keybinds.lua" && ! -L "$HOME/.config/hypr/configs/keybinds.lua" ]]; then
+        cp -f "$HOME/.config/hypr/configs/keybinds.lua" "$user_state_dir/keybinds.lua"
+        msg dn "Migrated existing keybinds.lua to $user_state_dir/keybinds.lua"
+    elif [[ -f "$HOME/.backup_hyprconf-${USER}/hypr/configs/keybinds.lua" && ! -L "$HOME/.backup_hyprconf-${USER}/hypr/configs/keybinds.lua" ]]; then
+        cp -f "$HOME/.backup_hyprconf-${USER}/hypr/configs/keybinds.lua" "$user_state_dir/keybinds.lua"
+        msg dn "Migrated existing keybinds.lua from backup to $user_state_dir/keybinds.lua"
+    elif [[ -n "$local_hyprconf" && -f "$local_hyprconf/keybinds.lua" ]]; then
+        cp -f "$local_hyprconf/keybinds.lua" "$user_state_dir/keybinds.lua"
+    elif [[ -f "$dir/local/share/hyprconf/keybinds.lua" ]]; then
+        cp -f "$dir/local/share/hyprconf/keybinds.lua" "$user_state_dir/keybinds.lua"
+    fi
+else
+    msg dn "Preserved existing keybindings in $user_state_dir/keybinds.lua"
+fi
 ln -sfn "$user_state_dir/keybinds.lua" "$HOME/.hyprconf/hypr/configs/keybinds.lua"
 ln -sfn "$user_state_dir/welcome-app.json" "$HOME/.hyprconf/hypr/welcome-app.json"
 # Symlink ~/.hyprconf/hypr/.cache -> ~/.local/share/hyprconf/.cache

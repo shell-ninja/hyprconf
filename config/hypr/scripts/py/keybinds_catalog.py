@@ -52,6 +52,13 @@ CATALOG = [
         "desc": "Launch private browsing session",
     },
     {
+        "combo": "SUPER + A",
+        "action": "Toggle Agent Console (OpenCode / Claude / Gemini)",
+        "category": "Apps",
+        "icon": "terminal",
+        "desc": "Open/close 40% sliding CLI agent console with background execution",
+    },
+    {
         "combo": "SUPER + C",
         "action": "Open IDE (VS Code / Codium / Antigravity)",
         "category": "Apps",
@@ -136,6 +143,13 @@ CATALOG = [
         "category": "Windows",
         "icon": "layout",
         "desc": "Keep window's original aspect ratio while tiled",
+    },
+    {
+        "combo": "SUPER + T",
+        "action": "Toggle 3D Window Tilt (hyprtilt)",
+        "category": "Windows",
+        "icon": "layers",
+        "desc": "Toggle 3D perspective card hover effect on/off",
     },
     {
         "combo": "SUPER + G",
@@ -227,10 +241,10 @@ CATALOG = [
     # ── QUICKSHELL & SHELL ───────────────────────────────────────────────────
     {
         "combo": "SUPER + W",
-        "action": "Change Wallpaper (Random)",
+        "action": "Open Wallpaper Selector Studio",
         "category": "Quickshell",
         "icon": "image",
-        "desc": "Pick and apply a random wallpaper",
+        "desc": "Open adaptive wallpaper selector and browser",
     },
     {
         "combo": "SUPER + SHIFT + W",
@@ -357,7 +371,7 @@ CATALOG = [
     # ── SYSTEM & POWER ───────────────────────────────────────────────────────
     {
         "combo": "SUPER + X",
-        "action": "Open Power Menu (Dynamic Island)",
+        "action": "Open Power Menu",
         "category": "System",
         "icon": "power",
         "desc": "Shutdown, reboot, lock, suspend menu",

@@ -95,6 +95,7 @@ get_brightness() {
 notify_osd() {
     local pct="$1"
     qs ipc -c island call island showOsd "brightness" "$pct" "${pct}%" "brightness" "" >/dev/null 2>&1 &
+    qs ipc -c bar call bar showOsd "brightness" "$pct" "${pct}%" "brightness" "" >/dev/null 2>&1 &
 }
 
 set_brightness_laptop() {

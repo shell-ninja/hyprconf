@@ -12,7 +12,9 @@ Item {
     property string align: "center"       // "left" | "center" | "right"
     property int popupWidth: 320
     property int maxContentHeight: 540
-    property color surface: Theme.background
+    property color surface: Theme.alpha(Theme.surface, 0.96)
+    readonly property bool isFloating: (typeof bar !== "undefined" && bar && (bar.capsuleStyle === "islands" || bar.marginTop > 2))
+    readonly property int effectiveFillet: isFloating ? 0 : fillet
     property int barHeight: 44
     property int edge: 12
     property int bottomRadius: 22
@@ -23,9 +25,16 @@ Item {
 
     default property alias content: contentHolder.data
 
+    property bool hoverOpen: true
     property bool shown: false
     property bool suppressed: false
     property real bodyX: edge
+
+    onShownChanged: {
+        if (shown) {
+            reposition()
+        }
+    }
 
     readonly property bool wantOpen: (trigger ? trigger.hovered : false) || hover.hovered
     readonly property real fullHeight: Math.min(contentHolder.implicitHeight + padding * 2 + topOverlap, maxContentHeight)
@@ -41,16 +50,19 @@ Item {
     }
 
     function reposition() {
-        if (!trigger || !parent)
+        if (!parent)
             return
-        const p = trigger.mapToItem(parent, 0, 0)
-        const cx = p.x + trigger.width / 2
-        if (align === "left")
+        if (align === "left") {
             bodyX = edge
-        else if (align === "right")
+        } else if (align === "right") {
             bodyX = parent.width - edge - popupWidth
-        else
+        } else if (trigger) {
+            const p = trigger.mapToItem(parent, 0, 0)
+            const cx = p.x + trigger.width / 2
             bodyX = Math.max(edge + fillet, Math.min(parent.width - edge - fillet - popupWidth, cx - popupWidth / 2))
+        } else {
+            bodyX = Math.max(edge + fillet, (parent.width - popupWidth) / 2)
+        }
     }
 
     function close() {
@@ -58,43 +70,62 @@ Item {
         suppressed = true
     }
 
+    Timer {
+        id: hoverIntentTimer
+        interval: 180
+        repeat: false
+        onTriggered: {
+            if (popup.hoverOpen && popup.wantOpen && !popup.suppressed) {
+                popup.reposition()
+                popup.shown = true
+            }
+        }
+    }
+
     onWantOpenChanged: {
+        if (!hoverOpen) return
         if (wantOpen) {
             closeTimer.stop()
-            if (!suppressed) {
-                reposition()
-                shown = true
+            if (!suppressed && !shown) {
+                hoverIntentTimer.restart()
             }
         } else {
+            hoverIntentTimer.stop()
             suppressed = false
             closeTimer.restart()
         }
     }
 
-    // 80ms debounce: moving between pill and panel never flickers.
+    // 160ms debounce: moving between pill and panel never flickers.
     Timer {
         id: closeTimer
-        interval: 80
-        onTriggered: if (!popup.wantOpen) popup.shown = false
+        interval: 160
+        onTriggered: if (popup.hoverOpen && !popup.wantOpen) popup.shown = false
     }
 
-    x: bodyX - fillet
-    y: barHeight - topOverlap
+    Shortcut {
+        sequence: "Escape"
+        enabled: popup.shown
+        onActivated: popup.close()
+    }
+
+    x: bodyX - effectiveFillet
+    y: isFloating ? ((typeof bar !== "undefined" && bar) ? (bar.marginTop + bar.barH + 6) : 48) : (barHeight - topOverlap)
     z: 20
-    width: popupWidth + fillet * 2
+    width: popupWidth + effectiveFillet * 2
     height: revealHeight
     visible: height > 0.5
     clip: true
 
     HoverHandler { id: hover }
 
-    // Concave corner fillet, top-left (hidden when the panel is flush with the left frame)
+    // Concave corner fillet, top-left (hidden when floating or flush with the left frame)
     Shape {
         x: 0
         y: popup.topOverlap
         width: popup.fillet
         height: popup.fillet
-        visible: popup.align !== "left"
+        visible: !popup.isFloating && popup.align !== "left"
         layer.enabled: true
         layer.samples: 4
         ShapePath {
@@ -104,13 +135,13 @@ Item {
         }
     }
 
-    // Concave corner fillet, top-right (hidden when flush with the right frame)
+    // Concave corner fillet, top-right (hidden when floating or flush with the right frame)
     Shape {
         x: popup.width - popup.fillet
         y: popup.topOverlap
         width: popup.fillet
         height: popup.fillet
-        visible: popup.align !== "right"
+        visible: !popup.isFloating && popup.align !== "right"
         layer.enabled: true
         layer.samples: 4
         ShapePath {
@@ -122,26 +153,37 @@ Item {
 
     Rectangle {
         id: body
-        x: popup.fillet
+        x: popup.effectiveFillet
         y: 0
         width: popup.popupWidth
         height: popup.height
         color: popup.surface
         border.width: 1
-        border.color: Theme.alpha(Theme.accent, 0.30)
-        topLeftRadius: 0
-        topRightRadius: 0
-        bottomLeftRadius: popup.bottomRadius
-        bottomRightRadius: popup.bottomRadius
+        border.color: Theme.alpha(Theme.accent, 0.28)
+        radius: popup.isFloating ? 16 : 0
+        topLeftRadius: popup.isFloating ? 16 : 0
+        topRightRadius: popup.isFloating ? 16 : 0
+        bottomLeftRadius: popup.isFloating ? 16 : popup.bottomRadius
+        bottomRightRadius: popup.isFloating ? 16 : popup.bottomRadius
         clip: true
 
-        // Seamless fusion: covers the top 1px border so dropdown flows smoothly from the bar
+        // Inner subtle glass rim at top
+        Rectangle {
+            anchors.top: parent.top
+            anchors.horizontalCenter: parent.horizontalCenter
+            width: parent.width * 0.75
+            height: 1
+            color: Theme.alpha(Theme.foreground, 0.12)
+        }
+
+        // Seamless fusion: covers the top 1px border so dropdown flows smoothly from the bar (non-floating only)
         Rectangle {
             anchors.top: parent.top
             anchors.left: parent.left
             anchors.right: parent.right
             height: 2
             color: popup.surface
+            visible: !popup.isFloating
             z: 5
         }
 

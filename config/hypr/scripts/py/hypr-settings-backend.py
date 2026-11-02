@@ -853,7 +853,7 @@ def _apply_environment(pending, result):
 
 def _apply_keybinds(pending, result):
     edits = pending.get("keybind_edit", {})
-    removes = pending.get("keybind_remove", set())
+    removes = pending.get("keybind_remove", [])
     adds = pending.get("keybind_add", [])
     if not (edits or removes or adds):
         return
@@ -877,7 +877,8 @@ def _apply_keybinds(pending, result):
             result.err("a keybind removal could not be located — skipped")
             continue
         line_start = text.rfind("\n", 0, idx) + 1
-        line_end = text.find("\n", idx)
+        end_pos = idx + len(original)
+        line_end = text.find("\n", end_pos)
         line_end = line_end + 1 if line_end != -1 else len(text)
         text = text[:line_start] + text[line_end:]
         result.ok("keybind removed")
@@ -885,9 +886,11 @@ def _apply_keybinds(pending, result):
     if adds:
         if not text.endswith("\n"):
             text += "\n"
-        text += "\n".join(adds) + "\n"
         for raw in adds:
-            result.ok(f"keybind added → {raw.splitlines()[0][:60]}")
+            clean_raw = str(raw).strip()
+            if clean_raw:
+                text += clean_raw + "\n"
+                result.ok(f"keybind added → {clean_raw.splitlines()[0][:60]}")
 
     KEYBINDS_LUA.write_text(text)
 
@@ -917,25 +920,146 @@ def get_all_settings():
         monitors_with_options.append(m_copy)
 
     # Keybinds list
+    try:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        from keybinds_catalog import CATALOG
+    except Exception:
+        CATALOG = []
+
+    catalog_map = {item["combo"].lower().replace(" ", ""): item for item in CATALOG}
+    
+    var_map = {
+        "terminal": "kitty",
+        "file_man": "dolphin || thunar",
+        "term_file_man": "yazi",
+        "volumeCTRL": "volumecontrol.sh",
+        "brightnessCTRL": "brightness.sh",
+        "qsLauncher": "qs-launcher.sh",
+        "qsLauncherTheme": "qs-launcher-theme.sh",
+        "qsIsland": "qs-island.sh",
+        "qsWallpaper": "qs-wallpaper.sh",
+        "qsPower": "qs-power.sh",
+        "qsScreenshot": "qs-screenshot.sh",
+        "qsClipboard": "qs-clipboard.sh",
+        "qsEmoji": "qs-emoji.sh",
+        "qsKeybinds": "qs-keybinds.sh",
+        "qsReload": "qs-reload.sh",
+        "qsBar": "qs-bar.sh",
+        "inputMethodCTRL": "input-method.sh",
+    }
+
     keybinds_list = []
     for kb in iter_keybind_statements():
         raw_combo = kb.get("combo", "").strip().strip('"\'')
-        display_combo = raw_combo.replace('.. "', '+ ').replace('.. \'', '+ ').replace('"', '').replace("'", '').replace("mainMod", "SUPER").strip()
-        import re
+        display_combo = (raw_combo
+            .replace('.. "', '+ ')
+            .replace('.. \'', '+ ')
+            .replace('"', '')
+            .replace("'", '')
+            .replace("mainMod", "SUPER")
+            .replace("ctrl", "CTRL")
+            .replace("alt", "ALT")
+            .replace("shift", "SHIFT")
+            .strip())
         display_combo = re.sub(r"\+\s*\+", "+", display_combo).strip()
         if display_combo.startswith(","):
             display_combo = display_combo.lstrip(", ")
         display_combo = display_combo.strip()
-        
+
+        parts = [p.strip() for p in display_combo.split("+")]
+        mods = [p for p in parts if p in ("SUPER", "CTRL", "ALT", "SHIFT")]
+        keys = [p for p in parts if p not in ("SUPER", "CTRL", "ALT", "SHIFT")]
+        key = "+".join(keys) if keys else ""
+
         raw_action = kb.get("action", "").strip()
         display_action = raw_action
         if display_action.startswith("hl.dsp."):
             display_action = display_action[7:]
-        
+
+        action_type = "custom"
+        command = ""
+        m_exec = re.search(r"exec_cmd\((.+)\)", raw_action)
+        if m_exec:
+            action_type = "exec"
+            inner = m_exec.group(1).strip()
+            cmd_resolved = inner
+            for var_k, var_v in var_map.items():
+                cmd_resolved = re.sub(r"\b" + var_k + r"\b", var_v, cmd_resolved)
+            cmd_resolved = cmd_resolved.replace("..", "").replace('"', '').replace("'", '').strip()
+            cmd_resolved = re.sub(r"\s+", " ", cmd_resolved)
+            command = cmd_resolved
+        elif "window.close" in raw_action:
+            action_type = "window_close"
+        elif "window.float" in raw_action:
+            action_type = "window_float"
+        elif "window.fullscreen" in raw_action:
+            action_type = "window_fullscreen"
+        elif "window.pseudo" in raw_action:
+            action_type = "window_pseudo"
+        elif "window.move" in raw_action:
+            action_type = "window_move"
+        elif "window.resize" in raw_action:
+            action_type = "window_resize"
+        elif "focus" in raw_action:
+            action_type = "focus"
+        elif "workspace" in raw_action:
+            action_type = "workspace"
+        elif "group" in raw_action:
+            action_type = "group"
+        elif "layout" in raw_action:
+            action_type = "layout"
+
+        norm = display_combo.lower().replace(" ", "")
+        cat_item = catalog_map.get(norm, {})
+
+        if cat_item:
+            category = cat_item.get("category", "General")
+            title = cat_item.get("action", display_combo)
+            desc = cat_item.get("desc", "")
+            icon = cat_item.get("icon", "keyboard")
+        else:
+            icon = "command" if action_type == "exec" else "window"
+            if "workspace" in raw_action:
+                category = "Workspaces"
+                title = "Workspace Navigation"
+                desc = display_action
+            elif any(k in raw_action for k in ("window.", "focus", "layout", "group.")):
+                category = "Window Management"
+                title = "Window Manipulation"
+                desc = display_action
+            elif any(k in raw_action for k in ("volume", "brightness", "playerctl", "Audio", "Brightness")):
+                category = "Media & Hardware"
+                title = "Audio / Brightness Control"
+                desc = display_action
+            elif action_type == "exec":
+                category = "Apps & Launchers"
+                title = f"Run: {command[:35]}" if command else "Custom Command"
+                desc = command
+            else:
+                category = "General"
+                title = display_combo
+                desc = display_action
+
+        if category in ("Apps", "Applications", "Quickshell"):
+            category = "Apps & Launchers"
+        elif category in ("Windows", "Window Management"):
+            category = "Window Management"
+        elif category in ("Media", "Audio"):
+            category = "Media & Hardware"
+
         keybinds_list.append({
             "combo": display_combo or "(bind)",
+            "key": key,
+            "mods": mods,
             "action": display_action,
+            "raw_action": raw_action,
             "raw": kb.get("raw", ""),
+            "action_type": action_type,
+            "command": command,
+            "category": category,
+            "title": title,
+            "desc": desc,
+            "icon": icon,
         })
 
     # Files status

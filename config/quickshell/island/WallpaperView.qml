@@ -15,8 +15,8 @@ Item {
     property real animProgress: 1.0
     signal backClicked()
 
-    implicitWidth: 920
-    implicitHeight: 370
+    implicitWidth: 960
+    implicitHeight: 395
 
     // ── DATA MODELS & STATE ──────────────────────────────────────────────────
     property var allWallpapers: []
@@ -410,38 +410,42 @@ Item {
         }
     }
 
+    function executeApplyWallpaper(targetPath, isLive) {
+        if (!targetPath || targetPath.length === 0) return
+        if (targetPath.indexOf("http://") === 0 || targetPath.indexOf("https://") === 0) {
+            var havenCmd = [
+                "python3",
+                root.homeDir + "/.hyprconf/hypr/scripts/py/wallhaven-bridge.py",
+                "apply",
+                "--url", targetPath
+            ]
+            if (root.colorVariant && root.colorVariant.length > 0) {
+                havenCmd.push("--variant")
+                havenCmd.push(root.colorVariant)
+            }
+            Quickshell.execDetached(havenCmd)
+        } else {
+            var applyArgs = [
+                "bash",
+                root.homeDir + "/.hyprconf/hypr/scripts/sh/Wallpaper.sh",
+                isLive ? "--live" : "--static"
+            ]
+            if (root.colorVariant && root.colorVariant.length > 0) {
+                applyArgs.push("--variant")
+                applyArgs.push(root.colorVariant)
+            }
+            applyArgs.push(targetPath)
+            Quickshell.execDetached(applyArgs)
+        }
+    }
+
     Timer {
         id: applyTimer
         interval: 220
         repeat: false
         onTriggered: {
             if (applyProc.targetPath && applyProc.targetPath.length > 0) {
-                if (applyProc.targetPath.indexOf("http://") === 0 || applyProc.targetPath.indexOf("https://") === 0) {
-                    var havenCmd = [
-                        "python3",
-                        root.homeDir + "/.hyprconf/hypr/scripts/py/wallhaven-bridge.py",
-                        "apply",
-                        "--url", applyProc.targetPath
-                    ]
-                    if (root.colorVariant && root.colorVariant.length > 0) {
-                        havenCmd.push("--variant")
-                        havenCmd.push(root.colorVariant)
-                    }
-                    applyProc.command = havenCmd
-                } else {
-                    var applyArgs = [
-                        "bash",
-                        root.homeDir + "/.hyprconf/hypr/scripts/sh/Wallpaper.sh",
-                        applyProc.isLive ? "--live" : "--static"
-                    ]
-                    if (root.colorVariant && root.colorVariant.length > 0) {
-                        applyArgs.push("--variant")
-                        applyArgs.push(root.colorVariant)
-                    }
-                    applyArgs.push(applyProc.targetPath)
-                    applyProc.command = applyArgs
-                }
-                applyProc.running = true
+                root.executeApplyWallpaper(applyProc.targetPath, applyProc.isLive)
             }
         }
     }
@@ -480,9 +484,9 @@ Item {
         applyBtn.isApplying = true
         applyProc.targetPath = path
         applyProc.isLive = true
+        root.executeApplyWallpaper(path, true)
         root.closeDirBrowser()
         root.backClicked()
-        applyTimer.restart()
     }
 
     function applyWallpaperFromBrowser(item) {
@@ -491,9 +495,9 @@ Item {
         applyBtn.isApplying = true
         applyProc.targetPath = item.path
         applyProc.isLive = false
+        root.executeApplyWallpaper(item.path, false)
         root.closeDirBrowser()
         root.backClicked()
-        applyTimer.restart()
     }
 
     function fetchOnlineWallpapers(page) {
@@ -688,14 +692,9 @@ Item {
         if (root.filteredWallpapers.length === 0 || root.selectedIndex < 0 || root.selectedIndex >= root.filteredWallpapers.length) return
         var item = root.filteredWallpapers[root.selectedIndex]
         applyBtn.isApplying = true
-        applyProc.targetPath = item.path
-        applyProc.isLive = (root.activeMode === "live") || (item.is_video === true)
-
-        // 1. Collapse the wallpaper menu first
+        var isLive = (root.activeMode === "live") || (item.is_video === true)
+        root.executeApplyWallpaper(item.path, isLive)
         root.backClicked()
-
-        // 2. Apply the wallpaper once collapse animation is initiated
-        applyTimer.restart()
     }
 
     // ── VIM & ARROW KEYBOARD INTERCEPTOR ─────────────────────────────────────
@@ -984,7 +983,7 @@ Item {
             anchors.leftMargin: 20
             anchors.right: parent.right
             anchors.rightMargin: 20
-            height: 288
+            height: 300
             clip: true
 
             // CoverFlow cards (15 circular dynamic slots with jump-free continuous mapping)
@@ -1034,11 +1033,11 @@ Item {
                     // Strictly visible only when inside bounds (max 5 cards: hero, 2 left, 2 right)
                     visible: isValid && dist <= 2.3 && calcOpacity > 0.005
 
-                    // Layout coordinates
-                    width: 196
-                    height: 112
-                    x: (coverflowViewport.width / 2) + (effectiveOffset * 155) - (width / 2)
-                    y: 164 + yLift - (height / 2)
+                    // Layout coordinates (enlarged preview cards with spacious coverflow geometry)
+                    width: 228
+                    height: 128
+                    x: (coverflowViewport.width / 2) + (effectiveOffset * 174) - (width / 2)
+                    y: 168 + yLift - (height / 2)
                     z: Math.round(100 - dist * 8)
                     opacity: calcOpacity
                     scale: calcScale
@@ -1290,7 +1289,7 @@ Item {
                 id: titlePill
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.top: parent.top
-                anchors.topMargin: 196
+                anchors.topMargin: 206
                 height: 24
                 width: Math.max(80, titleRow.implicitWidth + 24)
                 radius: 12

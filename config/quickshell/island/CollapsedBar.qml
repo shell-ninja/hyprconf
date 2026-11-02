@@ -2294,6 +2294,11 @@ Item {
             if (root.osdType === "mic") return "Microphone"
             if (root.osdType === "brightness") return "Brightness"
             if (root.osdType === "input") return "Input Method"
+            if (root.osdType === "power" || root.osdType === "power_profile") return "Power Profile"
+            if (root.osdType === "caffeine") return "Caffeine Mode"
+            if (root.osdType === "nightlight" || root.osdType === "sunset") return "Night Light"
+            if (root.osdType === "capslock") return "Caps Lock"
+            if (root.osdType === "screenshot" || root.osdType === "timer") return "Screenshot Timer"
             return "Setting"
         }
 
@@ -2303,6 +2308,9 @@ Item {
             var m = Theme.muted
             var e = Theme.error
 
+            if (root.osdType === "screenshot" || root.osdType === "timer") {
+                return root.svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + c + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>')
+            }
             if (root.osdType === "volume") {
                 if (isMuted) return root.svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + e + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>')
                 if (v <= 0.33)
@@ -2316,9 +2324,6 @@ Item {
             }
             if (root.osdType === "brightness") {
                 // Sun with rays that grow with brightness:
-                // Low  (≤33%): small circle + 4 short rays
-                // Mid  (≤66%): medium circle + 6 medium rays
-                // High (>66%): large circle + 8 long rays
                 var r = (v <= 0.33) ? 3.5 : (v <= 0.66) ? 4.5 : 5.5
                 var rayLen = (v <= 0.33) ? 1.0 : (v <= 0.66) ? 1.8 : 2.8
                 var numRays = (v <= 0.33) ? 4 : (v <= 0.66) ? 6 : 8
@@ -2335,6 +2340,15 @@ Item {
                     paths += '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '"/>'
                 }
                 return root.svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + c + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="' + cx + '" cy="' + cy + '" r="' + r + '"/>' + paths + '</svg>')
+            }
+            if (root.osdType === "power" || root.osdType === "power_profile") {
+                return root.svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + c + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>')
+            }
+            if (root.osdType === "caffeine") {
+                return root.svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + c + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>')
+            }
+            if (root.osdType === "nightlight" || root.osdType === "sunset") {
+                return root.svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + c + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>')
             }
             if (root.osdType === "input") {
                 return root.keyboardSvg
@@ -2412,12 +2426,14 @@ Item {
                     width: parent.width
                     height: 6
 
+                    readonly property bool isContinuous: root.osdType === "volume" || root.osdType === "mic" || root.osdType === "brightness" || root.osdType === "power" || root.osdType === "power_profile" || root.osdType === "screenshot" || root.osdType === "timer"
+
                     // Track
                     Rectangle {
                         anchors.fill: parent
                         radius: 3
                         color: Theme.alpha(Theme.foreground, 0.12)
-                        visible: root.osdType !== "input"
+                        visible: parent.isContinuous
                     }
 
                     // Fill bar
@@ -2426,21 +2442,21 @@ Item {
                         width: Math.max(0, Math.min(parent.width, parent.width * root.osdValue))
                         radius: 3
                         color: osdRow.isMuted ? Theme.error : Theme.accent
-                        visible: root.osdType !== "input"
+                        visible: parent.isContinuous
 
                         Behavior on width {
                             NumberAnimation { duration: 120; easing.type: Easing.OutCubic }
                         }
                     }
 
-                    // Input Method subtitle
+                    // Subtitle for non-continuous states
                     Text {
                         anchors.verticalCenter: parent.verticalCenter
-                        text: root.osdSubLabel.length > 0 ? root.osdSubLabel : "Active Keymap"
+                        text: root.osdSubLabel.length > 0 ? root.osdSubLabel : root.osdLabel
                         font.family: "Outfit"
                         font.pixelSize: 9
                         color: Theme.alpha(Theme.foreground, 0.50)
-                        visible: root.osdType === "input"
+                        visible: !parent.isContinuous
                         elide: Text.ElideRight
                     }
                 }

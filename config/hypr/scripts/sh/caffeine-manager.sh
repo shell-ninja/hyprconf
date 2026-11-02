@@ -17,17 +17,26 @@ get_status() {
 
 set_status() {
     local target="$1"
+    local label sub val
     if [[ "$target" == "on" ]]; then
         # Turn caffeine ON -> Kill hypridle so screen/machine doesn't idle
         pkill -x "hypridle" 2>/dev/null
+        label="Awake"
+        sub="Screen Idle Inactivity Suspended"
+        val="1"
         echo "on"
     else
         # Turn caffeine OFF -> Start hypridle
         if ! is_idle_running; then
             setsid -f hypridle -q </dev/null >/dev/null 2>&1
         fi
+        label="Normal"
+        sub="Idle Inhibitor Disabled"
+        val="0"
         echo "off"
     fi
+    qs ipc -c bar call bar showOsd "caffeine" "$val" "$label" "coffee" "$sub" >/dev/null 2>&1 &
+    qs ipc -c island call island showOsd "caffeine" "$val" "$label" "coffee" "$sub" >/dev/null 2>&1 &
 }
 
 toggle_status() {

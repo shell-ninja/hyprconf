@@ -67,7 +67,83 @@ frame_delimiter = 10
 EOF
 fi
 
+# Handle unconditional stop
+if [[ "${1:-}" == "--stop" ]]; then
+    qs ipc -c island call island quit 2>/dev/null || true
+    pkill -9 -f "qs -c island" 2>/dev/null || true
+    pkill -9 -f "quickshell.*island" 2>/dev/null || true
+    pkill -f "qs -c island" 2>/dev/null || true
+    pkill -f "quickshell.*island" 2>/dev/null || true
+    pkill -9 -f "[a]udio-monitor.py" 2>/dev/null || true
+    pkill -9 -f "[n]etwork-speed.py" 2>/dev/null || true
+    pkill -9 -f "[p]actl subscribe" 2>/dev/null || true
+    pkill -x cava 2>/dev/null || true
+    exit 0
+fi
+
+bar_cfg="$HOME/.local/share/hyprconf/bar.json"
+is_bar_mode=false
+if [[ -f "$bar_cfg" ]]; then
+    if grep -q '"top_panel":\s*"bar"' "$bar_cfg" 2>/dev/null; then
+        is_bar_mode=true
+    fi
+elif pgrep -f "qs -c bar" >/dev/null 2>&1 && ! pgrep -f "qs -c island" >/dev/null 2>&1; then
+    is_bar_mode=true
+fi
+
+# Guard against starting or reviving Dynamic Island when user has selected Full Top Bar
+if [[ "$is_bar_mode" == "true" ]]; then
+    case "${1:-}" in
+        --start)
+            exec "$HOME/.hyprconf/hypr/scripts/sh/qs-bar.sh" --start
+            ;;
+        --restart)
+            exec "$HOME/.hyprconf/hypr/scripts/sh/qs-bar.sh" --restart
+            ;;
+        --stop)
+            pkill -f "qs -c island" 2>/dev/null || true
+            exit 0
+            ;;
+        --wallpaper)
+            exec "$HOME/.hyprconf/hypr/scripts/sh/qs-wallpaper.sh"
+            ;;
+        --launcher)
+            exec "$HOME/.hyprconf/hypr/scripts/sh/qs-launcher.sh"
+            ;;
+        --clipboard)
+            exec "$HOME/.hyprconf/hypr/scripts/sh/qs-clipboard.sh"
+            ;;
+        --emoji)
+            exec "$HOME/.hyprconf/hypr/scripts/sh/qs-emoji.sh"
+            ;;
+        --power)
+            exec "$HOME/.hyprconf/hypr/scripts/sh/qs-power.sh"
+            ;;
+        --screenshot)
+            exec "$HOME/.hyprconf/hypr/scripts/sh/qs-screenshot.sh"
+            ;;
+        --launcher-theme|--theme)
+            exec "$HOME/.hyprconf/hypr/scripts/sh/qs-launcher-theme.sh"
+            ;;
+        --keybinds)
+            exec "$HOME/.hyprconf/hypr/scripts/sh/qs-keybinds.sh"
+            ;;
+        --weather)
+            if pgrep -f "qs -c bar" >/dev/null 2>&1; then
+                exec qs ipc -c bar call bar toggleWeather
+            fi
+            exit 0
+            ;;
+        *)
+            # Never start Dynamic Island daemon if user is in bar mode
+            exit 0
+            ;;
+    esac
+fi
+
 if [[ "$1" == "--start" ]]; then
+    pkill -9 -f "qs -c bar" 2>/dev/null || true
+    pkill -9 -f "quickshell.*bar" 2>/dev/null || true
     if ! pgrep -f "qs -c island" >/dev/null 2>&1; then
         exec qs -c island -d
     fi
@@ -75,14 +151,16 @@ if [[ "$1" == "--start" ]]; then
 fi
 
 if [[ "$1" == "--restart" ]]; then
-    pkill -f "qs -c island" 2>/dev/null || true
-    pkill -f "quickshell -c island" 2>/dev/null || true
-    pkill -f "quickshell.*island" 2>/dev/null || true
+    pkill -9 -f "qs -c bar" 2>/dev/null || true
+    pkill -9 -f "quickshell.*bar" 2>/dev/null || true
+    pkill -9 -f "qs -c island" 2>/dev/null || true
+    pkill -9 -f "quickshell -c island" 2>/dev/null || true
+    pkill -9 -f "quickshell.*island" 2>/dev/null || true
     pkill -9 -f "[a]udio-monitor.py" 2>/dev/null || true
     pkill -9 -f "[n]etwork-speed.py" 2>/dev/null || true
     pkill -9 -f "[p]actl subscribe" 2>/dev/null || true
     pkill -x cava 2>/dev/null || true
-    sleep 0.35
+    sleep 0.25
     exec qs -c island -d
 fi
 
@@ -94,6 +172,18 @@ if [[ "$1" == "--wallpaper" ]]; then
         qs -c island -d
         sleep 0.35
         qs ipc -c island call island openWallpaper
+        exit 0
+    fi
+fi
+
+if [[ "$1" == "--spotlight" ]]; then
+    if pgrep -f "qs -c island" >/dev/null 2>&1; then
+        qs ipc -c island call island toggleSpotlight
+        exit 0
+    else
+        qs -c island -d
+        sleep 0.35
+        qs ipc -c island call island openSpotlight
         exit 0
     fi
 fi
