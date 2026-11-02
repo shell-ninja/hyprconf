@@ -2844,8 +2844,8 @@ PanelWindow {
 
             ActionButton { Layout.fillWidth: true; icon: "lock"; label: "Lock"; onClicked: { powerPop.close(); Quickshell.execDetached(["loginctl", "lock-session"]) } }
             ActionButton { Layout.fillWidth: true; icon: "logout"; label: "Logout"; confirm: true; onClicked: { powerPop.close(); Quickshell.execDetached(["hyprctl", "dispatch", "exit"]) } }
-            ActionButton { Layout.fillWidth: true; icon: "reboot"; label: "Reboot"; confirm: true; onClicked: { powerPop.close(); Quickshell.execDetached(["systemctl", "reboot"]) } }
-            ActionButton { Layout.fillWidth: true; icon: "power"; label: "Shutdown"; confirm: true; onClicked: { powerPop.close(); Quickshell.execDetached(["systemctl", "poweroff"]) } }
+            ActionButton { Layout.fillWidth: true; icon: "reboot"; label: "Reboot"; confirm: true; onClicked: { powerPop.close(); Quickshell.execDetached(["python3", bar.homeDir + "/.hyprconf/hypr/scripts/py/uptime-tracker.py", "--reboot"]) } }
+            ActionButton { Layout.fillWidth: true; icon: "power"; label: "Shutdown"; confirm: true; onClicked: { powerPop.close(); Quickshell.execDetached(["python3", bar.homeDir + "/.hyprconf/hypr/scripts/py/uptime-tracker.py", "--shutdown"]) } }
         }
     }
 

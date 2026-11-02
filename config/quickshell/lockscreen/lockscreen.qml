@@ -650,12 +650,12 @@ Scope {
 
     Process {
         id: powerProc
-        command: ["systemctl", "poweroff"]
+        command: ["python3", root.homeDir + "/.hyprconf/hypr/scripts/py/uptime-tracker.py", "--shutdown"]
     }
 
     Process {
         id: rebootProc
-        command: ["systemctl", "reboot"]
+        command: ["python3", root.homeDir + "/.hyprconf/hypr/scripts/py/uptime-tracker.py", "--reboot"]
     }
 
     WlSessionLock {

@@ -327,12 +327,16 @@ Item {
             "    json.dump(d, open(p, 'w'), indent=2)\n" +
             "except Exception: pass\n"
         if (mode === "bar") {
-            switchScript += "subprocess.run(['bash', os.path.expanduser('~/.hyprconf/hypr/scripts/sh/qs-island.sh'), '--stop'])\n" +
-                "subprocess.run(['bash', os.path.expanduser('~/.hyprconf/hypr/scripts/sh/qs-bar.sh'), '--restart'])\n"
+            switchScript += "subprocess.run(['pkill', '-9', '-f', 'qs -c island'], stderr=subprocess.DEVNULL)\n" +
+                "subprocess.run(['pkill', '-9', '-f', 'quickshell.*island'], stderr=subprocess.DEVNULL)\n" +
+                "subprocess.run(['bash', os.path.expanduser('~/.hyprconf/hypr/scripts/sh/qs-island.sh'), '--stop'], stderr=subprocess.DEVNULL)\n" +
+                "subprocess.run(['bash', os.path.expanduser('~/.hyprconf/hypr/scripts/sh/qs-bar.sh'), '--restart'], stderr=subprocess.DEVNULL)\n"
         } else {
-            switchScript += "subprocess.run(['qs', 'ipc', '-c', 'bar', 'call', 'bar', 'quit'], stderr=subprocess.DEVNULL)\n" +
-                "subprocess.run(['bash', os.path.expanduser('~/.hyprconf/hypr/scripts/sh/qs-bar.sh'), '--stop'])\n" +
-                "subprocess.run(['bash', os.path.expanduser('~/.hyprconf/hypr/scripts/sh/qs-island.sh'), '--restart'])\n"
+            switchScript += "subprocess.run(['pkill', '-9', '-f', 'qs -c bar'], stderr=subprocess.DEVNULL)\n" +
+                "subprocess.run(['pkill', '-9', '-f', 'quickshell.*bar'], stderr=subprocess.DEVNULL)\n" +
+                "subprocess.run(['qs', 'ipc', '-c', 'bar', 'call', 'bar', 'quit'], stderr=subprocess.DEVNULL)\n" +
+                "subprocess.run(['bash', os.path.expanduser('~/.hyprconf/hypr/scripts/sh/qs-bar.sh'), '--stop'], stderr=subprocess.DEVNULL)\n" +
+                "subprocess.run(['bash', os.path.expanduser('~/.hyprconf/hypr/scripts/sh/qs-island.sh'), '--restart'], stderr=subprocess.DEVNULL)\n"
         }
         Quickshell.execDetached(["python3", "-c", switchScript])
     }

@@ -49,6 +49,11 @@ fi
 
 "$sh_dir/notification.sh" sys
 
+# Play system startup sound chime
+if [[ -f "$HOME/.hyprconf/hypr/sounds/system-startup.wav" ]]; then
+    (pw-play "$HOME/.hyprconf/hypr/sounds/system-startup.wav" >/dev/null 2>&1 || mpv --no-video --really-quiet "$HOME/.hyprconf/hypr/sounds/system-startup.wav" >/dev/null 2>&1) &
+fi
+
 # Start clipboard history daemon with cliphist
 if command -v wl-paste &>/dev/null && command -v cliphist &>/dev/null; then
     if ! pgrep -f "cliphist store" >/dev/null 2>&1; then

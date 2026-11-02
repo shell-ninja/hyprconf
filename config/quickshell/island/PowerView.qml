@@ -102,9 +102,9 @@ Item {
         root.backClicked()
 
         if (act === "shutdown") {
-            root.executePowerAction("systemctl poweroff")
+            root.executePowerAction("python3 " + root.homeDir + "/.hyprconf/hypr/scripts/py/uptime-tracker.py --shutdown")
         } else if (act === "reboot") {
-            root.executePowerAction("systemctl reboot")
+            root.executePowerAction("python3 " + root.homeDir + "/.hyprconf/hypr/scripts/py/uptime-tracker.py --reboot")
         } else if (act === "logout") {
             root.executePowerAction(root.homeDir + "/.hyprconf/hypr/scripts/sh/qs-logout.sh")
         }
