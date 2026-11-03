@@ -40,12 +40,23 @@ Pill {
         Quickshell.execDetached(["hyprctl", "eval", "hl.dispatch(hl.dsp.focus({ window = 'address:" + addr + "' }))"])
     }
 
+    function getAppIconSource(cls, title) {
+        var c = (cls || "").toLowerCase()
+        if (c.indexOf("brave") !== -1) {
+            return "file:///home/shell-ninja/.local/share/icons/kora/apps/scalable/brave-desktop.svg"
+        }
+        return ""
+    }
+
     function getAppGlyph(cls, title) {
         var c = (cls || "").toLowerCase()
         var t = (title || "").toLowerCase()
         if (c.indexOf("kitty") !== -1 || c.indexOf("alacritty") !== -1 || c.indexOf("foot") !== -1 || c.indexOf("terminal") !== -1) return "󰞷"
         if (c.indexOf("nvim") !== -1 || c.indexOf("code") !== -1 || c.indexOf("vim") !== -1 || c.indexOf("sublime") !== -1 || c.indexOf("antigravity") !== -1) return "󰅩"
-        if (c.indexOf("brave") !== -1 || c.indexOf("firefox") !== -1 || c.indexOf("chrome") !== -1 || c.indexOf("chromium") !== -1 || c.indexOf("edge") !== -1 || c.indexOf("zen") !== -1) return "󰈹"
+        if (c.indexOf("brave") !== -1) return "󰖟"
+        if (c.indexOf("firefox") !== -1 || c.indexOf("zen") !== -1) return "󰈹"
+        if (c.indexOf("chrome") !== -1 || c.indexOf("chromium") !== -1) return ""
+        if (c.indexOf("edge") !== -1) return "󰇩"
         if (c.indexOf("thunar") !== -1 || c.indexOf("dolphin") !== -1 || c.indexOf("nautilus") !== -1 || c.indexOf("yazi") !== -1 || c.indexOf("files") !== -1) return "󰉋"
         if (c.indexOf("discord") !== -1 || c.indexOf("telegram") !== -1 || c.indexOf("slack") !== -1 || c.indexOf("signal") !== -1 || c.indexOf("wechat") !== -1) return "󰭹"
         if (c.indexOf("spotify") !== -1 || c.indexOf("music") !== -1 || c.indexOf("mpd") !== -1 || c.indexOf("vlc") !== -1) return "󰝚"
@@ -177,7 +188,7 @@ Pill {
                     readonly property int visibleAppCount: (rootPill.showAppIcons && winList) ? Math.min(2, winList.length) : 0
 
                     height: wsCluster.height
-                    width: Math.max(26, 26 + visibleAppCount * 14)
+                    width: Math.max(28, 28 + visibleAppCount * 19)
 
                     Behavior on width {
                         NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
@@ -187,7 +198,7 @@ Pill {
                         anchors.fill: parent
                         anchors.leftMargin: (slotItem.visibleAppCount > 0) ? 6 : 0
                         anchors.rightMargin: (slotItem.visibleAppCount > 0) ? 6 : 0
-                        spacing: 4
+                        spacing: 5
 
                         Text {
                             Layout.alignment: Qt.AlignVCenter
@@ -209,15 +220,37 @@ Pill {
                         // Mini App Icons
                         Repeater {
                             model: slotItem.visibleAppCount
-                            delegate: Text {
+                            delegate: Item {
                                 required property int index
                                 readonly property var appWin: slotItem.winList[index]
+                                readonly property string iconPath: rootPill.getAppIconSource(appWin ? appWin.class : "", appWin ? appWin.title : "")
+                                readonly property string glyphStr: rootPill.getAppGlyph(appWin ? appWin.class : "", appWin ? appWin.title : "")
+
                                 Layout.alignment: Qt.AlignVCenter
-                                text: appWin ? rootPill.getAppGlyph(appWin.class, appWin.title) : ""
-                                font.family: "JetBrainsMono Nerd Font, monospace"
-                                font.pixelSize: 11
-                                color: slotItem.isActive ? Theme.background : Theme.accent
-                                opacity: slotItem.isActive ? 0.95 : 0.85
+                                implicitWidth: 15
+                                implicitHeight: 15
+
+                                Image {
+                                    anchors.centerIn: parent
+                                    width: 15
+                                    height: 15
+                                    source: parent.iconPath
+                                    fillMode: Image.PreserveAspectFit
+                                    visible: parent.iconPath.length > 0
+                                    asynchronous: true
+                                    smooth: true
+                                    mipmap: true
+                                }
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: parent.glyphStr
+                                    font.family: "JetBrainsMono Nerd Font, monospace"
+                                    font.pixelSize: 14
+                                    color: slotItem.isActive ? Theme.background : Theme.accent
+                                    opacity: slotItem.isActive ? 0.95 : 0.85
+                                    visible: parent.iconPath.length === 0
+                                }
 
                                 MouseArea {
                                     anchors.fill: parent
@@ -319,11 +352,32 @@ Pill {
                             anchors.leftMargin: 6; anchors.rightMargin: 6
                             spacing: 6
 
-                            Text {
-                                text: rootPill.getAppGlyph(modelData.class, modelData.title)
-                                font.family: "JetBrainsMono Nerd Font, monospace"
-                                font.pixelSize: 11
-                                color: Theme.accent
+                            Item {
+                                Layout.alignment: Qt.AlignVCenter
+                                implicitWidth: 16
+                                implicitHeight: 16
+                                readonly property string tipIcon: rootPill.getAppIconSource(modelData.class, modelData.title)
+
+                                Image {
+                                    anchors.centerIn: parent
+                                    width: 16
+                                    height: 16
+                                    source: parent.tipIcon
+                                    fillMode: Image.PreserveAspectFit
+                                    visible: parent.tipIcon.length > 0
+                                    asynchronous: true
+                                    smooth: true
+                                    mipmap: true
+                                }
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: rootPill.getAppGlyph(modelData.class, modelData.title)
+                                    font.family: "JetBrainsMono Nerd Font, monospace"
+                                    font.pixelSize: 14
+                                    color: Theme.accent
+                                    visible: parent.tipIcon.length === 0
+                                }
                             }
 
                             Text {
