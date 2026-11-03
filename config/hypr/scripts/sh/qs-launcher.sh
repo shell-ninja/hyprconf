@@ -27,6 +27,21 @@ elif pgrep -f "qs -c bar" >/dev/null 2>&1 && ! pgrep -f "qs -c island" >/dev/nul
     is_bar_mode=true
 fi
 
+if [[ -f "$bar_cfg" ]]; then
+    if grep -q '"capsule_style":\s*"glass"' "$bar_cfg" 2>/dev/null || grep -q '"screen_frame":\s*true' "$bar_cfg" 2>/dev/null; then
+        export QS_LAUNCHER_HAS_FRAME="1"
+    else
+        export QS_LAUNCHER_HAS_FRAME="0"
+    fi
+    ft=$(grep -oP '"frame_thickness":\s*\K[0-9]+' "$bar_cfg" 2>/dev/null || echo "18")
+    export QS_LAUNCHER_FRAME_THICKNESS="${ft:-18}"
+    op=$(grep -oP '"opacity":\s*\K[0-9.]+' "$bar_cfg" 2>/dev/null || echo "0.85")
+    export QS_LAUNCHER_BAR_OPACITY="${op:-0.85}"
+else
+    export QS_LAUNCHER_HAS_FRAME="0"
+    export QS_LAUNCHER_FRAME_THICKNESS="18"
+fi
+
 if [[ "$is_bar_mode" == "true" ]]; then
     if pgrep -f "qs -c launcher" >/dev/null 2>&1; then
         qs ipc -c launcher call launcher close 2>/dev/null || pkill -f "qs -c launcher" 2>/dev/null || true

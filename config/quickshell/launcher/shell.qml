@@ -19,6 +19,7 @@ PanelWindow {
     }
 
     color: "transparent"
+    exclusionMode: ExclusionMode.Ignore
     onClosed: Qt.quit()
 
     WlrLayershell.layer: WlrLayer.Overlay
@@ -42,9 +43,20 @@ PanelWindow {
     }
 
     // Bar configuration detection (Frames vs Capsule mode)
-    property bool hasScreenFrame: false
-    property int frameThickness: 18
-    property real barOpacity: 0.85
+    property bool hasScreenFrame: {
+        var e = Quickshell.env("QS_LAUNCHER_HAS_FRAME")
+        if (e === "1") return true
+        if (e === "0") return false
+        return false
+    }
+    property int frameThickness: {
+        var ft = parseInt(Quickshell.env("QS_LAUNCHER_FRAME_THICKNESS"))
+        return (!isNaN(ft) && ft > 0) ? ft : 18
+    }
+    property real barOpacity: {
+        var op = parseFloat(Quickshell.env("QS_LAUNCHER_BAR_OPACITY"))
+        return (!isNaN(op) && op > 0) ? op : 0.85
+    }
     property string barCapsuleStyle: "islands"
 
     readonly property bool isBottomAttached: (root.currentTheme === "spotlight" || root.currentTheme === "style-3") && root.hasScreenFrame
@@ -453,14 +465,27 @@ PanelWindow {
         onTriggered: root.focusLauncher()
     }
 
+    // Bottom Glass Frame Bar (Seamless fusion under the attached spotlight)
+    Rectangle {
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        height: root.frameThickness
+        color: Theme.alpha(Theme.surface, root.barOpacity)
+        visible: root.isBottomAttached
+        z: 0
+    }
+
     // ── Dynamic Launcher Theme Loader & Bubbly Animations ────────────────────
     Loader {
         id: themeLoader
         focus: true
+        width: item ? item.width : 680
+        height: item ? item.height : 560
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.verticalCenter: root.isBottomAttached ? undefined : parent.verticalCenter
         anchors.bottom: root.isBottomAttached ? parent.bottom : undefined
-        anchors.bottomMargin: root.isBottomAttached ? root.frameThickness : 0
+        anchors.bottomMargin: root.isBottomAttached ? (root.frameThickness - 1) : 0
 
         scale: root.animScale
         opacity: root.animOpacity

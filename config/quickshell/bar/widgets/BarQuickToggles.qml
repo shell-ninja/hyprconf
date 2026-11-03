@@ -23,6 +23,18 @@ Pill {
         readonly property bool isHovered: modeHover.hovered || modeMouse.containsMouse
         readonly property int currentMode: (typeof bar !== "undefined" && bar) ? bar.systemMode : 0
 
+        property bool modePulse: false
+        Timer {
+            id: pulseResetTimer
+            interval: 220
+            repeat: false
+            onTriggered: systemModeBtn.modePulse = false
+        }
+        onCurrentModeChanged: {
+            systemModeBtn.modePulse = true
+            pulseResetTimer.restart()
+        }
+
         // Scaled Visual Badge
         Rectangle {
             anchors.fill: parent
@@ -59,13 +71,46 @@ Pill {
             onClicked: if (typeof bar !== "undefined" && bar) bar.cycleSystemMode()
         }
 
-        // Obsidian Glass Hover Tooltip (Unscaled, Centered, Monolithic)
+        // Obsidian Glass Hover Tooltip (Animated Pop-down Dropdown)
         Item {
             id: modeTooltip
             z: 9999
-            visible: systemModeBtn.isHovered || opacity > 0.01
+            visible: opacity > 0.005
+
+            property real animY: systemModeBtn.isHovered ? 0 : -8
+            property real animScale: systemModeBtn.isHovered ? 1.0 : 0.94
             opacity: systemModeBtn.isHovered ? 1.0 : 0.0
-            Behavior on opacity { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: systemModeBtn.isHovered ? 180 : 130
+                    easing.type: systemModeBtn.isHovered ? Easing.OutQuad : Easing.InQuad
+                }
+            }
+            Behavior on animY {
+                NumberAnimation {
+                    duration: systemModeBtn.isHovered ? 240 : 140
+                    easing.type: systemModeBtn.isHovered ? Easing.OutBack : Easing.InCubic
+                    easing.overshoot: 1.25
+                }
+            }
+            Behavior on animScale {
+                NumberAnimation {
+                    duration: systemModeBtn.isHovered ? 220 : 140
+                    easing.type: systemModeBtn.isHovered ? Easing.OutBack : Easing.InCubic
+                    easing.overshoot: 1.2
+                }
+            }
+
+            transform: [
+                Translate { y: modeTooltip.animY },
+                Scale {
+                    origin.x: modeTooltip.width / 2
+                    origin.y: 0
+                    xScale: modeTooltip.animScale
+                    yScale: modeTooltip.animScale
+                }
+            ]
 
             readonly property bool isGlass: (typeof bar !== "undefined" && bar && bar.capsuleStyle === "glass")
             readonly property int fL: isGlass ? 10 : 0
@@ -75,17 +120,19 @@ Pill {
             readonly property int w: bodyWidth
             readonly property int h: height
             readonly property color surface: (typeof bar !== "undefined" && bar) ? Theme.alpha(Theme.surface, bar.barOpacity) : Theme.alpha(Theme.surface, 0.90)
-            readonly property color strokeColor: systemModeBtn.currentMode === 1
-                                                 ? Theme.alpha(Theme.accent, 0.45)
-                                                 : (systemModeBtn.currentMode === 2
-                                                    ? Theme.alpha(Theme.secondary, 0.45)
-                                                    : Theme.alpha(Theme.accent, 0.28))
+            property color strokeColor: systemModeBtn.currentMode === 1
+                                         ? Theme.alpha(Theme.accent, 0.45)
+                                         : (systemModeBtn.currentMode === 2
+                                            ? Theme.alpha(Theme.secondary, 0.45)
+                                            : Theme.alpha(Theme.accent, 0.28))
+            Behavior on strokeColor { ColorAnimation { duration: 220 } }
 
             y: isGlass ? Math.round((bar.barH + systemModeBtn.height) / 2 - 1) : (systemModeBtn.height + 6)
             x: {
                 var idealBodyX = systemModeBtn.width / 2 - bodyWidth / 2
                 try {
-                    var screenBtnX = systemModeBtn.mapToItem(null, 0, 0).x
+                    var screenPt = systemModeBtn.mapToItem(null, 0, 0)
+                    var screenBtnX = screenPt ? screenPt.x : 0
                     var minScreenX = isGlass ? (bar.frameThickness + 4) : 8
                     var maxScreenX = isGlass ? (bar.width - bar.frameThickness - 4) : (bar.width - 8)
                     var clampedBodyX = Math.max(minScreenX - screenBtnX, Math.min(maxScreenX - bodyWidth - screenBtnX, idealBodyX))
@@ -227,6 +274,11 @@ Pill {
                         name: systemModeBtn.currentMode === 1 ? "gamepad" : (systemModeBtn.currentMode === 2 ? "presentation" : "desktop")
                         size: 14
                         color: systemModeBtn.currentMode === 1 ? Theme.accent : (systemModeBtn.currentMode === 2 ? Theme.secondary : Theme.foreground)
+                        scale: systemModeBtn.modePulse ? 1.25 : 1.0
+                        rotation: systemModeBtn.currentMode * 120
+                        Behavior on color { ColorAnimation { duration: 180 } }
+                        Behavior on scale { NumberAnimation { duration: 200; easing.type: Easing.OutBack; easing.overshoot: 1.5 } }
+                        Behavior on rotation { NumberAnimation { duration: 280; easing.type: Easing.OutBack; easing.overshoot: 1.3 } }
                     }
 
                     Text {
@@ -235,6 +287,8 @@ Pill {
                         font.pixelSize: 12
                         font.weight: Font.Bold
                         color: Theme.foreground
+                        scale: systemModeBtn.modePulse ? 1.05 : 1.0
+                        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutQuad } }
                     }
 
                     Item { Layout.fillWidth: true }
@@ -243,6 +297,7 @@ Pill {
                         implicitWidth: badgeText.implicitWidth + 12
                         implicitHeight: 18
                         radius: 9
+                        scale: systemModeBtn.modePulse ? 1.15 : 1.0
                         color: systemModeBtn.currentMode === 1
                                ? Theme.alpha(Theme.accent, 0.25)
                                : (systemModeBtn.currentMode === 2
@@ -254,6 +309,10 @@ Pill {
                                       : (systemModeBtn.currentMode === 2
                                          ? Theme.alpha(Theme.secondary, 0.50)
                                          : Theme.alpha(Theme.foreground, 0.15))
+
+                        Behavior on scale { NumberAnimation { duration: 200; easing.type: Easing.OutBack; easing.overshoot: 1.4 } }
+                        Behavior on color { ColorAnimation { duration: 180 } }
+                        Behavior on border.color { ColorAnimation { duration: 180 } }
 
                         Text {
                             id: badgeText
@@ -274,134 +333,155 @@ Pill {
                     color: Theme.alpha(Theme.accent, 0.15)
                 }
 
-                // Normal Mode (0)
-                ColumnLayout {
+                // Feature Lists Animated Container
+                Item {
                     Layout.fillWidth: true
-                    spacing: 5
-                    visible: systemModeBtn.currentMode === 0
+                    implicitHeight: 74
 
-                    RowLayout {
-                        spacing: 6
-                        Rectangle { width: 4; height: 4; radius: 2; color: Theme.accent }
-                        Text {
-                            text: "Obsidian glass & window blur active"
-                            font.family: "Outfit"; font.pixelSize: 10
-                            color: Theme.alpha(Theme.foreground, 0.85)
-                        }
-                    }
-                    RowLayout {
-                        spacing: 6
-                        Rectangle { width: 4; height: 4; radius: 2; color: Theme.accent }
-                        Text {
-                            text: "Smooth spring physics animations"
-                            font.family: "Outfit"; font.pixelSize: 10
-                            color: Theme.alpha(Theme.foreground, 0.85)
-                        }
-                    }
-                    RowLayout {
-                        spacing: 6
-                        Rectangle { width: 4; height: 4; radius: 2; color: Theme.accent }
-                        Text {
-                            text: "Desktop notifications & toasts active"
-                            font.family: "Outfit"; font.pixelSize: 10
-                            color: Theme.alpha(Theme.foreground, 0.85)
-                        }
-                    }
-                    RowLayout {
-                        spacing: 6
-                        Rectangle { width: 4; height: 4; radius: 2; color: Theme.accent }
-                        Text {
-                            text: "Standard sleep & balanced power"
-                            font.family: "Outfit"; font.pixelSize: 10
-                            color: Theme.alpha(Theme.foreground, 0.85)
-                        }
-                    }
-                }
+                    // Normal Mode (0)
+                    ColumnLayout {
+                        id: normalCol
+                        anchors.fill: parent
+                        spacing: 5
+                        opacity: systemModeBtn.currentMode === 0 ? 1.0 : 0.0
+                        visible: opacity > 0.01
+                        transform: Translate { y: systemModeBtn.currentMode === 0 ? 0 : (systemModeBtn.currentMode > 0 ? -6 : 6) }
+                        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutQuad } }
+                        Behavior on y { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
 
-                // Game Mode (1)
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    spacing: 5
-                    visible: systemModeBtn.currentMode === 1
+                        RowLayout {
+                            spacing: 6
+                            Rectangle { width: 4; height: 4; radius: 2; color: Theme.accent }
+                            Text {
+                                text: "Obsidian glass & window blur active"
+                                font.family: "Outfit"; font.pixelSize: 10
+                                color: Theme.alpha(Theme.foreground, 0.85)
+                            }
+                        }
+                        RowLayout {
+                            spacing: 6
+                            Rectangle { width: 4; height: 4; radius: 2; color: Theme.accent }
+                            Text {
+                                text: "Smooth spring physics animations"
+                                font.family: "Outfit"; font.pixelSize: 10
+                                color: Theme.alpha(Theme.foreground, 0.85)
+                            }
+                        }
+                        RowLayout {
+                            spacing: 6
+                            Rectangle { width: 4; height: 4; radius: 2; color: Theme.accent }
+                            Text {
+                                text: "Desktop notifications & toasts active"
+                                font.family: "Outfit"; font.pixelSize: 10
+                                color: Theme.alpha(Theme.foreground, 0.85)
+                            }
+                        }
+                        RowLayout {
+                            spacing: 6
+                            Rectangle { width: 4; height: 4; radius: 2; color: Theme.accent }
+                            Text {
+                                text: "Standard sleep & balanced power"
+                                font.family: "Outfit"; font.pixelSize: 10
+                                color: Theme.alpha(Theme.foreground, 0.85)
+                            }
+                        }
+                    }
 
-                    RowLayout {
-                        spacing: 6
-                        Rectangle { width: 4; height: 4; radius: 2; color: Theme.accent }
-                        Text {
-                            text: "100% opacity on all windows"
-                            font.family: "Outfit"; font.pixelSize: 10
-                            color: Theme.alpha(Theme.foreground, 0.85)
-                        }
-                    }
-                    RowLayout {
-                        spacing: 6
-                        Rectangle { width: 4; height: 4; radius: 2; color: Theme.accent }
-                        Text {
-                            text: "0ms latency direct scanout tearing"
-                            font.family: "Outfit"; font.pixelSize: 10
-                            color: Theme.alpha(Theme.foreground, 0.85)
-                        }
-                    }
-                    RowLayout {
-                        spacing: 6
-                        Rectangle { width: 4; height: 4; radius: 2; color: Theme.accent }
-                        Text {
-                            text: "Blur, window shadows & anim off"
-                            font.family: "Outfit"; font.pixelSize: 10
-                            color: Theme.alpha(Theme.foreground, 0.85)
-                        }
-                    }
-                    RowLayout {
-                        spacing: 6
-                        Rectangle { width: 4; height: 4; radius: 2; color: Theme.accent }
-                        Text {
-                            text: "Max performance CPU profile"
-                            font.family: "Outfit"; font.pixelSize: 10
-                            color: Theme.alpha(Theme.foreground, 0.85)
-                        }
-                    }
-                }
+                    // Game Mode (1)
+                    ColumnLayout {
+                        id: gameCol
+                        anchors.fill: parent
+                        spacing: 5
+                        opacity: systemModeBtn.currentMode === 1 ? 1.0 : 0.0
+                        visible: opacity > 0.01
+                        transform: Translate { y: systemModeBtn.currentMode === 1 ? 0 : (systemModeBtn.currentMode > 1 ? -6 : 6) }
+                        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutQuad } }
+                        Behavior on y { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
 
-                // Presentation Mode (2)
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    spacing: 5
-                    visible: systemModeBtn.currentMode === 2
+                        RowLayout {
+                            spacing: 6
+                            Rectangle { width: 4; height: 4; radius: 2; color: Theme.accent }
+                            Text {
+                                text: "100% opacity on all windows"
+                                font.family: "Outfit"; font.pixelSize: 10
+                                color: Theme.alpha(Theme.foreground, 0.85)
+                            }
+                        }
+                        RowLayout {
+                            spacing: 6
+                            Rectangle { width: 4; height: 4; radius: 2; color: Theme.accent }
+                            Text {
+                                text: "0ms latency direct scanout tearing"
+                                font.family: "Outfit"; font.pixelSize: 10
+                                color: Theme.alpha(Theme.foreground, 0.85)
+                            }
+                        }
+                        RowLayout {
+                            spacing: 6
+                            Rectangle { width: 4; height: 4; radius: 2; color: Theme.accent }
+                            Text {
+                                text: "Blur, window shadows & anim off"
+                                font.family: "Outfit"; font.pixelSize: 10
+                                color: Theme.alpha(Theme.foreground, 0.85)
+                            }
+                        }
+                        RowLayout {
+                            spacing: 6
+                            Rectangle { width: 4; height: 4; radius: 2; color: Theme.accent }
+                            Text {
+                                text: "Max performance CPU profile"
+                                font.family: "Outfit"; font.pixelSize: 10
+                                color: Theme.alpha(Theme.foreground, 0.85)
+                            }
+                        }
+                    }
 
-                    RowLayout {
-                        spacing: 6
-                        Rectangle { width: 4; height: 4; radius: 2; color: Theme.secondary }
-                        Text {
-                            text: "Do Not Disturb (DND) — popups silenced"
-                            font.family: "Outfit"; font.pixelSize: 10
-                            color: Theme.alpha(Theme.foreground, 0.85)
+                    // Presentation Mode (2)
+                    ColumnLayout {
+                        id: presCol
+                        anchors.fill: parent
+                        spacing: 5
+                        opacity: systemModeBtn.currentMode === 2 ? 1.0 : 0.0
+                        visible: opacity > 0.01
+                        transform: Translate { y: systemModeBtn.currentMode === 2 ? 0 : (systemModeBtn.currentMode < 2 ? 6 : -6) }
+                        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutQuad } }
+                        Behavior on y { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+
+                        RowLayout {
+                            spacing: 6
+                            Rectangle { width: 4; height: 4; radius: 2; color: Theme.secondary }
+                            Text {
+                                text: "Do Not Disturb (DND) — popups silenced"
+                                font.family: "Outfit"; font.pixelSize: 10
+                                color: Theme.alpha(Theme.foreground, 0.85)
+                            }
                         }
-                    }
-                    RowLayout {
-                        spacing: 6
-                        Rectangle { width: 4; height: 4; radius: 2; color: Theme.secondary }
-                        Text {
-                            text: "Display sleep & lock inhibited (Caffeine)"
-                            font.family: "Outfit"; font.pixelSize: 10
-                            color: Theme.alpha(Theme.foreground, 0.85)
+                        RowLayout {
+                            spacing: 6
+                            Rectangle { width: 4; height: 4; radius: 2; color: Theme.secondary }
+                            Text {
+                                text: "Display sleep & lock inhibited (Caffeine)"
+                                font.family: "Outfit"; font.pixelSize: 10
+                                color: Theme.alpha(Theme.foreground, 0.85)
+                            }
                         }
-                    }
-                    RowLayout {
-                        spacing: 6
-                        Rectangle { width: 4; height: 4; radius: 2; color: Theme.secondary }
-                        Text {
-                            text: "No tearing for clean video / screen share"
-                            font.family: "Outfit"; font.pixelSize: 10
-                            color: Theme.alpha(Theme.foreground, 0.85)
+                        RowLayout {
+                            spacing: 6
+                            Rectangle { width: 4; height: 4; radius: 2; color: Theme.secondary }
+                            Text {
+                                text: "No tearing for clean video / screen share"
+                                font.family: "Outfit"; font.pixelSize: 10
+                                color: Theme.alpha(Theme.foreground, 0.85)
+                            }
                         }
-                    }
-                    RowLayout {
-                        spacing: 6
-                        Rectangle { width: 4; height: 4; radius: 2; color: Theme.secondary }
-                        Text {
-                            text: "Quiet fan acoustics (Balanced power)"
-                            font.family: "Outfit"; font.pixelSize: 10
-                            color: Theme.alpha(Theme.foreground, 0.85)
+                        RowLayout {
+                            spacing: 6
+                            Rectangle { width: 4; height: 4; radius: 2; color: Theme.secondary }
+                            Text {
+                                text: "Quiet fan acoustics (Balanced power)"
+                                font.family: "Outfit"; font.pixelSize: 10
+                                color: Theme.alpha(Theme.foreground, 0.85)
+                            }
                         }
                     }
                 }

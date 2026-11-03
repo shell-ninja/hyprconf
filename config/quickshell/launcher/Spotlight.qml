@@ -16,8 +16,10 @@ Rectangle {
     readonly property bool isIsland: Boolean(rootWindow && rootWindow.isIslandView)
     readonly property bool isBottomAttached: Boolean(rootWindow && rootWindow.isBottomAttached)
 
-    width: isIsland ? parent.width : 680
-    height: isIsland ? parent.height : Math.min(560, mainLayout.implicitHeight + 24)
+    implicitWidth: 680
+    implicitHeight: Math.min(560, mainLayout.implicitHeight + (card.isBottomAttached ? 18 : 24))
+    width: isIsland ? parent.width : implicitWidth
+    height: isIsland ? parent.height : implicitHeight
     anchors.fill: isIsland ? parent : undefined
     anchors.centerIn: (isIsland || isBottomAttached) ? undefined : parent
     radius: (isIsland || isBottomAttached) ? 0 : 16
@@ -34,7 +36,10 @@ Rectangle {
     // Attached Bottom Glass Frame Monolithic Shape
     Shape {
         id: bottomAttachedBg
-        anchors.fill: parent
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        width: card.width + fL + fR
         layer.enabled: true
         layer.samples: 4
         visible: card.isBottomAttached
@@ -49,58 +54,63 @@ Rectangle {
         readonly property int w: card.width
         readonly property int h: card.height
 
-        // 1. Closed Fill Path (Seamless with bottom frame)
+        // 1. Closed Fill Path (Seamless fusion with bottom frame)
         ShapePath {
             fillColor: bottomAttachedBg.surfaceFill
             strokeColor: "transparent"
             strokeWidth: 0
 
-            startX: -bottomAttachedBg.fL
-            startY: bottomAttachedBg.h
+            startX: 0
+            startY: bottomAttachedBg.h + 2
+
+            // Edge from below frame up to bottom frame seam
+            PathLine { x: 0; y: bottomAttachedBg.h }
 
             // Fillet curve from bottom frame into left edge
             PathArc {
-                x: 0
+                x: bottomAttachedBg.fL
                 y: bottomAttachedBg.h - bottomAttachedBg.fL
                 radiusX: bottomAttachedBg.fL
                 radiusY: bottomAttachedBg.fL
-                direction: PathArc.Clockwise
+                direction: PathArc.Counterclockwise
             }
             // Left vertical edge up to top-left corner
-            PathLine { x: 0; y: bottomAttachedBg.tr }
+            PathLine { x: bottomAttachedBg.fL; y: bottomAttachedBg.tr }
             // Top-left rounded corner
             PathArc {
-                x: bottomAttachedBg.tr
+                x: bottomAttachedBg.fL + bottomAttachedBg.tr
                 y: 0
                 radiusX: bottomAttachedBg.tr
                 radiusY: bottomAttachedBg.tr
                 direction: PathArc.Clockwise
             }
             // Top horizontal edge
-            PathLine { x: bottomAttachedBg.w - bottomAttachedBg.tr; y: 0 }
+            PathLine { x: bottomAttachedBg.fL + bottomAttachedBg.w - bottomAttachedBg.tr; y: 0 }
             // Top-right rounded corner
             PathArc {
-                x: bottomAttachedBg.w
+                x: bottomAttachedBg.fL + bottomAttachedBg.w
                 y: bottomAttachedBg.tr
                 radiusX: bottomAttachedBg.tr
                 radiusY: bottomAttachedBg.tr
                 direction: PathArc.Clockwise
             }
             // Right vertical edge down to right fillet
-            PathLine { x: bottomAttachedBg.w; y: bottomAttachedBg.h - bottomAttachedBg.fR }
+            PathLine { x: bottomAttachedBg.fL + bottomAttachedBg.w; y: bottomAttachedBg.h - bottomAttachedBg.fR }
             // Fillet curve from right edge into bottom frame
             PathArc {
-                x: bottomAttachedBg.w + bottomAttachedBg.fR
+                x: bottomAttachedBg.fL + bottomAttachedBg.w + bottomAttachedBg.fR
                 y: bottomAttachedBg.h
                 radiusX: bottomAttachedBg.fR
                 radiusY: bottomAttachedBg.fR
-                direction: PathArc.Clockwise
+                direction: PathArc.Counterclockwise
             }
-            // Close across the bottom line to complete fill
-            PathLine { x: -bottomAttachedBg.fL; y: bottomAttachedBg.h }
+            // Edge down 2px into bottom frame
+            PathLine { x: bottomAttachedBg.fL + bottomAttachedBg.w + bottomAttachedBg.fR; y: bottomAttachedBg.h + 2 }
+            // Close across bottom line inside bottom frame
+            PathLine { x: 0; y: bottomAttachedBg.h + 2 }
         }
 
-        // 2. Open Perimeter Stroke (NO stroke across bottom seam!)
+        // 2. Open Perimeter Stroke (NO stroke across bottom seam — seamless attachment)
         ShapePath {
             fillColor: "transparent"
             strokeColor: bottomAttachedBg.strokeColor
@@ -108,39 +118,39 @@ Rectangle {
             capStyle: ShapePath.RoundCap
             joinStyle: ShapePath.RoundJoin
 
-            startX: -bottomAttachedBg.fL
+            startX: 0
             startY: bottomAttachedBg.h
 
             PathArc {
-                x: 0
+                x: bottomAttachedBg.fL
                 y: bottomAttachedBg.h - bottomAttachedBg.fL
                 radiusX: bottomAttachedBg.fL
                 radiusY: bottomAttachedBg.fL
-                direction: PathArc.Clockwise
+                direction: PathArc.Counterclockwise
             }
-            PathLine { x: 0; y: bottomAttachedBg.tr }
+            PathLine { x: bottomAttachedBg.fL; y: bottomAttachedBg.tr }
             PathArc {
-                x: bottomAttachedBg.tr
+                x: bottomAttachedBg.fL + bottomAttachedBg.tr
                 y: 0
                 radiusX: bottomAttachedBg.tr
                 radiusY: bottomAttachedBg.tr
                 direction: PathArc.Clockwise
             }
-            PathLine { x: bottomAttachedBg.w - bottomAttachedBg.tr; y: 0 }
+            PathLine { x: bottomAttachedBg.fL + bottomAttachedBg.w - bottomAttachedBg.tr; y: 0 }
             PathArc {
-                x: bottomAttachedBg.w
+                x: bottomAttachedBg.fL + bottomAttachedBg.w
                 y: bottomAttachedBg.tr
                 radiusX: bottomAttachedBg.tr
                 radiusY: bottomAttachedBg.tr
                 direction: PathArc.Clockwise
             }
-            PathLine { x: bottomAttachedBg.w; y: bottomAttachedBg.h - bottomAttachedBg.fR }
+            PathLine { x: bottomAttachedBg.fL + bottomAttachedBg.w; y: bottomAttachedBg.h - bottomAttachedBg.fR }
             PathArc {
-                x: bottomAttachedBg.w + bottomAttachedBg.fR
+                x: bottomAttachedBg.fL + bottomAttachedBg.w + bottomAttachedBg.fR
                 y: bottomAttachedBg.h
                 radiusX: bottomAttachedBg.fR
                 radiusY: bottomAttachedBg.fR
-                direction: PathArc.Clockwise
+                direction: PathArc.Counterclockwise
             }
         }
     }
@@ -171,7 +181,9 @@ Rectangle {
         onTriggered: focusInput()
     }
 
-    Component.onCompleted: focusInput()
+    Component.onCompleted: {
+        focusInput()
+    }
 
     Connections {
         target: rootWindow
@@ -494,7 +506,10 @@ Rectangle {
     ColumnLayout {
         id: mainLayout
         anchors.fill: parent
-        anchors.margins: card.isIsland ? 12 : 14
+        anchors.leftMargin: card.isIsland ? 12 : 14
+        anchors.rightMargin: card.isIsland ? 12 : 14
+        anchors.topMargin: card.isIsland ? 12 : 14
+        anchors.bottomMargin: card.isBottomAttached ? 6 : (card.isIsland ? 12 : 14)
         spacing: 12
 
         // ── TOP SEARCH INPUT ROW ────────────────────────────────────────────
