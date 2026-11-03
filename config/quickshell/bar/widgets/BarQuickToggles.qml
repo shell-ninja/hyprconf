@@ -30,7 +30,7 @@ Pill {
 
         SvgIcon {
             anchors.centerIn: parent
-            name: systemModeBtn.currentMode === 1 ? "gamepad" : (systemModeBtn.currentMode === 2 ? "presentation" : "spark")
+            name: systemModeBtn.currentMode === 1 ? "gamepad" : (systemModeBtn.currentMode === 2 ? "presentation" : "desktop")
             size: 13
             color: (systemModeBtn.currentMode === 1 || systemModeBtn.currentMode === 2)
                    ? Theme.background
@@ -61,11 +61,14 @@ Pill {
             Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutBack; easing.overshoot: 1.2 } }
 
             anchors.top: parent.bottom
-            anchors.topMargin: 8
+            anchors.topMargin: (typeof bar !== "undefined" && bar && bar.capsuleStyle === "glass") ? Math.max(0, (bar.barH - systemModeBtn.height) / 2 - 1) : 8
             anchors.horizontalCenter: parent.horizontalCenter
             width: 260
             height: tooltipCol.implicitHeight + 20
-            radius: 12
+            topLeftRadius: (typeof bar !== "undefined" && bar && bar.capsuleStyle === "glass") ? 0 : 12
+            topRightRadius: (typeof bar !== "undefined" && bar && bar.capsuleStyle === "glass") ? 0 : 12
+            bottomLeftRadius: 12
+            bottomRightRadius: 12
             color: Theme.alpha(Theme.surface, 0.96)
             border.width: 1
             border.color: systemModeBtn.currentMode === 1
@@ -98,7 +101,7 @@ Pill {
                     spacing: 8
 
                     SvgIcon {
-                        name: systemModeBtn.currentMode === 1 ? "gamepad" : (systemModeBtn.currentMode === 2 ? "presentation" : "spark")
+                        name: systemModeBtn.currentMode === 1 ? "gamepad" : (systemModeBtn.currentMode === 2 ? "presentation" : "desktop")
                         size: 14
                         color: systemModeBtn.currentMode === 1 ? Theme.accent : (systemModeBtn.currentMode === 2 ? Theme.secondary : Theme.foreground)
                     }

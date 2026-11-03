@@ -15,7 +15,7 @@ ShellRoot {
         }
         implicitWidth: 1
         implicitHeight: 1
-        exclusiveZone: zone
+        exclusiveZone: visible ? zone : 0
         color: "transparent"
         mask: Region {}
         WlrLayershell.layer: WlrLayer.Bottom
@@ -37,26 +37,26 @@ ShellRoot {
             Reserve {
                 screen: scope.modelData
                 side: "top"
-                zone: mainBar.totalBarHeight
+                zone: (mainBar.capsuleStyle === "glass") ? mainBar.barH : mainBar.totalBarHeight
             }
 
             Reserve {
                 screen: scope.modelData
                 side: "left"
-                zone: 12
-                visible: mainBar.enableScreenFrame
+                zone: (mainBar.capsuleStyle === "glass") ? mainBar.frameThickness : 12
+                visible: (mainBar.capsuleStyle === "glass") || mainBar.enableScreenFrame
             }
             Reserve {
                 screen: scope.modelData
                 side: "right"
-                zone: 12
-                visible: mainBar.enableScreenFrame
+                zone: (mainBar.capsuleStyle === "glass") ? mainBar.frameThickness : 12
+                visible: (mainBar.capsuleStyle === "glass") || mainBar.enableScreenFrame
             }
             Reserve {
                 screen: scope.modelData
                 side: "bottom"
-                zone: 12
-                visible: mainBar.enableScreenFrame
+                zone: (mainBar.capsuleStyle === "glass") ? mainBar.frameThickness : 12
+                visible: (mainBar.capsuleStyle === "glass") || mainBar.enableScreenFrame
             }
         }
     }

@@ -66,8 +66,9 @@ Item {
         if (osdType === "system_mode" || osdType === "mode") {
             if (osdIcon === "presentation" || osdValue === 2.0 || osdLabel.toLowerCase().indexOf("presentation") !== -1 || osdLabel.toLowerCase().indexOf("class") !== -1) return "presentation"
             if (osdIcon === "gamepad" || osdValue === 1.0 || osdLabel.toLowerCase().indexOf("game") !== -1) return "gamepad"
-            return "spark"
+            return "desktop"
         }
+        if (osdType === "desktop") return "desktop"
         if (osdType === "gamepad") return "gamepad"
         if (osdType === "presentation") return "presentation"
         if (osdType === "nightlight" || osdType === "sunset") return "moon"

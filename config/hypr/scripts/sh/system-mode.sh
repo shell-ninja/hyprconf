@@ -56,7 +56,7 @@ set_mode() {
 
             # 6. Unified OSD
             if [[ -x "$scripts_dir/osd-notify.sh" ]]; then
-                bash "$scripts_dir/osd-notify.sh" "system_mode" "0" "Normal Mode" "spark" "Obsidian Glass • Standard Notifications" >/dev/null 2>&1 || true
+                bash "$scripts_dir/osd-notify.sh" "system_mode" "0" "Normal Mode" "desktop" "Obsidian Glass • Standard Notifications" >/dev/null 2>&1 || true
             else
                 notify-send -a "Hyprconf System Mode" -t 2500 "Normal Mode" "Obsidian Glass • Standard Notifications" 2>/dev/null || true
             fi

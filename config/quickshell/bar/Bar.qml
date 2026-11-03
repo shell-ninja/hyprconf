@@ -44,6 +44,8 @@ PanelWindow {
     property real barOpacity: 0.85
     property bool enableScreenFrame: false
     property bool hidePkgWhenEmpty: false
+    property int frameThickness: 18
+    property int frameCornerRadius: 24
 
     readonly property int totalBarHeight: barH + marginTop + 4
 
@@ -169,6 +171,8 @@ PanelWindow {
             if (cfg.opacity !== undefined) bar.barOpacity = parseFloat(cfg.opacity) || 0.85
             if (cfg.screen_frame !== undefined) bar.enableScreenFrame = !!cfg.screen_frame
             if (cfg.hide_pkg_empty !== undefined) bar.hidePkgWhenEmpty = !!cfg.hide_pkg_empty
+            if (cfg.frame_thickness !== undefined) bar.frameThickness = parseInt(cfg.frame_thickness, 10) || 18
+            if (cfg.frame_corner_radius !== undefined) bar.frameCornerRadius = parseInt(cfg.frame_corner_radius, 10) || 24
 
             if (cfg.start && Array.isArray(cfg.start)) bar.startWidgets = cfg.start
             if (cfg.center && Array.isArray(cfg.center)) bar.centerWidgets = cfg.center
@@ -828,18 +832,18 @@ PanelWindow {
     // ── MAIN BAR VISUAL SURFACE ─────────────────────────────────────
     Item {
         id: topStrip
-        x: bar.marginLeft
-        y: bar.marginTop
-        width: bar.width - bar.marginLeft - bar.marginRight
+        x: (bar.capsuleStyle === "glass") ? 0 : bar.marginLeft
+        y: (bar.capsuleStyle === "glass") ? 0 : bar.marginTop
+        width: (bar.capsuleStyle === "glass") ? bar.width : (bar.width - bar.marginLeft - bar.marginRight)
         height: bar.barH
 
         // Unified Mode: Full-width continuous Obsidian Glass Shelf
         Rectangle {
             id: barBackground
             anchors.fill: parent
-            radius: Math.min(bar.capsuleRadius + 2, height / 2)
+            radius: (bar.capsuleStyle === "glass") ? 0 : Math.min(bar.capsuleRadius + 2, height / 2)
             color: Theme.alpha(Theme.surface, bar.barOpacity)
-            border.width: 1
+            border.width: (bar.capsuleStyle === "glass") ? 0 : 1
             border.color: Theme.alpha(Theme.accent, 0.22)
             visible: (bar.capsuleStyle !== "islands") && bar.barOpacity > 0.05
 
@@ -850,6 +854,7 @@ PanelWindow {
                 width: parent.width * 0.85
                 height: 1
                 color: Theme.alpha(Theme.foreground, 0.12)
+                visible: bar.capsuleStyle !== "glass"
             }
         }
 
@@ -879,7 +884,7 @@ PanelWindow {
         RowLayout {
             id: startRow
             anchors.left: (bar.capsuleStyle === "islands") ? startIsland.left : parent.left
-            anchors.leftMargin: bar.padding
+            anchors.leftMargin: (bar.capsuleStyle === "glass") ? (bar.frameThickness + 8) : bar.padding
             anchors.verticalCenter: parent.verticalCenter
             spacing: bar.widgetSpacing
 
@@ -954,7 +959,7 @@ PanelWindow {
         RowLayout {
             id: endRow
             anchors.right: (bar.capsuleStyle === "islands") ? endIsland.right : parent.right
-            anchors.rightMargin: bar.padding
+            anchors.rightMargin: (bar.capsuleStyle === "glass") ? (bar.frameThickness + 8) : bar.padding
             anchors.verticalCenter: parent.verticalCenter
             spacing: bar.widgetSpacing
 
@@ -990,6 +995,151 @@ PanelWindow {
             reverse: true
             theme: bar.trailStyle
             visible: (bar.capsuleStyle === "islands") && (bar.trailStyle !== "none")
+        }
+    }
+
+    // ── CAELESTIA SHELL / CONTINUOUS SCREEN FRAME (3-sided empty bars + 4 inverted corners) ──
+    Item {
+        id: screenFrame
+        anchors.fill: parent
+        visible: ((bar.capsuleStyle === "glass") || bar.enableScreenFrame) && (bar.barOpacity > 0.05)
+        z: -1
+
+        readonly property int ft: bar.frameThickness
+        readonly property int cr: bar.frameCornerRadius
+        readonly property int topH: (bar.capsuleStyle === "glass") ? bar.barH : (bar.barH + bar.marginTop)
+        readonly property color frameFill: Theme.alpha(Theme.surface, bar.barOpacity)
+
+        // 1. Left Glass Frame Bar
+        Rectangle {
+            x: 0
+            y: screenFrame.topH
+            width: screenFrame.ft
+            height: parent.height - screenFrame.topH - screenFrame.ft
+            color: screenFrame.frameFill
+        }
+
+        // 2. Right Glass Frame Bar
+        Rectangle {
+            x: parent.width - screenFrame.ft
+            y: screenFrame.topH
+            width: screenFrame.ft
+            height: parent.height - screenFrame.topH - screenFrame.ft
+            color: screenFrame.frameFill
+        }
+
+        // 3. Bottom Glass Frame Bar
+        Rectangle {
+            x: 0
+            y: parent.height - screenFrame.ft
+            width: parent.width
+            height: screenFrame.ft
+            color: screenFrame.frameFill
+        }
+
+        // 4. Inverted Corner Fillets (Native QtQuick.Shapes matching exact frameFill color)
+        // Top-Left Inverted Corner
+        Shape {
+            x: screenFrame.ft
+            y: screenFrame.topH
+            width: screenFrame.cr
+            height: screenFrame.cr
+            layer.enabled: true
+            layer.samples: 4
+            ShapePath {
+                fillColor: screenFrame.frameFill
+                strokeWidth: -1
+                strokeColor: "transparent"
+                startX: 0
+                startY: 0
+                PathLine { x: screenFrame.cr; y: 0 }
+                PathArc {
+                    x: 0
+                    y: screenFrame.cr
+                    radiusX: screenFrame.cr
+                    radiusY: screenFrame.cr
+                    direction: PathArc.Counterclockwise
+                }
+                PathLine { x: 0; y: 0 }
+            }
+        }
+
+        // Top-Right Inverted Corner
+        Shape {
+            x: parent.width - screenFrame.ft - screenFrame.cr
+            y: screenFrame.topH
+            width: screenFrame.cr
+            height: screenFrame.cr
+            layer.enabled: true
+            layer.samples: 4
+            ShapePath {
+                fillColor: screenFrame.frameFill
+                strokeWidth: -1
+                strokeColor: "transparent"
+                startX: screenFrame.cr
+                startY: 0
+                PathLine { x: screenFrame.cr; y: screenFrame.cr }
+                PathArc {
+                    x: 0
+                    y: 0
+                    radiusX: screenFrame.cr
+                    radiusY: screenFrame.cr
+                    direction: PathArc.Counterclockwise
+                }
+                PathLine { x: screenFrame.cr; y: 0 }
+            }
+        }
+
+        // Bottom-Left Inverted Corner
+        Shape {
+            x: screenFrame.ft
+            y: parent.height - screenFrame.ft - screenFrame.cr
+            width: screenFrame.cr
+            height: screenFrame.cr
+            layer.enabled: true
+            layer.samples: 4
+            ShapePath {
+                fillColor: screenFrame.frameFill
+                strokeWidth: -1
+                strokeColor: "transparent"
+                startX: 0
+                startY: screenFrame.cr
+                PathLine { x: 0; y: 0 }
+                PathArc {
+                    x: screenFrame.cr
+                    y: screenFrame.cr
+                    radiusX: screenFrame.cr
+                    radiusY: screenFrame.cr
+                    direction: PathArc.Counterclockwise
+                }
+                PathLine { x: 0; y: screenFrame.cr }
+            }
+        }
+
+        // Bottom-Right Inverted Corner
+        Shape {
+            x: parent.width - screenFrame.ft - screenFrame.cr
+            y: parent.height - screenFrame.ft - screenFrame.cr
+            width: screenFrame.cr
+            height: screenFrame.cr
+            layer.enabled: true
+            layer.samples: 4
+            ShapePath {
+                fillColor: screenFrame.frameFill
+                strokeWidth: -1
+                strokeColor: "transparent"
+                startX: screenFrame.cr
+                startY: screenFrame.cr
+                PathLine { x: screenFrame.cr; y: 0 }
+                PathArc {
+                    x: 0
+                    y: screenFrame.cr
+                    radiusX: screenFrame.cr
+                    radiusY: screenFrame.cr
+                    direction: PathArc.Clockwise
+                }
+                PathLine { x: screenFrame.cr; y: screenFrame.cr }
+            }
         }
     }
 

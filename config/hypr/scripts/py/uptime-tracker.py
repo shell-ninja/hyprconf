@@ -148,19 +148,29 @@ def play_sound(sound_type="poweroff"):
             continue
 
 def send_notification(metrics, action="Shutdown"):
-    box = format_box(metrics, action)
-    title = f"System {action.capitalize()}"
+    title = f"System {action.capitalize()} Summary"
     icon = "system-reboot" if action.lower() == "reboot" else "system-shutdown"
+
+    dur_str = metrics["duration_str"]
+    hours_dec_str = f"{metrics['hours_dec']:.2f} hrs"
+    boot_str = metrics["boot_str"]
+    now_str = metrics["now_str"]
+
+    body = (
+        f"Session Duration: {dur_str} ({hours_dec_str})\n"
+        f"Startup: {boot_str}\n"
+        f"{action.capitalize()}: {now_str}"
+    )
     
-    # Try notify-send with mono box formatting
+    # Try notify-send with clean multi-line formatting
     try:
         subprocess.run([
             "notify-send",
             "-a", "Hyprconf Power",
             "-i", icon,
-            "-t", "4500",
+            "-t", "5000",
             title,
-            box
+            body
         ], timeout=2, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     except Exception:
         pass

@@ -314,10 +314,13 @@ Pill {
                 if (!item) return 0
                 return Math.max(-10, Math.min(wsCluster.width - width + 10, item.x + item.width / 2 - width / 2))
             }
-            y: parent.height + 8
+            y: (typeof bar !== "undefined" && bar && bar.capsuleStyle === "glass") ? (parent.height - 1) : (parent.height + 6)
             width: Math.max(160, Math.min(280, tooltipCol.implicitWidth + 24))
             implicitHeight: tooltipCol.implicitHeight + 16
-            radius: 8
+            topLeftRadius: (typeof bar !== "undefined" && bar && bar.capsuleStyle === "glass") ? 0 : 8
+            topRightRadius: (typeof bar !== "undefined" && bar && bar.capsuleStyle === "glass") ? 0 : 8
+            bottomLeftRadius: 10
+            bottomRightRadius: 10
             color: Theme.alpha(Theme.surface, 0.96)
             border.width: 1
             border.color: Theme.alpha(Theme.accent, 0.40)

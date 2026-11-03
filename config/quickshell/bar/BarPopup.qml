@@ -15,9 +15,9 @@ Item {
     property color surface: Theme.alpha(Theme.surface, 0.96)
     readonly property bool isFloating: (typeof bar !== "undefined" && bar && (bar.capsuleStyle === "islands" || bar.marginTop > 2))
     readonly property int effectiveFillet: isFloating ? 0 : fillet
-    property int barHeight: 44
+    property int barHeight: (typeof bar !== "undefined" && bar) ? bar.barH : 36
     property int edge: 12
-    property int bottomRadius: 22
+    property int bottomRadius: 18
     property int fillet: 16
     property int padding: 18
     property int duration: 320
@@ -119,59 +119,103 @@ Item {
 
     HoverHandler { id: hover }
 
-    // Concave corner fillet, top-left (hidden when floating or flush with the left frame)
+    // Unified Attached Monolithic Background (Top fillets + Body in one continuous shape)
     Shape {
-        x: 0
-        y: popup.topOverlap
-        width: popup.fillet
-        height: popup.fillet
-        visible: !popup.isFloating && popup.align !== "left"
+        id: unifiedBg
+        anchors.fill: parent
         layer.enabled: true
         layer.samples: 4
-        ShapePath {
-            fillColor: popup.surface
-            strokeWidth: -1
-            PathSvg { path: "M 0 0 L " + popup.fillet + " 0 L " + popup.fillet + " " + popup.fillet + " A " + popup.fillet + " " + popup.fillet + " 0 0 0 0 0 Z" }
-        }
-    }
+        visible: !popup.isFloating
 
-    // Concave corner fillet, top-right (hidden when floating or flush with the right frame)
-    Shape {
-        x: popup.width - popup.fillet
-        y: popup.topOverlap
-        width: popup.fillet
-        height: popup.fillet
-        visible: !popup.isFloating && popup.align !== "right"
-        layer.enabled: true
-        layer.samples: 4
+        readonly property int fL: (popup.align === "left") ? 0 : popup.fillet
+        readonly property int fR: (popup.align === "right") ? 0 : popup.fillet
+        readonly property int br: popup.bottomRadius
+        readonly property int w: popup.popupWidth
+        readonly property int h: popup.height
+
         ShapePath {
             fillColor: popup.surface
-            strokeWidth: -1
-            PathSvg { path: "M " + popup.fillet + " 0 L 0 0 L 0 " + popup.fillet + " A " + popup.fillet + " " + popup.fillet + " 0 0 1 " + popup.fillet + " 0 Z" }
+            strokeColor: Theme.alpha(Theme.accent, 0.28)
+            strokeWidth: 1
+
+            startX: 0
+            startY: 0
+
+            PathArc {
+                x: unifiedBg.fL
+                y: unifiedBg.fL
+                radiusX: unifiedBg.fL
+                radiusY: unifiedBg.fL
+                direction: PathArc.Clockwise
+            }
+
+            PathLine {
+                x: unifiedBg.fL
+                y: Math.max(unifiedBg.fL, unifiedBg.h - unifiedBg.br)
+            }
+
+            PathArc {
+                x: unifiedBg.fL + unifiedBg.br
+                y: unifiedBg.h
+                radiusX: unifiedBg.br
+                radiusY: unifiedBg.br
+                direction: PathArc.Counterclockwise
+            }
+
+            PathLine {
+                x: unifiedBg.fL + unifiedBg.w - unifiedBg.br
+                y: unifiedBg.h
+            }
+
+            PathArc {
+                x: unifiedBg.fL + unifiedBg.w
+                y: Math.max(unifiedBg.fL, unifiedBg.h - unifiedBg.br)
+                radiusX: unifiedBg.br
+                radiusY: unifiedBg.br
+                direction: PathArc.Counterclockwise
+            }
+
+            PathLine {
+                x: unifiedBg.fL + unifiedBg.w
+                y: unifiedBg.fR
+            }
+
+            PathArc {
+                x: unifiedBg.fL + unifiedBg.w + unifiedBg.fR
+                y: 0
+                radiusX: unifiedBg.fR
+                radiusY: unifiedBg.fR
+                direction: PathArc.Clockwise
+            }
+
+            // Close across the top edge back to (0, 0)
+            PathLine {
+                x: 0
+                y: 0
+            }
         }
     }
 
     Rectangle {
-        id: body
-        x: popup.effectiveFillet
-        y: 0
-        width: popup.popupWidth
-        height: popup.height
+        id: floatingBg
+        visible: popup.isFloating
+        anchors.fill: parent
+        radius: 16
         color: popup.surface
         border.width: 1
         border.color: Theme.alpha(Theme.accent, 0.28)
-        radius: popup.isFloating ? 16 : 0
-        topLeftRadius: popup.isFloating ? 16 : 0
-        topRightRadius: popup.isFloating ? 16 : 0
-        bottomLeftRadius: popup.isFloating ? 16 : popup.bottomRadius
-        bottomRightRadius: popup.isFloating ? 16 : popup.bottomRadius
+    }
+
+    Item {
+        id: body
+        anchors.fill: parent
         clip: true
 
         // Inner subtle glass rim at top
         Rectangle {
             anchors.top: parent.top
             anchors.horizontalCenter: parent.horizontalCenter
-            width: parent.width * 0.75
+            width: popup.popupWidth * 0.75
             height: 1
             color: Theme.alpha(Theme.foreground, 0.12)
         }
