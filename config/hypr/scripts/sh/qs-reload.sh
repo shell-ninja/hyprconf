@@ -65,10 +65,6 @@ if [[ -f "$sh_dir/qs-dock.sh" ]]; then
     nohup bash "$sh_dir/qs-dock.sh" --start >/dev/null 2>&1 &
 fi
 
-# 5. Relaunch Quickshell Sidebar daemon (standby)
-if [[ -f "$sh_dir/qs-sidebar.sh" ]]; then
-    nohup bash "$sh_dir/qs-sidebar.sh" --start >/dev/null 2>&1 &
-fi
 
 # 5. Notify user of successful reload
 if [[ "${1:-}" != "--quiet" && "${1:-}" != "-q" ]]; then

@@ -62,7 +62,6 @@ Item {
         { id: "clock", name: "Clock & Calendar", desc: "Formatted local time and interactive calendar dropdown", icon: "clock", category: "Utilities" },
         { id: "notification", name: "Notification Center", desc: "Unread count indicator and notification toast history", icon: "bell", category: "Utilities" },
         { id: "dnd", name: "Do Not Disturb (DND)", desc: "Quick toggle to silence notifications and toasts", icon: "dnd", category: "Utilities", isNew: true },
-        { id: "ai_assistant", name: "Agent Console", desc: "Global 40% sliding CLI agent drawer (OpenCode, Claude, Gemini)", icon: "terminal", category: "Utilities", isNew: true },
         { id: "pkg_update", name: "Package Updates", desc: "Pending system packages counter and updater launcher", icon: "package", category: "Utilities" },
 
         // Quick Toggles & Controls

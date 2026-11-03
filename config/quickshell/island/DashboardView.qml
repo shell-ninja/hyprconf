@@ -169,14 +169,14 @@ Item {
     property alias statusPage: statusPage
     property alias networkDetailPage: statusPage.networkDetailPage
     property alias weatherPage: weatherPage
-    property alias wallpaperView: wallpaperView
-    property alias launcherView: launcherView
-    property alias themeSwitcherView: themeSwitcherView
-    property alias screenshotView: screenshotView
-    property alias polkitView: polkitView
-    property alias clipboardView: clipboardView
-    property alias emojiView: emojiView
-    property alias keybindsView: keybindsView
+    readonly property var wallpaperView: wallpaperLoader.item
+    readonly property var launcherView: launcherLoader.item
+    readonly property var themeSwitcherView: themeSwitcherLoader.item
+    readonly property var screenshotView: screenshotLoader.item
+    readonly property var polkitView: polkitLoader.item
+    readonly property var clipboardView: clipboardLoader.item
+    readonly property var emojiView: emojiLoader.item
+    readonly property var keybindsView: keybindsLoader.item
 
     property bool isClosingWallpaper: false
     property real animProgress: 1.0
@@ -320,202 +320,142 @@ Item {
         }
     }
 
-    // ── 3. WALLPAPER SELECTOR PAGE ───────────────────────────────────────────
-    WallpaperView {
-        id: wallpaperView
+    // ── 3. WALLPAPER SELECTOR PAGE (LAZY-LOADED) ─────────────────────────────
+    Loader {
+        id: wallpaperLoader
         anchors.fill: parent
-        active: root.active && root.currentView === 2
-        isClosing: root.isClosingWallpaper
-        animProgress: root.animProgress
-        visible: root.currentView === 2
-        opacity: root.currentView === 2 ? 1.0 : 0.0
-        scale: root.currentView === 2 ? 1.0 : 0.94
-
-        Behavior on opacity {
-            NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
-        }
-        Behavior on scale {
-            NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
-        }
-
-        onBackClicked: {
-            root.closeRequested()
+        active: root.currentView === 2
+        visible: active
+        sourceComponent: Component {
+            WallpaperView {
+                active: root.active && root.currentView === 2
+                isClosing: root.isClosingWallpaper
+                animProgress: root.animProgress
+                onBackClicked: root.closeRequested()
+            }
         }
     }
 
-    // ── 4. APP LAUNCHER PAGE (SUPER + D / SUPER + SPACE) ─────────────────────
-    LauncherView {
-        id: launcherView
-        wallpaperTimestamp: root.wallpaperTimestamp
+    // ── 4. APP LAUNCHER PAGE (SUPER + D / SUPER + SPACE) (LAZY-LOADED) ───────
+    Loader {
+        id: launcherLoader
         anchors.fill: parent
-        active: root.active && root.currentView === 3
-        isClosing: root.isClosingWallpaper
-        animProgress: root.animProgress
-        visible: root.currentView === 3
-        opacity: root.currentView === 3 ? 1.0 : 0.0
-        scale: root.currentView === 3 ? 1.0 : 0.94
-
-        Behavior on opacity {
-            NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
-        }
-        Behavior on scale {
-            NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
-        }
-
-        onCloseRequested: {
-            root.closeRequested()
-        }
-        onOpenThemeSwitcherRequested: {
-            root.currentView = 4
+        active: root.currentView === 3
+        visible: active
+        sourceComponent: Component {
+            LauncherView {
+                wallpaperTimestamp: root.wallpaperTimestamp
+                active: root.active && root.currentView === 3
+                isClosing: root.isClosingWallpaper
+                animProgress: root.animProgress
+                onCloseRequested: root.closeRequested()
+                onOpenThemeSwitcherRequested: root.currentView = 4
+            }
         }
     }
 
-    // ── 5. LAUNCHER THEME SELECTOR (SUPER + ALT + D) ─────────────────────────
-    ThemeSwitcherView {
-        id: themeSwitcherView
-        wallpaperTimestamp: root.wallpaperTimestamp
+    // ── 5. LAUNCHER THEME SELECTOR (SUPER + ALT + D) (LAZY-LOADED) ───────────
+    Loader {
+        id: themeSwitcherLoader
         anchors.fill: parent
-        active: root.active && root.currentView === 4
-        isClosing: root.isClosingWallpaper
-        animProgress: root.animProgress
-        visible: root.currentView === 4
-        opacity: root.currentView === 4 ? 1.0 : 0.0
-        scale: root.currentView === 4 ? 1.0 : 0.94
-
-        Behavior on opacity {
-            NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
-        }
-        Behavior on scale {
-            NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
-        }
-
-        onCloseRequested: {
-            root.closeRequested()
-        }
-        onLaunchLauncherRequested: {
-            root.launchLauncherRequested()
+        active: root.currentView === 4
+        visible: active
+        sourceComponent: Component {
+            ThemeSwitcherView {
+                wallpaperTimestamp: root.wallpaperTimestamp
+                active: root.active && root.currentView === 4
+                isClosing: root.isClosingWallpaper
+                animProgress: root.animProgress
+                onCloseRequested: root.closeRequested()
+                onLaunchLauncherRequested: root.launchLauncherRequested()
+            }
         }
     }
 
-    // ── 6. SCREENSHOT STUDIO PAGE (PRINT / QS-SCREENSHOT.SH) ──────────────────
-    ScreenshotView {
-        id: screenshotView
+    // ── 6. SCREENSHOT STUDIO PAGE (PRINT / QS-SCREENSHOT.SH) (LAZY-LOADED) ────
+    Loader {
+        id: screenshotLoader
         anchors.fill: parent
-        active: root.active && root.currentView === 5
-        isClosing: root.isClosingWallpaper
-        animProgress: root.animProgress
-        visible: root.currentView === 5
-        opacity: root.currentView === 5 ? 1.0 : 0.0
-        scale: root.currentView === 5 ? 1.0 : 0.94
-
-        Behavior on opacity {
-            NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
-        }
-        Behavior on scale {
-            NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
-        }
-
-        onCloseRequested: {
-            root.closeRequested()
-        }
-        onStartTimerScreenshot: function(seconds, targetMode, useSatty, playSound) {
-            root.startTimerScreenshot(seconds, targetMode, useSatty, playSound)
+        active: root.currentView === 5
+        visible: active
+        sourceComponent: Component {
+            ScreenshotView {
+                active: root.active && root.currentView === 5
+                isClosing: root.isClosingWallpaper
+                animProgress: root.animProgress
+                onCloseRequested: root.closeRequested()
+                onStartTimerScreenshot: function(seconds, targetMode, useSatty, playSound) {
+                    root.startTimerScreenshot(seconds, targetMode, useSatty, playSound)
+                }
+            }
         }
     }
 
-    // ── 7. POLKIT AUTHENTICATION AGENT (AUTOMATIC SYSTEM PROMPT) ────────────
-    PolkitView {
-        id: polkitView
+    // ── 7. POLKIT AUTHENTICATION AGENT (LAZY-LOADED) ─────────────────────────
+    Loader {
+        id: polkitLoader
         anchors.fill: parent
-        active: root.active && root.currentView === 6
-        isClosing: root.isClosingWallpaper
-        animProgress: root.animProgress
-        flow: root.polkitFlow
-        visible: root.currentView === 6
-        opacity: root.currentView === 6 ? 1.0 : 0.0
-        scale: root.currentView === 6 ? 1.0 : 0.94
-
-        Behavior on opacity {
-            NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
-        }
-        Behavior on scale {
-            NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
-        }
-
-        onCloseRequested: {
-            root.closeRequested()
+        active: root.currentView === 6
+        visible: active
+        sourceComponent: Component {
+            PolkitView {
+                active: root.active && root.currentView === 6
+                isClosing: root.isClosingWallpaper
+                animProgress: root.animProgress
+                flow: root.polkitFlow
+                onCloseRequested: root.closeRequested()
+            }
         }
     }
 
-    // ── 8. CLIPBOARD MANAGER (SUPER + V) ────────────────────────────────────
-    ClipboardView {
-        id: clipboardView
+    // ── 8. CLIPBOARD MANAGER (SUPER + V) (LAZY-LOADED) ───────────────────────
+    Loader {
+        id: clipboardLoader
         anchors.fill: parent
-        active: root.active && root.currentView === 7
-        isClosing: root.isClosingWallpaper
-        animProgress: root.animProgress
-        visible: root.currentView === 7
-        opacity: root.currentView === 7 ? 1.0 : 0.0
-        scale: root.currentView === 7 ? 1.0 : 0.94
-
-        Behavior on opacity {
-            NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
-        }
-        Behavior on scale {
-            NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
-        }
-
-        onCloseRequested: {
-            root.closeRequested()
+        active: root.currentView === 7
+        visible: active
+        sourceComponent: Component {
+            ClipboardView {
+                active: root.active && root.currentView === 7
+                isClosing: root.isClosingWallpaper
+                animProgress: root.animProgress
+                onCloseRequested: root.closeRequested()
+            }
         }
     }
 
-    // ── 9. EMOJI STUDIO PICKER (SUPER + SHIFT + D) ──────────────────────────
-    EmojiView {
-        id: emojiView
+    // ── 9. EMOJI STUDIO PICKER (SUPER + SHIFT + D) (LAZY-LOADED) ────────────
+    Loader {
+        id: emojiLoader
         anchors.fill: parent
-        active: root.active && root.currentView === 8
-        isClosing: root.isClosingWallpaper
-        animProgress: root.animProgress
-        visible: root.currentView === 8
-        opacity: root.currentView === 8 ? 1.0 : 0.0
-        scale: root.currentView === 8 ? 1.0 : 0.94
-
-        Behavior on opacity {
-            NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
-        }
-        Behavior on scale {
-            NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
-        }
-
-        onCloseRequested: {
-            root.closeRequested()
-        }
-        onEmojiSelected: function(emoji) {
-            root.closeRequested()
+        active: root.currentView === 8
+        visible: active
+        sourceComponent: Component {
+            EmojiView {
+                active: root.active && root.currentView === 8
+                isClosing: root.isClosingWallpaper
+                animProgress: root.animProgress
+                onCloseRequested: root.closeRequested()
+                onEmojiSelected: function(emoji) {
+                    root.closeRequested()
+                }
+            }
         }
     }
 
-    // ── 10. KEYBINDS LAUNCHER (SUPER + SHIFT + H) ───────────────────────────
-    KeybindsView {
-        id: keybindsView
+    // ── 10. KEYBINDS LAUNCHER (SUPER + SHIFT + H) (LAZY-LOADED) ─────────────
+    Loader {
+        id: keybindsLoader
         anchors.fill: parent
-        active: root.active && root.currentView === 9
-        isClosing: root.isClosingWallpaper
-        animProgress: root.animProgress
-        visible: root.currentView === 9
-        opacity: root.currentView === 9 ? 1.0 : 0.0
-        scale: root.currentView === 9 ? 1.0 : 0.94
-
-        Behavior on opacity {
-            NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
-        }
-        Behavior on scale {
-            NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
-        }
-
-        onCloseRequested: {
-            root.closeRequested()
+        active: root.currentView === 9
+        visible: active
+        sourceComponent: Component {
+            KeybindsView {
+                active: root.active && root.currentView === 9
+                isClosing: root.isClosingWallpaper
+                animProgress: root.animProgress
+                onCloseRequested: root.closeRequested()
+            }
         }
     }
 }

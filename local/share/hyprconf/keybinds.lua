@@ -174,8 +174,8 @@ end
 hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(), { mouse = true })
 hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
 
--- ── AI Assistant Sidebar (OpenCode, Claude, Gemini) ──────────────────────────
-hl.bind(mainMod .. " + A", hl.dsp.exec_cmd(sh_dir .. "/qs-sidebar.sh --toggle"))
+-- ── Pyprland Terminal Scratchpad ──────────────────────────────────────────────
+hl.bind(mainMod .. " + A", hl.dsp.exec_cmd("pypr toggle term"))
 hl.bind(mainMod .. " + ALT + G", hl.dsp.exec_cmd(sh_dir .. "/gamemode.sh --toggle"))
 hl.bind(mainMod .. " + N", hl.dsp.exec_cmd("pypr toggle_special minimized"))
 hl.bind(mainMod .. " + SHIFT + N", hl.dsp.workspace.toggle_special("minimized"))

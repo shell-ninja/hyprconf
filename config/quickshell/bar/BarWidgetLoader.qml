@@ -36,7 +36,6 @@ Item {
                 case "active_window": return compActiveWindow
                 case "visualizer": return compVisualizer
                 case "dnd": return compDnd
-                case "ai_assistant": return compAiAssistant
                 default: return null
             }
         }
@@ -63,6 +62,5 @@ Item {
     Component { id: compActiveWindow; BarActiveWindow {} }
     Component { id: compVisualizer; BarVisualizer {} }
     Component { id: compDnd; BarDnd {} }
-    Component { id: compAiAssistant; BarAiAssistant {} }
 }
 

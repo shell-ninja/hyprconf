@@ -261,8 +261,7 @@ Rectangle {
         { id: "settings", name: "Settings Studio", desc: "Unified Quickshell Settings", cmd: "qs-settings.sh", icon: "settings" },
         { id: "updater", name: "Package Updater", desc: "Check and apply system upgrades", cmd: "qs-updater.sh", icon: "download" },
         { id: "reload", name: "Reload Quickshell", desc: "Restart desktop shell processes", cmd: "qs-reload.sh", icon: "refresh" },
-        { id: "screenshot", name: "Screenshot Studio", desc: "Interactive screen capture", cmd: "qs-screenshot.sh", icon: "camera" },
-        { id: "agent", name: "Agent Console", desc: "Open CLI AI Assistant drawer", cmd: "qs-sidebar.sh --toggle", icon: "terminal" }
+        { id: "screenshot", name: "Screenshot Studio", desc: "Interactive screen capture", cmd: "qs-screenshot.sh", icon: "camera" }
     ]
 
     readonly property var matchedActions: {
@@ -328,11 +327,9 @@ Rectangle {
             return
         }
 
-        // 3. AI Prompt
+        // 3. AI Prompt (open in user's terminal)
         if (card.isAiQuery && card.aiPromptText.length > 0) {
-            var sideCmd = card.homeDir + "/.hyprconf/hypr/scripts/sh/qs-sidebar.sh"
-            Quickshell.execDetached([sideCmd, "--open"])
-            Quickshell.execDetached(["qs", "ipc", "-c", "sidebar", "call", "sidebar", "runTestCommand", card.aiPromptText])
+            Quickshell.execDetached(["kitty", "--title", "opencode", "bash", "-c", "opencode " + JSON.stringify(card.aiPromptText) + " || $SHELL"])
             card.triggerClose()
             return
         }

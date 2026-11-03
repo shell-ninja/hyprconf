@@ -1099,11 +1099,6 @@ IslandMediaIndicators 1.0 IslandMediaIndicators.qml
 LockscreenSystemGraph 1.0 LockscreenSystemGraph.qml
 LockscreenAudioVisualizer 1.0 LockscreenAudioVisualizer.qml
 """,
-            "sidebar": """singleton Theme 1.0 Theme.qml
-SidebarView 1.0 SidebarView.qml
-AiChatMessage 1.0 AiChatMessage.qml
-AiCommandPalette 1.0 AiCommandPalette.qml
-""",
             "bar": """singleton Theme 1.0 Theme.qml
 Bar 1.0 Bar.qml
 BarPopup 1.0 BarPopup.qml
