@@ -145,6 +145,11 @@ PanelWindow {
             } else if (root.osdType === "volume") {
                 root.systemVolume = intVal
             }
+        } else if (root.osdType === "system_mode" || root.osdType === "mode") {
+            root.osdValue = numVal
+            if (expandedContent && expandedContent.homePage && expandedContent.homePage.profileBanner) {
+                expandedContent.homePage.profileBanner.systemMode = Math.round(numVal)
+            }
         } else {
             root.osdValue = (numVal > 0.0 && numVal < 1.0) ? numVal : Math.max(0.0, Math.min(1.0, numVal / 100.0))
         }

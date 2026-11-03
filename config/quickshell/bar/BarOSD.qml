@@ -32,6 +32,8 @@ Item {
             case "brightness": return "Display Brightness"
             case "power":
             case "power_profile": return "Power Profile"
+            case "system_mode":
+            case "mode": return "System Mode"
             case "caffeine": return "Caffeine Mode"
             case "nightlight":
             case "sunset": return "Night Light"
@@ -61,6 +63,13 @@ Item {
             return "gauge"
         }
         if (osdType === "caffeine") return "coffee"
+        if (osdType === "system_mode" || osdType === "mode") {
+            if (osdIcon === "presentation" || osdValue === 2.0 || osdLabel.toLowerCase().indexOf("presentation") !== -1 || osdLabel.toLowerCase().indexOf("class") !== -1) return "presentation"
+            if (osdIcon === "gamepad" || osdValue === 1.0 || osdLabel.toLowerCase().indexOf("game") !== -1) return "gamepad"
+            return "spark"
+        }
+        if (osdType === "gamepad") return "gamepad"
+        if (osdType === "presentation") return "presentation"
         if (osdType === "nightlight" || osdType === "sunset") return "moon"
         if (osdType === "input") return "keyboard"
         if (osdType === "capslock" || osdType === "numlock") return "lock"

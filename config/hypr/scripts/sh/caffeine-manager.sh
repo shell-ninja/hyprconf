@@ -35,8 +35,10 @@ set_status() {
         val="0"
         echo "off"
     fi
-    qs ipc -c bar call bar showOsd "caffeine" "$val" "$label" "coffee" "$sub" >/dev/null 2>&1 &
-    qs ipc -c island call island showOsd "caffeine" "$val" "$label" "coffee" "$sub" >/dev/null 2>&1 &
+    if [[ "${QUIET:-0}" != "1" && "${2:-}" != "--quiet" ]]; then
+        qs ipc -c bar call bar showOsd "caffeine" "$val" "$label" "coffee" "$sub" >/dev/null 2>&1 &
+        qs ipc -c island call island showOsd "caffeine" "$val" "$label" "coffee" "$sub" >/dev/null 2>&1 &
+    fi
 }
 
 toggle_status() {
@@ -50,13 +52,19 @@ toggle_status() {
 }
 
 case "$1" in
-    "get")
+    "get"|"--get"|"status")
         get_status
         ;;
     "set")
         set_status "$2"
         ;;
-    "toggle")
+    "on"|"--on"|"--enable"|"enable")
+        set_status "on"
+        ;;
+    "off"|"--off"|"--disable"|"disable")
+        set_status "off"
+        ;;
+    "toggle"|"--toggle")
         toggle_status
         ;;
     *)

@@ -9,65 +9,70 @@ Pill {
     spacing: 3
     clickable: false
 
-    // Game Mode
+    // System Mode (Tri-State: 0 Normal, 1 Game, 2 Presentation)
     Rectangle {
-        id: gameModeBtn
+        id: systemModeBtn
         implicitWidth: 26
         implicitHeight: 26
         radius: 13
         z: isHovered ? 1000 : 1
-        readonly property bool isHovered: gameHover.hovered || gameMouse.containsMouse
+        readonly property bool isHovered: modeHover.hovered || modeMouse.containsMouse
+        readonly property int currentMode: (typeof bar !== "undefined" && bar) ? bar.systemMode : 0
 
-        color: (typeof bar !== "undefined" && bar && bar.gameModeActive)
+        color: currentMode === 1
                ? Theme.accent
-               : (isHovered ? Theme.alpha(Theme.accent, 0.18) : "transparent")
-        scale: isHovered ? (gameMouse.pressed ? 0.90 : 1.12) : 1.0
+               : (currentMode === 2
+                  ? Theme.secondary
+                  : (isHovered ? Theme.alpha(Theme.accent, 0.18) : "transparent"))
+        scale: isHovered ? (modeMouse.pressed ? 0.90 : 1.12) : 1.0
         Behavior on color { ColorAnimation { duration: 150 } }
         Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutBack; easing.overshoot: 1.3 } }
 
         SvgIcon {
             anchors.centerIn: parent
-            name: "gamepad"
+            name: systemModeBtn.currentMode === 1 ? "gamepad" : (systemModeBtn.currentMode === 2 ? "presentation" : "spark")
             size: 13
-            color: (typeof bar !== "undefined" && bar && bar.gameModeActive)
+            color: (systemModeBtn.currentMode === 1 || systemModeBtn.currentMode === 2)
                    ? Theme.background
-                   : (gameModeBtn.isHovered ? Theme.accent : Theme.alpha(Theme.foreground, 0.75))
+                   : (systemModeBtn.isHovered ? Theme.accent : Theme.alpha(Theme.foreground, 0.75))
             Behavior on color { ColorAnimation { duration: 150 } }
         }
 
         HoverHandler {
-            id: gameHover
+            id: modeHover
         }
 
         MouseArea {
-            id: gameMouse
+            id: modeMouse
             anchors.fill: parent
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
-            onClicked: if (typeof bar !== "undefined" && bar) bar.toggleGameMode()
+            onClicked: if (typeof bar !== "undefined" && bar) bar.cycleSystemMode()
         }
 
         // Obsidian Glass Hover Tooltip
         Rectangle {
-            id: gameTooltip
+            id: modeTooltip
             z: 9999
-            visible: gameModeBtn.isHovered || opacity > 0.01
-            opacity: gameModeBtn.isHovered ? 1.0 : 0.0
-            scale: gameModeBtn.isHovered ? 1.0 : 0.90
+            visible: systemModeBtn.isHovered || opacity > 0.01
+            opacity: systemModeBtn.isHovered ? 1.0 : 0.0
+            scale: systemModeBtn.isHovered ? 1.0 : 0.90
             Behavior on opacity { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
             Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutBack; easing.overshoot: 1.2 } }
 
             anchors.top: parent.bottom
             anchors.topMargin: 8
             anchors.horizontalCenter: parent.horizontalCenter
-            width: 250
+            width: 260
             height: tooltipCol.implicitHeight + 20
             radius: 12
             color: Theme.alpha(Theme.surface, 0.96)
             border.width: 1
-            border.color: (typeof bar !== "undefined" && bar && bar.gameModeActive)
+            border.color: systemModeBtn.currentMode === 1
                           ? Theme.alpha(Theme.accent, 0.45)
-                          : Theme.alpha(Theme.accent, 0.25)
+                          : (systemModeBtn.currentMode === 2
+                             ? Theme.alpha(Theme.secondary, 0.45)
+                             : Theme.alpha(Theme.accent, 0.25))
 
             // Inner subtle top glass rim
             Rectangle {
@@ -93,13 +98,13 @@ Pill {
                     spacing: 8
 
                     SvgIcon {
-                        name: "gamepad"
+                        name: systemModeBtn.currentMode === 1 ? "gamepad" : (systemModeBtn.currentMode === 2 ? "presentation" : "spark")
                         size: 14
-                        color: (typeof bar !== "undefined" && bar && bar.gameModeActive) ? Theme.accent : Theme.foreground
+                        color: systemModeBtn.currentMode === 1 ? Theme.accent : (systemModeBtn.currentMode === 2 ? Theme.secondary : Theme.foreground)
                     }
 
                     Text {
-                        text: "Game Mode"
+                        text: systemModeBtn.currentMode === 1 ? "Game Mode" : (systemModeBtn.currentMode === 2 ? "Presentation Mode" : "Normal Mode")
                         font.family: "Outfit"
                         font.pixelSize: 12
                         font.weight: Font.Bold
@@ -112,22 +117,26 @@ Pill {
                         implicitWidth: badgeText.implicitWidth + 12
                         implicitHeight: 18
                         radius: 9
-                        color: (typeof bar !== "undefined" && bar && bar.gameModeActive)
+                        color: systemModeBtn.currentMode === 1
                                ? Theme.alpha(Theme.accent, 0.25)
-                               : Theme.alpha(Theme.foreground, 0.10)
+                               : (systemModeBtn.currentMode === 2
+                                  ? Theme.alpha(Theme.secondary, 0.25)
+                                  : Theme.alpha(Theme.foreground, 0.10))
                         border.width: 1
-                        border.color: (typeof bar !== "undefined" && bar && bar.gameModeActive)
+                        border.color: systemModeBtn.currentMode === 1
                                       ? Theme.alpha(Theme.accent, 0.50)
-                                      : Theme.alpha(Theme.foreground, 0.15)
+                                      : (systemModeBtn.currentMode === 2
+                                         ? Theme.alpha(Theme.secondary, 0.50)
+                                         : Theme.alpha(Theme.foreground, 0.15))
 
                         Text {
                             id: badgeText
                             anchors.centerIn: parent
-                            text: (typeof bar !== "undefined" && bar && bar.gameModeActive) ? "ACTIVE" : "OFF"
+                            text: systemModeBtn.currentMode === 1 ? "GAME ON" : (systemModeBtn.currentMode === 2 ? "PRESENTING" : "STANDARD")
                             font.family: "Outfit"
                             font.pixelSize: 9
                             font.weight: Font.Bold
-                            color: (typeof bar !== "undefined" && bar && bar.gameModeActive) ? Theme.accent : Theme.alpha(Theme.foreground, 0.60)
+                            color: systemModeBtn.currentMode === 1 ? Theme.accent : (systemModeBtn.currentMode === 2 ? Theme.secondary : Theme.alpha(Theme.foreground, 0.60))
                         }
                     }
                 }
@@ -139,52 +148,155 @@ Pill {
                     color: Theme.alpha(Theme.accent, 0.15)
                 }
 
-                // Bullet 1: 0ms Latency
-                RowLayout {
-                    spacing: 6
-                    Rectangle { width: 4; height: 4; radius: 2; color: Theme.accent }
-                    Text {
-                        text: "0ms tearing latency (direct scanout)"
-                        font.family: "Outfit"
-                        font.pixelSize: 10
-                        color: Theme.alpha(Theme.foreground, 0.85)
+                // Normal Mode (0)
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 5
+                    visible: systemModeBtn.currentMode === 0
+
+                    RowLayout {
+                        spacing: 6
+                        Rectangle { width: 4; height: 4; radius: 2; color: Theme.accent }
+                        Text {
+                            text: "Obsidian glass & window blur active"
+                            font.family: "Outfit"; font.pixelSize: 10
+                            color: Theme.alpha(Theme.foreground, 0.85)
+                        }
+                    }
+                    RowLayout {
+                        spacing: 6
+                        Rectangle { width: 4; height: 4; radius: 2; color: Theme.accent }
+                        Text {
+                            text: "Smooth spring physics animations"
+                            font.family: "Outfit"; font.pixelSize: 10
+                            color: Theme.alpha(Theme.foreground, 0.85)
+                        }
+                    }
+                    RowLayout {
+                        spacing: 6
+                        Rectangle { width: 4; height: 4; radius: 2; color: Theme.accent }
+                        Text {
+                            text: "Desktop notifications & toasts active"
+                            font.family: "Outfit"; font.pixelSize: 10
+                            color: Theme.alpha(Theme.foreground, 0.85)
+                        }
+                    }
+                    RowLayout {
+                        spacing: 6
+                        Rectangle { width: 4; height: 4; radius: 2; color: Theme.accent }
+                        Text {
+                            text: "Standard sleep & balanced power"
+                            font.family: "Outfit"; font.pixelSize: 10
+                            color: Theme.alpha(Theme.foreground, 0.85)
+                        }
                     }
                 }
 
-                // Bullet 2: Full Opacity
-                RowLayout {
-                    spacing: 6
-                    Rectangle { width: 4; height: 4; radius: 2; color: Theme.accent }
-                    Text {
-                        text: "100% window opacity (no glass)"
-                        font.family: "Outfit"
-                        font.pixelSize: 10
-                        color: Theme.alpha(Theme.foreground, 0.85)
+                // Game Mode (1)
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 5
+                    visible: systemModeBtn.currentMode === 1
+
+                    RowLayout {
+                        spacing: 6
+                        Rectangle { width: 4; height: 4; radius: 2; color: Theme.accent }
+                        Text {
+                            text: "100% opacity on all windows"
+                            font.family: "Outfit"; font.pixelSize: 10
+                            color: Theme.alpha(Theme.foreground, 0.85)
+                        }
+                    }
+                    RowLayout {
+                        spacing: 6
+                        Rectangle { width: 4; height: 4; radius: 2; color: Theme.accent }
+                        Text {
+                            text: "0ms latency direct scanout tearing"
+                            font.family: "Outfit"; font.pixelSize: 10
+                            color: Theme.alpha(Theme.foreground, 0.85)
+                        }
+                    }
+                    RowLayout {
+                        spacing: 6
+                        Rectangle { width: 4; height: 4; radius: 2; color: Theme.accent }
+                        Text {
+                            text: "Blur, window shadows & anim off"
+                            font.family: "Outfit"; font.pixelSize: 10
+                            color: Theme.alpha(Theme.foreground, 0.85)
+                        }
+                    }
+                    RowLayout {
+                        spacing: 6
+                        Rectangle { width: 4; height: 4; radius: 2; color: Theme.accent }
+                        Text {
+                            text: "Max performance CPU profile"
+                            font.family: "Outfit"; font.pixelSize: 10
+                            color: Theme.alpha(Theme.foreground, 0.85)
+                        }
                     }
                 }
 
-                // Bullet 3: Blur & animations off
-                RowLayout {
-                    spacing: 6
-                    Rectangle { width: 4; height: 4; radius: 2; color: Theme.accent }
-                    Text {
-                        text: "Compositor blur & animations disabled"
-                        font.family: "Outfit"
-                        font.pixelSize: 10
-                        color: Theme.alpha(Theme.foreground, 0.85)
+                // Presentation Mode (2)
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 5
+                    visible: systemModeBtn.currentMode === 2
+
+                    RowLayout {
+                        spacing: 6
+                        Rectangle { width: 4; height: 4; radius: 2; color: Theme.secondary }
+                        Text {
+                            text: "Do Not Disturb (DND) — popups silenced"
+                            font.family: "Outfit"; font.pixelSize: 10
+                            color: Theme.alpha(Theme.foreground, 0.85)
+                        }
+                    }
+                    RowLayout {
+                        spacing: 6
+                        Rectangle { width: 4; height: 4; radius: 2; color: Theme.secondary }
+                        Text {
+                            text: "Display sleep & lock inhibited (Caffeine)"
+                            font.family: "Outfit"; font.pixelSize: 10
+                            color: Theme.alpha(Theme.foreground, 0.85)
+                        }
+                    }
+                    RowLayout {
+                        spacing: 6
+                        Rectangle { width: 4; height: 4; radius: 2; color: Theme.secondary }
+                        Text {
+                            text: "No tearing for clean video / screen share"
+                            font.family: "Outfit"; font.pixelSize: 10
+                            color: Theme.alpha(Theme.foreground, 0.85)
+                        }
+                    }
+                    RowLayout {
+                        spacing: 6
+                        Rectangle { width: 4; height: 4; radius: 2; color: Theme.secondary }
+                        Text {
+                            text: "Quiet fan acoustics (Balanced power)"
+                            font.family: "Outfit"; font.pixelSize: 10
+                            color: Theme.alpha(Theme.foreground, 0.85)
+                        }
                     }
                 }
 
-                // Bullet 4: Max Performance Profile
-                RowLayout {
-                    spacing: 6
-                    Rectangle { width: 4; height: 4; radius: 2; color: Theme.accent }
-                    Text {
-                        text: "Max performance CPU profile"
-                        font.family: "Outfit"
-                        font.pixelSize: 10
-                        color: Theme.alpha(Theme.foreground, 0.85)
-                    }
+                // Footer: Click hint
+                Rectangle {
+                    Layout.fillWidth: true
+                    height: 1
+                    color: Theme.alpha(Theme.foreground, 0.08)
+                }
+
+                Text {
+                    text: systemModeBtn.currentMode === 0
+                          ? "Click to switch to Game Mode"
+                          : (systemModeBtn.currentMode === 1
+                             ? "Click to switch to Presentation Mode"
+                             : "Click to switch to Normal Mode")
+                    font.family: "Outfit"
+                    font.pixelSize: 9
+                    font.weight: Font.DemiBold
+                    color: Theme.alpha(Theme.foreground, 0.50)
                 }
             }
         }

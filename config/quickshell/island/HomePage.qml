@@ -27,6 +27,7 @@ Item {
     property real animProgress: 1.0
 
     property alias isWifiDialogOpen: wifiDialog.isOpen
+    property alias profileBanner: card0
     function openWifiDialog() { wifiDialog.open() }
     function closeWifiDialog() { wifiDialog.close() }
 
@@ -154,6 +155,7 @@ Item {
         if (active) {
             cascadeExitAnim.stop()
             cascadeEnterAnim.start()
+            card0.refreshMode()
             if (!brightReader.running) {
                 brightReader.running = true
             } else {

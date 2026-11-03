@@ -49,8 +49,53 @@ Rectangle {
 
     readonly property string settingsSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.foreground + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>')
     readonly property string powerSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.error + '" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>')
+    readonly property string sparkSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.foreground + '" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 7.2L21 12l-6.6 2.8L12 22l-2.4-7.2L3 12l6.6-2.8z"/></svg>')
+    readonly property string gamepadSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.accent + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" x2="10" y1="12" y2="12"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="15" x2="15.01" y1="13" y2="13"/><line x1="18" x2="18.01" y1="11" y2="11"/><path d="M17.32 5H6.68a4 4 0 0 0-3.98 3.59C2.6 9.42 2 14.46 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.41-1.41A2 2 0 0 1 9.83 16h4.34a2 2 0 0 1 1.41.59L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.55-.6-6.58-.69-7.26A4 4 0 0 0 17.32 5z"/></svg>')
+    readonly property string presentationSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.secondary + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h20"/><path d="M21 3v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V3"/><path d="m7 21 5-5 5 5"/></svg>')
     readonly property string cameraSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.foreground + '" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>')
     readonly property string cameraMiniSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.background + '" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>')
+
+    property int systemMode: 0
+
+    Process {
+        id: modeReader
+        command: ["sh", "-c", "cat " + root.homeDir + "/.local/share/hyprconf/.cache/system_mode.state 2>/dev/null || cat " + root.homeDir + "/.local/share/hyprconf/.cache/gamemode.state 2>/dev/null || echo '0'"]
+        running: true
+        stdout: StdioCollector {
+            onTextChanged: {
+                if (!text) return
+                var m = parseInt(text.trim())
+                if (!isNaN(m)) root.systemMode = m
+            }
+            onStreamFinished: {
+                if (!text) return
+                var m = parseInt(text.trim())
+                if (!isNaN(m)) root.systemMode = m
+            }
+        }
+    }
+
+    Timer {
+        interval: 1500
+        running: true
+        repeat: true
+        onTriggered: {
+            modeReader.running = false
+            modeReader.running = true
+        }
+    }
+
+    function refreshMode() {
+        modeReader.running = false
+        modeReader.running = true
+    }
+
+    function cycleSystemMode() {
+        var nextMode = (root.systemMode + 1) % 3
+        root.systemMode = nextMode
+        actionProc.command = ["bash", "-c", "$HOME/.hyprconf/hypr/scripts/sh/system-mode.sh --set " + nextMode]
+        actionProc.running = true
+    }
 
     // Live Uptime Reader (direct awk on /proc/uptime, zero-overhead)
     Process {
@@ -339,13 +384,63 @@ Rectangle {
             }
         }
 
-        // Quick Action Buttons (Settings & Power)
+        // Quick Action Buttons (Mode, Settings & Power)
         Row {
             id: actionsRow
             anchors.right: parent.right
             anchors.top: parent.top
             anchors.topMargin: 2
             spacing: 8
+
+            // System Mode Switcher Capsule (0 Normal, 1 Game, 2 Presentation)
+            Rectangle {
+                id: modeBtn
+                height: 30
+                width: modeRow.implicitWidth + 20
+                radius: 15
+                readonly property int currentMode: root.systemMode
+                color: modeMouse.containsMouse
+                       ? (currentMode === 1 ? Theme.alpha(Theme.accent, 0.35) : (currentMode === 2 ? Theme.alpha(Theme.secondary, 0.35) : Theme.alpha(Theme.surface, 0.9)))
+                       : (currentMode === 1 ? Theme.alpha(Theme.accent, 0.22) : (currentMode === 2 ? Theme.alpha(Theme.secondary, 0.22) : Theme.alpha(Theme.surface, 0.5)))
+                border.color: modeMouse.containsMouse
+                              ? (currentMode === 1 ? Theme.accent : (currentMode === 2 ? Theme.secondary : Theme.alpha(Theme.foreground, 0.2)))
+                              : (currentMode === 1 ? Theme.alpha(Theme.accent, 0.6) : (currentMode === 2 ? Theme.alpha(Theme.secondary, 0.6) : Theme.alpha(Theme.foreground, 0.08)))
+                border.width: 1
+                scale: modeMouse.pressed ? 0.93 : (modeMouse.containsMouse ? 1.04 : 1.0)
+                Behavior on scale { NumberAnimation { duration: 120 } }
+                Behavior on color { ColorAnimation { duration: 150 } }
+                Behavior on border.color { ColorAnimation { duration: 150 } }
+
+                Row {
+                    id: modeRow
+                    anchors.centerIn: parent
+                    spacing: 6
+
+                    Image {
+                        width: 13
+                        height: 13
+                        anchors.verticalCenter: parent.verticalCenter
+                        source: modeBtn.currentMode === 1 ? root.gamepadSvg : (modeBtn.currentMode === 2 ? root.presentationSvg : root.sparkSvg)
+                    }
+
+                    Text {
+                        text: modeBtn.currentMode === 1 ? "Game" : (modeBtn.currentMode === 2 ? "Class" : "Normal")
+                        font.family: "Outfit"
+                        font.pixelSize: 11
+                        font.weight: Font.DemiBold
+                        color: modeBtn.currentMode === 1 ? Theme.accent : (modeBtn.currentMode === 2 ? Theme.secondary : Theme.foreground)
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                }
+
+                MouseArea {
+                    id: modeMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: root.cycleSystemMode()
+                }
+            }
 
             // Settings button
             Rectangle {

@@ -70,6 +70,7 @@ PanelWindow {
     property bool caffeine: false
     property bool nightLight: false
     property bool gameModeActive: false
+    property int systemMode: 0                    // 0 normal, 1 game, 2 presentation/class
     property int profile: 1                       // 0 performance, 1 balanced, 2 saver
     property real cpuUsage: 0
     property var cpuCores: [0, 0, 0, 0, 0, 0, 0, 0]
@@ -260,7 +261,20 @@ PanelWindow {
         function togglePkg() {
             bar.togglePkg()
         }
+        function cycleSystemMode() {
+            bar.cycleSystemMode()
+        }
+        function toggleGameMode() {
+            bar.cycleSystemMode()
+        }
         function showOsd(type: string, value: string, label: string, icon: string, subLabel: string) {
+            if (type === "system_mode" || type === "mode") {
+                var m = parseInt(value)
+                if (!isNaN(m)) {
+                    bar.systemMode = m
+                    bar.gameModeActive = (m === 1)
+                }
+            }
             osd.show(type, value, label, icon, subLabel)
         }
         function hideOsd() {
@@ -421,22 +435,38 @@ PanelWindow {
         onTriggered: if (!clipCountProc.running) clipCountProc.running = true
     }
 
-    // Game Mode State Watcher
+    // Game & System Mode State Watcher
     Process {
         id: gameModeChecker
-        command: ["sh", "-c", "cat " + bar.homeDir + "/.local/share/hyprconf/.cache/gamemode.state 2>/dev/null || echo '0'"]
+        command: ["sh", "-c", "cat " + bar.homeDir + "/.local/share/hyprconf/.cache/system_mode.state 2>/dev/null || cat " + bar.homeDir + "/.local/share/hyprconf/.cache/gamemode.state 2>/dev/null || echo '0'"]
         running: true
         stdout: StdioCollector {
+            onTextChanged: {
+                if (!text) return
+                var m = parseInt(text.trim())
+                if (!isNaN(m)) {
+                    bar.systemMode = m
+                    bar.gameModeActive = (m === 1)
+                }
+            }
             onStreamFinished: {
-                bar.gameModeActive = (text && text.trim() === "1")
+                if (!text) return
+                var m = parseInt(text.trim())
+                if (!isNaN(m)) {
+                    bar.systemMode = m
+                    bar.gameModeActive = (m === 1)
+                }
             }
         }
     }
     Timer {
-        interval: 3000
+        interval: 2000
         running: true
         repeat: true
-        onTriggered: if (!gameModeChecker.running) gameModeChecker.running = true
+        onTriggered: {
+            gameModeChecker.running = false
+            gameModeChecker.running = true
+        }
     }
 
     // System stats (CPU / RAM / Disk) via sys-monitor.py
@@ -703,9 +733,15 @@ PanelWindow {
         osd.show("nightlight", bar.nightLight ? "1" : "0", bar.nightLight ? "Warm (4500K)" : "Off", "moon", bar.nightLight ? "Eye Strain Reduction Active" : "Color Temperature Normal")
     }
 
+    function cycleSystemMode() {
+        var nextMode = (bar.systemMode + 1) % 3
+        bar.systemMode = nextMode
+        bar.gameModeActive = (nextMode === 1)
+        Quickshell.execDetached([homeDir + "/.hyprconf/hypr/scripts/sh/system-mode.sh", "--set", nextMode.toString()])
+    }
+
     function toggleGameMode() {
-        bar.gameModeActive = !bar.gameModeActive
-        Quickshell.execDetached([homeDir + "/.hyprconf/hypr/scripts/sh/gamemode.sh", "--toggle"])
+        cycleSystemMode()
     }
 
     function cycleProfile() {

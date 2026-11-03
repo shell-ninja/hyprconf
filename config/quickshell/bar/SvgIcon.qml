@@ -80,6 +80,7 @@ Item {
         network: '<polyline points="7 10 12 5 17 10"/><line x1="12" y1="5" x2="12" y2="15"/><polyline points="17 14 12 19 7 14"/><line x1="12" y1="19" x2="12" y2="9"/>',
         equalizer: '<path d="M4 10v4M8 7v10M12 4v16M16 8v8M20 11v2"/>',
         spark: '<path d="M12 2l2.4 7.2L21 12l-6.6 2.8L12 22l-2.4-7.2L3 12l6.6-2.8z"/>',
+        presentation: '<path d="M2 3h20"/><path d="M21 3v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V3"/><path d="m7 21 5-5 5 5"/>',
         terminal: '<polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/>'
     })
 
