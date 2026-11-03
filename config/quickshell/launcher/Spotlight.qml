@@ -253,7 +253,7 @@ Rectangle {
 
     // ── 5. SYSTEM COMMANDS CATALOG ──────────────────────────────────────────
     readonly property var systemActions: [
-        { id: "gamemode", name: "Game Mode", desc: "Toggle Gaming Mode (0ms Latency & Max Perf)", cmd: "gamemode.sh --toggle", icon: "zap" },
+        { id: "gamemode", name: "Game Mode", desc: "Toggle Gaming Mode (0ms Latency & Max Perf)", cmd: "gamemode.sh --toggle", icon: "gamepad" },
         { id: "lock", name: "Lock Screen", desc: "Launch PAM Lockscreen", cmd: "qs-lock.sh", icon: "lock" },
         { id: "sleep", name: "Sleep / Suspend", desc: "Suspend system to RAM", cmd: "systemctl suspend", icon: "moon" },
         { id: "caffeine", name: "Toggle Caffeine", desc: "Inhibit display sleep & idle", cmd: "caffeine-manager.sh", icon: "coffee" },
@@ -263,6 +263,21 @@ Rectangle {
         { id: "reload", name: "Reload Quickshell", desc: "Restart desktop shell processes", cmd: "qs-reload.sh", icon: "refresh" },
         { id: "screenshot", name: "Screenshot Studio", desc: "Interactive screen capture", cmd: "qs-screenshot.sh", icon: "camera" }
     ]
+
+    function getActionGlyph(iconName) {
+        switch (iconName) {
+            case "gamepad": return "󰊴"
+            case "lock": return "󰌾"
+            case "moon": return "󰤄"
+            case "coffee": return "󰅶"
+            case "moonStar": return "󰖔"
+            case "settings": return "󰒓"
+            case "download": return "󰇚"
+            case "refresh": return "󰑐"
+            case "camera": return "󰄀"
+            default: return "󰵆"
+        }
+    }
 
     readonly property var matchedActions: {
         var q = card.queryText.toLowerCase().trim()
@@ -756,7 +771,7 @@ Rectangle {
                             color: Theme.alpha(Theme.accent, 0.18)
                             Text {
                                 anchors.centerIn: parent
-                                text: (modelData && modelData.type === "action") ? "⚡" : "󰵆"
+                                text: (modelData && modelData.type === "action" && modelData.data) ? card.getActionGlyph(modelData.data.icon) : "󰵆"
                                 font.family: "JetBrainsMono Nerd Font, monospace"; font.pixelSize: 12
                                 color: Theme.accent
                             }

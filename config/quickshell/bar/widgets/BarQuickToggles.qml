@@ -15,28 +15,178 @@ Pill {
         implicitWidth: 26
         implicitHeight: 26
         radius: 13
+        z: isHovered ? 1000 : 1
+        readonly property bool isHovered: gameHover.hovered || gameMouse.containsMouse
+
         color: (typeof bar !== "undefined" && bar && bar.gameModeActive)
                ? Theme.accent
-               : (gameMouse.containsMouse ? Theme.alpha(Theme.accent, 0.18) : "transparent")
-        scale: gameMouse.containsMouse ? (gameMouse.pressed ? 0.90 : 1.12) : 1.0
+               : (isHovered ? Theme.alpha(Theme.accent, 0.18) : "transparent")
+        scale: isHovered ? (gameMouse.pressed ? 0.90 : 1.12) : 1.0
         Behavior on color { ColorAnimation { duration: 150 } }
         Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutBack; easing.overshoot: 1.3 } }
 
         SvgIcon {
             anchors.centerIn: parent
-            name: "zap"
+            name: "gamepad"
             size: 13
             color: (typeof bar !== "undefined" && bar && bar.gameModeActive)
                    ? Theme.background
-                   : (gameMouse.containsMouse ? Theme.accent : Theme.alpha(Theme.foreground, 0.75))
+                   : (gameModeBtn.isHovered ? Theme.accent : Theme.alpha(Theme.foreground, 0.75))
             Behavior on color { ColorAnimation { duration: 150 } }
         }
+
+        HoverHandler {
+            id: gameHover
+        }
+
         MouseArea {
             id: gameMouse
             anchors.fill: parent
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
             onClicked: if (typeof bar !== "undefined" && bar) bar.toggleGameMode()
+        }
+
+        // Obsidian Glass Hover Tooltip
+        Rectangle {
+            id: gameTooltip
+            z: 9999
+            visible: gameModeBtn.isHovered || opacity > 0.01
+            opacity: gameModeBtn.isHovered ? 1.0 : 0.0
+            scale: gameModeBtn.isHovered ? 1.0 : 0.90
+            Behavior on opacity { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+            Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutBack; easing.overshoot: 1.2 } }
+
+            anchors.top: parent.bottom
+            anchors.topMargin: 8
+            anchors.horizontalCenter: parent.horizontalCenter
+            width: 250
+            height: tooltipCol.implicitHeight + 20
+            radius: 12
+            color: Theme.alpha(Theme.surface, 0.96)
+            border.width: 1
+            border.color: (typeof bar !== "undefined" && bar && bar.gameModeActive)
+                          ? Theme.alpha(Theme.accent, 0.45)
+                          : Theme.alpha(Theme.accent, 0.25)
+
+            // Inner subtle top glass rim
+            Rectangle {
+                anchors.top: parent.top
+                anchors.topMargin: 1
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: parent.width - 24
+                height: 1
+                color: Theme.alpha(Theme.foreground, 0.12)
+            }
+
+            ColumnLayout {
+                id: tooltipCol
+                anchors.top: parent.top
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.margins: 10
+                spacing: 6
+
+                // Header: Icon + Title + Status Badge
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 8
+
+                    SvgIcon {
+                        name: "gamepad"
+                        size: 14
+                        color: (typeof bar !== "undefined" && bar && bar.gameModeActive) ? Theme.accent : Theme.foreground
+                    }
+
+                    Text {
+                        text: "Game Mode"
+                        font.family: "Outfit"
+                        font.pixelSize: 12
+                        font.weight: Font.Bold
+                        color: Theme.foreground
+                    }
+
+                    Item { Layout.fillWidth: true }
+
+                    Rectangle {
+                        implicitWidth: badgeText.implicitWidth + 12
+                        implicitHeight: 18
+                        radius: 9
+                        color: (typeof bar !== "undefined" && bar && bar.gameModeActive)
+                               ? Theme.alpha(Theme.accent, 0.25)
+                               : Theme.alpha(Theme.foreground, 0.10)
+                        border.width: 1
+                        border.color: (typeof bar !== "undefined" && bar && bar.gameModeActive)
+                                      ? Theme.alpha(Theme.accent, 0.50)
+                                      : Theme.alpha(Theme.foreground, 0.15)
+
+                        Text {
+                            id: badgeText
+                            anchors.centerIn: parent
+                            text: (typeof bar !== "undefined" && bar && bar.gameModeActive) ? "ACTIVE" : "OFF"
+                            font.family: "Outfit"
+                            font.pixelSize: 9
+                            font.weight: Font.Bold
+                            color: (typeof bar !== "undefined" && bar && bar.gameModeActive) ? Theme.accent : Theme.alpha(Theme.foreground, 0.60)
+                        }
+                    }
+                }
+
+                // Divider
+                Rectangle {
+                    Layout.fillWidth: true
+                    height: 1
+                    color: Theme.alpha(Theme.accent, 0.15)
+                }
+
+                // Bullet 1: 0ms Latency
+                RowLayout {
+                    spacing: 6
+                    Rectangle { width: 4; height: 4; radius: 2; color: Theme.accent }
+                    Text {
+                        text: "0ms tearing latency (direct scanout)"
+                        font.family: "Outfit"
+                        font.pixelSize: 10
+                        color: Theme.alpha(Theme.foreground, 0.85)
+                    }
+                }
+
+                // Bullet 2: Full Opacity
+                RowLayout {
+                    spacing: 6
+                    Rectangle { width: 4; height: 4; radius: 2; color: Theme.accent }
+                    Text {
+                        text: "100% window opacity (no glass)"
+                        font.family: "Outfit"
+                        font.pixelSize: 10
+                        color: Theme.alpha(Theme.foreground, 0.85)
+                    }
+                }
+
+                // Bullet 3: Blur & animations off
+                RowLayout {
+                    spacing: 6
+                    Rectangle { width: 4; height: 4; radius: 2; color: Theme.accent }
+                    Text {
+                        text: "Compositor blur & animations disabled"
+                        font.family: "Outfit"
+                        font.pixelSize: 10
+                        color: Theme.alpha(Theme.foreground, 0.85)
+                    }
+                }
+
+                // Bullet 4: Max Performance Profile
+                RowLayout {
+                    spacing: 6
+                    Rectangle { width: 4; height: 4; radius: 2; color: Theme.accent }
+                    Text {
+                        text: "Max performance CPU profile"
+                        font.family: "Outfit"
+                        font.pixelSize: 10
+                        color: Theme.alpha(Theme.foreground, 0.85)
+                    }
+                }
+            }
         }
     }
 
