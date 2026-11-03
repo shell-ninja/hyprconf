@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
+import QtQuick.Shapes
 import Quickshell
 import Quickshell.Widgets
 import Quickshell.Io
@@ -13,20 +14,135 @@ Rectangle {
     required property var rootWindow
 
     readonly property bool isIsland: Boolean(rootWindow && rootWindow.isIslandView)
+    readonly property bool isBottomAttached: Boolean(rootWindow && rootWindow.isBottomAttached)
 
     width: isIsland ? parent.width : 680
     height: isIsland ? parent.height : Math.min(560, mainLayout.implicitHeight + 24)
     anchors.fill: isIsland ? parent : undefined
-    anchors.centerIn: isIsland ? undefined : parent
-    radius: isIsland ? 0 : 16
-    color: isIsland ? "transparent" : Theme.alpha(Theme.surface, 0.96)
-    border.width: isIsland ? 0 : 1.2
+    anchors.centerIn: (isIsland || isBottomAttached) ? undefined : parent
+    radius: (isIsland || isBottomAttached) ? 0 : 16
+    color: (isIsland || isBottomAttached) ? "transparent" : Theme.alpha(Theme.surface, 0.96)
+    border.width: (isIsland || isBottomAttached) ? 0 : 1.2
     border.color: Theme.alpha(Theme.accent, 0.35)
-    clip: true
+    clip: false
 
     readonly property string homeDir: {
         var h = Quickshell.env("HOME")
         return (h && h.length > 0) ? h : (Quickshell.env("USER") ? ("/home/" + Quickshell.env("USER")) : "/home")
+    }
+
+    // Attached Bottom Glass Frame Monolithic Shape
+    Shape {
+        id: bottomAttachedBg
+        anchors.fill: parent
+        layer.enabled: true
+        layer.samples: 4
+        visible: card.isBottomAttached
+
+        readonly property color surfaceFill: (rootWindow && rootWindow.barOpacity !== undefined)
+                                             ? Theme.alpha(Theme.surface, rootWindow.barOpacity)
+                                             : Theme.alpha(Theme.surface, 0.96)
+        readonly property color strokeColor: Theme.alpha(Theme.accent, 0.35)
+        readonly property int fL: 14
+        readonly property int fR: 14
+        readonly property int tr: 16
+        readonly property int w: card.width
+        readonly property int h: card.height
+
+        // 1. Closed Fill Path (Seamless with bottom frame)
+        ShapePath {
+            fillColor: bottomAttachedBg.surfaceFill
+            strokeColor: "transparent"
+            strokeWidth: 0
+
+            startX: -bottomAttachedBg.fL
+            startY: bottomAttachedBg.h
+
+            // Fillet curve from bottom frame into left edge
+            PathArc {
+                x: 0
+                y: bottomAttachedBg.h - bottomAttachedBg.fL
+                radiusX: bottomAttachedBg.fL
+                radiusY: bottomAttachedBg.fL
+                direction: PathArc.Clockwise
+            }
+            // Left vertical edge up to top-left corner
+            PathLine { x: 0; y: bottomAttachedBg.tr }
+            // Top-left rounded corner
+            PathArc {
+                x: bottomAttachedBg.tr
+                y: 0
+                radiusX: bottomAttachedBg.tr
+                radiusY: bottomAttachedBg.tr
+                direction: PathArc.Clockwise
+            }
+            // Top horizontal edge
+            PathLine { x: bottomAttachedBg.w - bottomAttachedBg.tr; y: 0 }
+            // Top-right rounded corner
+            PathArc {
+                x: bottomAttachedBg.w
+                y: bottomAttachedBg.tr
+                radiusX: bottomAttachedBg.tr
+                radiusY: bottomAttachedBg.tr
+                direction: PathArc.Clockwise
+            }
+            // Right vertical edge down to right fillet
+            PathLine { x: bottomAttachedBg.w; y: bottomAttachedBg.h - bottomAttachedBg.fR }
+            // Fillet curve from right edge into bottom frame
+            PathArc {
+                x: bottomAttachedBg.w + bottomAttachedBg.fR
+                y: bottomAttachedBg.h
+                radiusX: bottomAttachedBg.fR
+                radiusY: bottomAttachedBg.fR
+                direction: PathArc.Clockwise
+            }
+            // Close across the bottom line to complete fill
+            PathLine { x: -bottomAttachedBg.fL; y: bottomAttachedBg.h }
+        }
+
+        // 2. Open Perimeter Stroke (NO stroke across bottom seam!)
+        ShapePath {
+            fillColor: "transparent"
+            strokeColor: bottomAttachedBg.strokeColor
+            strokeWidth: 1.2
+            capStyle: ShapePath.RoundCap
+            joinStyle: ShapePath.RoundJoin
+
+            startX: -bottomAttachedBg.fL
+            startY: bottomAttachedBg.h
+
+            PathArc {
+                x: 0
+                y: bottomAttachedBg.h - bottomAttachedBg.fL
+                radiusX: bottomAttachedBg.fL
+                radiusY: bottomAttachedBg.fL
+                direction: PathArc.Clockwise
+            }
+            PathLine { x: 0; y: bottomAttachedBg.tr }
+            PathArc {
+                x: bottomAttachedBg.tr
+                y: 0
+                radiusX: bottomAttachedBg.tr
+                radiusY: bottomAttachedBg.tr
+                direction: PathArc.Clockwise
+            }
+            PathLine { x: bottomAttachedBg.w - bottomAttachedBg.tr; y: 0 }
+            PathArc {
+                x: bottomAttachedBg.w
+                y: bottomAttachedBg.tr
+                radiusX: bottomAttachedBg.tr
+                radiusY: bottomAttachedBg.tr
+                direction: PathArc.Clockwise
+            }
+            PathLine { x: bottomAttachedBg.w; y: bottomAttachedBg.h - bottomAttachedBg.fR }
+            PathArc {
+                x: bottomAttachedBg.w + bottomAttachedBg.fR
+                y: bottomAttachedBg.h
+                radiusX: bottomAttachedBg.fR
+                radiusY: bottomAttachedBg.fR
+                direction: PathArc.Clockwise
+            }
+        }
     }
 
     // Top Inner Glass Rim Highlight (only for standalone mode)

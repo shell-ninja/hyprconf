@@ -13,8 +13,12 @@ Pill {
     // System Mode (Tri-State: 0 Normal, 1 Game, 2 Presentation)
     Item {
         id: systemModeBtn
+        width: 26
+        height: 26
         implicitWidth: 26
         implicitHeight: 26
+        Layout.preferredWidth: 26
+        Layout.preferredHeight: 26
         z: isHovered ? 1000 : 1
         readonly property bool isHovered: modeHover.hovered || modeMouse.containsMouse
         readonly property int currentMode: (typeof bar !== "undefined" && bar) ? bar.systemMode : 0
@@ -83,7 +87,7 @@ Pill {
                 try {
                     var screenBtnX = systemModeBtn.mapToItem(null, 0, 0).x
                     var minScreenX = isGlass ? (bar.frameThickness + 4) : 8
-                    var maxScreenX = isGlass ? (bar.width - bar.frameThickness - 4) : (parent.width - 8)
+                    var maxScreenX = isGlass ? (bar.width - bar.frameThickness - 4) : (bar.width - 8)
                     var clampedBodyX = Math.max(minScreenX - screenBtnX, Math.min(maxScreenX - bodyWidth - screenBtnX, idealBodyX))
                     return clampedBodyX - fL
                 } catch(e) {

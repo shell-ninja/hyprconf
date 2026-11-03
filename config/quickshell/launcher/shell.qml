@@ -41,6 +41,32 @@ PanelWindow {
         return (envTheme && envTheme.length > 0) ? envTheme : "style-1"
     }
 
+    // Bar configuration detection (Frames vs Capsule mode)
+    property bool hasScreenFrame: false
+    property int frameThickness: 18
+    property real barOpacity: 0.85
+    property string barCapsuleStyle: "islands"
+
+    readonly property bool isBottomAttached: (root.currentTheme === "spotlight" || root.currentTheme === "style-3") && root.hasScreenFrame
+
+    Process {
+        id: barConfigReader
+        command: ["sh", "-c", "cat " + root.homeDir + "/.local/share/hyprconf/bar.json 2>/dev/null || cat " + root.homeDir + "/.hyprconf/quickshell/bar/config.json 2>/dev/null || echo '{}'"]
+        running: true
+        stdout: StdioCollector {
+            onTextChanged: {
+                if (!text || text.trim().length === 0) return
+                try {
+                    var b = JSON.parse(text.trim())
+                    root.barCapsuleStyle = b.capsule_style || "islands"
+                    root.hasScreenFrame = (b.capsule_style === "glass" || !!b.screen_frame)
+                    if (b.frame_thickness !== undefined) root.frameThickness = parseInt(b.frame_thickness, 10) || 18
+                    if (b.opacity !== undefined) root.barOpacity = parseFloat(b.opacity) || 0.85
+                } catch(e) {}
+            }
+        }
+    }
+
     // Model and filtering state
     property var allApps: []
     property var filteredApps: []
@@ -308,8 +334,9 @@ PanelWindow {
     }
 
     // ── BUBBLY OPENING / CLOSING ANIMATIONS ────────────────────────────────
-    property real animScale: 0.82
+    property real animScale: root.isBottomAttached ? 1.0 : 0.82
     property real animOpacity: 0.0
+    property real animTranslateY: root.isBottomAttached ? 180 : 0
     property bool isExiting: false
 
     ParallelAnimation {
@@ -318,11 +345,20 @@ PanelWindow {
         NumberAnimation {
             target: root
             property: "animScale"
-            from: 0.82
+            from: root.isBottomAttached ? 1.0 : 0.82
             to: 1.0
             duration: 300
             easing.type: Easing.OutBack
             easing.overshoot: 1.35
+        }
+        NumberAnimation {
+            target: root
+            property: "animTranslateY"
+            from: root.isBottomAttached ? 180 : 0
+            to: 0
+            duration: 320
+            easing.type: Easing.OutBack
+            easing.overshoot: 1.25
         }
         NumberAnimation {
             target: root
@@ -339,10 +375,17 @@ PanelWindow {
         NumberAnimation {
             target: root
             property: "animScale"
-            to: 0.86
+            to: root.isBottomAttached ? 1.0 : 0.86
             duration: 190
             easing.type: Easing.InBack
             easing.overshoot: 1.15
+        }
+        NumberAnimation {
+            target: root
+            property: "animTranslateY"
+            to: root.isBottomAttached ? 180 : 0
+            duration: 180
+            easing.type: Easing.InCubic
         }
         NumberAnimation {
             target: root
@@ -413,11 +456,18 @@ PanelWindow {
     // ── Dynamic Launcher Theme Loader & Bubbly Animations ────────────────────
     Loader {
         id: themeLoader
-        anchors.centerIn: parent
         focus: true
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.verticalCenter: root.isBottomAttached ? undefined : parent.verticalCenter
+        anchors.bottom: root.isBottomAttached ? parent.bottom : undefined
+        anchors.bottomMargin: root.isBottomAttached ? root.frameThickness : 0
+
         scale: root.animScale
         opacity: root.animOpacity
-        transformOrigin: Item.Center
+        transform: Translate {
+            y: root.animTranslateY
+        }
+        transformOrigin: root.isBottomAttached ? Item.Bottom : Item.Center
         sourceComponent: {
             if (root.currentTheme === "spotlight" || root.currentTheme === "style-3") return spotlightComponent
             if (root.currentTheme === "style-2") return style2Component

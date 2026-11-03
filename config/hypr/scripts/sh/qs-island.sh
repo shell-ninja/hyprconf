@@ -70,10 +70,8 @@ fi
 # Handle unconditional stop
 if [[ "${1:-}" == "--stop" ]]; then
     qs ipc -c island call island quit 2>/dev/null || true
-    pkill -9 -f "qs -c island" 2>/dev/null || true
-    pkill -9 -f "quickshell.*island" 2>/dev/null || true
-    pkill -f "qs -c island" 2>/dev/null || true
-    pkill -f "quickshell.*island" 2>/dev/null || true
+    pkill -9 -f '(^|/)(qs|quickshell)\s+(-c\s+island|-p\s+.*quickshell/island)' 2>/dev/null || true
+    pkill -f '(^|/)(qs|quickshell)\s+(-c\s+island|-p\s+.*quickshell/island)' 2>/dev/null || true
     pkill -9 -f "[a]udio-monitor.py" 2>/dev/null || true
     pkill -9 -f "[n]etwork-speed.py" 2>/dev/null || true
     pkill -9 -f "[p]actl subscribe" 2>/dev/null || true
@@ -86,6 +84,8 @@ is_bar_mode=false
 if [[ -f "$bar_cfg" ]]; then
     if grep -q '"top_panel":\s*"bar"' "$bar_cfg" 2>/dev/null; then
         is_bar_mode=true
+    elif grep -q '"top_panel":\s*"island"' "$bar_cfg" 2>/dev/null; then
+        is_bar_mode=false
     fi
 elif pgrep -f "qs -c bar" >/dev/null 2>&1 && ! pgrep -f "qs -c island" >/dev/null 2>&1; then
     is_bar_mode=true
@@ -142,8 +142,7 @@ if [[ "$is_bar_mode" == "true" ]]; then
 fi
 
 if [[ "$1" == "--start" ]]; then
-    pkill -9 -f "qs -c bar" 2>/dev/null || true
-    pkill -9 -f "quickshell.*bar" 2>/dev/null || true
+    pkill -9 -f '(^|/)(qs|quickshell)\s+(-c\s+bar|-p\s+.*quickshell/bar)' 2>/dev/null || true
     if ! pgrep -f "qs -c island" >/dev/null 2>&1; then
         exec qs -c island -d
     fi
@@ -151,11 +150,8 @@ if [[ "$1" == "--start" ]]; then
 fi
 
 if [[ "$1" == "--restart" ]]; then
-    pkill -9 -f "qs -c bar" 2>/dev/null || true
-    pkill -9 -f "quickshell.*bar" 2>/dev/null || true
-    pkill -9 -f "qs -c island" 2>/dev/null || true
-    pkill -9 -f "quickshell -c island" 2>/dev/null || true
-    pkill -9 -f "quickshell.*island" 2>/dev/null || true
+    pkill -9 -f '(^|/)(qs|quickshell)\s+(-c\s+bar|-p\s+.*quickshell/bar)' 2>/dev/null || true
+    pkill -9 -f '(^|/)(qs|quickshell)\s+(-c\s+island|-p\s+.*quickshell/island)' 2>/dev/null || true
     pkill -9 -f "[a]udio-monitor.py" 2>/dev/null || true
     pkill -9 -f "[n]etwork-speed.py" 2>/dev/null || true
     pkill -9 -f "[p]actl subscribe" 2>/dev/null || true

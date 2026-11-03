@@ -51,22 +51,17 @@ case "$cmd" in
 
     --stop)
         qs ipc -c bar call bar quit 2>/dev/null || true
-        pkill -9 -f "qs -c bar" 2>/dev/null || true
-        pkill -9 -f "quickshell.*bar" 2>/dev/null || true
-        pkill -f "qs -c bar" 2>/dev/null || true
-        pkill -f "quickshell -p .*quickshell/bar" 2>/dev/null || true
+        pkill -9 -f '(^|/)(qs|quickshell)\s+(-c\s+bar|-p\s+.*quickshell/bar)' 2>/dev/null || true
+        pkill -f '(^|/)(qs|quickshell)\s+(-c\s+bar|-p\s+.*quickshell/bar)' 2>/dev/null || true
         ;;
 
     --restart)
-        pkill -9 -f "qs -c island" 2>/dev/null || true
-        pkill -9 -f "quickshell.*island" 2>/dev/null || true
+        pkill -9 -f '(^|/)(qs|quickshell)\s+(-c\s+island|-p\s+.*quickshell/island)' 2>/dev/null || true
         pkill -9 -f "[a]udio-monitor.py" 2>/dev/null || true
         pkill -9 -f "[n]etwork-speed.py" 2>/dev/null || true
         pkill -x cava 2>/dev/null || true
-        pkill -9 -f "qs -c bar" 2>/dev/null || true
-        pkill -9 -f "quickshell.*bar" 2>/dev/null || true
-        pkill -f "qs -c bar" 2>/dev/null || true
-        pkill -f "quickshell -p .*quickshell/bar" 2>/dev/null || true
+        pkill -9 -f '(^|/)(qs|quickshell)\s+(-c\s+bar|-p\s+.*quickshell/bar)' 2>/dev/null || true
+        pkill -f '(^|/)(qs|quickshell)\s+(-c\s+bar|-p\s+.*quickshell/bar)' 2>/dev/null || true
         sleep 0.25
         exec qs -c bar -d
         ;;

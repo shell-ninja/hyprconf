@@ -328,7 +328,7 @@ Pill {
                 try {
                     var screenClusterX = wsCluster.mapToItem(null, 0, 0).x
                     var minScreenX = isGlass ? (bar.frameThickness + 4) : 8
-                    var maxScreenX = isGlass ? (bar.width - bar.frameThickness - 4) : (parent.width - 8)
+                    var maxScreenX = isGlass ? (bar.width - bar.frameThickness - 4) : (bar.width - 8)
                     var clampedBodyX = Math.max(minScreenX - screenClusterX, Math.min(maxScreenX - bodyWidth - screenClusterX, idealBodyX))
                     return clampedBodyX - fL
                 } catch(e) {

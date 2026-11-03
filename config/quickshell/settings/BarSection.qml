@@ -317,24 +317,52 @@ Item {
     function switchTopPanel(mode) {
         if (root.topPanelMode === mode) return
         root.topPanelMode = mode
-        root.executeSave()
-        var switchScript = "import json, os, subprocess\n" +
-            "p = os.path.expanduser('~/.local/share/hyprconf/bar.json')\n" +
-            "try:\n" +
-            "    d = json.load(open(p)) if os.path.exists(p) else {}\n" +
-            "    d['top_panel'] = '" + mode + "'\n" +
-            "    json.dump(d, open(p, 'w'), indent=2)\n" +
-            "except Exception: pass\n"
+        autoSaveTimer.stop()
+
+        var payload = {
+            "top_panel": mode,
+            "height": root.barHeight,
+            "margin_top": root.marginTop,
+            "margin_left": root.marginSides,
+            "margin_right": root.marginSides,
+            "padding": root.barPadding,
+            "widget_spacing": root.widgetSpacing,
+            "capsule_radius": root.capsuleRadius,
+            "capsule_padding": root.capsulePadding,
+            "capsule_style": root.capsuleStyle,
+            "trail_style": root.trailStyle,
+            "opacity": root.barOpacity,
+            "screen_frame": (root.capsuleStyle === "glass"),
+            "hide_pkg_empty": root.hidePkgWhenEmpty,
+            "start": root.startWidgets,
+            "center": root.centerWidgets,
+            "end": root.endWidgets,
+            "widget_settings": root.widgetSettings
+        }
+        var jsonStr = JSON.stringify(payload, null, 2)
+        var switchScript = "import json, os, subprocess, time\n" +
+            "p1 = os.path.expanduser('~/.local/share/hyprconf/bar.json')\n" +
+            "p2 = os.path.expanduser('~/.hyprconf/quickshell/bar/config.json')\n" +
+            "content = '''" + jsonStr + "'''\n" +
+            "for p in [p1, p2]:\n" +
+            "    try:\n" +
+            "        os.makedirs(os.path.dirname(p), exist_ok=True)\n" +
+            "        with open(p, 'w', encoding='utf-8') as f:\n" +
+            "            f.write(content)\n" +
+            "            f.flush()\n" +
+            "            os.fsync(f.fileno())\n" +
+            "    except Exception as e: print(e)\n"
+
         if (mode === "bar") {
-            switchScript += "subprocess.run(['pkill', '-9', '-f', 'qs -c island'], stderr=subprocess.DEVNULL)\n" +
-                "subprocess.run(['pkill', '-9', '-f', 'quickshell.*island'], stderr=subprocess.DEVNULL)\n" +
-                "subprocess.run(['bash', os.path.expanduser('~/.hyprconf/hypr/scripts/sh/qs-island.sh'), '--stop'], stderr=subprocess.DEVNULL)\n" +
+            switchScript += "subprocess.run(['bash', os.path.expanduser('~/.hyprconf/hypr/scripts/sh/qs-island.sh'), '--stop'], stderr=subprocess.DEVNULL)\n" +
+                "subprocess.run(['pkill', '-9', '-f', '^qs -c island'], stderr=subprocess.DEVNULL)\n" +
+                "time.sleep(0.1)\n" +
                 "subprocess.run(['bash', os.path.expanduser('~/.hyprconf/hypr/scripts/sh/qs-bar.sh'), '--restart'], stderr=subprocess.DEVNULL)\n"
         } else {
-            switchScript += "subprocess.run(['pkill', '-9', '-f', 'qs -c bar'], stderr=subprocess.DEVNULL)\n" +
-                "subprocess.run(['pkill', '-9', '-f', 'quickshell.*bar'], stderr=subprocess.DEVNULL)\n" +
-                "subprocess.run(['qs', 'ipc', '-c', 'bar', 'call', 'bar', 'quit'], stderr=subprocess.DEVNULL)\n" +
+            switchScript += "subprocess.run(['qs', 'ipc', '-c', 'bar', 'call', 'bar', 'quit'], stderr=subprocess.DEVNULL)\n" +
                 "subprocess.run(['bash', os.path.expanduser('~/.hyprconf/hypr/scripts/sh/qs-bar.sh'), '--stop'], stderr=subprocess.DEVNULL)\n" +
+                "subprocess.run(['pkill', '-9', '-f', '^qs -c bar'], stderr=subprocess.DEVNULL)\n" +
+                "time.sleep(0.1)\n" +
                 "subprocess.run(['bash', os.path.expanduser('~/.hyprconf/hypr/scripts/sh/qs-island.sh'), '--restart'], stderr=subprocess.DEVNULL)\n"
         }
         Quickshell.execDetached(["python3", "-c", switchScript])
