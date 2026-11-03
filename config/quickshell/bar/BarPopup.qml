@@ -12,9 +12,8 @@ Item {
     property string align: "center"       // "left" | "center" | "right"
     property int popupWidth: 320
     property int maxContentHeight: 540
-    property color surface: Theme.alpha(Theme.surface, 0.96)
+    property color surface: (typeof bar !== "undefined" && bar) ? Theme.alpha(Theme.surface, bar.barOpacity) : Theme.alpha(Theme.surface, 0.90)
     readonly property bool isFloating: (typeof bar !== "undefined" && bar && (bar.capsuleStyle === "islands" || bar.marginTop > 2))
-    readonly property int effectiveFillet: isFloating ? 0 : fillet
     property int barHeight: (typeof bar !== "undefined" && bar) ? bar.barH : 36
     property int edge: 12
     property int bottomRadius: 18
@@ -22,6 +21,13 @@ Item {
     property int padding: 18
     property int duration: 320
     readonly property int topOverlap: 1   // hides the AA seam against the bar
+
+    readonly property int minScreenX: (typeof bar !== "undefined" && bar && bar.capsuleStyle === "glass") ? (bar.frameThickness + 4) : 8
+    readonly property int maxScreenX: (typeof bar !== "undefined" && bar && bar.capsuleStyle === "glass") ? (parent.width - bar.frameThickness - 4) : (parent.width - 8)
+
+    // Dynamic fillet widths based on proximity to screen boundaries
+    readonly property int fL: isFloating ? 0 : ((bodyX - fillet >= minScreenX) ? fillet : 0)
+    readonly property int fR: isFloating ? 0 : ((bodyX + popupWidth + fillet <= maxScreenX) ? fillet : 0)
 
     default property alias content: contentHolder.data
 
@@ -50,19 +56,24 @@ Item {
     }
 
     function reposition() {
-        if (!parent)
-            return
-        if (align === "left") {
-            bodyX = edge
+        if (!parent) return
+        var targetCx = parent.width / 2
+
+        if (trigger) {
+            try {
+                var p = trigger.mapToItem(parent, 0, 0)
+                targetCx = p.x + trigger.width / 2
+            } catch(e) {
+                targetCx = parent.width / 2
+            }
+        } else if (align === "left") {
+            targetCx = minScreenX + popupWidth / 2
         } else if (align === "right") {
-            bodyX = parent.width - edge - popupWidth
-        } else if (trigger) {
-            const p = trigger.mapToItem(parent, 0, 0)
-            const cx = p.x + trigger.width / 2
-            bodyX = Math.max(edge + fillet, Math.min(parent.width - edge - fillet - popupWidth, cx - popupWidth / 2))
-        } else {
-            bodyX = Math.max(edge + fillet, (parent.width - popupWidth) / 2)
+            targetCx = maxScreenX - popupWidth / 2
         }
+
+        var idealBodyX = targetCx - popupWidth / 2
+        bodyX = Math.max(minScreenX, Math.min(maxScreenX - popupWidth, idealBodyX))
     }
 
     function close() {
@@ -109,10 +120,10 @@ Item {
         onActivated: popup.close()
     }
 
-    x: bodyX - effectiveFillet
+    x: bodyX - fL
     y: isFloating ? ((typeof bar !== "undefined" && bar) ? (bar.marginTop + bar.barH + 6) : 48) : (barHeight - topOverlap)
     z: 20
-    width: popupWidth + effectiveFillet * 2
+    width: popupWidth + fL + fR
     height: revealHeight
     visible: height > 0.5
     clip: true
@@ -127,16 +138,17 @@ Item {
         layer.samples: 4
         visible: !popup.isFloating
 
-        readonly property int fL: (popup.align === "left") ? 0 : popup.fillet
-        readonly property int fR: (popup.align === "right") ? 0 : popup.fillet
+        readonly property int fL: popup.fL
+        readonly property int fR: popup.fR
         readonly property int br: popup.bottomRadius
         readonly property int w: popup.popupWidth
         readonly property int h: popup.height
 
+        // 1. Fill Path (Monolithic Dropdown Fill)
         ShapePath {
             fillColor: popup.surface
-            strokeColor: Theme.alpha(Theme.accent, 0.28)
-            strokeWidth: 1
+            strokeColor: "transparent"
+            strokeWidth: 0
 
             startX: 0
             startY: 0
@@ -144,8 +156,8 @@ Item {
             PathArc {
                 x: unifiedBg.fL
                 y: unifiedBg.fL
-                radiusX: unifiedBg.fL
-                radiusY: unifiedBg.fL
+                radiusX: Math.max(1, unifiedBg.fL)
+                radiusY: Math.max(1, unifiedBg.fL)
                 direction: PathArc.Clockwise
             }
 
@@ -183,8 +195,8 @@ Item {
             PathArc {
                 x: unifiedBg.fL + unifiedBg.w + unifiedBg.fR
                 y: 0
-                radiusX: unifiedBg.fR
-                radiusY: unifiedBg.fR
+                radiusX: Math.max(1, unifiedBg.fR)
+                radiusY: Math.max(1, unifiedBg.fR)
                 direction: PathArc.Clockwise
             }
 
@@ -192,6 +204,63 @@ Item {
             PathLine {
                 x: 0
                 y: 0
+            }
+        }
+
+        // 2. Stroke Path (Perimeter Outline Only — Open at top for zero-seam glass attachment)
+        ShapePath {
+            fillColor: "transparent"
+            strokeColor: Theme.alpha(Theme.accent, 0.28)
+            strokeWidth: 1
+
+            startX: 0
+            startY: 0
+
+            PathArc {
+                x: unifiedBg.fL
+                y: unifiedBg.fL
+                radiusX: Math.max(1, unifiedBg.fL)
+                radiusY: Math.max(1, unifiedBg.fL)
+                direction: PathArc.Clockwise
+            }
+
+            PathLine {
+                x: unifiedBg.fL
+                y: Math.max(unifiedBg.fL, unifiedBg.h - unifiedBg.br)
+            }
+
+            PathArc {
+                x: unifiedBg.fL + unifiedBg.br
+                y: unifiedBg.h
+                radiusX: unifiedBg.br
+                radiusY: unifiedBg.br
+                direction: PathArc.Counterclockwise
+            }
+
+            PathLine {
+                x: unifiedBg.fL + unifiedBg.w - unifiedBg.br
+                y: unifiedBg.h
+            }
+
+            PathArc {
+                x: unifiedBg.fL + unifiedBg.w
+                y: Math.max(unifiedBg.fL, unifiedBg.h - unifiedBg.br)
+                radiusX: unifiedBg.br
+                radiusY: unifiedBg.br
+                direction: PathArc.Counterclockwise
+            }
+
+            PathLine {
+                x: unifiedBg.fL + unifiedBg.w
+                y: unifiedBg.fR
+            }
+
+            PathArc {
+                x: unifiedBg.fL + unifiedBg.w + unifiedBg.fR
+                y: 0
+                radiusX: Math.max(1, unifiedBg.fR)
+                radiusY: Math.max(1, unifiedBg.fR)
+                direction: PathArc.Clockwise
             }
         }
     }
@@ -211,29 +280,19 @@ Item {
         anchors.fill: parent
         clip: true
 
-        // Inner subtle glass rim at top
+        // Inner subtle glass rim at top (floating only)
         Rectangle {
             anchors.top: parent.top
             anchors.horizontalCenter: parent.horizontalCenter
             width: popup.popupWidth * 0.75
             height: 1
             color: Theme.alpha(Theme.foreground, 0.12)
-        }
-
-        // Seamless fusion: covers the top 1px border so dropdown flows smoothly from the bar (non-floating only)
-        Rectangle {
-            anchors.top: parent.top
-            anchors.left: parent.left
-            anchors.right: parent.right
-            height: 2
-            color: popup.surface
-            visible: !popup.isFloating
-            z: 5
+            visible: popup.isFloating
         }
 
         ColumnLayout {
             id: contentHolder
-            x: popup.padding
+            x: popup.fL + popup.padding
             y: popup.topOverlap + popup.padding
             width: popup.popupWidth - popup.padding * 2
             spacing: 10

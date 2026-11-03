@@ -1992,12 +1992,12 @@ Item {
                         return root.currentNotification.body || ""
                     }
                     font.family: isMonoBox ? "JetBrainsMono Nerd Font, monospace" : "Outfit"
-                    font.pixelSize: isMonoBox ? 9.5 : 11
+                    font.pixelSize: isMonoBox ? 10 : 11
                     font.weight: Font.Normal
                     lineHeight: isMonoBox ? 1.05 : 1.15
                     color: Theme.alpha(Theme.foreground, 0.85)
                     wrapMode: isMonoBox ? Text.NoWrap : Text.Wrap
-                    maximumLineCount: isMonoBox ? 14 : 3
+                    maximumLineCount: isMonoBox ? 16 : 3
                     elide: Text.ElideRight
                     width: parent.width
                     visible: text.length > 0

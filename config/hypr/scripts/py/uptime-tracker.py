@@ -50,8 +50,8 @@ def get_session_metrics():
     }
 
 def format_box(metrics, action="Shutdown"):
+    width = 40
     title = f"PC SESSION SUMMARY ({action.upper()})"
-    width = 42
     pad_title = title.center(width - 2)
 
     boot_str = metrics["boot_str"]
@@ -59,15 +59,18 @@ def format_box(metrics, action="Shutdown"):
     dur_str = metrics["duration_str"]
     hours_dec_str = f"{metrics['hours_dec']:.2f} hrs"
 
+    col1_w = 14
+    col2_w = width - 3 - col1_w
+
     box = (
         f"╭{'─' * (width - 2)}╮\n"
         f"│{pad_title}│\n"
-        f"├{'─' * 16}┬{'─' * (width - 19)}┤\n"
-        f"│ Startup Time   │ {boot_str:<{width - 21}} │\n"
-        f"│ {action:<14} │ {now_str:<{width - 21}} │\n"
-        f"│ Session Time   │ {dur_str:<{width - 21}} │\n"
-        f"│ Total Usage    │ {hours_dec_str:<{width - 21}} │\n"
-        f"╰{'─' * 16}┴{'─' * (width - 19)}╯"
+        f"├{'─' * col1_w}┬{'─' * col2_w}┤\n"
+        f"│ {'Startup Time':<{col1_w - 1}}│ {boot_str:<{col2_w - 1}}│\n"
+        f"│ {action:<{col1_w - 1}}│ {now_str:<{col2_w - 1}}│\n"
+        f"│ {'Session Time':<{col1_w - 1}}│ {dur_str:<{col2_w - 1}}│\n"
+        f"│ {'Total Usage':<{col1_w - 1}}│ {hours_dec_str:<{col2_w - 1}}│\n"
+        f"╰{'─' * col1_w}┴{'─' * col2_w}╯"
     )
     return box
 
@@ -148,29 +151,19 @@ def play_sound(sound_type="poweroff"):
             continue
 
 def send_notification(metrics, action="Shutdown"):
-    title = f"System {action.capitalize()} Summary"
+    title = f"System {action.capitalize()}"
     icon = "system-reboot" if action.lower() == "reboot" else "system-shutdown"
-
-    dur_str = metrics["duration_str"]
-    hours_dec_str = f"{metrics['hours_dec']:.2f} hrs"
-    boot_str = metrics["boot_str"]
-    now_str = metrics["now_str"]
-
-    body = (
-        f"Session Duration: {dur_str} ({hours_dec_str})\n"
-        f"Startup: {boot_str}\n"
-        f"{action.capitalize()}: {now_str}"
-    )
+    box = format_box(metrics, action)
     
-    # Try notify-send with clean multi-line formatting
+    # Send desktop notification with the complete obsidian session box
     try:
         subprocess.run([
             "notify-send",
             "-a", "Hyprconf Power",
             "-i", icon,
-            "-t", "5000",
+            "-t", "6500",
             title,
-            body
+            box
         ], timeout=2, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     except Exception:
         pass

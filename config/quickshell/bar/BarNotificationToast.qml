@@ -19,7 +19,7 @@ Item {
     anchors.topMargin: (typeof bar !== "undefined" && bar) ? (bar.marginTop + bar.barH + 12) : 56
     anchors.rightMargin: 16
 
-    width: (root.notifItem && root.notifItem.body && (root.notifItem.body.indexOf("╭") >= 0 || root.notifItem.body.indexOf("┌") >= 0)) ? 410 : 340
+    width: (root.notifItem && root.notifItem.body && (root.notifItem.body.indexOf("╭") >= 0 || root.notifItem.body.indexOf("┌") >= 0)) ? 430 : 340
     implicitHeight: cardBg.implicitHeight
     height: implicitHeight
     z: 100
@@ -100,7 +100,7 @@ Item {
         id: cardBg
         anchors.fill: parent
         radius: 16
-        color: Theme.alpha(Theme.surface, 0.94)
+        color: (typeof bar !== "undefined" && bar) ? Theme.alpha(Theme.surface, bar.barOpacity) : Theme.alpha(Theme.surface, 0.90)
         border.width: 1
         border.color: hoverHandler.hovered ? Theme.alpha(Theme.accent, 0.45) : Theme.alpha(Theme.accent, 0.28)
         clip: true
@@ -228,10 +228,10 @@ Item {
                 Layout.fillWidth: true
                 text: root.notifItem ? (root.notifItem.body || "") : ""
                 font.family: isMonoBox ? "JetBrainsMono Nerd Font, monospace" : "Outfit"
-                font.pixelSize: isMonoBox ? 9.5 : 11
+                font.pixelSize: isMonoBox ? 10 : 11
                 color: Theme.alpha(Theme.foreground, 0.85)
                 wrapMode: isMonoBox ? Text.NoWrap : Text.Wrap
-                maximumLineCount: isMonoBox ? 14 : 4
+                maximumLineCount: isMonoBox ? 16 : 4
                 elide: Text.ElideRight
                 lineHeight: isMonoBox ? 1.05 : 1.2
                 visible: text.length > 0

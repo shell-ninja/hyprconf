@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Shapes
 import Quickshell
 import Quickshell.Io
 import Quickshell.Hyprland
@@ -302,33 +303,150 @@ Pill {
         }
 
         // Rich Hover Tooltip displaying open windows on hovered workspace
-        Rectangle {
+        Item {
             id: wsTooltip
             readonly property var winList: rootPill.getWsWindows(rootPill.hoveredWsId)
             visible: rootPill.hoveredWsId > 0 && winList.length > 0
             z: 999
+
+            readonly property bool isGlass: (typeof bar !== "undefined" && bar && bar.capsuleStyle === "glass")
+            readonly property int fL: isGlass ? 10 : 0
+            readonly property int fR: isGlass ? 10 : 0
+            readonly property int br: 10
+            readonly property int bodyWidth: Math.max(160, Math.min(280, tooltipCol.implicitWidth + 24))
+            readonly property int w: bodyWidth
+            readonly property int h: height
+            readonly property color surface: (typeof bar !== "undefined" && bar) ? Theme.alpha(Theme.surface, bar.barOpacity) : Theme.alpha(Theme.surface, 0.90)
+            readonly property color strokeColor: Theme.alpha(Theme.accent, 0.35)
+
             x: {
                 var item = (rootPill.hoveredWsId >= 1 && rootPill.hoveredWsId <= rootPill.maxSlots && slotsRepeater.count >= rootPill.hoveredWsId)
                     ? slotsRepeater.itemAt(rootPill.hoveredWsId - 1)
                     : null
                 if (!item) return 0
-                return Math.max(-10, Math.min(wsCluster.width - width + 10, item.x + item.width / 2 - width / 2))
+                var idealBodyX = item.x + item.width / 2 - bodyWidth / 2
+                try {
+                    var screenClusterX = wsCluster.mapToItem(null, 0, 0).x
+                    var minScreenX = isGlass ? (bar.frameThickness + 4) : 8
+                    var maxScreenX = isGlass ? (bar.width - bar.frameThickness - 4) : (parent.width - 8)
+                    var clampedBodyX = Math.max(minScreenX - screenClusterX, Math.min(maxScreenX - bodyWidth - screenClusterX, idealBodyX))
+                    return clampedBodyX - fL
+                } catch(e) {
+                    return idealBodyX - fL
+                }
             }
-            y: (typeof bar !== "undefined" && bar && bar.capsuleStyle === "glass") ? (parent.height - 1) : (parent.height + 6)
-            width: Math.max(160, Math.min(280, tooltipCol.implicitWidth + 24))
-            implicitHeight: tooltipCol.implicitHeight + 16
-            topLeftRadius: (typeof bar !== "undefined" && bar && bar.capsuleStyle === "glass") ? 0 : 8
-            topRightRadius: (typeof bar !== "undefined" && bar && bar.capsuleStyle === "glass") ? 0 : 8
-            bottomLeftRadius: 10
-            bottomRightRadius: 10
-            color: Theme.alpha(Theme.surface, 0.96)
-            border.width: 1
-            border.color: Theme.alpha(Theme.accent, 0.40)
+            y: isGlass ? Math.round((bar.barH + wsCluster.height) / 2 - 1) : (parent.height + 6)
+            width: bodyWidth + fL + fR
+            height: tooltipCol.implicitHeight + 16
+
+            // Glass Attached Monolithic Shape
+            Shape {
+                anchors.fill: parent
+                layer.enabled: true
+                layer.samples: 4
+                visible: wsTooltip.isGlass
+
+                // 1. Fill Path (Closed across top)
+                ShapePath {
+                    fillColor: wsTooltip.surface
+                    strokeColor: "transparent"
+                    strokeWidth: 0
+
+                    startX: 0
+                    startY: 0
+
+                    PathArc {
+                        x: wsTooltip.fL
+                        y: wsTooltip.fL
+                        radiusX: Math.max(1, wsTooltip.fL)
+                        radiusY: Math.max(1, wsTooltip.fL)
+                        direction: PathArc.Clockwise
+                    }
+                    PathLine { x: wsTooltip.fL; y: Math.max(wsTooltip.fL, wsTooltip.h - wsTooltip.br) }
+                    PathArc {
+                        x: wsTooltip.fL + wsTooltip.br
+                        y: wsTooltip.h
+                        radiusX: wsTooltip.br
+                        radiusY: wsTooltip.br
+                        direction: PathArc.Counterclockwise
+                    }
+                    PathLine { x: wsTooltip.fL + wsTooltip.w - wsTooltip.br; y: wsTooltip.h }
+                    PathArc {
+                        x: wsTooltip.fL + wsTooltip.w
+                        y: Math.max(wsTooltip.fL, wsTooltip.h - wsTooltip.br)
+                        radiusX: wsTooltip.br
+                        radiusY: wsTooltip.br
+                        direction: PathArc.Counterclockwise
+                    }
+                    PathLine { x: wsTooltip.fL + wsTooltip.w; y: wsTooltip.fR }
+                    PathArc {
+                        x: wsTooltip.fL + wsTooltip.w + wsTooltip.fR
+                        y: 0
+                        radiusX: Math.max(1, wsTooltip.fR)
+                        radiusY: Math.max(1, wsTooltip.fR)
+                        direction: PathArc.Clockwise
+                    }
+                    PathLine { x: 0; y: 0 }
+                }
+
+                // 2. Stroke Path (Open across top — zero-seam glass attachment)
+                ShapePath {
+                    fillColor: "transparent"
+                    strokeColor: wsTooltip.strokeColor
+                    strokeWidth: 1
+
+                    startX: 0
+                    startY: 0
+
+                    PathArc {
+                        x: wsTooltip.fL
+                        y: wsTooltip.fL
+                        radiusX: Math.max(1, wsTooltip.fL)
+                        radiusY: Math.max(1, wsTooltip.fL)
+                        direction: PathArc.Clockwise
+                    }
+                    PathLine { x: wsTooltip.fL; y: Math.max(wsTooltip.fL, wsTooltip.h - wsTooltip.br) }
+                    PathArc {
+                        x: wsTooltip.fL + wsTooltip.br
+                        y: wsTooltip.h
+                        radiusX: wsTooltip.br
+                        radiusY: wsTooltip.br
+                        direction: PathArc.Counterclockwise
+                    }
+                    PathLine { x: wsTooltip.fL + wsTooltip.w - wsTooltip.br; y: wsTooltip.h }
+                    PathArc {
+                        x: wsTooltip.fL + wsTooltip.w
+                        y: Math.max(wsTooltip.fL, wsTooltip.h - wsTooltip.br)
+                        radiusX: wsTooltip.br
+                        radiusY: wsTooltip.br
+                        direction: PathArc.Counterclockwise
+                    }
+                    PathLine { x: wsTooltip.fL + wsTooltip.w; y: wsTooltip.fR }
+                    PathArc {
+                        x: wsTooltip.fL + wsTooltip.w + wsTooltip.fR
+                        y: 0
+                        radiusX: Math.max(1, wsTooltip.fR)
+                        radiusY: Math.max(1, wsTooltip.fR)
+                        direction: PathArc.Clockwise
+                    }
+                }
+            }
+
+            // Floating Card Background (Islands style)
+            Rectangle {
+                anchors.fill: parent
+                visible: !wsTooltip.isGlass
+                radius: wsTooltip.br
+                color: wsTooltip.surface
+                border.width: 1
+                border.color: wsTooltip.strokeColor
+            }
 
             ColumnLayout {
                 id: tooltipCol
-                anchors.fill: parent
-                anchors.margins: 8
+                x: wsTooltip.fL + 8
+                y: 8
+                width: wsTooltip.bodyWidth - 16
                 spacing: 4
 
                 RowLayout {
