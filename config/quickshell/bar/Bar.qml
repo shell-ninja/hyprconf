@@ -307,7 +307,7 @@ PanelWindow {
             Region { item: osd.shown ? osd : null },
             Region { item: notifToast.shown ? notifToast : null },
             Region { item: rightFramePowerTrigger },
-            Region { item: (bar.rightPowerMenuShown || togglesPop.shown) ? popupDismissArea : null },
+            Region { item: ((bar.rightPowerMenuShown && (!rightPowerMenu || !rightPowerMenu.hoverActive)) || togglesPop.shown) ? popupDismissArea : null },
             Region { item: trayPop.shown ? trayPop : null },
             Region { item: weatherPop.shown ? weatherPop : null },
             Region { item: perfPop.shown ? perfPop : null },
@@ -1063,7 +1063,11 @@ PanelWindow {
             }
 
             onIsHoveredChanged: {
-                if (isHovered) bar.openPowerFromHover()
+                if (isHovered) {
+                    bar.openPowerFromHover()
+                } else if (typeof rightPowerMenu !== "undefined" && rightPowerMenu) {
+                    rightPowerMenu.updateHover()
+                }
             }
         }
 
@@ -1191,7 +1195,7 @@ PanelWindow {
         id: popupDismissArea
         anchors.fill: parent
         z: 15
-        enabled: bar.rightPowerMenuShown || togglesPop.shown
+        enabled: (bar.rightPowerMenuShown && (!rightPowerMenu || !rightPowerMenu.hoverActive)) || togglesPop.shown
         visible: enabled
         onClicked: {
             bar.closePower()

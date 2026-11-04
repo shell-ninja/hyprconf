@@ -10,8 +10,12 @@ Item {
 
     required property var bar
 
-    property bool shown: false
     property var triggerItem: null
+    property bool manualOpen: false
+    property bool hoverActive: false
+
+    readonly property bool isExpanded: manualOpen || hoverActive
+    readonly property bool shown: isExpanded
 
     width: 410
     height: 350
@@ -27,29 +31,29 @@ Item {
     anchors.rightMargin: root.isGlass ? Math.max(0, bar.frameThickness - 1) : 12
     anchors.verticalCenter: parent ? parent.verticalCenter : undefined
 
-    // ── TOOLTIP-STYLE ANIMATION (Anchored & Emerging from Right Frame) ─────────
-    property real animX: shown ? 0 : 8
-    property real animScale: shown ? 1.0 : 0.94
-    opacity: shown ? 1.0 : 0.0
+    // ── TOOLTIP-STYLE HOVER ANIMATION (Matching modeTooltip & BarPopup) ───────
+    property real animX: isExpanded ? 0 : 8
+    property real animScale: isExpanded ? 1.0 : 0.94
+    opacity: isExpanded ? 1.0 : 0.0
     visible: opacity > 0.005
 
     Behavior on opacity {
         NumberAnimation {
-            duration: root.shown ? 180 : 130
-            easing.type: root.shown ? Easing.OutQuad : Easing.InQuad
+            duration: root.isExpanded ? 180 : 130
+            easing.type: root.isExpanded ? Easing.OutQuad : Easing.InQuad
         }
     }
     Behavior on animX {
         NumberAnimation {
-            duration: root.shown ? 240 : 140
-            easing.type: root.shown ? Easing.OutBack : Easing.InCubic
+            duration: root.isExpanded ? 240 : 140
+            easing.type: root.isExpanded ? Easing.OutBack : Easing.InCubic
             easing.overshoot: 1.25
         }
     }
     Behavior on animScale {
         NumberAnimation {
-            duration: root.shown ? 220 : 140
-            easing.type: root.shown ? Easing.OutBack : Easing.InCubic
+            duration: root.isExpanded ? 220 : 140
+            easing.type: root.isExpanded ? Easing.OutBack : Easing.InCubic
             easing.overshoot: 1.20
         }
     }
@@ -64,7 +68,7 @@ Item {
         }
     ]
 
-    readonly property bool isHovered: panelMouse.containsMouse || frameBridgeMouse.containsMouse
+    readonly property bool isHovered: panelHover.hovered || (triggerItem ? triggerItem.isHovered : false)
     readonly property string homeDir: bar ? bar.homeDir : (Quickshell.env("HOME") || "/home/" + (Quickshell.env("USER") || "user"))
     readonly property string userName: (Quickshell.env("USER") || "user") + "@" + (Quickshell.env("HOSTNAME") || "hyprconf")
 
@@ -123,64 +127,56 @@ Item {
         NumberAnimation { target: root; property: "pulseGlow"; from: 1.0; to: 0.40; duration: 450; easing.type: Easing.InOutQuad }
     }
 
-    // Grace timer to close when cursor leaves menu and triggers (only if opened via hover)
-    property bool isHoverOpened: false
-
+    // Hover grace timer (120ms debounce to prevent seam drop when moving between frame and panel)
     Timer {
-        id: hoverCloseTimer
-        interval: 350
+        id: hoverGraceTimer
+        interval: 120
         repeat: false
         onTriggered: {
-            if (!root.isHovered && (!root.triggerItem || !root.triggerItem.isHovered) && !root.isCountingDown && root.isHoverOpened) {
-                root.closeMenu()
+            if (!root.isHovered && (!root.triggerItem || !root.triggerItem.isHovered)) {
+                root.hoverActive = false
             }
         }
     }
 
-    function checkHoverState() {
+    function updateHover() {
         if (root.isHovered || (root.triggerItem && root.triggerItem.isHovered)) {
-            hoverCloseTimer.stop()
+            hoverGraceTimer.stop()
+            root.hoverActive = true
         } else {
-            if (!root.isCountingDown && root.shown && root.isHoverOpened) {
-                hoverCloseTimer.restart()
+            if (!root.isCountingDown) {
+                hoverGraceTimer.restart()
             }
         }
     }
 
-    onIsHoveredChanged: checkHoverState()
+    onIsHoveredChanged: updateHover()
 
     Connections {
         target: root.triggerItem
         function onIsHoveredChanged() {
-            root.checkHoverState()
+            root.updateHover()
         }
     }
 
     function openFromHover() {
-        hoverCloseTimer.stop()
-        root.isHoverOpened = true
-        root.shown = true
-        Qt.callLater(root.checkHoverState)
+        updateHover()
     }
 
     function openMenu() {
-        hoverCloseTimer.stop()
-        root.isHoverOpened = false
-        root.shown = true
+        root.manualOpen = true
     }
 
     function closeMenu() {
         root.cancelCountdown()
-        root.isHoverOpened = false
-        root.shown = false
+        root.manualOpen = false
+        root.hoverActive = false
+        hoverGraceTimer.stop()
     }
 
     function toggleMenu() {
-        if (root.shown) {
-            closeMenu()
-        } else {
-            openMenu()
-        }
+        if (root.isExpanded) closeMenu()
+        else openMenu()
     }
 
     function triggerAction(actionName) {
@@ -375,34 +371,9 @@ Item {
     }
 
 
-    MouseArea {
-        id: panelMouse
-        anchors.left: parent.left
-        anchors.top: parent.top
-        anchors.bottom: parent.bottom
-        anchors.right: parent.right
-        anchors.rightMargin: -8
-        hoverEnabled: true
-        onEntered: root.checkHoverState()
-        onExited: root.checkHoverState()
-    }
-
-    // Frame hover extension bridge (covers right frame directly adjacent to power panel)
-    MouseArea {
-        id: frameBridgeMouse
-        anchors.left: parent.right
-        anchors.top: parent.top
-        anchors.bottom: parent.bottom
-        width: Math.max(18, (bar && bar.frameThickness) ? bar.frameThickness : 18) + 6
-        hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
-        z: 2
-        onEntered: root.checkHoverState()
-        onExited: root.checkHoverState()
-        onClicked: {
-            if (root.isCountingDown) root.cancelCountdown()
-            else root.closeMenu()
-        }
+    HoverHandler {
+        id: panelHover
+        onHoveredChanged: root.updateHover()
     }
 
     // ── INNER CONTENT CONTAINER ───────────────────────────────────────────────
