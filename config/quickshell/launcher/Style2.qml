@@ -11,10 +11,11 @@ import "."
 // Style 2: Panoramic Grid Launcher (820x560 with wallpaper banner, compact 6x2 grid & 3-pill mode switcher)
 ClippingRectangle {
     id: card
-    width: (rootWindow && rootWindow.isIslandView && parent) ? parent.width : 820
-    height: (rootWindow && rootWindow.isIslandView && parent) ? parent.height : 560
+    implicitWidth: (rootWindow && rootWindow.isIslandView && parent) ? parent.width : 820
+    implicitHeight: (rootWindow && rootWindow.isIslandView && parent) ? parent.height : 560
+    width: implicitWidth
+    height: implicitHeight
     anchors.fill: (rootWindow && rootWindow.isIslandView) ? parent : undefined
-    anchors.centerIn: (rootWindow && rootWindow.isIslandView) ? undefined : parent
     radius: (rootWindow && rootWindow.isIslandView && rootWindow.animProgress !== undefined)
             ? (18 + (26 - 18) * rootWindow.animProgress) : 26
     color: "transparent"

@@ -8,10 +8,11 @@ import "."
 // Style 1: Slanted Split Quad Launcher (Widescreen 880x420)
 ClippingRectangle {
     id: card
-    width: (rootWindow && rootWindow.isIslandView && parent) ? parent.width : 880
-    height: (rootWindow && rootWindow.isIslandView && parent) ? parent.height : 420
+    implicitWidth: (rootWindow && rootWindow.isIslandView && parent) ? parent.width : 880
+    implicitHeight: (rootWindow && rootWindow.isIslandView && parent) ? parent.height : 420
+    width: implicitWidth
+    height: implicitHeight
     anchors.fill: (rootWindow && rootWindow.isIslandView) ? parent : undefined
-    anchors.centerIn: (rootWindow && rootWindow.isIslandView) ? undefined : parent
     radius: (rootWindow && rootWindow.isIslandView && rootWindow.animProgress !== undefined)
             ? (18 + (20 - 18) * rootWindow.animProgress) : 20
     color: (rootWindow && rootWindow.isIslandView) ? "transparent" : Theme.alpha(Theme.background, 0.78)
