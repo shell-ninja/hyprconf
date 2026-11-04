@@ -23,10 +23,6 @@ Pill {
         if (typeof bar !== "undefined" && bar && bar.powerTrigger === rootPill) bar.powerTrigger = null
     }
 
-    onHoveredChanged: {
-        if (hovered && typeof bar !== "undefined" && bar) bar.openPowerFromHover()
-    }
-
     onClicked: {
         if (typeof bar !== "undefined" && bar) bar.togglePower()
     }

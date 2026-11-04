@@ -306,8 +306,7 @@ PanelWindow {
             Region { item: (bar.capsuleStyle === "islands") ? endIsland : null },
             Region { item: osd.shown ? osd : null },
             Region { item: notifToast.shown ? notifToast : null },
-            Region { item: rightFramePowerTrigger },
-            Region { item: ((bar.rightPowerMenuShown && (!rightPowerMenu || !rightPowerMenu.hoverActive)) || togglesPop.shown) ? popupDismissArea : null },
+            Region { item: (bar.rightPowerMenuShown || togglesPop.shown) ? popupDismissArea : null },
             Region { item: trayPop.shown ? trayPop : null },
             Region { item: weatherPop.shown ? weatherPop : null },
             Region { item: perfPop.shown ? perfPop : null },
@@ -1042,35 +1041,6 @@ PanelWindow {
             color: screenFrame.frameFill
         }
 
-        // Interactive Right Frame Power Trigger (Clean hover zone at center of right frame)
-        Item {
-            id: rightFramePowerTrigger
-            x: parent.width - Math.max(screenFrame.ft, 18)
-            y: Math.round((parent.height - height) / 2)
-            width: Math.max(screenFrame.ft, 18)
-            height: 360
-            z: 20
-
-            readonly property bool isHovered: frameHover.hovered || frameMouse.containsMouse
-
-            HoverHandler { id: frameHover }
-            MouseArea {
-                id: frameMouse
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: bar.togglePower()
-            }
-
-            onIsHoveredChanged: {
-                if (isHovered) {
-                    bar.openPowerFromHover()
-                } else if (typeof rightPowerMenu !== "undefined" && rightPowerMenu) {
-                    rightPowerMenu.updateHover()
-                }
-            }
-        }
-
         // 3. Bottom Glass Frame Bar
         Rectangle {
             x: 0
@@ -1190,12 +1160,22 @@ PanelWindow {
     // POPUPS (Smooth drop-downs dynamically attached to triggers)
     // ================================================================
 
+    // Dimming backdrop scrim for centered Power Menu
+    Rectangle {
+        anchors.fill: parent
+        z: 14
+        color: "#000000"
+        opacity: bar.rightPowerMenuShown ? 0.45 : 0.0
+        visible: opacity > 0.005
+        Behavior on opacity { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+    }
+
     // Fullscreen dismiss backdrop for click-activated popups (Power, Toggles/Clipboard)
     MouseArea {
         id: popupDismissArea
         anchors.fill: parent
         z: 15
-        enabled: (bar.rightPowerMenuShown && (!rightPowerMenu || !rightPowerMenu.hoverActive)) || togglesPop.shown
+        enabled: bar.rightPowerMenuShown || togglesPop.shown
         visible: enabled
         onClicked: {
             bar.closePower()
@@ -3056,11 +3036,10 @@ PanelWindow {
         }
     }
 
-    // 11. POWER & SESSION MENU (Expands from Right Frame on Hover)
+    // 11. POWER & SESSION MENU (Centered Obsidian Modal)
     BarPowerMenu {
         id: rightPowerMenu
         bar: bar
-        triggerItem: rightFramePowerTrigger
     }
 
     // ================================================================

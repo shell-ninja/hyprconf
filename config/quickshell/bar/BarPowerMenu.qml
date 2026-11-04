@@ -12,66 +12,38 @@ Item {
 
     property var triggerItem: null
     property bool manualOpen: false
-    property bool hoverActive: false
 
-    readonly property bool isExpanded: manualOpen || hoverActive
+    readonly property bool isExpanded: manualOpen
     readonly property bool shown: isExpanded
 
-    width: 410
-    height: 350
+    width: 430
+    height: 360
     z: 9999
 
-    readonly property bool isGlass: (bar && bar.capsuleStyle === "glass")
-    readonly property int fT: 14
-    readonly property int fB: 14
-    readonly property int rL: 16
+    // Centered directly on screen
+    anchors.centerIn: parent
 
-    // Centered along the right frame of the screen
-    anchors.right: parent ? parent.right : undefined
-    anchors.rightMargin: root.isGlass ? Math.max(0, bar.frameThickness - 1) : 12
-    anchors.verticalCenter: parent ? parent.verticalCenter : undefined
+    // Smooth bloom scale & opacity animation from center
+    transformOrigin: Item.Center
+    scale: root.isExpanded ? 1.0 : 0.92
+    opacity: root.isExpanded ? 1.0 : 0.0
+    visible: opacity > 0.005
 
-    // ── CAELESTIA SHELL HOVER EXPANSION FORMULA ──────────────────────────────
-    // Material 3 Expressive Bezier tokens from Caelestia Shell:
-    // • expressiveDefaultSpatial: [ 0.38, 1.21, 0.22, 1.00 ] (500ms)
-    // • expressiveFastSpatial:    [ 0.42, 1.67, 0.21, 0.90 ] (350ms)
-    // • expressiveDefaultEffects: [ 0.34, 0.80, 0.34, 1.00 ] (200ms)
-    // • emphasizedAccel:         [ 0.30, 0.00, 0.80, 0.15 ] (200ms)
-
-    property real offsetScale: isExpanded ? 0.0 : 1.0
-
-    Behavior on offsetScale {
+    Behavior on scale {
         NumberAnimation {
-            duration: root.isExpanded ? 480 : 200
-            easing.type: Easing.BezierSpline
-            easing.bezierCurve: root.isExpanded
-                ? [ 0.38, 1.21, 0.22, 1.0, 1, 1 ]  // Caelestia expressiveDefaultSpatial
-                : [ 0.30, 0.00, 0.80, 0.15, 1, 1 ] // Caelestia emphasizedAccel
+            duration: root.isExpanded ? 260 : 180
+            easing.type: root.isExpanded ? Easing.OutBack : Easing.InQuad
+            easing.overshoot: 1.15
         }
     }
 
-    // Master expansion progress: 0.0 (closed) -> 1.08 (expressive bounce) -> 1.00 (settled)
-    readonly property real expansionProgress: 1.0 - offsetScale
-
-    // Exact spatial mapping derived from Caelestia's offsetScale formula:
-    readonly property real animX: 38 * offsetScale
-    readonly property real animScaleX: 0.62 + 0.38 * expansionProgress
-    readonly property real animScaleY: 0.70 + 0.30 * expansionProgress
-
-    opacity: Math.max(0.0, Math.min(1.0, expansionProgress * 1.35))
-    visible: opacity > 0.005
-
-    transform: [
-        Translate { x: root.animX },
-        Scale {
-            origin.x: root.width
-            origin.y: root.height / 2
-            xScale: root.animScaleX
-            yScale: root.animScaleY
+    Behavior on opacity {
+        NumberAnimation {
+            duration: root.isExpanded ? 220 : 160
+            easing.type: Easing.OutCubic
         }
-    ]
+    }
 
-    readonly property bool isHovered: panelHover.hovered || (triggerItem ? triggerItem.isHovered : false)
     readonly property string homeDir: bar ? bar.homeDir : (Quickshell.env("HOME") || "/home/" + (Quickshell.env("USER") || "user"))
     readonly property string userName: (Quickshell.env("USER") || "user") + "@" + (Quickshell.env("HOSTNAME") || "hyprconf")
 
@@ -130,41 +102,11 @@ Item {
         NumberAnimation { target: root; property: "pulseGlow"; from: 1.0; to: 0.40; duration: 450; easing.type: Easing.InOutQuad }
     }
 
-    // Hover grace timer (220ms debounce to prevent seam drop when moving between frame and panel)
-    Timer {
-        id: hoverGraceTimer
-        interval: 220
-        repeat: false
-        onTriggered: {
-            if (!root.isHovered && (!root.triggerItem || !root.triggerItem.isHovered)) {
-                root.hoverActive = false
-            }
-        }
-    }
-
-    function updateHover() {
-        if (root.isHovered || (root.triggerItem && root.triggerItem.isHovered)) {
-            hoverGraceTimer.stop()
-            root.hoverActive = true
-        } else {
-            if (!root.isCountingDown) {
-                hoverGraceTimer.restart()
-            }
-        }
-    }
-
-    onIsHoveredChanged: updateHover()
-
-    Connections {
-        target: root.triggerItem
-        function onIsHoveredChanged() {
-            root.updateHover()
-        }
-    }
-
     function openFromHover() {
-        updateHover()
+        openMenu()
     }
+
+    function updateHover() {}
 
     function openMenu() {
         root.manualOpen = true
@@ -173,8 +115,6 @@ Item {
     function closeMenu() {
         root.cancelCountdown()
         root.manualOpen = false
-        root.hoverActive = false
-        hoverGraceTimer.stop()
     }
 
     function toggleMenu() {
@@ -302,81 +242,14 @@ Item {
         }
     }
 
-    // ── ATTACHED OBSIDIAN GLASS FRAME MONOLITHIC SHAPE (Glass Mode) ───────────
-    Shape {
-        id: attachedShape
-        visible: root.isGlass
-        anchors.right: parent.right
-        anchors.rightMargin: -2
-        y: -root.fT
-        width: root.width + 2
-        height: root.height + root.fT + root.fB
-        layer.enabled: true
-        layer.samples: 4
-
-        readonly property color surfaceFill: Theme.alpha(Theme.surface, (bar && bar.barOpacity > 0.05) ? bar.barOpacity : 0.95)
-
-        // Monolithic Plain Fill Path (Seamless fusion into the right frame with NO border)
-        ShapePath {
-            fillColor: attachedShape.surfaceFill
-            strokeColor: "transparent"
-            strokeWidth: 0
-
-            startX: attachedShape.width
-            startY: 0
-
-            PathLine { x: root.width; y: 0 }
-            PathArc {
-                x: root.width - root.fT
-                y: root.fT
-                radiusX: root.fT
-                radiusY: root.fT
-                direction: PathArc.Clockwise
-            }
-            PathLine { x: root.rL; y: root.fT }
-            PathArc {
-                x: 0
-                y: root.fT + root.rL
-                radiusX: root.rL
-                radiusY: root.rL
-                direction: PathArc.Counterclockwise
-            }
-            PathLine { x: 0; y: root.fT + root.height - root.rL }
-            PathArc {
-                x: root.rL
-                y: root.fT + root.height
-                radiusX: root.rL
-                radiusY: root.rL
-                direction: PathArc.Counterclockwise
-            }
-            PathLine { x: root.width - root.fB; y: root.fT + root.height }
-            PathArc {
-                x: root.width
-                y: root.fT + root.height + root.fB
-                radiusX: root.fB
-                radiusY: root.fB
-                direction: PathArc.Clockwise
-            }
-            PathLine { x: attachedShape.width; y: root.fT + root.height + root.fB }
-            PathLine { x: attachedShape.width; y: 0 }
-        }
-    }
-
-    // ── FLOATING OBSIDIAN GLASS CARD (Islands Mode — Plain, No Outer Border) ──
+    // ── CENTERED OBSIDIAN GLASS CARD ─────────────────────────────────────────
     Rectangle {
-        id: floatingCard
-        visible: !root.isGlass
+        id: cardBg
         anchors.fill: parent
-        radius: 16
-        color: Theme.alpha(Theme.surface, 0.95)
-        border.width: 0
-        border.color: "transparent"
-    }
-
-
-    HoverHandler {
-        id: panelHover
-        onHoveredChanged: root.updateHover()
+        radius: 20
+        color: Theme.alpha(Theme.surface, 0.94)
+        border.width: 1.2
+        border.color: Theme.alpha(Theme.accent, 0.25)
     }
 
     // ── INNER CONTENT CONTAINER ───────────────────────────────────────────────
