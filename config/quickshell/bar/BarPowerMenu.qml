@@ -31,9 +31,10 @@ Item {
     anchors.rightMargin: root.isGlass ? Math.max(0, bar.frameThickness - 1) : 12
     anchors.verticalCenter: parent ? parent.verticalCenter : undefined
 
-    // ── TOOLTIP-STYLE HOVER ANIMATION (Matching modeTooltip & BarPopup) ───────
-    property real animX: isExpanded ? 0 : 8
-    property real animScale: isExpanded ? 1.0 : 0.94
+    // ── BUBBLY POP HOVER EXPANSION ANIMATION (Upscaled Bubble Physics) ───────
+    property real animX: isExpanded ? 0 : 36
+    property real animScaleX: isExpanded ? 1.0 : 0.58
+    property real animScaleY: isExpanded ? 1.0 : 0.68
     opacity: isExpanded ? 1.0 : 0.0
     visible: opacity > 0.005
 
@@ -45,16 +46,23 @@ Item {
     }
     Behavior on animX {
         NumberAnimation {
-            duration: root.isExpanded ? 240 : 140
+            duration: root.isExpanded ? 340 : 150
             easing.type: root.isExpanded ? Easing.OutBack : Easing.InCubic
-            easing.overshoot: 1.25
+            easing.overshoot: 1.35
         }
     }
-    Behavior on animScale {
+    Behavior on animScaleX {
         NumberAnimation {
-            duration: root.isExpanded ? 220 : 140
+            duration: root.isExpanded ? 350 : 160
             easing.type: root.isExpanded ? Easing.OutBack : Easing.InCubic
-            easing.overshoot: 1.20
+            easing.overshoot: 1.45
+        }
+    }
+    Behavior on animScaleY {
+        NumberAnimation {
+            duration: root.isExpanded ? 320 : 160
+            easing.type: root.isExpanded ? Easing.OutBack : Easing.InCubic
+            easing.overshoot: 1.28
         }
     }
 
@@ -63,8 +71,8 @@ Item {
         Scale {
             origin.x: root.width
             origin.y: root.height / 2
-            xScale: root.animScale
-            yScale: root.animScale
+            xScale: root.animScaleX
+            yScale: root.animScaleY
         }
     ]
 
@@ -127,10 +135,10 @@ Item {
         NumberAnimation { target: root; property: "pulseGlow"; from: 1.0; to: 0.40; duration: 450; easing.type: Easing.InOutQuad }
     }
 
-    // Hover grace timer (120ms debounce to prevent seam drop when moving between frame and panel)
+    // Hover grace timer (220ms debounce to prevent seam drop when moving between frame and panel)
     Timer {
         id: hoverGraceTimer
-        interval: 120
+        interval: 220
         repeat: false
         onTriggered: {
             if (!root.isHovered && (!root.triggerItem || !root.triggerItem.isHovered)) {
@@ -399,8 +407,16 @@ Item {
                 border.color: root.isCountingDown
                               ? root.pendingActionColor
                               : Theme.alpha(Theme.error, 0.40)
+                scale: root.isExpanded ? 1.0 : 0.75
                 Behavior on color { ColorAnimation { duration: 180 } }
                 Behavior on border.color { ColorAnimation { duration: 180 } }
+                Behavior on scale {
+                    NumberAnimation {
+                        duration: root.isExpanded ? 340 : 140
+                        easing.type: root.isExpanded ? Easing.OutBack : Easing.InQuad
+                        easing.overshoot: 1.35
+                    }
+                }
 
                 SvgIcon {
                     anchors.centerIn: parent
@@ -445,6 +461,14 @@ Item {
                 color: Theme.alpha(Theme.surface, 0.70)
                 border.width: 1
                 border.color: Theme.alpha(Theme.accent, 0.25)
+                scale: root.isExpanded ? 1.0 : 0.82
+                Behavior on scale {
+                    NumberAnimation {
+                        duration: root.isExpanded ? 320 : 140
+                        easing.type: root.isExpanded ? Easing.OutBack : Easing.InQuad
+                        easing.overshoot: 1.25
+                    }
+                }
 
                 RowLayout {
                     id: userRow
@@ -497,11 +521,11 @@ Item {
                 border.color: lockTileMouse.containsMouse
                               ? Theme.primary
                               : Theme.alpha(Theme.foreground, 0.12)
-                scale: lockTileMouse.pressed ? 0.97 : (lockTileMouse.containsMouse ? 1.02 : 1.0)
+                scale: lockTileMouse.pressed ? 0.96 : (lockTileMouse.containsMouse ? 1.03 : 1.0)
 
                 Behavior on color { ColorAnimation { duration: 150 } }
                 Behavior on border.color { ColorAnimation { duration: 150 } }
-                Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutBack; easing.overshoot: 1.2 } }
+                Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutBack; easing.overshoot: 1.35 } }
 
                 ColumnLayout {
                     anchors.centerIn: parent
@@ -568,11 +592,11 @@ Item {
                               : (logoutTileMouse.containsMouse
                                  ? Theme.alpha(Theme.secondary, 0.60)
                                  : Theme.alpha(Theme.foreground, 0.12))
-                scale: logoutTileMouse.pressed ? 0.97 : (logoutTileMouse.containsMouse ? 1.02 : 1.0)
+                scale: logoutTileMouse.pressed ? 0.96 : (logoutTileMouse.containsMouse ? 1.03 : 1.0)
 
                 Behavior on color { ColorAnimation { duration: 150 } }
                 Behavior on border.color { ColorAnimation { duration: 150 } }
-                Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutBack; easing.overshoot: 1.2 } }
+                Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutBack; easing.overshoot: 1.35 } }
 
                 ColumnLayout {
                     anchors.centerIn: parent
@@ -667,11 +691,11 @@ Item {
                               : (rebootTileMouse.containsMouse
                                  ? Theme.alpha("#f59e0b", 0.60)
                                  : Theme.alpha(Theme.foreground, 0.12))
-                scale: rebootTileMouse.pressed ? 0.97 : (rebootTileMouse.containsMouse ? 1.02 : 1.0)
+                scale: rebootTileMouse.pressed ? 0.96 : (rebootTileMouse.containsMouse ? 1.03 : 1.0)
 
                 Behavior on color { ColorAnimation { duration: 150 } }
                 Behavior on border.color { ColorAnimation { duration: 150 } }
-                Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutBack; easing.overshoot: 1.2 } }
+                Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutBack; easing.overshoot: 1.35 } }
 
                 ColumnLayout {
                     anchors.centerIn: parent
@@ -766,11 +790,11 @@ Item {
                               : (shutdownTileMouse.containsMouse
                                  ? Theme.alpha(Theme.error, 0.60)
                                  : Theme.alpha(Theme.foreground, 0.12))
-                scale: shutdownTileMouse.pressed ? 0.97 : (shutdownTileMouse.containsMouse ? 1.02 : 1.0)
+                scale: shutdownTileMouse.pressed ? 0.96 : (shutdownTileMouse.containsMouse ? 1.03 : 1.0)
 
                 Behavior on color { ColorAnimation { duration: 150 } }
                 Behavior on border.color { ColorAnimation { duration: 150 } }
-                Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutBack; easing.overshoot: 1.2 } }
+                Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutBack; easing.overshoot: 1.35 } }
 
                 ColumnLayout {
                     anchors.centerIn: parent
