@@ -27,37 +27,35 @@ Item {
     anchors.rightMargin: root.isGlass ? Math.max(0, bar.frameThickness - 1) : 12
     anchors.verticalCenter: parent ? parent.verticalCenter : undefined
 
-    // ── BUBBLY POPPING ANIMATION (Anchored & Expanding from Right Frame) ────
-    property real animTranslateX: shown ? 0 : 45
-    property real animScale: shown ? 1.0 : 0.84
-    property real animOpacity: shown ? 1.0 : 0.0
-
-    opacity: animOpacity
+    // ── TOOLTIP-STYLE ANIMATION (Anchored & Emerging from Right Frame) ─────────
+    property real animX: shown ? 0 : 8
+    property real animScale: shown ? 1.0 : 0.94
+    opacity: shown ? 1.0 : 0.0
     visible: opacity > 0.005
 
-    Behavior on animTranslateX {
-        NumberAnimation {
-            duration: root.shown ? 270 : 150
-            easing.type: root.shown ? Easing.OutBack : Easing.InQuad
-            easing.overshoot: 1.20
-        }
-    }
-    Behavior on animScale {
-        NumberAnimation {
-            duration: root.shown ? 260 : 150
-            easing.type: root.shown ? Easing.OutBack : Easing.InQuad
-            easing.overshoot: 1.35
-        }
-    }
-    Behavior on animOpacity {
+    Behavior on opacity {
         NumberAnimation {
             duration: root.shown ? 180 : 130
             easing.type: root.shown ? Easing.OutQuad : Easing.InQuad
         }
     }
+    Behavior on animX {
+        NumberAnimation {
+            duration: root.shown ? 240 : 140
+            easing.type: root.shown ? Easing.OutBack : Easing.InCubic
+            easing.overshoot: 1.25
+        }
+    }
+    Behavior on animScale {
+        NumberAnimation {
+            duration: root.shown ? 220 : 140
+            easing.type: root.shown ? Easing.OutBack : Easing.InCubic
+            easing.overshoot: 1.20
+        }
+    }
 
     transform: [
-        Translate { x: root.animTranslateX },
+        Translate { x: root.animX },
         Scale {
             origin.x: root.width
             origin.y: root.height / 2
@@ -318,12 +316,8 @@ Item {
         layer.samples: 4
 
         readonly property color surfaceFill: Theme.alpha(Theme.surface, (bar && bar.barOpacity > 0.05) ? bar.barOpacity : 0.95)
-        property color strokeColor: root.isCountingDown
-                                     ? root.pendingActionColor
-                                     : Theme.alpha(Theme.accent, 0.35)
-        Behavior on strokeColor { ColorAnimation { duration: 220 } }
 
-        // 1. Closed Fill Path (Seamless fusion into the right frame)
+        // Monolithic Plain Fill Path (Seamless fusion into the right frame with NO border)
         ShapePath {
             fillColor: attachedShape.surfaceFill
             strokeColor: "transparent"
@@ -367,76 +361,19 @@ Item {
             PathLine { x: attachedShape.width; y: root.fT + root.height + root.fB }
             PathLine { x: attachedShape.width; y: 0 }
         }
-
-        // 2. Open Perimeter Stroke (NO stroke across right frame seam — 100% attached)
-        ShapePath {
-            fillColor: "transparent"
-            strokeColor: attachedShape.strokeColor
-            strokeWidth: 1.2
-            capStyle: ShapePath.RoundCap
-            joinStyle: ShapePath.RoundJoin
-
-            startX: root.width
-            startY: 0
-
-            PathArc {
-                x: root.width - root.fT
-                y: root.fT
-                radiusX: root.fT
-                radiusY: root.fT
-                direction: PathArc.Clockwise
-            }
-            PathLine { x: root.rL; y: root.fT }
-            PathArc {
-                x: 0
-                y: root.fT + root.rL
-                radiusX: root.rL
-                radiusY: root.rL
-                direction: PathArc.Counterclockwise
-            }
-            PathLine { x: 0; y: root.fT + root.height - root.rL }
-            PathArc {
-                x: root.rL
-                y: root.fT + root.height
-                radiusX: root.rL
-                radiusY: root.rL
-                direction: PathArc.Counterclockwise
-            }
-            PathLine { x: root.width - root.fB; y: root.fT + root.height }
-            PathArc {
-                x: root.width
-                y: root.fT + root.height + root.fB
-                radiusX: root.fB
-                radiusY: root.fB
-                direction: PathArc.Clockwise
-            }
-        }
     }
 
-    // ── FLOATING OBSIDIAN GLASS CARD (Islands Mode) ───────────────────────────
+    // ── FLOATING OBSIDIAN GLASS CARD (Islands Mode — Plain, No Outer Border) ──
     Rectangle {
         id: floatingCard
         visible: !root.isGlass
         anchors.fill: parent
         radius: 16
         color: Theme.alpha(Theme.surface, 0.95)
-        border.width: 1.2
-        border.color: root.isCountingDown
-                      ? root.pendingActionColor
-                      : Theme.alpha(Theme.accent, 0.35)
-        Behavior on border.color { ColorAnimation { duration: 220 } }
+        border.width: 0
+        border.color: "transparent"
     }
 
-    // Top Inner Glass Rim
-    Rectangle {
-        anchors.top: parent.top
-        anchors.topMargin: 1
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.margins: 16
-        height: 1
-        color: Theme.alpha(Theme.foreground, 0.15)
-    }
 
     MouseArea {
         id: panelMouse
