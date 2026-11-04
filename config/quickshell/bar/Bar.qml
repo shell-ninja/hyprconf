@@ -52,7 +52,7 @@ PanelWindow {
     // ── Zone Layout Arrays (Dynamic elements) ───────────────────────
     property var startWidgets: ["workspaces", "tray", "weather"]
     property var centerWidgets: ["power_profile", "media", "clock", "notification"]
-    property var endWidgets: ["pkg_update", "quick_toggles", "system_info", "volume", "power"]
+    property var endWidgets: ["pkg_update", "quick_toggles", "system_info", "volume"]
     property var widgetSettings: ({})
 
     // ── Triggers (registered dynamically by BarWidgetLoader instances) ──
@@ -1042,14 +1042,14 @@ PanelWindow {
             color: screenFrame.frameFill
         }
 
-        // Interactive Right Frame Power Trigger (Hover zone to expand Power Menu)
+        // Interactive Right Frame Power Trigger (Clean hover zone at center of right frame)
         Item {
             id: rightFramePowerTrigger
             x: parent.width - Math.max(screenFrame.ft, 18)
-            y: screenFrame.topH
+            y: Math.round((parent.height - height) / 2)
             width: Math.max(screenFrame.ft, 18)
-            height: 380
-            z: 10
+            height: 360
+            z: 20
 
             readonly property bool isHovered: frameHover.hovered || frameMouse.containsMouse
 
@@ -1064,34 +1064,6 @@ PanelWindow {
 
             onIsHoveredChanged: {
                 if (isHovered) bar.openPowerFromHover()
-            }
-
-            // Subtle Right Frame Power Notch Indicator
-            Rectangle {
-                anchors.horizontalCenter: parent.horizontalCenter
-                y: 18
-                width: 12
-                height: 24
-                radius: 6
-                color: rightFramePowerTrigger.isHovered
-                       ? Theme.alpha(Theme.error, 0.40)
-                       : (bar.rightPowerMenuShown ? Theme.alpha(Theme.error, 0.25) : Theme.alpha(Theme.foreground, 0.08))
-                border.width: 1
-                border.color: rightFramePowerTrigger.isHovered
-                              ? Theme.alpha(Theme.error, 0.65)
-                              : (bar.rightPowerMenuShown ? Theme.alpha(Theme.error, 0.40) : "transparent")
-                Behavior on color { ColorAnimation { duration: 180 } }
-                Behavior on border.color { ColorAnimation { duration: 180 } }
-
-                SvgIcon {
-                    anchors.centerIn: parent
-                    name: "power"
-                    size: 9
-                    color: rightFramePowerTrigger.isHovered
-                           ? Theme.error
-                           : (bar.rightPowerMenuShown ? Theme.error : Theme.alpha(Theme.foreground, 0.50))
-                    Behavior on color { ColorAnimation { duration: 180 } }
-                }
             }
         }
 
