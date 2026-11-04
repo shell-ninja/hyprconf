@@ -31,40 +31,35 @@ Item {
     anchors.rightMargin: root.isGlass ? Math.max(0, bar.frameThickness - 1) : 12
     anchors.verticalCenter: parent ? parent.verticalCenter : undefined
 
-    // ── BUBBLY POP HOVER EXPANSION ANIMATION (Upscaled Bubble Physics) ───────
-    property real animX: isExpanded ? 0 : 36
-    property real animScaleX: isExpanded ? 1.0 : 0.58
-    property real animScaleY: isExpanded ? 1.0 : 0.68
-    opacity: isExpanded ? 1.0 : 0.0
-    visible: opacity > 0.005
+    // ── CAELESTIA SHELL HOVER EXPANSION FORMULA ──────────────────────────────
+    // Material 3 Expressive Bezier tokens from Caelestia Shell:
+    // • expressiveDefaultSpatial: [ 0.38, 1.21, 0.22, 1.00 ] (500ms)
+    // • expressiveFastSpatial:    [ 0.42, 1.67, 0.21, 0.90 ] (350ms)
+    // • expressiveDefaultEffects: [ 0.34, 0.80, 0.34, 1.00 ] (200ms)
+    // • emphasizedAccel:         [ 0.30, 0.00, 0.80, 0.15 ] (200ms)
 
-    Behavior on opacity {
+    property real offsetScale: isExpanded ? 0.0 : 1.0
+
+    Behavior on offsetScale {
         NumberAnimation {
-            duration: root.isExpanded ? 180 : 130
-            easing.type: root.isExpanded ? Easing.OutQuad : Easing.InQuad
+            duration: root.isExpanded ? 480 : 200
+            easing.type: Easing.BezierSpline
+            easing.bezierCurve: root.isExpanded
+                ? [ 0.38, 1.21, 0.22, 1.0, 1, 1 ]  // Caelestia expressiveDefaultSpatial
+                : [ 0.30, 0.00, 0.80, 0.15, 1, 1 ] // Caelestia emphasizedAccel
         }
     }
-    Behavior on animX {
-        NumberAnimation {
-            duration: root.isExpanded ? 340 : 150
-            easing.type: root.isExpanded ? Easing.OutBack : Easing.InCubic
-            easing.overshoot: 1.35
-        }
-    }
-    Behavior on animScaleX {
-        NumberAnimation {
-            duration: root.isExpanded ? 350 : 160
-            easing.type: root.isExpanded ? Easing.OutBack : Easing.InCubic
-            easing.overshoot: 1.45
-        }
-    }
-    Behavior on animScaleY {
-        NumberAnimation {
-            duration: root.isExpanded ? 320 : 160
-            easing.type: root.isExpanded ? Easing.OutBack : Easing.InCubic
-            easing.overshoot: 1.28
-        }
-    }
+
+    // Master expansion progress: 0.0 (closed) -> 1.08 (expressive bounce) -> 1.00 (settled)
+    readonly property real expansionProgress: 1.0 - offsetScale
+
+    // Exact spatial mapping derived from Caelestia's offsetScale formula:
+    readonly property real animX: 38 * offsetScale
+    readonly property real animScaleX: 0.62 + 0.38 * expansionProgress
+    readonly property real animScaleY: 0.70 + 0.30 * expansionProgress
+
+    opacity: Math.max(0.0, Math.min(1.0, expansionProgress * 1.35))
+    visible: opacity > 0.005
 
     transform: [
         Translate { x: root.animX },
@@ -412,9 +407,11 @@ Item {
                 Behavior on border.color { ColorAnimation { duration: 180 } }
                 Behavior on scale {
                     NumberAnimation {
-                        duration: root.isExpanded ? 340 : 140
-                        easing.type: root.isExpanded ? Easing.OutBack : Easing.InQuad
-                        easing.overshoot: 1.35
+                        duration: root.isExpanded ? 400 : 180
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: root.isExpanded
+                            ? [ 0.38, 1.21, 0.22, 1.0, 1, 1 ] // Caelestia expressiveDefaultSpatial
+                            : [ 0.30, 0.00, 0.80, 0.15, 1, 1 ] // Caelestia emphasizedAccel
                     }
                 }
 
@@ -464,9 +461,11 @@ Item {
                 scale: root.isExpanded ? 1.0 : 0.82
                 Behavior on scale {
                     NumberAnimation {
-                        duration: root.isExpanded ? 320 : 140
-                        easing.type: root.isExpanded ? Easing.OutBack : Easing.InQuad
-                        easing.overshoot: 1.25
+                        duration: root.isExpanded ? 380 : 180
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: root.isExpanded
+                            ? [ 0.38, 1.21, 0.22, 1.0, 1, 1 ] // Caelestia expressiveDefaultSpatial
+                            : [ 0.30, 0.00, 0.80, 0.15, 1, 1 ] // Caelestia emphasizedAccel
                     }
                 }
 
@@ -513,7 +512,7 @@ Item {
                 id: lockTile
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                radius: 13
+                radius: lockTileMouse.pressed ? 10 : (lockTileMouse.containsMouse ? 16 : 13)
                 color: lockTileMouse.containsMouse
                        ? Theme.alpha(Theme.surface, 0.90)
                        : Theme.alpha(Theme.surface, 0.65)
@@ -521,11 +520,36 @@ Item {
                 border.color: lockTileMouse.containsMouse
                               ? Theme.primary
                               : Theme.alpha(Theme.foreground, 0.12)
-                scale: lockTileMouse.pressed ? 0.96 : (lockTileMouse.containsMouse ? 1.03 : 1.0)
+                scale: lockTileMouse.pressed ? 0.96 : (lockTileMouse.containsMouse ? 1.025 : 1.0)
 
-                Behavior on color { ColorAnimation { duration: 150 } }
-                Behavior on border.color { ColorAnimation { duration: 150 } }
-                Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutBack; easing.overshoot: 1.35 } }
+                Behavior on radius {
+                    NumberAnimation {
+                        duration: 200
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: [ 0.34, 0.80, 0.34, 1.0, 1, 1 ] // Caelestia expressiveDefaultEffects
+                    }
+                }
+                Behavior on color {
+                    ColorAnimation {
+                        duration: 200
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: [ 0.34, 0.80, 0.34, 1.0, 1, 1 ]
+                    }
+                }
+                Behavior on border.color {
+                    ColorAnimation {
+                        duration: 200
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: [ 0.34, 0.80, 0.34, 1.0, 1, 1 ]
+                    }
+                }
+                Behavior on scale {
+                    NumberAnimation {
+                        duration: 250
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: [ 0.42, 1.67, 0.21, 0.90, 1, 1 ] // Caelestia expressiveFastSpatial
+                    }
+                }
 
                 ColumnLayout {
                     anchors.centerIn: parent
@@ -580,7 +604,7 @@ Item {
                 id: logoutTile
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                radius: 13
+                radius: logoutTileMouse.pressed ? 10 : (logoutTileMouse.containsMouse ? 16 : 13)
                 color: root.pendingAction === "logout"
                        ? Theme.alpha(Theme.secondary, 0.28)
                        : (logoutTileMouse.containsMouse
@@ -592,11 +616,36 @@ Item {
                               : (logoutTileMouse.containsMouse
                                  ? Theme.alpha(Theme.secondary, 0.60)
                                  : Theme.alpha(Theme.foreground, 0.12))
-                scale: logoutTileMouse.pressed ? 0.96 : (logoutTileMouse.containsMouse ? 1.03 : 1.0)
+                scale: logoutTileMouse.pressed ? 0.96 : (logoutTileMouse.containsMouse ? 1.025 : 1.0)
 
-                Behavior on color { ColorAnimation { duration: 150 } }
-                Behavior on border.color { ColorAnimation { duration: 150 } }
-                Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutBack; easing.overshoot: 1.35 } }
+                Behavior on radius {
+                    NumberAnimation {
+                        duration: 200
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: [ 0.34, 0.80, 0.34, 1.0, 1, 1 ] // Caelestia expressiveDefaultEffects
+                    }
+                }
+                Behavior on color {
+                    ColorAnimation {
+                        duration: 200
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: [ 0.34, 0.80, 0.34, 1.0, 1, 1 ]
+                    }
+                }
+                Behavior on border.color {
+                    ColorAnimation {
+                        duration: 200
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: [ 0.34, 0.80, 0.34, 1.0, 1, 1 ]
+                    }
+                }
+                Behavior on scale {
+                    NumberAnimation {
+                        duration: 250
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: [ 0.42, 1.67, 0.21, 0.90, 1, 1 ] // Caelestia expressiveFastSpatial
+                    }
+                }
 
                 ColumnLayout {
                     anchors.centerIn: parent
@@ -679,7 +728,7 @@ Item {
                 id: rebootTile
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                radius: 13
+                radius: rebootTileMouse.pressed ? 10 : (rebootTileMouse.containsMouse ? 16 : 13)
                 color: root.pendingAction === "reboot"
                        ? Theme.alpha("#f59e0b", 0.28)
                        : (rebootTileMouse.containsMouse
@@ -691,11 +740,36 @@ Item {
                               : (rebootTileMouse.containsMouse
                                  ? Theme.alpha("#f59e0b", 0.60)
                                  : Theme.alpha(Theme.foreground, 0.12))
-                scale: rebootTileMouse.pressed ? 0.96 : (rebootTileMouse.containsMouse ? 1.03 : 1.0)
+                scale: rebootTileMouse.pressed ? 0.96 : (rebootTileMouse.containsMouse ? 1.025 : 1.0)
 
-                Behavior on color { ColorAnimation { duration: 150 } }
-                Behavior on border.color { ColorAnimation { duration: 150 } }
-                Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutBack; easing.overshoot: 1.35 } }
+                Behavior on radius {
+                    NumberAnimation {
+                        duration: 200
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: [ 0.34, 0.80, 0.34, 1.0, 1, 1 ] // Caelestia expressiveDefaultEffects
+                    }
+                }
+                Behavior on color {
+                    ColorAnimation {
+                        duration: 200
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: [ 0.34, 0.80, 0.34, 1.0, 1, 1 ]
+                    }
+                }
+                Behavior on border.color {
+                    ColorAnimation {
+                        duration: 200
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: [ 0.34, 0.80, 0.34, 1.0, 1, 1 ]
+                    }
+                }
+                Behavior on scale {
+                    NumberAnimation {
+                        duration: 250
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: [ 0.42, 1.67, 0.21, 0.90, 1, 1 ] // Caelestia expressiveFastSpatial
+                    }
+                }
 
                 ColumnLayout {
                     anchors.centerIn: parent
@@ -778,7 +852,7 @@ Item {
                 id: shutdownTile
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                radius: 13
+                radius: shutdownTileMouse.pressed ? 10 : (shutdownTileMouse.containsMouse ? 16 : 13)
                 color: root.pendingAction === "shutdown"
                        ? Theme.alpha(Theme.error, 0.28)
                        : (shutdownTileMouse.containsMouse
@@ -790,11 +864,36 @@ Item {
                               : (shutdownTileMouse.containsMouse
                                  ? Theme.alpha(Theme.error, 0.60)
                                  : Theme.alpha(Theme.foreground, 0.12))
-                scale: shutdownTileMouse.pressed ? 0.96 : (shutdownTileMouse.containsMouse ? 1.03 : 1.0)
+                scale: shutdownTileMouse.pressed ? 0.96 : (shutdownTileMouse.containsMouse ? 1.025 : 1.0)
 
-                Behavior on color { ColorAnimation { duration: 150 } }
-                Behavior on border.color { ColorAnimation { duration: 150 } }
-                Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutBack; easing.overshoot: 1.35 } }
+                Behavior on radius {
+                    NumberAnimation {
+                        duration: 200
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: [ 0.34, 0.80, 0.34, 1.0, 1, 1 ] // Caelestia expressiveDefaultEffects
+                    }
+                }
+                Behavior on color {
+                    ColorAnimation {
+                        duration: 200
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: [ 0.34, 0.80, 0.34, 1.0, 1, 1 ]
+                    }
+                }
+                Behavior on border.color {
+                    ColorAnimation {
+                        duration: 200
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: [ 0.34, 0.80, 0.34, 1.0, 1, 1 ]
+                    }
+                }
+                Behavior on scale {
+                    NumberAnimation {
+                        duration: 250
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: [ 0.42, 1.67, 0.21, 0.90, 1, 1 ] // Caelestia expressiveFastSpatial
+                    }
+                }
 
                 ColumnLayout {
                     anchors.centerIn: parent
@@ -878,7 +977,7 @@ Item {
             Layout.alignment: Qt.AlignHCenter
             Layout.preferredWidth: root.isCountingDown ? 240 : 150
             Layout.preferredHeight: 28
-            radius: 14
+            radius: cancelBtnMouse.pressed ? 10 : (cancelBtnMouse.containsMouse ? 16 : 14)
             color: root.isCountingDown
                    ? (cancelBtnMouse.containsMouse ? Theme.alpha(Theme.error, 0.30) : Theme.alpha(Theme.error, 0.18))
                    : (cancelBtnMouse.containsMouse ? Theme.alpha(Theme.surface, 0.90) : Theme.alpha(Theme.surface, 0.50))
@@ -886,10 +985,43 @@ Item {
             border.color: root.isCountingDown
                           ? Theme.error
                           : (cancelBtnMouse.containsMouse ? Theme.alpha(Theme.foreground, 0.20) : Theme.alpha(Theme.foreground, 0.10))
+            scale: cancelBtnMouse.pressed ? 0.96 : (cancelBtnMouse.containsMouse ? 1.025 : 1.0)
 
-            Behavior on Layout.preferredWidth { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-            Behavior on color { ColorAnimation { duration: 150 } }
-            Behavior on border.color { ColorAnimation { duration: 150 } }
+            Behavior on Layout.preferredWidth {
+                NumberAnimation {
+                    duration: 200
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: [ 0.38, 1.21, 0.22, 1.0, 1, 1 ] // Caelestia expressiveDefaultSpatial
+                }
+            }
+            Behavior on radius {
+                NumberAnimation {
+                    duration: 200
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: [ 0.34, 0.80, 0.34, 1.0, 1, 1 ] // Caelestia expressiveDefaultEffects
+                }
+            }
+            Behavior on scale {
+                NumberAnimation {
+                    duration: 250
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: [ 0.42, 1.67, 0.21, 0.90, 1, 1 ] // Caelestia expressiveFastSpatial
+                }
+            }
+            Behavior on color {
+                ColorAnimation {
+                    duration: 200
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: [ 0.34, 0.80, 0.34, 1.0, 1, 1 ]
+                }
+            }
+            Behavior on border.color {
+                ColorAnimation {
+                    duration: 200
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: [ 0.34, 0.80, 0.34, 1.0, 1, 1 ]
+                }
+            }
 
             Text {
                 anchors.centerIn: parent
