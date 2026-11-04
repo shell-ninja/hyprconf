@@ -20,8 +20,8 @@ PanelWindow {
     }
 
     // ── Theme tokens (Hyprconf dynamic Obsidian Glassmorphism) ─────
-    property color surface: Theme.alpha(Theme.surface, 0.96)
-    property color pillColor: Theme.alpha(Theme.surface, 0.90)
+    property color surface: Theme.alpha(Theme.surface, bar.barOpacity)
+    property color pillColor: Theme.alpha(Theme.surface, bar.barOpacity)
     property color pillDark: Theme.accent
     property color pillBorder: Theme.alpha(Theme.accent, 0.40)
     property color fg: Theme.foreground
@@ -232,10 +232,10 @@ PanelWindow {
             bar.togglePower()
         }
         function openPower() {
-            powerPop.shown = true
+            bar.openPower()
         }
         function closePower() {
-            powerPop.shown = false
+            bar.closePower()
         }
         function toggleWeather() {
             bar.toggleWeather()
@@ -306,7 +306,8 @@ PanelWindow {
             Region { item: (bar.capsuleStyle === "islands") ? endIsland : null },
             Region { item: osd.shown ? osd : null },
             Region { item: notifToast.shown ? notifToast : null },
-            Region { item: (powerPop.shown || togglesPop.shown) ? popupDismissArea : null },
+            Region { item: rightFramePowerTrigger },
+            Region { item: (bar.rightPowerMenuShown || togglesPop.shown) ? popupDismissArea : null },
             Region { item: trayPop.shown ? trayPop : null },
             Region { item: weatherPop.shown ? weatherPop : null },
             Region { item: perfPop.shown ? perfPop : null },
@@ -316,7 +317,7 @@ PanelWindow {
             Region { item: monitorPop.shown ? monitorPop : null },
             Region { item: volumePop.shown ? volumePop : null },
             Region { item: netPop.shown ? netPop : null },
-            Region { item: powerPop.shown ? powerPop : null },
+            Region { item: bar.rightPowerMenuShown ? rightPowerMenu : null },
             Region { item: pkgPop.shown ? pkgPop : null }
         ]
     }
@@ -719,10 +720,23 @@ PanelWindow {
         clipCountProc.running = true
         togglesPop.shown = !togglesPop.shown
     }
+    readonly property bool rightPowerMenuShown: (typeof rightPowerMenu !== "undefined" && rightPowerMenu) ? rightPowerMenu.shown : false
+
     function toggleMonitor() { monitorPop.shown = !monitorPop.shown }
     function toggleVolume() { volumePop.shown = !volumePop.shown }
     function toggleNetwork() { netPop.shown = !netPop.shown }
-    function togglePower() { powerPop.shown = !powerPop.shown }
+    function togglePower() {
+        if (typeof rightPowerMenu !== "undefined" && rightPowerMenu) rightPowerMenu.toggleMenu()
+    }
+    function openPower() {
+        if (typeof rightPowerMenu !== "undefined" && rightPowerMenu) rightPowerMenu.openMenu()
+    }
+    function openPowerFromHover() {
+        if (typeof rightPowerMenu !== "undefined" && rightPowerMenu) rightPowerMenu.openFromHover()
+    }
+    function closePower() {
+        if (typeof rightPowerMenu !== "undefined" && rightPowerMenu) rightPowerMenu.closeMenu()
+    }
     function togglePkg() { pkgPop.shown = !pkgPop.shown }
 
     function toggleCaffeine() {
@@ -1028,6 +1042,59 @@ PanelWindow {
             color: screenFrame.frameFill
         }
 
+        // Interactive Right Frame Power Trigger (Hover zone to expand Power Menu)
+        Item {
+            id: rightFramePowerTrigger
+            x: parent.width - Math.max(screenFrame.ft, 18)
+            y: screenFrame.topH
+            width: Math.max(screenFrame.ft, 18)
+            height: 380
+            z: 10
+
+            readonly property bool isHovered: frameHover.hovered || frameMouse.containsMouse
+
+            HoverHandler { id: frameHover }
+            MouseArea {
+                id: frameMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: bar.togglePower()
+            }
+
+            onIsHoveredChanged: {
+                if (isHovered) bar.openPowerFromHover()
+            }
+
+            // Subtle Right Frame Power Notch Indicator
+            Rectangle {
+                anchors.horizontalCenter: parent.horizontalCenter
+                y: 18
+                width: 12
+                height: 24
+                radius: 6
+                color: rightFramePowerTrigger.isHovered
+                       ? Theme.alpha(Theme.error, 0.40)
+                       : (bar.rightPowerMenuShown ? Theme.alpha(Theme.error, 0.25) : Theme.alpha(Theme.foreground, 0.08))
+                border.width: 1
+                border.color: rightFramePowerTrigger.isHovered
+                              ? Theme.alpha(Theme.error, 0.65)
+                              : (bar.rightPowerMenuShown ? Theme.alpha(Theme.error, 0.40) : "transparent")
+                Behavior on color { ColorAnimation { duration: 180 } }
+                Behavior on border.color { ColorAnimation { duration: 180 } }
+
+                SvgIcon {
+                    anchors.centerIn: parent
+                    name: "power"
+                    size: 9
+                    color: rightFramePowerTrigger.isHovered
+                           ? Theme.error
+                           : (bar.rightPowerMenuShown ? Theme.error : Theme.alpha(Theme.foreground, 0.50))
+                    Behavior on color { ColorAnimation { duration: 180 } }
+                }
+            }
+        }
+
         // 3. Bottom Glass Frame Bar
         Rectangle {
             x: 0
@@ -1152,10 +1219,10 @@ PanelWindow {
         id: popupDismissArea
         anchors.fill: parent
         z: 15
-        enabled: powerPop.shown || togglesPop.shown
+        enabled: bar.rightPowerMenuShown || togglesPop.shown
         visible: enabled
         onClicked: {
-            powerPop.close()
+            bar.closePower()
             togglesPop.close()
         }
     }
@@ -3013,26 +3080,11 @@ PanelWindow {
         }
     }
 
-    // 11. POWER & SESSION POPUP (Modern Obsidian Action Tiles)
-    BarPopup {
-        id: powerPop
-        trigger: bar.powerTrigger
-        popupWidth: 260
-        surface: bar.surface
-        align: "right"
-        hoverOpen: false
-
-        GridLayout {
-            Layout.fillWidth: true
-            columns: 2
-            rowSpacing: 6
-            columnSpacing: 6
-
-            ActionButton { Layout.fillWidth: true; icon: "lock"; label: "Lock"; onClicked: { powerPop.close(); Quickshell.execDetached(["loginctl", "lock-session"]) } }
-            ActionButton { Layout.fillWidth: true; icon: "logout"; label: "Logout"; confirm: true; onClicked: { powerPop.close(); Quickshell.execDetached(["hyprctl", "dispatch", "exit"]) } }
-            ActionButton { Layout.fillWidth: true; icon: "reboot"; label: "Reboot"; confirm: true; onClicked: { powerPop.close(); Quickshell.execDetached(["python3", bar.homeDir + "/.hyprconf/hypr/scripts/py/uptime-tracker.py", "--reboot"]) } }
-            ActionButton { Layout.fillWidth: true; icon: "power"; label: "Shutdown"; confirm: true; onClicked: { powerPop.close(); Quickshell.execDetached(["python3", bar.homeDir + "/.hyprconf/hypr/scripts/py/uptime-tracker.py", "--shutdown"]) } }
-        }
+    // 11. POWER & SESSION MENU (Expands from Right Frame on Hover)
+    BarPowerMenu {
+        id: rightPowerMenu
+        bar: bar
+        triggerItem: rightFramePowerTrigger
     }
 
     // ================================================================

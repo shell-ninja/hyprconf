@@ -5,6 +5,9 @@
 if pgrep -f "qs -c island" >/dev/null 2>&1; then
     qs ipc -c island call island close 2>/dev/null || true
 fi
+if pgrep -f "qs -c bar" >/dev/null 2>&1; then
+    qs ipc -c bar call bar closePower 2>/dev/null || true
+fi
 
 # Play logout notification sound in background
 "$HOME/.hyprconf/hypr/scripts/sh/notification.sh" logout 2>/dev/null &

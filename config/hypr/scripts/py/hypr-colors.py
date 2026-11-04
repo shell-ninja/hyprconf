@@ -1102,6 +1102,7 @@ LockscreenAudioVisualizer 1.0 LockscreenAudioVisualizer.qml
             "bar": """singleton Theme 1.0 Theme.qml
 Bar 1.0 Bar.qml
 BarPopup 1.0 BarPopup.qml
+BarPowerMenu 1.0 BarPowerMenu.qml
 BarOSD 1.0 BarOSD.qml
 BarNotificationToast 1.0 BarNotificationToast.qml
 BarTrailBridge 1.0 BarTrailBridge.qml
