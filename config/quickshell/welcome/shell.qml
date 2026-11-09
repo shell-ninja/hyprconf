@@ -30,6 +30,60 @@ FloatingWindow {
     property bool showOnStartup: true
     property string shortcutSearch: ""
 
+    // ── KEYBOARD LAYOUT STATE ────────────────────────────────────────────────
+    property string currentKbLayout: "us"
+    property string currentKbName: "English (US)"
+    property bool kbSavedNotification: false
+    property bool kbModalOpen: false
+    property string kbSearchQuery: ""
+    property var kbPopularList: [
+        { code: "us", name: "English (US)" },
+        { code: "gb", name: "English (UK)" },
+        { code: "de", name: "German" },
+        { code: "fr", name: "French" },
+        { code: "es", name: "Spanish" },
+        { code: "it", name: "Italian" },
+        { code: "pt", name: "Portuguese" },
+        { code: "br", name: "Portuguese (Brazil)" },
+        { code: "ru", name: "Russian" },
+        { code: "tr", name: "Turkish" },
+        { code: "pl", name: "Polish" },
+        { code: "se", name: "Swedish" },
+        { code: "no", name: "Norwegian" },
+        { code: "dk", name: "Danish" },
+        { code: "fi", name: "Finnish" },
+        { code: "jp", name: "Japanese" },
+        { code: "kr", name: "Korean" },
+        { code: "ara", name: "Arabic" },
+        { code: "bd", name: "Bangla" }
+    ]
+    property var kbAllList: []
+    property var filteredKbLayouts: []
+
+    function updateFilteredLayouts() {
+        var q = kbSearchQuery.trim().toLowerCase()
+        var source = (kbAllList && kbAllList.length > 0) ? kbAllList : kbPopularList
+        if (q.length === 0) {
+            filteredKbLayouts = source
+            return
+        }
+        var res = []
+        for (var i = 0; i < source.length; i++) {
+            var it = source[i]
+            if (it.code.toLowerCase().indexOf(q) !== -1 || it.name.toLowerCase().indexOf(q) !== -1) {
+                res.push(it)
+            }
+        }
+        filteredKbLayouts = res
+    }
+
+    onKbModalOpenChanged: {
+        if (kbModalOpen) {
+            updateFilteredLayouts()
+            focusTimer.restart()
+        }
+    }
+
     // ── SVG ASSETS ───────────────────────────────────────────────────────────
     function svgUrl(content) {
         return "data:image/svg+xml;utf8," + encodeURIComponent(content)
@@ -68,6 +122,15 @@ FloatingWindow {
         function openShortcuts() { window.activePage = 2 }
         function openApps() { window.activePage = 3 }
         function openGetStarted() { window.activePage = 4 }
+        function openKbModal() {
+            window.activePage = 0
+            window.kbSearchQuery = ""
+            window.updateFilteredLayouts()
+            window.kbModalOpen = true
+        }
+        function selectKbLayout(code: string) {
+            window.setKeyboardLayout(code)
+        }
         function close() {
             Qt.quit()
         }
@@ -76,7 +139,13 @@ FloatingWindow {
     // ── KEYBOARD SHORTCUTS ───────────────────────────────────────────────────
     Shortcut {
         sequence: "Escape"
-        onActivated: Qt.quit()
+        onActivated: {
+            if (window.kbModalOpen) {
+                window.kbModalOpen = false
+            } else {
+                Qt.quit()
+            }
+        }
     }
 
     Shortcut {
@@ -91,6 +160,73 @@ FloatingWindow {
         onActivated: {
             if (window.activePage < 4) window.activePage++
         }
+    }
+
+    // ── KEYBOARD LAYOUT BACKEND (set-kb-layout.py) ───────────────────────────
+    Process {
+        id: kbListReader
+        command: ["python3", window.homeDir + "/.hyprconf/hypr/scripts/py/set-kb-layout.py", "--list"]
+        running: true
+        stdout: StdioCollector {
+            onTextChanged: {
+                if (!text || text.trim().length === 0) return
+                try {
+                    var data = JSON.parse(text.trim())
+                    if (data.status === "ok") {
+                        if (data.current) {
+                            window.currentKbLayout = data.current
+                        }
+                        if (data.popular && data.popular.length > 0) {
+                            window.kbPopularList = data.popular
+                        }
+                        if (data.all && data.all.length > 0) {
+                            window.kbAllList = data.all
+                        }
+                        var list = data.all || data.popular || []
+                        for (var i = 0; i < list.length; i++) {
+                            if (list[i].code === window.currentKbLayout) {
+                                window.currentKbName = list[i].name
+                                break
+                            }
+                        }
+                        window.updateFilteredLayouts()
+                    }
+                } catch(e) {}
+            }
+        }
+    }
+
+    Process {
+        id: kbWriter
+    }
+
+    Timer {
+        id: kbSavedTimer
+        interval: 3200
+        onTriggered: window.kbSavedNotification = false
+    }
+
+    function setKeyboardLayout(code) {
+        if (!code || code.trim().length === 0) return
+        code = code.trim().toLowerCase()
+        window.currentKbLayout = code
+
+        var all = (window.kbAllList && window.kbAllList.length > 0) ? window.kbAllList : window.kbPopularList
+        var name = code.toUpperCase()
+        for (var i = 0; i < all.length; i++) {
+            if (all[i].code === code) {
+                name = all[i].name
+                break
+            }
+        }
+        window.currentKbName = name
+
+        kbWriter.command = ["python3", window.homeDir + "/.hyprconf/hypr/scripts/py/set-kb-layout.py", "--set", code]
+        kbWriter.running = false
+        kbWriter.running = true
+
+        window.kbSavedNotification = true
+        kbSavedTimer.restart()
     }
 
     // ── STATE PERSISTENCE (welcome-app.json) ──────────────────────────────────
@@ -331,7 +467,7 @@ FloatingWindow {
                 ColumnLayout {
                     anchors.fill: parent
                     visible: window.activePage === 0
-                    spacing: 20
+                    spacing: 14
 
                     Item { Layout.fillHeight: true }
 
@@ -495,6 +631,192 @@ FloatingWindow {
                                     color: Theme.muted
                                     wrapMode: Text.WordWrap
                                     Layout.fillWidth: true
+                                }
+                            }
+                        }
+                    }
+
+                    // Keyboard Layout Configuration Card
+                    Rectangle {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 72
+                        radius: 12
+                        color: Theme.alpha(Theme.surface, 0.65)
+                        border.color: Theme.alpha(Theme.foreground, 0.08)
+                        border.width: 1
+
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.leftMargin: 16
+                            anchors.rightMargin: 16
+                            spacing: 14
+
+                            // Left Icon
+                            Rectangle {
+                                width: 38
+                                height: 38
+                                radius: 10
+                                color: Theme.alpha(Theme.accent, 0.14)
+                                border.color: Theme.alpha(Theme.accent, 0.30)
+                                border.width: 1
+
+                                Image {
+                                    anchors.centerIn: parent
+                                    width: 18
+                                    height: 18
+                                    source: window.keyboardSvg
+                                }
+                            }
+
+                            // Info Cluster
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                spacing: 3
+
+                                RowLayout {
+                                    spacing: 8
+                                    Text {
+                                        text: "Keyboard Layout"
+                                        font.pixelSize: 13
+                                        font.bold: true
+                                        color: Theme.foreground
+                                    }
+
+                                    // Active Layout Badge
+                                    Rectangle {
+                                        height: 20
+                                        implicitWidth: activeBadgeRow.implicitWidth + 12
+                                        radius: 10
+                                        color: Theme.alpha(Theme.accent, 0.15)
+                                        border.color: Theme.alpha(Theme.accent, 0.35)
+                                        border.width: 1
+
+                                        RowLayout {
+                                            id: activeBadgeRow
+                                            anchors.centerIn: parent
+                                            spacing: 5
+
+                                            Rectangle {
+                                                width: 6
+                                                height: 6
+                                                radius: 3
+                                                color: "#22c55e"
+                                            }
+
+                                            Text {
+                                                text: window.currentKbLayout.toUpperCase() + " • " + window.currentKbName
+                                                font.pixelSize: 10
+                                                font.bold: true
+                                                color: Theme.accent
+                                            }
+                                        }
+                                    }
+
+                                    // Saved toast notification
+                                    RowLayout {
+                                        visible: window.kbSavedNotification
+                                        spacing: 4
+                                        Image {
+                                            width: 12
+                                            height: 12
+                                            source: window.checkSvg
+                                        }
+                                        Text {
+                                            text: "Applied & Saved"
+                                            font.pixelSize: 10
+                                            font.bold: true
+                                            color: "#22c55e"
+                                        }
+                                    }
+                                }
+
+                                Text {
+                                    text: "Choose your preferred layout. Automatically saved to settings.lua and applied live."
+                                    font.pixelSize: 11
+                                    color: Theme.muted
+                                    elide: Text.ElideRight
+                                    Layout.fillWidth: true
+                                }
+                            }
+
+                            // Layout Selectors (Quick Pills + Modal Trigger)
+                            RowLayout {
+                                spacing: 6
+                                Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
+
+                                // Quick chips: US, UK, DE, FR, ES
+                                Repeater {
+                                    model: [
+                                        { code: "us", label: "US" },
+                                        { code: "gb", label: "UK" },
+                                        { code: "de", label: "DE" },
+                                        { code: "fr", label: "FR" },
+                                        { code: "es", label: "ES" }
+                                    ]
+
+                                    Rectangle {
+                                        width: 38
+                                        height: 30
+                                        radius: 8
+                                        readonly property bool isSelected: window.currentKbLayout === modelData.code
+                                        color: isSelected ? Theme.accent : (chipMa.containsMouse ? Theme.alpha(Theme.foreground, 0.10) : Theme.alpha(Theme.surface, 0.85))
+                                        border.color: isSelected ? Theme.accent : (chipMa.containsMouse ? Theme.alpha(Theme.accent, 0.45) : Theme.alpha(Theme.foreground, 0.12))
+                                        border.width: 1
+
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: modelData.label
+                                            font.pixelSize: 11
+                                            font.bold: true
+                                            color: parent.isSelected ? Theme.background : Theme.foreground
+                                        }
+
+                                        MouseArea {
+                                            id: chipMa
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: window.setKeyboardLayout(modelData.code)
+                                        }
+                                    }
+                                }
+
+                                // "All Layouts... ▾" button
+                                Rectangle {
+                                    height: 30
+                                    implicitWidth: allLayoutsRow.implicitWidth + 20
+                                    radius: 8
+                                    readonly property bool isCustomActive: !["us", "gb", "de", "fr", "es"].includes(window.currentKbLayout)
+                                    color: isCustomActive
+                                        ? Theme.alpha(Theme.accent, 0.25)
+                                        : (allMa.containsMouse ? Theme.alpha(Theme.foreground, 0.10) : Theme.alpha(Theme.surface, 0.85))
+                                    border.color: isCustomActive ? Theme.accent : (allMa.containsMouse ? Theme.alpha(Theme.accent, 0.45) : Theme.alpha(Theme.foreground, 0.12))
+                                    border.width: 1
+
+                                    RowLayout {
+                                        id: allLayoutsRow
+                                        anchors.centerIn: parent
+                                        spacing: 6
+
+                                        Text {
+                                            text: parent.parent.isCustomActive ? (window.currentKbLayout.toUpperCase() + " ▾") : "All Layouts... ▾"
+                                            font.pixelSize: 11
+                                            font.bold: true
+                                            color: parent.parent.isCustomActive ? Theme.accent : Theme.foreground
+                                        }
+                                    }
+
+                                    MouseArea {
+                                        id: allMa
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            window.kbSearchQuery = ""
+                                            window.updateFilteredLayouts()
+                                            window.kbModalOpen = true
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -1482,6 +1804,387 @@ FloatingWindow {
                         }
                     }
                 }
+            }
+        }
+
+        // ── KEYBOARD LAYOUT SELECTOR MODAL OVERLAY ───────────────────────────
+        Rectangle {
+            id: kbModalOverlay
+            anchors.fill: parent
+            visible: window.kbModalOpen
+            color: Theme.alpha(Theme.background, 0.82)
+            z: 100
+
+            // Backdrop click dismisses
+            MouseArea {
+                anchors.fill: parent
+                cursorShape: Qt.ArrowCursor
+                onClicked: window.kbModalOpen = false
+            }
+
+            Rectangle {
+                id: kbModalDialog
+                width: 520
+                height: 480
+                anchors.centerIn: parent
+                radius: 16
+                color: Theme.alpha(Theme.surface, 0.98)
+                border.color: Theme.alpha(Theme.accent, 0.40)
+                border.width: 1.5
+                clip: true
+
+                // Consume clicks inside dialog
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: {}
+                }
+
+                ColumnLayout {
+                    anchors.fill: parent
+                    anchors.margins: 20
+                    spacing: 12
+
+                    // Modal Header
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 12
+
+                        Rectangle {
+                            width: 36
+                            height: 36
+                            radius: 10
+                            color: Theme.alpha(Theme.accent, 0.15)
+                            border.color: Theme.alpha(Theme.accent, 0.35)
+                            border.width: 1
+
+                            Image {
+                                anchors.centerIn: parent
+                                width: 18
+                                height: 18
+                                source: window.keyboardSvg
+                            }
+                        }
+
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 1
+
+                            Text {
+                                text: "Select Keyboard Layout"
+                                font.pixelSize: 15
+                                font.bold: true
+                                color: Theme.foreground
+                            }
+                            Text {
+                                text: "Choose from 99 system XKB layouts or specify a custom code."
+                                font.pixelSize: 11
+                                color: Theme.muted
+                            }
+                        }
+
+                        // Close (X) button
+                        Rectangle {
+                            width: 28
+                            height: 28
+                            radius: 7
+                            color: modalCloseMa.containsMouse ? Theme.alpha("#ef4444", 0.20) : Theme.alpha(Theme.foreground, 0.06)
+                            border.color: modalCloseMa.containsMouse ? Theme.alpha("#ef4444", 0.50) : Theme.alpha(Theme.foreground, 0.10)
+                            border.width: 1
+
+                            Image {
+                                anchors.centerIn: parent
+                                width: 12
+                                height: 12
+                                source: window.closeSvg
+                            }
+
+                            MouseArea {
+                                id: modalCloseMa
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: window.kbModalOpen = false
+                            }
+                        }
+                    }
+
+                    // Search input
+                    Rectangle {
+                        Layout.fillWidth: true
+                        height: 38
+                        radius: 8
+                        color: Theme.alpha(Theme.background, 0.85)
+                        border.color: kbSearchInput.activeFocus ? Theme.accent : Theme.alpha(Theme.foreground, 0.12)
+                        border.width: 1
+
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.leftMargin: 12
+                            anchors.rightMargin: 12
+                            spacing: 8
+
+                            Image {
+                                width: 14
+                                height: 14
+                                source: window.searchSvg
+                            }
+
+                            TextInput {
+                                id: kbSearchInput
+                                Layout.fillWidth: true
+                                text: window.kbSearchQuery
+                                font.pixelSize: 12
+                                color: Theme.foreground
+                                clip: true
+                                verticalAlignment: TextInput.AlignVCenter
+                                onTextChanged: {
+                                    window.kbSearchQuery = text
+                                    window.updateFilteredLayouts()
+                                }
+                                onAccepted: {
+                                    if (customOptionCard.visible) {
+                                        window.setKeyboardLayout(customOptionCard.trimmedQuery)
+                                        window.kbModalOpen = false
+                                    } else if (window.filteredKbLayouts && window.filteredKbLayouts.length > 0) {
+                                        window.setKeyboardLayout(window.filteredKbLayouts[0].code)
+                                        window.kbModalOpen = false
+                                    }
+                                }
+
+                                Text {
+                                    anchors.fill: parent
+                                    verticalAlignment: Text.AlignVCenter
+                                    text: "Search by language, country, or code (e.g. de, fr, swedish)..."
+                                    font.pixelSize: 12
+                                    color: Theme.muted
+                                    visible: !kbSearchInput.text
+                                }
+                            }
+
+                            // Clear button
+                            Text {
+                                visible: kbSearchInput.text.length > 0
+                                text: "✕"
+                                font.pixelSize: 11
+                                color: Theme.muted
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        kbSearchInput.text = ""
+                                        kbSearchInput.forceActiveFocus()
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Optional Custom Entry Card (if query doesn't match an exact code in filtered list)
+                    Rectangle {
+                        id: customOptionCard
+                        readonly property string trimmedQuery: window.kbSearchQuery.trim().toLowerCase()
+                        readonly property bool showCustom: trimmedQuery.length > 0 && !window.filteredKbLayouts.some(function(i){ return i.code.toLowerCase() === trimmedQuery })
+                        visible: showCustom
+                        Layout.fillWidth: true
+                        height: 36
+                        radius: 8
+                        color: customMa.containsMouse ? Theme.alpha(Theme.accent, 0.20) : Theme.alpha(Theme.accent, 0.08)
+                        border.color: Theme.alpha(Theme.accent, 0.35)
+                        border.width: 1
+
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.leftMargin: 12
+                            anchors.rightMargin: 12
+                            spacing: 8
+
+                            Text {
+                                text: "Custom layout code:"
+                                font.pixelSize: 11
+                                color: Theme.muted
+                            }
+
+                            Rectangle {
+                                height: 20
+                                implicitWidth: customCodeText.implicitWidth + 10
+                                radius: 4
+                                color: Theme.alpha(Theme.accent, 0.25)
+                                Text {
+                                    id: customCodeText
+                                    anchors.centerIn: parent
+                                    text: customOptionCard.trimmedQuery
+                                    font.pixelSize: 11
+                                    font.bold: true
+                                    color: Theme.accent
+                                }
+                            }
+
+                            Item { Layout.fillWidth: true }
+
+                            Text {
+                                text: "Apply ↵"
+                                font.pixelSize: 11
+                                font.bold: true
+                                color: Theme.accent
+                            }
+                        }
+
+                        MouseArea {
+                            id: customMa
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                window.setKeyboardLayout(customOptionCard.trimmedQuery)
+                                window.kbModalOpen = false
+                            }
+                        }
+                    }
+
+                    // Layouts List
+                    Rectangle {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        radius: 8
+                        color: Theme.alpha(Theme.background, 0.40)
+                        border.color: Theme.alpha(Theme.foreground, 0.06)
+                        border.width: 1
+                        clip: true
+
+                        ListView {
+                            id: kbList
+                            anchors.fill: parent
+                            anchors.margins: 4
+                            spacing: 2
+                            model: window.filteredKbLayouts
+                            boundsBehavior: Flickable.StopAtBounds
+                            ScrollBar.vertical: ScrollBar {
+                                active: true
+                                policy: ScrollBar.AsNeeded
+                            }
+
+                            delegate: Rectangle {
+                                width: kbList.width
+                                height: 34
+                                radius: 6
+                                readonly property bool isSelected: window.currentKbLayout === modelData.code
+                                color: isSelected
+                                    ? Theme.alpha(Theme.accent, 0.22)
+                                    : (itemMa.containsMouse ? Theme.alpha(Theme.foreground, 0.06) : "transparent")
+                                border.color: isSelected ? Theme.alpha(Theme.accent, 0.40) : "transparent"
+                                border.width: 1
+
+                                RowLayout {
+                                    anchors.fill: parent
+                                    anchors.leftMargin: 12
+                                    anchors.rightMargin: 12
+                                    spacing: 10
+
+                                    // Layout Code Badge
+                                    Rectangle {
+                                        width: 32
+                                        height: 20
+                                        radius: 4
+                                        color: parent.parent.isSelected ? Theme.accent : Theme.alpha(Theme.surface, 0.90)
+                                        border.color: parent.parent.isSelected ? Theme.accent : Theme.alpha(Theme.foreground, 0.12)
+                                        border.width: 1
+
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: modelData.code.toUpperCase()
+                                            font.pixelSize: 9
+                                            font.bold: true
+                                            color: parent.parent.parent.isSelected ? Theme.background : Theme.foreground
+                                        }
+                                    }
+
+                                    // Full Name
+                                    Text {
+                                        Layout.fillWidth: true
+                                        text: modelData.name
+                                        font.pixelSize: 12
+                                        font.bold: parent.parent.isSelected
+                                        color: parent.parent.isSelected ? Theme.accent : Theme.foreground
+                                        elide: Text.ElideRight
+                                    }
+
+                                    // Checkmark
+                                    Image {
+                                        visible: parent.parent.isSelected
+                                        width: 14
+                                        height: 14
+                                        source: window.checkSvg
+                                    }
+                                }
+
+                                MouseArea {
+                                    id: itemMa
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        window.setKeyboardLayout(modelData.code)
+                                        window.kbModalOpen = false
+                                    }
+                                }
+                            }
+
+                            // Empty state
+                            Text {
+                                anchors.centerIn: parent
+                                visible: kbList.count === 0 && !customOptionCard.showCustom
+                                text: "No matching layouts found"
+                                font.pixelSize: 12
+                                color: Theme.muted
+                            }
+                        }
+                    }
+
+                    // Modal Footer
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 8
+
+                        Text {
+                            Layout.fillWidth: true
+                            text: "Saves to ~/.hyprconf/hypr/configs/settings.lua"
+                            font.pixelSize: 10
+                            color: Theme.muted
+                            elide: Text.ElideRight
+                        }
+
+                        Rectangle {
+                            width: 76
+                            height: 28
+                            radius: 6
+                            color: closeBtnMa.containsMouse ? Theme.alpha(Theme.foreground, 0.12) : Theme.alpha(Theme.surface, 0.80)
+                            border.color: Theme.alpha(Theme.foreground, 0.12)
+                            border.width: 1
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "Done"
+                                font.pixelSize: 11
+                                font.bold: true
+                                color: Theme.foreground
+                            }
+
+                            MouseArea {
+                                id: closeBtnMa
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: window.kbModalOpen = false
+                            }
+                        }
+                    }
+                }
+            }
+
+            Timer {
+                id: focusTimer
+                interval: 50
+                onTriggered: kbSearchInput.forceActiveFocus()
             }
         }
     }
