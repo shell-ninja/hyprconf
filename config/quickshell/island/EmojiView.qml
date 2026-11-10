@@ -177,15 +177,12 @@ Item {
     }
 
     // ── DISPATCH COPY & AUTO-PASTE ───────────────────────────────────────────
-    Process {
-        id: pasteProc
-    }
-
     function selectEmoji(emojiChar) {
         if (!emojiChar || emojiChar.length === 0) return
+        Quickshell.execDetached(["wl-copy", "--", emojiChar])
+        Quickshell.execDetached(["wl-copy", "--primary", "--", emojiChar])
+        Quickshell.execDetached(["python3", root.homeDir + "/.hyprconf/hypr/scripts/py/paste-emoji.py", emojiChar])
         root.emojiSelected(emojiChar)
-        pasteProc.command = ["python3", root.homeDir + "/.hyprconf/hypr/scripts/py/paste-emoji.py", emojiChar]
-        pasteProc.running = true
         root.closeRequested()
     }
 

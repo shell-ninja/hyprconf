@@ -292,6 +292,232 @@ Rectangle {
         }
     }
 
+    // ── 2b. COMPREHENSIVE UNIT CONVERTER ─────────────────────────────────────────
+    readonly property var unitResult: {
+        var q = card.queryText.trim()
+        if (q.length < 3 || card.isAiQuery || card.currencyResult !== null) return null
+
+        var parts = q.split(/\s+to\s+|\s+in\s+|\s*->\s*|\s*=\s*/i)
+        var val = NaN
+        var uFromRaw = ""
+        var uToRaw = ""
+
+        if (parts.length === 2) {
+            var m = parts[0].trim().match(/^([0-9]+(?:\.[0-9]+)?)\s*(.+)$/)
+            if (!m) return null
+            val = parseFloat(m[1])
+            uFromRaw = m[2].trim().toLowerCase()
+            uToRaw = parts[1].trim().toLowerCase()
+        } else {
+            var m2 = q.match(/^([0-9]+(?:\.[0-9]+)?)\s*([a-zA-Z°µ"'/²³]+)\s+([a-zA-Z°µ"'/²³]+)$/)
+            if (!m2) return null
+            val = parseFloat(m2[1])
+            uFromRaw = m2[2].trim().toLowerCase()
+            uToRaw = m2[3].trim().toLowerCase()
+        }
+
+        if (isNaN(val) || !uFromRaw || !uToRaw || uFromRaw === uToRaw) return null
+
+        var unitsTable = {
+            length: {
+                name: "Length",
+                icon: "󰆞",
+                units: {
+                    "m": { rate: 1.0, sym: "m" }, "meter": { rate: 1.0, sym: "m" }, "meters": { rate: 1.0, sym: "m" }, "metre": { rate: 1.0, sym: "m" }, "metres": { rate: 1.0, sym: "m" },
+                    "km": { rate: 1000.0, sym: "km" }, "kilometer": { rate: 1000.0, sym: "km" }, "kilometers": { rate: 1000.0, sym: "km" }, "kilometre": { rate: 1000.0, sym: "km" }, "kilometres": { rate: 1000.0, sym: "km" },
+                    "cm": { rate: 0.01, sym: "cm" }, "centimeter": { rate: 0.01, sym: "cm" }, "centimeters": { rate: 0.01, sym: "cm" }, "centimetre": { rate: 0.01, sym: "cm" }, "centimetres": { rate: 0.01, sym: "cm" },
+                    "mm": { rate: 0.001, sym: "mm" }, "millimeter": { rate: 0.001, sym: "mm" }, "millimeters": { rate: 0.001, sym: "mm" }, "millimetre": { rate: 0.001, sym: "mm" }, "millimetres": { rate: 0.001, sym: "mm" },
+                    "um": { rate: 1e-6, sym: "µm" }, "µm": { rate: 1e-6, sym: "µm" }, "micrometer": { rate: 1e-6, sym: "µm" }, "micrometers": { rate: 1e-6, sym: "µm" }, "micron": { rate: 1e-6, sym: "µm" }, "microns": { rate: 1e-6, sym: "µm" },
+                    "nm": { rate: 1e-9, sym: "nm" }, "nanometer": { rate: 1e-9, sym: "nm" }, "nanometers": { rate: 1e-9, sym: "nm" },
+                    "in": { rate: 0.0254, sym: "in" }, "inch": { rate: 0.0254, sym: "in" }, "inches": { rate: 0.0254, sym: "in" }, "\"": { rate: 0.0254, sym: "in" },
+                    "ft": { rate: 0.3048, sym: "ft" }, "foot": { rate: 0.3048, sym: "ft" }, "feet": { rate: 0.3048, sym: "ft" }, "'": { rate: 0.3048, sym: "ft" },
+                    "yd": { rate: 0.9144, sym: "yd" }, "yard": { rate: 0.9144, sym: "yd" }, "yards": { rate: 0.9144, sym: "yd" },
+                    "mi": { rate: 1609.344, sym: "mi" }, "mile": { rate: 1609.344, sym: "mi" }, "miles": { rate: 1609.344, sym: "mi" },
+                    "nmi": { rate: 1852.0, sym: "nmi" }, "nauticalmile": { rate: 1852.0, sym: "nmi" }, "nauticalmiles": { rate: 1852.0, sym: "nmi" }
+                }
+            },
+            mass: {
+                name: "Mass & Weight",
+                icon: "󰚥",
+                units: {
+                    "kg": { rate: 1.0, sym: "kg" }, "kilo": { rate: 1.0, sym: "kg" }, "kilos": { rate: 1.0, sym: "kg" }, "kilogram": { rate: 1.0, sym: "kg" }, "kilograms": { rate: 1.0, sym: "kg" },
+                    "g": { rate: 0.001, sym: "g" }, "gram": { rate: 0.001, sym: "g" }, "grams": { rate: 0.001, sym: "g" },
+                    "mg": { rate: 1e-6, sym: "mg" }, "milligram": { rate: 1e-6, sym: "mg" }, "milligrams": { rate: 1e-6, sym: "mg" },
+                    "ug": { rate: 1e-9, sym: "µg" }, "µg": { rate: 1e-9, sym: "µg" }, "microgram": { rate: 1e-9, sym: "µg" }, "micrograms": { rate: 1e-9, sym: "µg" },
+                    "t": { rate: 1000.0, sym: "t" }, "ton": { rate: 1000.0, sym: "t" }, "tons": { rate: 1000.0, sym: "t" }, "tonne": { rate: 1000.0, sym: "t" }, "tonnes": { rate: 1000.0, sym: "t" },
+                    "lb": { rate: 0.45359237, sym: "lbs" }, "lbs": { rate: 0.45359237, sym: "lbs" }, "pound": { rate: 0.45359237, sym: "lbs" }, "pounds": { rate: 0.45359237, sym: "lbs" },
+                    "oz": { rate: 0.028349523125, sym: "oz" }, "ounce": { rate: 0.028349523125, sym: "oz" }, "ounces": { rate: 0.028349523125, sym: "oz" },
+                    "st": { rate: 6.35029318, sym: "st" }, "stone": { rate: 6.35029318, sym: "st" }
+                }
+            },
+            temperature: {
+                name: "Temperature",
+                icon: "󰔏",
+                isTemp: true,
+                units: {
+                    "c": { sym: "°C" }, "celsius": { sym: "°C" }, "°c": { sym: "°C" }, "deg c": { sym: "°C" },
+                    "f": { sym: "°F" }, "fahrenheit": { sym: "°F" }, "°f": { sym: "°F" }, "deg f": { sym: "°F" },
+                    "k": { sym: "K" }, "kelvin": { sym: "K" }
+                }
+            },
+            area: {
+                name: "Area",
+                icon: "󱁕",
+                units: {
+                    "sqm": { rate: 1.0, sym: "m²" }, "m2": { rate: 1.0, sym: "m²" }, "m²": { rate: 1.0, sym: "m²" }, "sq m": { rate: 1.0, sym: "m²" },
+                    "sqkm": { rate: 1e6, sym: "km²" }, "km2": { rate: 1e6, sym: "km²" }, "km²": { rate: 1e6, sym: "km²" }, "sq km": { rate: 1e6, sym: "km²" },
+                    "sqcm": { rate: 1e-4, sym: "cm²" }, "cm2": { rate: 1e-4, sym: "cm²" }, "cm²": { rate: 1e-4, sym: "cm²" }, "sq cm": { rate: 1e-4, sym: "cm²" },
+                    "sqmm": { rate: 1e-6, sym: "mm²" }, "mm2": { rate: 1e-6, sym: "mm²" }, "mm²": { rate: 1e-6, sym: "mm²" }, "sq mm": { rate: 1e-6, sym: "mm²" },
+                    "sqft": { rate: 0.09290304, sym: "sq ft" }, "ft2": { rate: 0.09290304, sym: "sq ft" }, "ft²": { rate: 0.09290304, sym: "sq ft" }, "sq ft": { rate: 0.09290304, sym: "sq ft" },
+                    "sqin": { rate: 0.00064516, sym: "sq in" }, "in2": { rate: 0.00064516, sym: "sq in" }, "in²": { rate: 0.00064516, sym: "sq in" }, "sq in": { rate: 0.00064516, sym: "sq in" },
+                    "sqyd": { rate: 0.83612736, sym: "sq yd" }, "yd2": { rate: 0.83612736, sym: "sq yd" }, "yd²": { rate: 0.83612736, sym: "sq yd" }, "sq yd": { rate: 0.83612736, sym: "sq yd" },
+                    "sqmi": { rate: 2589988.110336, sym: "sq mi" }, "mi2": { rate: 2589988.110336, sym: "sq mi" }, "mi²": { rate: 2589988.110336, sym: "sq mi" }, "sq mi": { rate: 2589988.110336, sym: "sq mi" },
+                    "ha": { rate: 10000.0, sym: "ha" }, "hectare": { rate: 10000.0, sym: "ha" }, "hectares": { rate: 10000.0, sym: "ha" },
+                    "acre": { rate: 4046.8564224, sym: "acres" }, "acres": { rate: 4046.8564224, sym: "acres" }
+                }
+            },
+            volume: {
+                name: "Volume",
+                icon: "󰈢",
+                units: {
+                    "l": { rate: 1.0, sym: "L" }, "liter": { rate: 1.0, sym: "L" }, "liters": { rate: 1.0, sym: "L" }, "litre": { rate: 1.0, sym: "L" }, "litres": { rate: 1.0, sym: "L" },
+                    "ml": { rate: 0.001, sym: "mL" }, "milliliter": { rate: 0.001, sym: "mL" }, "milliliters": { rate: 0.001, sym: "mL" }, "millilitre": { rate: 0.001, sym: "mL" }, "millilitres": { rate: 0.001, sym: "mL" },
+                    "cl": { rate: 0.01, sym: "cL" }, "dl": { rate: 0.1, sym: "dL" },
+                    "m3": { rate: 1000.0, sym: "m³" }, "m³": { rate: 1000.0, sym: "m³" },
+                    "gal": { rate: 3.785411784, sym: "gal" }, "gallon": { rate: 3.785411784, sym: "gal" }, "gallons": { rate: 3.785411784, sym: "gal" },
+                    "qt": { rate: 0.946352946, sym: "qt" }, "quart": { rate: 0.946352946, sym: "qt" }, "quarts": { rate: 0.946352946, sym: "qt" },
+                    "pt": { rate: 0.473176473, sym: "pt" }, "pint": { rate: 0.473176473, sym: "pt" }, "pints": { rate: 0.473176473, sym: "pt" },
+                    "cup": { rate: 0.2365882365, sym: "cup" }, "cups": { rate: 0.2365882365, sym: "cup" },
+                    "floz": { rate: 0.0295735295625, sym: "fl oz" }, "fl oz": { rate: 0.0295735295625, sym: "fl oz" }, "fluid ounce": { rate: 0.0295735295625, sym: "fl oz" },
+                    "tbsp": { rate: 0.01478676478125, sym: "tbsp" }, "tablespoon": { rate: 0.01478676478125, sym: "tbsp" },
+                    "tsp": { rate: 0.00492892159375, sym: "tsp" }, "teaspoon": { rate: 0.00492892159375, sym: "tsp" },
+                    "cuft": { rate: 28.316846592, sym: "cu ft" }, "ft3": { rate: 28.316846592, sym: "cu ft" },
+                    "cuin": { rate: 0.016387064, sym: "cu in" }, "in3": { rate: 0.016387064, sym: "cu in" }
+                }
+            },
+            speed: {
+                name: "Speed",
+                icon: "󱓞",
+                units: {
+                    "m/s": { rate: 1.0, sym: "m/s" }, "mps": { rate: 1.0, sym: "m/s" },
+                    "km/h": { rate: 1.0 / 3.6, sym: "km/h" }, "kmh": { rate: 1.0 / 3.6, sym: "km/h" }, "kph": { rate: 1.0 / 3.6, sym: "km/h" },
+                    "mph": { rate: 0.44704, sym: "mph" },
+                    "knot": { rate: 0.514444, sym: "kn" }, "knots": { rate: 0.514444, sym: "kn" }, "kn": { rate: 0.514444, sym: "kn" },
+                    "ft/s": { rate: 0.3048, sym: "ft/s" }, "fps": { rate: 0.3048, sym: "ft/s" }
+                }
+            },
+            data: {
+                name: "Digital Data",
+                icon: "󰈀",
+                units: {
+                    "b": { rate: 0.125, sym: "b" }, "bit": { rate: 0.125, sym: "b" }, "bits": { rate: 0.125, sym: "b" },
+                    "byte": { rate: 1.0, sym: "B" }, "bytes": { rate: 1.0, sym: "B" },
+                    "kb": { rate: 125.0, sym: "kb" }, "kbit": { rate: 125.0, sym: "kb" },
+                    "kib": { rate: 1024.0, sym: "KiB" },
+                    "mb": { rate: 1e6, sym: "MB" }, "megabyte": { rate: 1e6, sym: "MB" }, "megabytes": { rate: 1e6, sym: "MB" },
+                    "mib": { rate: 1048576.0, sym: "MiB" },
+                    "gb": { rate: 1e9, sym: "GB" }, "gigabyte": { rate: 1e9, sym: "GB" }, "gigabytes": { rate: 1e9, sym: "GB" },
+                    "gib": { rate: 1073741824.0, sym: "GiB" },
+                    "tb": { rate: 1e12, sym: "TB" }, "terabyte": { rate: 1e12, sym: "TB" }, "terabytes": { rate: 1e12, sym: "TB" },
+                    "tib": { rate: 1099511627776.0, sym: "TiB" },
+                    "pb": { rate: 1e15, sym: "PB" }, "petabyte": { rate: 1e15, sym: "PB" }
+                }
+            },
+            time: {
+                name: "Time",
+                icon: "󱎫",
+                units: {
+                    "ms": { rate: 0.001, sym: "ms" }, "millisecond": { rate: 0.001, sym: "ms" }, "milliseconds": { rate: 0.001, sym: "ms" },
+                    "s": { rate: 1.0, sym: "s" }, "sec": { rate: 1.0, sym: "s" }, "secs": { rate: 1.0, sym: "s" }, "second": { rate: 1.0, sym: "s" }, "seconds": { rate: 1.0, sym: "s" },
+                    "min": { rate: 60.0, sym: "min" }, "mins": { rate: 60.0, sym: "min" }, "minute": { rate: 60.0, sym: "min" }, "minutes": { rate: 60.0, sym: "min" },
+                    "h": { rate: 3600.0, sym: "hr" }, "hr": { rate: 3600.0, sym: "hr" }, "hrs": { rate: 3600.0, sym: "hr" }, "hour": { rate: 3600.0, sym: "hr" }, "hours": { rate: 3600.0, sym: "hr" },
+                    "d": { rate: 86400.0, sym: "days" }, "day": { rate: 86400.0, sym: "days" }, "days": { rate: 86400.0, sym: "days" },
+                    "wk": { rate: 604800.0, sym: "wks" }, "wks": { rate: 604800.0, sym: "wks" }, "week": { rate: 604800.0, sym: "wks" }, "weeks": { rate: 604800.0, sym: "wks" },
+                    "mo": { rate: 2629800.0, sym: "months" }, "month": { rate: 2629800.0, sym: "months" }, "months": { rate: 2629800.0, sym: "months" },
+                    "yr": { rate: 31557600.0, sym: "yrs" }, "year": { rate: 31557600.0, sym: "yrs" }, "years": { rate: 31557600.0, sym: "yrs" }
+                }
+            },
+            pressure: {
+                name: "Pressure",
+                icon: "󱠤",
+                units: {
+                    "pa": { rate: 1.0, sym: "Pa" }, "pascal": { rate: 1.0, sym: "Pa" },
+                    "kpa": { rate: 1000.0, sym: "kPa" },
+                    "mpa": { rate: 1e6, sym: "MPa" },
+                    "bar": { rate: 100000.0, sym: "bar" }, "bars": { rate: 100000.0, sym: "bar" },
+                    "mbar": { rate: 100.0, sym: "mbar" },
+                    "psi": { rate: 6894.757293168, sym: "psi" },
+                    "atm": { rate: 101325.0, sym: "atm" },
+                    "torr": { rate: 133.322368421, sym: "Torr" }, "mmhg": { rate: 133.322368421, sym: "mmHg" }
+                }
+            },
+            energy: {
+                name: "Energy & Power",
+                icon: "󱐋",
+                units: {
+                    "j": { rate: 1.0, sym: "J" }, "joule": { rate: 1.0, sym: "J" }, "joules": { rate: 1.0, sym: "J" },
+                    "kj": { rate: 1000.0, sym: "kJ" },
+                    "mj": { rate: 1e6, sym: "MJ" },
+                    "cal": { rate: 4.184, sym: "cal" }, "calorie": { rate: 4.184, sym: "cal" }, "calories": { rate: 4.184, sym: "cal" },
+                    "kcal": { rate: 4184.0, sym: "kcal" },
+                    "wh": { rate: 3600.0, sym: "Wh" },
+                    "kwh": { rate: 3.6e6, sym: "kWh" },
+                    "btu": { rate: 1055.05585, sym: "BTU" },
+                    "ev": { rate: 1.602176634e-19, sym: "eV" },
+                    "w": { rate: 1.0, sym: "W" }, "watt": { rate: 1.0, sym: "W" }, "watts": { rate: 1.0, sym: "W" },
+                    "kw": { rate: 1000.0, sym: "kW" }, "kilowatt": { rate: 1000.0, sym: "kW" },
+                    "hp": { rate: 745.699872, sym: "hp" }, "horsepower": { rate: 745.699872, sym: "hp" }
+                }
+            }
+        }
+
+        for (var catKey in unitsTable) {
+            var cat = unitsTable[catKey]
+            if (cat.isTemp) {
+                var u1 = cat.units[uFromRaw]
+                var u2 = cat.units[uToRaw]
+                if (u1 && u2) {
+                    var s1 = u1.sym
+                    var s2 = u2.sym
+                    var cVal = (s1 === "°C") ? val : (s1 === "°F") ? (val - 32) * 5 / 9 : (val - 273.15)
+                    var target = (s2 === "°C") ? cVal : (s2 === "°F") ? (cVal * 9 / 5 + 32) : (cVal + 273.15)
+                    var tFormatted = (Math.round(target * 10000) / 10000).toLocaleString("en-US", { maximumFractionDigits: 4 })
+                    return {
+                        amount: val,
+                        fromSym: s1,
+                        toSym: s2,
+                        target: target,
+                        formatted: val + " " + s1 + " = " + tFormatted + " " + s2,
+                        rateStr: cat.name + " Conversion",
+                        copyVal: tFormatted + " " + s2,
+                        icon: cat.icon
+                    }
+                }
+            } else {
+                var u1n = cat.units[uFromRaw]
+                var u2n = cat.units[uToRaw]
+                if (u1n && u2n) {
+                    var baseVal = val * u1n.rate
+                    var targetVal = baseVal / u2n.rate
+                    var unitRate = u1n.rate / u2n.rate
+                    var tFormattedVal = (Math.round(targetVal * 100000) / 100000).toLocaleString("en-US", { maximumFractionDigits: 5 })
+                    var rFormatted = (Math.round(unitRate * 100000) / 100000).toLocaleString("en-US", { maximumFractionDigits: 5 })
+                    return {
+                        amount: val,
+                        fromSym: u1n.sym,
+                        toSym: u2n.sym,
+                        target: targetVal,
+                        formatted: val + " " + u1n.sym + " = " + tFormattedVal + " " + u2n.sym,
+                        rateStr: "1 " + u1n.sym + " = " + rFormatted + " " + u2n.sym + " (" + cat.name + ")",
+                        copyVal: tFormattedVal + " " + u2n.sym,
+                        icon: cat.icon
+                    }
+                }
+            }
+        }
+        return null
+    }
+
     // ── 3. EMOJIS SEARCH ENGINE ─────────────────────────────────────────────
     property var allEmojis: []
 
@@ -313,7 +539,7 @@ Rectangle {
     readonly property var matchedEmojis: {
         var q = card.queryText.toLowerCase().trim()
         if (q.length < 2 || !card.allEmojis || card.allEmojis.length === 0) return []
-        if (card.isAiQuery || card.mathResult !== null || card.currencyResult !== null) return []
+        if (card.isAiQuery || card.mathResult !== null || card.currencyResult !== null || card.unitResult !== null) return []
 
         var isExplicit = q.startsWith(":") || q.startsWith("emoji ")
         var cleanQ = q
@@ -360,7 +586,9 @@ Rectangle {
     }
 
     function copyEmoji(glyph, name) {
-        Quickshell.execDetached(["wl-copy", glyph])
+        Quickshell.execDetached(["wl-copy", "--", glyph])
+        Quickshell.execDetached(["wl-copy", "--primary", "--", glyph])
+        Quickshell.execDetached(["python3", card.homeDir + "/.hyprconf/hypr/scripts/py/paste-emoji.py", glyph])
         var osdCmd = card.homeDir + "/.hyprconf/hypr/scripts/sh/osd-notify.sh"
         Quickshell.execDetached([osdCmd, "smile", "1", "Emoji Copied", "smile", glyph + " (" + name + ") copied to clipboard!"])
         card.triggerClose()
@@ -409,7 +637,7 @@ Rectangle {
 
     readonly property var matchedActions: {
         var q = card.queryText.toLowerCase().trim()
-        if (q.length === 0 || card.isAiQuery || card.mathResult !== null || card.currencyResult !== null) return []
+        if (q.length === 0 || card.isAiQuery || card.mathResult !== null || card.currencyResult !== null || card.unitResult !== null) return []
         var res = []
         for (var i = 0; i < systemActions.length; i++) {
             var act = systemActions[i]
@@ -450,10 +678,22 @@ Rectangle {
     }
 
     function executeCurrent() {
+        // 0. Unit conversion result
+        if (card.unitResult !== null) {
+            var unitVal = card.unitResult.copyVal
+            Quickshell.execDetached(["wl-copy", "--", unitVal])
+            Quickshell.execDetached(["wl-copy", "--primary", "--", unitVal])
+            var osdCmdU = card.homeDir + "/.hyprconf/hypr/scripts/sh/osd-notify.sh"
+            Quickshell.execDetached([osdCmdU, "calculator", "1", "Unit Converted", "calculator", card.unitResult.formatted + " copied!"])
+            card.triggerClose()
+            return
+        }
+
         // 1. Currency conversion result
         if (card.currencyResult !== null) {
             var currVal = card.currencyResult.copyVal
-            Quickshell.execDetached(["wl-copy", currVal])
+            Quickshell.execDetached(["wl-copy", "--", currVal])
+            Quickshell.execDetached(["wl-copy", "--primary", "--", currVal])
             var osdCmd1 = card.homeDir + "/.hyprconf/hypr/scripts/sh/osd-notify.sh"
             Quickshell.execDetached([osdCmd1, "currency", "1", "Currency Converted", "currency", card.currencyResult.formatted + " copied!"])
             card.triggerClose()
@@ -567,7 +807,7 @@ Rectangle {
                         verticalAlignment: Text.AlignVCenter
                         elide: Text.ElideRight
                         visible: !searchInput.text && !searchInput.activeFocus
-                        text: "Search apps, calculate, 100 USD to EUR, :emoji, or >ask AI..."
+                        text: "Search apps, calculate, 10 cm to in, 100 USD to EUR, :emoji, or >ask AI..."
                         font.family: "Outfit, sans-serif"
                         font.pixelSize: 13
                         color: Theme.alpha(Theme.foreground, 0.38)
@@ -581,6 +821,7 @@ Rectangle {
                     radius: 5
                     color: {
                         if (card.currencyResult !== null) return Theme.alpha(Theme.accent, 0.25)
+                        if (card.unitResult !== null) return Theme.alpha(Theme.accent, 0.25)
                         if (card.mathResult !== null) return Theme.alpha(Theme.accent, 0.22)
                         if (card.isAiQuery) return Theme.alpha(Theme.accent, 0.30)
                         if (matchedActions.length > 0) return Theme.alpha(Theme.secondary, 0.20)
@@ -594,6 +835,7 @@ Rectangle {
                         anchors.centerIn: parent
                         text: {
                             if (card.currencyResult !== null) return "CURRENCY"
+                            if (card.unitResult !== null) return "CONVERT"
                             if (card.mathResult !== null) return "CALC"
                             if (card.isAiQuery) return "AI AGENT"
                             if (matchedActions.length > 0) return "ACTION"
@@ -602,7 +844,7 @@ Rectangle {
                         font.family: "JetBrainsMono Nerd Font, monospace"
                         font.pixelSize: 9
                         font.weight: Font.Bold
-                        color: (card.currencyResult !== null || card.mathResult !== null || card.isAiQuery) ? Theme.accent : Theme.alpha(Theme.foreground, 0.65)
+                        color: (card.currencyResult !== null || card.unitResult !== null || card.mathResult !== null || card.isAiQuery) ? Theme.accent : Theme.alpha(Theme.foreground, 0.65)
                     }
                 }
 
@@ -680,9 +922,65 @@ Rectangle {
             }
         }
 
+        // 1b. Unit Conversion Result Card
+        Rectangle {
+            visible: card.unitResult !== null && card.currencyResult === null
+            Layout.fillWidth: true
+            height: 58
+            radius: 8
+            color: Theme.alpha(Theme.accent, 0.15)
+            border.width: 1
+            border.color: Theme.accent
+
+            RowLayout {
+                anchors.fill: parent
+                anchors.margins: 12
+                spacing: 12
+
+                Text {
+                    text: card.unitResult ? card.unitResult.icon : "󰆞"
+                    font.family: "JetBrainsMono Nerd Font, monospace"
+                    font.pixelSize: 18
+                    color: Theme.accent
+                }
+
+                Column {
+                    Layout.fillWidth: true
+                    spacing: 2
+                    Text {
+                        text: card.unitResult ? card.unitResult.formatted : ""
+                        font.family: "Outfit"; font.pixelSize: 15; font.weight: Font.Bold
+                        color: Theme.foreground
+                    }
+                    Text {
+                        text: card.unitResult ? card.unitResult.rateStr : ""
+                        font.family: "Outfit"; font.pixelSize: 10
+                        color: Theme.alpha(Theme.foreground, 0.60)
+                    }
+                }
+
+                Rectangle {
+                    height: 24; implicitWidth: unitEnterText.implicitWidth + 12; radius: 5
+                    color: Theme.accent
+                    Text {
+                        id: unitEnterText
+                        anchors.centerIn: parent
+                        text: "↵ Copy Result"
+                        font.family: "Outfit"; font.pixelSize: 10; font.bold: true; color: Theme.on_primary
+                    }
+                }
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                onClicked: card.executeCurrent()
+            }
+        }
+
         // 2. Math Calculation Result Card
         Rectangle {
-            visible: card.mathResult !== null && card.currencyResult === null
+            visible: card.mathResult !== null && card.currencyResult === null && card.unitResult === null
             Layout.fillWidth: true
             height: 54
             radius: 8

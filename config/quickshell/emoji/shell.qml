@@ -149,14 +149,11 @@ PanelWindow {
     }
 
     // ── PICK & PASTE DISPATCHER ──────────────────────────────────────────────
-    Process {
-        id: pasteProc
-    }
-
     function chooseEmoji(emojiChar) {
         if (!emojiChar || emojiChar.length === 0) return
-        pasteProc.command = ["python3", root.homeDir + "/.hyprconf/hypr/scripts/py/paste-emoji.py", emojiChar]
-        pasteProc.running = true
+        Quickshell.execDetached(["wl-copy", "--", emojiChar])
+        Quickshell.execDetached(["wl-copy", "--primary", "--", emojiChar])
+        Quickshell.execDetached(["python3", root.homeDir + "/.hyprconf/hypr/scripts/py/paste-emoji.py", emojiChar])
         root.visible = false
         closeTimer.restart()
     }

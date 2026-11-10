@@ -7,11 +7,28 @@ import sys
 import os
 import json
 import time
+import shutil
 import subprocess
 
 CACHE_DIR = os.path.expanduser("~/.hyprconf/hypr/.cache")
 RECENT_FILE = os.path.join(CACHE_DIR, "recent_emojis.json")
 TARGET_FILE = os.path.join(CACHE_DIR, "emoji_target.json")
+
+def find_fallback_target():
+    try:
+        raw = subprocess.check_output(["hyprctl", "clients", "-j"], stderr=subprocess.DEVNULL)
+        clients = json.loads(raw)
+        valid = [
+            c for c in clients
+            if c.get("mapped", True) and not c.get("hidden", False)
+            and c.get("class", "").lower() not in ["quickshell", "qs", ""]
+        ]
+        if valid:
+            valid.sort(key=lambda x: x.get("focusHistoryID", 999))
+            return valid[0].get("address", ""), valid[0].get("class", "").lower()
+    except Exception:
+        pass
+    return "", ""
 
 def main():
     if len(sys.argv) < 2:
@@ -22,10 +39,17 @@ def main():
 
     # 1. Copy emoji to Wayland clipboard and primary selection
     try:
-        subprocess.run(["wl-copy"], input=emoji.encode("utf-8"), check=True)
-        subprocess.run(["wl-copy", "--primary"], input=emoji.encode("utf-8"), check=False)
+        subprocess.run(["wl-copy", "--", emoji], check=False)
+        subprocess.run(["wl-copy", "--primary", "--", emoji], check=False)
     except Exception:
         pass
+
+    # Also store into cliphist if running so clipboard history retains it
+    if shutil.which("cliphist"):
+        try:
+            subprocess.run(["cliphist", "store"], input=emoji.encode("utf-8"), check=False)
+        except Exception:
+            pass
 
     # 2. Update recent emojis cache
     try:
@@ -37,7 +61,6 @@ def main():
                     recent = json.load(f)
             except Exception:
                 recent = []
-        # Deduplicate and place at front
         recent = [x for x in recent if x != emoji]
         recent.insert(0, emoji)
         recent = recent[:40]
@@ -58,19 +81,23 @@ def main():
         except Exception:
             pass
 
-    # 4. Close Dynamic Island emoji view
+    # If no valid target address was stored, find the most recently focused client
+    if not target_addr:
+        target_addr, target_class = find_fallback_target()
+
+    # 4. Close Dynamic Island emoji view & standalone emoji picker
     subprocess.run(["qs", "ipc", "-c", "island", "call", "island", "closeEmoji"], stderr=subprocess.DEVNULL)
     subprocess.run(["pkill", "-f", "qs -c emoji"], stderr=subprocess.DEVNULL)
 
-    # Allow window manager time to unmap the island surface and restore focus
+    # Allow window manager time to unmap the surface
     time.sleep(0.12)
 
-    # Refocus target window if address is known
+    # 5. Refocus target window using Hyprland Lua dispatcher
     if target_addr:
         addr_arg = target_addr if target_addr.startswith("address:") else f"address:{target_addr}"
         try:
             subprocess.run(
-                ["hyprctl", "dispatch", f"focuswindow {addr_arg}"],
+                ["hyprctl", "dispatch", f'hl.dsp.focus({{ window = "{addr_arg}" }})'],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL
             )
@@ -79,32 +106,32 @@ def main():
 
     time.sleep(0.08)
 
-    # 5. Dispatch paste shortcut to target window
-    # Check if target is a terminal
+    # 6. Dispatch paste shortcut to target window
     is_terminal = any(term in target_class for term in [
         "kitty", "alacritty", "foot", "wezterm", "terminal",
         "ghostty", "rio", "xterm", "urxvt", "gnome-terminal", "konsole"
     ])
     mods = "CTRL,SHIFT" if is_terminal else "CTRL"
-    
-    # Target window if available, with fallback to currently active window
-    win_arg = ""
-    if target_addr:
-        addr_str = target_addr if target_addr.startswith("address:") else f"address:{target_addr}"
-        win_arg = f', window = "{addr_str}"'
 
-    lua_cmd = (
-        'local r = hl.dispatch(hl.dsp.send_shortcut({ mods = "' + mods + '", key = "v"' + win_arg + ' })); '
-        'if not r.ok then hl.dispatch(hl.dsp.send_shortcut({ mods = "' + mods + '", key = "v" })) end'
-    )
+    # Use native Hyprland send_shortcut dispatcher
     try:
         subprocess.run(
-            ["hyprctl", "repl", lua_cmd],
+            ["hyprctl", "dispatch", f'hl.dsp.send_shortcut({{ mods = "{mods}", key = "v" }})'],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL
         )
     except Exception:
         pass
+
+    # If wtype is present, provide additional keyboard typing fallback
+    if shutil.which("wtype"):
+        try:
+            if is_terminal:
+                subprocess.run(["wtype", "-M", "ctrl", "-M", "shift", "-k", "v", "-m", "shift", "-m", "ctrl"], stderr=subprocess.DEVNULL)
+            else:
+                subprocess.run(["wtype", "-M", "ctrl", "-k", "v", "-m", "ctrl"], stderr=subprocess.DEVNULL)
+        except Exception:
+            pass
 
 if __name__ == "__main__":
     main()
