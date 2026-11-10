@@ -80,7 +80,7 @@ Item {
     property string islandStyle: "capsule"
     property int visualizerBarCount: 8
     property real animProgress: 0.0
-    property bool matrixStreamEnabled: true
+    property bool matrixStreamEnabled: false
 
     // Hardware & Media Status
     property real currentVolume: 0.50

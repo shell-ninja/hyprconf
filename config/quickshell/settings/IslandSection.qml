@@ -25,7 +25,7 @@ Item {
     property string islandPosition: "top"
     property bool islandAutoHide: false
     property string islandStyle: "capsule" // "capsule", "orbital", "split_wings", "minimal_rail"
-    property bool matrixStreamEnabled: true
+    property bool matrixStreamEnabled: false
     property bool visualizerEnabled: true
     property int visualizerBarCount: 8
     property string visualizerStyle: "wave"
@@ -135,7 +135,7 @@ Item {
         root.islandPosition = "top"
         root.islandAutoHide = true
         root.islandStyle = "pill"
-        root.matrixStreamEnabled = true
+        root.matrixStreamEnabled = false
         root.visualizerEnabled = true
         root.visualizerBarCount = 8
         root.visualizerStyle = "wave"
