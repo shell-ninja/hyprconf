@@ -31,7 +31,7 @@ hl.config({
         dim_strength     = 0.1,
         dim_special      = 0.2,
         wobble           = {
-            enabled          = true,
+            enabled          = false,
             mesh             = 5,
             stiffness        = 280.0,
             damping          = 8.5,
@@ -44,7 +44,7 @@ hl.config({
         shadow           = {
             enabled        = true,
             range          = shadow_range,
-            render_power   = 4,
+            render_power   = 3,
             color          = act_border,
             color_inactive = inact_border,
         },
@@ -59,23 +59,23 @@ hl.config({
 
         blur             = {
             enabled                   = true,
-            size                      = 5,
+            size                      = 3,
             passes                    = 2,
             ignore_opacity            = true,
             new_optimizations         = true,
             xray                      = false,
-            noise                     = 0.01,
+            noise                     = 0.12,
             contrast                  = 1.0,
             brightness                = 1.0,
-            vibrancy                  = 0.1696,
-            vibrancy_darkness         = 0.0,
+            vibrancy                  = 0.12,
+            vibrancy_darkness         = 0.3,
             special                   = false,
-            popups                    = true,
+            popups                    = false,
             popups_ignorealpha        = 0.5,
             input_methods             = false,
             input_methods_ignorealpha = 0.2,
             proportional              = false,
-            variant                   = "acrylic",
+            variant                   = "kawase",
 
             acrylic = {
                 aberration = 0.025,
@@ -137,7 +137,7 @@ hl.config({
         },
 
         motion_blur      = {
-            enabled = true,
+            enabled = false,
             samples = 5,
         },
     },

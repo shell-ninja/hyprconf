@@ -217,7 +217,7 @@ PanelWindow {
     property int visualizerBarCount: 8
     property string visualizerStyle: "wave"
     property bool visualizerMoveOnHover: true
-    property bool matrixStreamEnabled: true
+    property bool matrixStreamEnabled: false
     property bool isMinimalClockHovered: false
 
     Process {

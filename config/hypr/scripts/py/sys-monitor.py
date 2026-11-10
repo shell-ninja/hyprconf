@@ -6,6 +6,8 @@ Outputs JSON with overall CPU%, per-core CPU%, RAM breakdown, NVMe/Disk stats, a
 import sys
 import json
 import os
+import time
+import glob
 import subprocess
 import psutil
 
@@ -66,10 +68,50 @@ def get_gpu_stats(cpu_temp):
             if os.path.exists(p) and os.path.exists(max_p):
                 cur = float(open(p).read().strip())
                 max_f = float(open(max_p).read().strip())
-                load = round((cur / max_f) * 100, 1) if max_f > 0 else 0.0
+
+                load = None
+                rc6_paths = glob.glob(f"/sys/class/drm/{card}/gt/gt0/rc6_residency_ms") or \
+                            glob.glob(f"/sys/class/drm/{card}/power/rc6_residency_ms")
+                if rc6_paths:
+                    cache_file = "/tmp/.intel_gpu_rc6_cache.json"
+                    try:
+                        cur_rc6 = int(open(rc6_paths[0]).read().strip())
+                        now = time.time()
+                        cached = None
+                        if os.path.exists(cache_file):
+                            try:
+                                with open(cache_file, "r") as cf:
+                                    cached = json.load(cf)
+                            except Exception:
+                                pass
+                        if cached and "time" in cached and "rc6" in cached:
+                            dt_ms = (now - cached["time"]) * 1000.0
+                            dr_ms = cur_rc6 - cached["rc6"]
+                            if 100.0 <= dt_ms <= 10000.0 and dr_ms >= 0:
+                                idle_ratio = min(1.0, max(0.0, dr_ms / dt_ms))
+                                load = round((1.0 - idle_ratio) * 100.0, 1)
+                        if load is None:
+                            time.sleep(0.04)
+                            t2 = time.time()
+                            rc6_2 = int(open(rc6_paths[0]).read().strip())
+                            dt_ms = (t2 - now) * 1000.0
+                            dr_ms = rc6_2 - cur_rc6
+                            idle_ratio = min(1.0, max(0.0, dr_ms / dt_ms)) if dt_ms > 0 else 1.0
+                            load = round((1.0 - idle_ratio) * 100.0, 1)
+                            now, cur_rc6 = t2, rc6_2
+                        tmp_cache = cache_file + ".tmp"
+                        with open(tmp_cache, "w") as cf:
+                            json.dump({"time": now, "rc6": cur_rc6, "load": load}, cf)
+                        os.replace(tmp_cache, cache_file)
+                    except Exception:
+                        pass
+
+                if load is None:
+                    load = round((cur / max_f) * 100, 1) if max_f > 0 else 0.0
+
                 return {
                     "type": "Intel",
-                    "load": min(100.0, load),
+                    "load": min(100.0, max(0.0, load)),
                     "temp": cpu_temp,
                     "freq_mhz": int(cur),
                     "max_freq_mhz": int(max_f)

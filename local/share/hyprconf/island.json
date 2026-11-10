@@ -1,8 +1,8 @@
 {
   "position": "top",
   "auto_hide": false,
-  "style": "capsule",
-  "matrix_stream": true,
+  "style": "minimal_rail",
+  "matrix_stream": false,
   "visualizer": {
     "enabled": true,
     "bar_count": 16,

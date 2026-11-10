@@ -71,12 +71,51 @@ def get_gpu_info(cpu_temp):
         try:
             card_dir = os.path.dirname(intel_gt_acts[0])
             act = int(open(os.path.join(card_dir, "gt_act_freq_mhz")).read().strip())
-            min_f = int(open(os.path.join(card_dir, "gt_min_freq_mhz")).read().strip())
-            max_f = int(open(os.path.join(card_dir, "gt_max_freq_mhz")).read().strip())
-            if max_f > min_f:
-                load = round(((act - min_f) / (max_f - min_f)) * 100)
-            else:
-                load = 0
+
+            # Hardware-accurate busy utilization derived from RC6 sleep residency
+            load = None
+            rc6_paths = glob.glob(os.path.join(card_dir, "gt/gt0/rc6_residency_ms")) or \
+                        glob.glob(os.path.join(card_dir, "power/rc6_residency_ms"))
+            if rc6_paths:
+                cache_file = "/tmp/.intel_gpu_rc6_cache.json"
+                try:
+                    cur_rc6 = int(open(rc6_paths[0]).read().strip())
+                    now = time.time()
+                    cached = None
+                    if os.path.exists(cache_file):
+                        try:
+                            with open(cache_file, "r") as cf:
+                                cached = json.load(cf)
+                        except Exception:
+                            pass
+                    if cached and "time" in cached and "rc6" in cached:
+                        dt_ms = (now - cached["time"]) * 1000.0
+                        dr_ms = cur_rc6 - cached["rc6"]
+                        if 100.0 <= dt_ms <= 10000.0 and dr_ms >= 0:
+                            idle_ratio = min(1.0, max(0.0, dr_ms / dt_ms))
+                            load = int(round((1.0 - idle_ratio) * 100.0))
+                    if load is None:
+                        # Cold start / no cache: short 40ms delta sample
+                        time.sleep(0.04)
+                        t2 = time.time()
+                        rc6_2 = int(open(rc6_paths[0]).read().strip())
+                        dt_ms = (t2 - now) * 1000.0
+                        dr_ms = rc6_2 - cur_rc6
+                        idle_ratio = min(1.0, max(0.0, dr_ms / dt_ms)) if dt_ms > 0 else 1.0
+                        load = int(round((1.0 - idle_ratio) * 100.0))
+                        now, cur_rc6 = t2, rc6_2
+                    tmp_cache = cache_file + ".tmp"
+                    with open(tmp_cache, "w") as cf:
+                        json.dump({"time": now, "rc6": cur_rc6, "load": load}, cf)
+                    os.replace(tmp_cache, cache_file)
+                except Exception:
+                    pass
+
+            if load is None:
+                min_f = int(open(os.path.join(card_dir, "gt_min_freq_mhz")).read().strip())
+                max_f = int(open(os.path.join(card_dir, "gt_max_freq_mhz")).read().strip())
+                load = round(((act - min_f) / (max_f - min_f)) * 100) if max_f > min_f else 0
+
             info["load"] = max(0, min(100, load))
             info["mem"] = f"{act} MHz"
             info["temp"] = cpu_temp # iGPU resides on package die

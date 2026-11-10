@@ -3,6 +3,9 @@ import json
 import os
 import shutil
 import sys
+import time
+import glob
+import subprocess
 
 def get_system_stats():
     # 1. System Uptime
@@ -116,6 +119,44 @@ def get_system_stats():
         # Intel
         if not found_amd:
             for card in glob.glob('/sys/class/drm/card*'):
+                rc6_paths = glob.glob(os.path.join(card, 'gt/gt0/rc6_residency_ms')) or \
+                            glob.glob(os.path.join(card, 'power/rc6_residency_ms'))
+                if rc6_paths:
+                    cache_file = '/tmp/.intel_gpu_rc6_cache.json'
+                    try:
+                        cur_rc6 = int(open(rc6_paths[0]).read().strip())
+                        now = time.time()
+                        cached = None
+                        if os.path.exists(cache_file):
+                            try:
+                                with open(cache_file, 'r') as cf:
+                                    cached = json.load(cf)
+                            except Exception:
+                                pass
+                        if cached and 'time' in cached and 'rc6' in cached:
+                            dt_ms = (now - cached['time']) * 1000.0
+                            dr_ms = cur_rc6 - cached['rc6']
+                            if 100.0 <= dt_ms <= 10000.0 and dr_ms >= 0:
+                                idle_ratio = min(1.0, max(0.0, dr_ms / dt_ms))
+                                gpu_pct = int(round((1.0 - idle_ratio) * 100.0))
+                                break
+                        if gpu_pct == 0:
+                            time.sleep(0.04)
+                            t2 = time.time()
+                            rc6_2 = int(open(rc6_paths[0]).read().strip())
+                            dt_ms = (t2 - now) * 1000.0
+                            dr_ms = rc6_2 - cur_rc6
+                            idle_ratio = min(1.0, max(0.0, dr_ms / dt_ms)) if dt_ms > 0 else 1.0
+                            gpu_pct = int(round((1.0 - idle_ratio) * 100.0))
+                            now, cur_rc6 = t2, rc6_2
+                            tmp_cache = cache_file + '.tmp'
+                            with open(tmp_cache, 'w') as cf:
+                                json.dump({'time': now, 'rc6': cur_rc6, 'load': gpu_pct}, cf)
+                            os.replace(tmp_cache, cache_file)
+                            break
+                    except Exception:
+                        pass
+
                 act = os.path.join(card, 'gt_act_freq_mhz')
                 min_f = os.path.join(card, 'gt_min_freq_mhz')
                 max_f = os.path.join(card, 'gt_max_freq_mhz')
