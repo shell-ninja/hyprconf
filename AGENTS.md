@@ -122,9 +122,16 @@ Each subproject under `config/quickshell/` runs as an independent Quickshell app
   - **Page 3: System Status (`StatusPage.qml`)**: Real-time CPU, RAM, GPU, and storage load. Hosts an embedded sub-page ([`config/quickshell/island/NetworkDetailPage.qml`](config/quickshell/island/NetworkDetailPage.qml)) for live per-process socket/traffic monitoring.
 - **Fullscreen Guard**: Listens to Hyprland fullscreen state and auto-unmaps to prevent obstructing games or media.
 
-### 3. Application Launcher (`quickshell/launcher/`)
+### 3. Application Launcher & Spotlight Omnibar (`quickshell/launcher/`)
 - **Style 1**: Slanted Split Quad with category chips and category-filtered grids.
 - **Style 2**: Panoramic Grid with instant keyword search and keyboard navigation.
+- **Spotlight Omnibar (`Spotlight.qml`)**: Raycast-style floating command center embedded in both launcher and island notch:
+  - **Calculator**: Inline arithmetic expressions (`(/^[\d\s+\-*/%().^]+$/)`).
+  - **Currency Converter**: Live daily exchange rates for 26 currencies (`100 USD to EUR`).
+  - **Multi-Category Unit Converter**: Seamless unit conversions across 11 categories (Length, Mass/Weight, Temperature, Area, Volume, Speed, Digital Storage, Time, Pressure, Energy & Power) via natural queries (`10 cm to in`, `25 c to f`, `50 kg in lbs`).
+  - **Emoji Search & Copy**: Search emojis by name or keyword with direct clipboard population and auto-paste.
+  - **AI Agent Integration**: Query prefix `>` or `ai ` dispatches prompt to terminal session.
+  - **System Actions**: Quick triggers for Game Mode, Lock, Sleep, Caffeine, Settings, Updater, and Reload.
 - **Search Focus**: `focusInput()` must explicitly invoke `searchInput.forceActiveFocus()` and `searchInput.selectAll()`. Ensure no container steals keyboard focus.
 
 ### 4. Settings Studio (`quickshell/settings/`)
@@ -134,6 +141,7 @@ Each subproject under `config/quickshell/` runs as an independent Quickshell app
   - `IslandSection.qml`: Dynamic Island options and notch layout.
   - `LockscreenSection.qml`: Interactive drag & drop canvas positioning.
   - `ThemeSection.qml`: Wallpaper selector and Noctalia palette switcher.
+  - `Decoration`: Window Wobble physics, Motion Blur sampling, Window Glow, and Kawase blur variants (`acrylic`, `aurora`, `drops`, `fluid_jar`, `glass`, `haze`, `heat_shimmer`, `ripple`, `water`).
 - **Components**: Reusable UI widgets exported in `quickshell/settings/qmldir` (`ModernSlider.qml`, `CapsuleSwitch.qml`, `IconCard.qml`).
 
 ---
@@ -151,10 +159,27 @@ Each subproject under `config/quickshell/` runs as an independent Quickshell app
 - **Surface**: Centered floating XDG toplevel window (`FloatingWindow`) styled with obsidian glass (`920x660`).
 - **Pages**:
   - `Overview`: Shell-Ninja ambient halo brand logo, tagline, and desktop core pillar cards (Pure Quickshell, Obsidian Harmony, Spring Physics).
-  - `What's New in v1.0.1`: Release milestones breakdown (Island Weather System, Native Package Updater, Dynamic Island Polkit, Single-Event Escape Logic).
+  - `What's New in v1.0.2`: Release milestones breakdown (Multi-Category Unit Converter, Keyboard Layout Switcher, Window Wobble & Motion Blur, Dynamic Desktop Modes).
   - `Shortcuts`: Interactive, searchable keybindings matrix with direct click-to-execute test runners.
   - `Built-in Applications`: Launch controls for Settings Studio, Package Updater, and Keybinds Cheatsheet alongside core documentation links.
-  - `Get Started`: System ready confirmation with `show_on_startup` toggle and state persistence to `welcome-app.json`.
+  - `Get Started`: System ready confirmation with keyboard layout switcher (`localectl list-x11-keymap-layouts`), `show_on_startup` toggle, and state persistence to `welcome-app.json` and `settings.lua`.
+
+---
+
+### 7. Adaptive Emoji Picker & Auto-Paste Subsystem
+- **Modules**: Standalone modal ([`config/quickshell/emoji/shell.qml`](config/quickshell/emoji/shell.qml)), Island notch view ([`config/quickshell/island/EmojiView.qml`](config/quickshell/island/EmojiView.qml)), and background runner ([`config/hypr/scripts/py/paste-emoji.py`](config/hypr/scripts/py/paste-emoji.py)).
+- **Detached Process Execution**: QML components must execute clipboard copy (`wl-copy`) and paste runners via `Quickshell.execDetached` so the process completes even if the QML Item is destroyed during view closing.
+- **Target Window Discovery**: Captures target address prior to launching via `hyprctl activewindow -j`; if missing or invalid, falls back to `hyprctl clients -j` sorted by lowest `focusHistoryID == 0`.
+- **Compositor Refocus & Injection**: Uses native Hyprland Lua dispatchers (`hl.dsp.focus` and `hl.dsp.send_shortcut`) to safely restore client focus and fire paste combinations (`CTRL+V` or `CTRL+SHIFT+V` for terminals).
+
+---
+
+### 8. Desktop System Modes (`sh/system-mode.sh`)
+- **Supervisor**: Toggled via OSD, Island ProfileBanner, or Top Bar quick toggles (`system-mode.sh --normal|--game|--class`).
+- **Modes**:
+  - **Normal Mode (Mode 0)**: Rehydrates full obsidian glass styling from `configs.lua`, `decoration.lua`, and `animation.lua` via `pcall(dofile, ...)`; disables DND & Caffeine.
+  - **Game Mode (Mode 1)**: 100% window opacity, 0ms direct scanout tearing (`allow_tearing = true`), disables blur, wobble, motion blur, shadows, and animations; enables Caffeine and sets performance power profile.
+  - **Class Mode (Mode 2)**: 100% window opacity, tear-free presentation display (`allow_tearing = false`), disables blur and wobble, keeps smooth window animations active; enables DND and Caffeine with balanced power profile.
 
 ---
 
@@ -170,9 +195,13 @@ All helper scripts reside under `config/hypr/scripts/`:
 | `sh/qs-settings.sh` | Launches Quickshell Settings Studio modal |
 | `sh/qs-updater.sh` | Launches native Quickshell Package Updater modal |
 | `sh/qs-welcome.sh` | Launches native Quickshell Welcome onboarding modal (with `--autostart` check) |
+| `sh/qs-emoji.sh` | Adaptive Emoji picker launcher (Island view vs Standalone modal) |
+| `sh/system-mode.sh` | Multi-mode manager (`--normal`, `--game`, `--class`) with atomic Hyprland Lua eval |
 | `sh/pkg-apply.sh` | Streaming package upgrade runner using Polkit pkexec elevation |
 | `py/pkg-check.py` | Fast parallel package updates scanner (Pacman, AUR, Flatpak) |
 | `py/hypr-colors.py` | Extracts wallpaper color scheme and broadcasts tokens to all tools |
+| `py/hypr-settings-backend.py` | Settings Studio IPC backend for blur, wobble, motion blur, and glow |
+| `py/paste-emoji.py` | Background clipboard copy, window refocus, and auto-paste dispatcher |
 | `py/weather.py` | Open-Meteo weather background worker and JSON cache updater |
 | `sh/caffeine-manager.sh` | Toggles Hypridle inhibition for uninterrupted display |
 | `sh/hyprsunset-manager.sh`| 3-stage blue light night filter manager (Off / Always On / Scheduled) |
@@ -188,6 +217,7 @@ When tasked with implementing features, fixing bugs, or refactoring in this repo
 2. **Synchronize Generator Templates**: Remember that `hypr-colors.py` recreates `qmldir` dynamically across subprojects (`SUBPROJECT_QMLDIRS`). Always check and update `hypr-colors.py` templates whenever adding a new type to `qmldir`.
 3. **Prevent Binding Loops**: Always supply `implicitWidth` and `implicitHeight` on custom components. Never bind a parent's size directly to a child that anchors to the parent.
 4. **Clean Input Masks**: On floating panels and layer shells with auto-hide, ensure non-visible parts do not steal pointer clicks. Use dynamic input masks (`MaskRegion`) or collapse dimensions to 3px.
+5. **Use Detached Processes on View Dismissal**: When a QML action dismisses or closes the view (e.g., clicking an emoji or omnibar result), invoke processes using `Quickshell.execDetached([...])`. Binding a process to a local `Process { id: ... }` will kill child subprocesses immediately upon component unmapping.
 
 ### B. Modifying `setup.sh` and Installation Scripts
 1. **Never Clobber Existing User Files**: Use non-clobbering copies or presence checks:
@@ -207,4 +237,12 @@ When tasked with implementing features, fixing bugs, or refactoring in this repo
 3. When testing or finalizing changes:
    - Verify code within the repository (`config/`).
    - Copy modified files into `~/.hyprconf/` so live desktop updates reflect the work immediately.
-   - Stage changes in git on the active branch (e.g., `qs-v1.0.1`).
+   - Stage changes in git on the active branch (e.g., `v1.0.2`).
+
+### D. Hyprland Lua API & Dispatcher Rules
+1. **Use Modern Lua Dispatcher Syntax**: Modern Hyprland uses Lua-based dispatch evaluation. Do not pass raw unquoted string commands to `hyprctl dispatch` (such as `hyprctl dispatch focuswindow address:...`), as it will fail with Lua syntax errors (`')' expected`).
+2. **Standard Dispatch Commands**:
+   - Focus window: `hyprctl dispatch 'hl.dsp.focus({ window = "address:0x..." })'`
+   - Send shortcut: `hyprctl dispatch 'hl.dsp.send_shortcut({ mods = "CTRL", key = "v" })'`
+   - Batch evaluation: `hyprctl eval "pcall(dofile, ...) hl.config({ ... })"`
+3. **Compositor Rehydration**: When restoring configuration dynamically (e.g., Normal Mode), re-run `pcall(dofile, configs.lua)`, `pcall(dofile, decoration.lua)`, and `pcall(dofile, animation.lua)` in compositor memory to cleanly re-apply all saved options.
