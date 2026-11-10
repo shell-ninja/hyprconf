@@ -282,7 +282,7 @@ Pill {
                     }
 
                     Text {
-                        text: systemModeBtn.currentMode === 1 ? "Game Mode" : (systemModeBtn.currentMode === 2 ? "Presentation Mode" : "Normal Mode")
+                        text: systemModeBtn.currentMode === 1 ? "Game Mode" : (systemModeBtn.currentMode === 2 ? "Class Mode" : "Normal Mode")
                         font.family: "Outfit"
                         font.pixelSize: 12
                         font.weight: Font.Bold
@@ -317,7 +317,7 @@ Pill {
                         Text {
                             id: badgeText
                             anchors.centerIn: parent
-                            text: systemModeBtn.currentMode === 1 ? "GAME ON" : (systemModeBtn.currentMode === 2 ? "PRESENTING" : "STANDARD")
+                            text: systemModeBtn.currentMode === 1 ? "GAME ON" : (systemModeBtn.currentMode === 2 ? "CLASS" : "STANDARD")
                             font.family: "Outfit"
                             font.pixelSize: 9
                             font.weight: Font.Bold
@@ -420,7 +420,7 @@ Pill {
                             spacing: 6
                             Rectangle { width: 4; height: 4; radius: 2; color: Theme.accent }
                             Text {
-                                text: "Blur, window shadows & anim off"
+                                text: "Blur, wobble, motion blur & anim off"
                                 font.family: "Outfit"; font.pixelSize: 10
                                 color: Theme.alpha(Theme.foreground, 0.85)
                             }
@@ -436,7 +436,7 @@ Pill {
                         }
                     }
 
-                    // Presentation Mode (2)
+                    // Class Mode (2)
                     ColumnLayout {
                         id: presCol
                         anchors.fill: parent
@@ -447,6 +447,24 @@ Pill {
                         Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutQuad } }
                         Behavior on y { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
 
+                        RowLayout {
+                            spacing: 6
+                            Rectangle { width: 4; height: 4; radius: 2; color: Theme.secondary }
+                            Text {
+                                text: "100% window opacity & blur/wobble off"
+                                font.family: "Outfit"; font.pixelSize: 10
+                                color: Theme.alpha(Theme.foreground, 0.85)
+                            }
+                        }
+                        RowLayout {
+                            spacing: 6
+                            Rectangle { width: 4; height: 4; radius: 2; color: Theme.secondary }
+                            Text {
+                                text: "Smooth window animations active"
+                                font.family: "Outfit"; font.pixelSize: 10
+                                color: Theme.alpha(Theme.foreground, 0.85)
+                            }
+                        }
                         RowLayout {
                             spacing: 6
                             Rectangle { width: 4; height: 4; radius: 2; color: Theme.secondary }
@@ -465,24 +483,6 @@ Pill {
                                 color: Theme.alpha(Theme.foreground, 0.85)
                             }
                         }
-                        RowLayout {
-                            spacing: 6
-                            Rectangle { width: 4; height: 4; radius: 2; color: Theme.secondary }
-                            Text {
-                                text: "No tearing for clean video / screen share"
-                                font.family: "Outfit"; font.pixelSize: 10
-                                color: Theme.alpha(Theme.foreground, 0.85)
-                            }
-                        }
-                        RowLayout {
-                            spacing: 6
-                            Rectangle { width: 4; height: 4; radius: 2; color: Theme.secondary }
-                            Text {
-                                text: "Quiet fan acoustics (Balanced power)"
-                                font.family: "Outfit"; font.pixelSize: 10
-                                color: Theme.alpha(Theme.foreground, 0.85)
-                            }
-                        }
                     }
                 }
 
@@ -497,7 +497,7 @@ Pill {
                     text: systemModeBtn.currentMode === 0
                           ? "Click to switch to Game Mode"
                           : (systemModeBtn.currentMode === 1
-                             ? "Click to switch to Presentation Mode"
+                             ? "Click to switch to Class Mode"
                              : "Click to switch to Normal Mode")
                     font.family: "Outfit"
                     font.pixelSize: 9

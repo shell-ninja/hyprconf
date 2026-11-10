@@ -213,9 +213,124 @@ chmod 644 {q(face_icon)}
 # =============================================================================
 
 
+def extract_lua_table(text, table_name):
+    """Finds `table_name = { ... }` handling nested braces properly."""
+    m = re.search(rf"\b{table_name}\s*=\s*\{{", text)
+    if not m:
+        return None, -1, -1
+    start_idx = m.end() - 1
+    depth = 0
+    in_string = None
+    i = start_idx
+    while i < len(text):
+        c = text[i]
+        if in_string:
+            if c == "\\":
+                i += 2
+                continue
+            elif c == in_string:
+                in_string = None
+        else:
+            if c in ('"', "'"):
+                in_string = c
+            elif c == "{":
+                depth += 1
+            elif c == "}":
+                depth -= 1
+                if depth == 0:
+                    return text[m.start():i+1], m.start(), i+1
+        i += 1
+    return None, -1, -1
+
+
 def read_appearance():
     layout = "scrolling"
     col_width = 1.0
+    motion_blur_enabled = False
+    motion_blur_samples = 7
+    wobble_enabled = False
+    wobble_mesh = 12
+    wobble_stiffness = 200.0
+    wobble_damping = 12.0
+    wobble_mass = 1.0
+    wobble_intensity = 0.2
+    wobble_value_epsilon = 0.25
+    wobble_velocity_epsilon = 2.0
+
+    glow_enabled = False
+    glow_range = 15
+    glow_render_power = 2
+
+    blur_enabled = True
+    blur_size = 8
+    blur_passes = 1
+    blur_ignore_opacity = True
+    blur_new_optimizations = True
+    blur_xray = False
+    blur_noise = 0.0117
+    blur_contrast = 0.8916
+    blur_brightness = 1.0
+    blur_vibrancy = 0.1696
+    blur_vibrancy_darkness = 0.0
+    blur_special = False
+    blur_popups = False
+    blur_popups_ignorealpha = 0.2
+    blur_input_methods = False
+    blur_input_methods_ignorealpha = 0.2
+    blur_proportional = False
+    blur_variant = "kawase"
+
+    blur_acrylic_aberration = 0.025
+    blur_acrylic_bulb = 48.0
+    blur_acrylic_clarity = 0.82
+    blur_acrylic_refraction = 24.0
+
+    blur_aurora_intensity = 0.35
+    blur_aurora_speed = 1.0
+
+    blur_drops_speed = 3.0
+
+    blur_fluid_jar_distortion = 8.0
+    blur_fluid_jar_fill_amount = 0.5
+    blur_fluid_jar_mass = 1.4
+    blur_fluid_jar_precision = 2.0
+    blur_fluid_jar_speed = 3.7
+    blur_fluid_jar_turbulence = 1.2
+
+    blur_glass_refraction = 20.0
+    blur_glass_roughness = 1.0
+    blur_glass_size = 40.0
+
+    blur_haze_intensity = 0.35
+    blur_haze_iridescence = 0.7
+
+    blur_heat_shimmer_speed = 1.0
+
+    blur_ripple_duration = 0.45
+    blur_ripple_radius = 400.0
+    blur_ripple_strength = 30.0
+    blur_ripple_width = 32.0
+
+    blur_water_damping = 0.95
+    blur_water_duration = 12.0
+    blur_water_radius = 20.0
+    blur_water_speed = 0.76
+    blur_water_strength = 32.0
+
+    bsize_cfg = lua_get(CONFIGS_LUA, "blur_size")
+    if bsize_cfg:
+        try:
+            blur_size = int(float(bsize_cfg))
+        except ValueError:
+            pass
+
+    bpass_cfg = lua_get(CONFIGS_LUA, "blur_pass")
+    if bpass_cfg:
+        try:
+            blur_passes = int(float(bpass_cfg))
+        except ValueError:
+            pass
+
     if DECORATION_LUA.is_file():
         text = DECORATION_LUA.read_text()
         m_layout = re.search(r'layout\s*=\s*"([^"]+)"', text)
@@ -231,18 +346,269 @@ def read_appearance():
             if m_col2:
                 col_width = float(m_col2.group(1))
 
+        # Glow
+        tbl_glow, _, _ = extract_lua_table(text, "glow")
+        if tbl_glow:
+            m_en = re.search(r'\benabled\s*=\s*(true|false)', tbl_glow)
+            if m_en:
+                glow_enabled = (m_en.group(1) == "true")
+            m_rng = re.search(r'\brange\s*=\s*([0-9]+)', tbl_glow)
+            if m_rng:
+                glow_range = int(m_rng.group(1))
+            m_rp = re.search(r'\brender_power\s*=\s*([0-9]+)', tbl_glow)
+            if m_rp:
+                glow_render_power = int(m_rp.group(1))
+
+        # Blur
+        tbl_blur, _, _ = extract_lua_table(text, "blur")
+        if tbl_blur:
+            m_en = re.search(r'\benabled\s*=\s*(true|false)', tbl_blur)
+            if m_en:
+                blur_enabled = (m_en.group(1) == "true")
+            m_sz = re.search(r'\bsize\s*=\s*([0-9]+)', tbl_blur)
+            if m_sz:
+                blur_size = int(m_sz.group(1))
+            m_ps = re.search(r'\bpasses\s*=\s*([0-9]+)', tbl_blur)
+            if m_ps:
+                blur_passes = int(m_ps.group(1))
+            m_io = re.search(r'\bignore_opacity\s*=\s*(true|false)', tbl_blur)
+            if m_io:
+                blur_ignore_opacity = (m_io.group(1) == "true")
+            m_no = re.search(r'\bnew_optimizations\s*=\s*(true|false)', tbl_blur)
+            if m_no:
+                blur_new_optimizations = (m_no.group(1) == "true")
+            m_xr = re.search(r'\bxray\s*=\s*(true|false)', tbl_blur)
+            if m_xr:
+                blur_xray = (m_xr.group(1) == "true")
+            m_sp = re.search(r'\bspecial\s*=\s*(true|false)', tbl_blur)
+            if m_sp:
+                blur_special = (m_sp.group(1) == "true")
+            m_pop = re.search(r'\bpopups\s*=\s*(true|false)', tbl_blur)
+            if m_pop:
+                blur_popups = (m_pop.group(1) == "true")
+            m_im = re.search(r'\binput_methods\s*=\s*(true|false)', tbl_blur)
+            if m_im:
+                blur_input_methods = (m_im.group(1) == "true")
+            m_pr = re.search(r'\bproportional\s*=\s*(true|false)', tbl_blur)
+            if m_pr:
+                blur_proportional = (m_pr.group(1) == "true")
+
+            m_var = re.search(r'\bvariant\s*=\s*["\x27]?([a-zA-Z0-9_]+)["\x27]?', tbl_blur)
+            if m_var:
+                blur_variant = m_var.group(1)
+
+            for prop, target_var in [
+                ("noise", "blur_noise"),
+                ("contrast", "blur_contrast"),
+                ("brightness", "blur_brightness"),
+                ("vibrancy", "blur_vibrancy"),
+                ("vibrancy_darkness", "blur_vibrancy_darkness"),
+                ("popups_ignorealpha", "blur_popups_ignorealpha"),
+                ("input_methods_ignorealpha", "blur_input_methods_ignorealpha"),
+            ]:
+                m = re.search(rf'\b{prop}\s*=\s*([0-9.]+)', tbl_blur)
+                if m:
+                    if target_var == "blur_noise": blur_noise = float(m.group(1))
+                    elif target_var == "blur_contrast": blur_contrast = float(m.group(1))
+                    elif target_var == "blur_brightness": blur_brightness = float(m.group(1))
+                    elif target_var == "blur_vibrancy": blur_vibrancy = float(m.group(1))
+                    elif target_var == "blur_vibrancy_darkness": blur_vibrancy_darkness = float(m.group(1))
+                    elif target_var == "blur_popups_ignorealpha": blur_popups_ignorealpha = float(m.group(1))
+                    elif target_var == "blur_input_methods_ignorealpha": blur_input_methods_ignorealpha = float(m.group(1))
+
+            tbl_acr, _, _ = extract_lua_table(tbl_blur, "acrylic")
+            if tbl_acr:
+                m = re.search(r'\baberration\s*=\s*([0-9.]+)', tbl_acr)
+                if m: blur_acrylic_aberration = float(m.group(1))
+                m = re.search(r'\bbulb\s*=\s*([0-9.]+)', tbl_acr)
+                if m: blur_acrylic_bulb = float(m.group(1))
+                m = re.search(r'\bclarity\s*=\s*([0-9.]+)', tbl_acr)
+                if m: blur_acrylic_clarity = float(m.group(1))
+                m = re.search(r'\brefraction\s*=\s*([0-9.]+)', tbl_acr)
+                if m: blur_acrylic_refraction = float(m.group(1))
+
+            tbl_aur, _, _ = extract_lua_table(tbl_blur, "aurora")
+            if tbl_aur:
+                m = re.search(r'\bintensity\s*=\s*([0-9.]+)', tbl_aur)
+                if m: blur_aurora_intensity = float(m.group(1))
+                m = re.search(r'\bspeed\s*=\s*([0-9.]+)', tbl_aur)
+                if m: blur_aurora_speed = float(m.group(1))
+
+            tbl_drp, _, _ = extract_lua_table(tbl_blur, "drops")
+            if tbl_drp:
+                m = re.search(r'\bspeed\s*=\s*([0-9.]+)', tbl_drp)
+                if m: blur_drops_speed = float(m.group(1))
+
+            tbl_fj, _, _ = extract_lua_table(tbl_blur, "fluid_jar")
+            if tbl_fj:
+                m = re.search(r'\bdistortion\s*=\s*([0-9.]+)', tbl_fj)
+                if m: blur_fluid_jar_distortion = float(m.group(1))
+                m = re.search(r'\bfill_amount\s*=\s*([0-9.]+)', tbl_fj)
+                if m: blur_fluid_jar_fill_amount = float(m.group(1))
+                m = re.search(r'\bmass\s*=\s*([0-9.]+)', tbl_fj)
+                if m: blur_fluid_jar_mass = float(m.group(1))
+                m = re.search(r'\bprecision\s*=\s*([0-9.]+)', tbl_fj)
+                if m: blur_fluid_jar_precision = float(m.group(1))
+                m = re.search(r'\bspeed\s*=\s*([0-9.]+)', tbl_fj)
+                if m: blur_fluid_jar_speed = float(m.group(1))
+                m = re.search(r'\bturbulence\s*=\s*([0-9.]+)', tbl_fj)
+                if m: blur_fluid_jar_turbulence = float(m.group(1))
+
+            tbl_gls, _, _ = extract_lua_table(tbl_blur, "glass")
+            if tbl_gls:
+                m = re.search(r'\brefraction\s*=\s*([0-9.]+)', tbl_gls)
+                if m: blur_glass_refraction = float(m.group(1))
+                m = re.search(r'\broughness\s*=\s*([0-9.]+)', tbl_gls)
+                if m: blur_glass_roughness = float(m.group(1))
+                m = re.search(r'\bsize\s*=\s*([0-9.]+)', tbl_gls)
+                if m: blur_glass_size = float(m.group(1))
+
+            tbl_hz, _, _ = extract_lua_table(tbl_blur, "haze")
+            if tbl_hz:
+                m = re.search(r'\bintensity\s*=\s*([0-9.]+)', tbl_hz)
+                if m: blur_haze_intensity = float(m.group(1))
+                m = re.search(r'\biridescence\s*=\s*([0-9.]+)', tbl_hz)
+                if m: blur_haze_iridescence = float(m.group(1))
+
+            tbl_hs, _, _ = extract_lua_table(tbl_blur, "heat_shimmer")
+            if tbl_hs:
+                m = re.search(r'\bspeed\s*=\s*([0-9.]+)', tbl_hs)
+                if m: blur_heat_shimmer_speed = float(m.group(1))
+
+            tbl_rp, _, _ = extract_lua_table(tbl_blur, "ripple")
+            if tbl_rp:
+                m = re.search(r'\bduration\s*=\s*([0-9.]+)', tbl_rp)
+                if m: blur_ripple_duration = float(m.group(1))
+                m = re.search(r'\bradius\s*=\s*([0-9.]+)', tbl_rp)
+                if m: blur_ripple_radius = float(m.group(1))
+                m = re.search(r'\bstrength\s*=\s*([0-9.]+)', tbl_rp)
+                if m: blur_ripple_strength = float(m.group(1))
+                m = re.search(r'\bwidth\s*=\s*([0-9.]+)', tbl_rp)
+                if m: blur_ripple_width = float(m.group(1))
+
+            tbl_wt, _, _ = extract_lua_table(tbl_blur, "water")
+            if tbl_wt:
+                m = re.search(r'\bdamping\s*=\s*([0-9.]+)', tbl_wt)
+                if m: blur_water_damping = float(m.group(1))
+                m = re.search(r'\bduration\s*=\s*([0-9.]+)', tbl_wt)
+                if m: blur_water_duration = float(m.group(1))
+                m = re.search(r'\bradius\s*=\s*([0-9.]+)', tbl_wt)
+                if m: blur_water_radius = float(m.group(1))
+                m = re.search(r'\bspeed\s*=\s*([0-9.]+)', tbl_wt)
+                if m: blur_water_speed = float(m.group(1))
+                m = re.search(r'\bstrength\s*=\s*([0-9.]+)', tbl_wt)
+                if m: blur_water_strength = float(m.group(1))
+
+        # Motion blur
+        m_mb = re.search(r'motion_blur\s*=\s*\{([^}]*)\}', text, re.DOTALL)
+        if m_mb:
+            mb_text = m_mb.group(1)
+            m_en = re.search(r'\benabled\s*=\s*(true|false)', mb_text)
+            if m_en:
+                motion_blur_enabled = (m_en.group(1) == "true")
+            m_samp = re.search(r'\bsamples\s*=\s*([0-9]+)', mb_text)
+            if m_samp:
+                motion_blur_samples = int(m_samp.group(1))
+
+        # Wobble
+        m_wob = re.search(r'wobble\s*=\s*\{([^}]*)\}', text, re.DOTALL)
+        if m_wob:
+            wob_text = m_wob.group(1)
+            m_en = re.search(r'\benabled\s*=\s*(true|false)', wob_text)
+            if m_en:
+                wobble_enabled = (m_en.group(1) == "true")
+            m_mesh = re.search(r'\bmesh\s*=\s*([0-9]+)', wob_text)
+            if m_mesh:
+                wobble_mesh = int(m_mesh.group(1))
+            m_stiff = re.search(r'\bstiffness\s*=\s*([0-9.]+)', wob_text)
+            if m_stiff:
+                wobble_stiffness = float(m_stiff.group(1))
+            m_damp = re.search(r'\bdamping\s*=\s*([0-9.]+)', wob_text)
+            if m_damp:
+                wobble_damping = float(m_damp.group(1))
+            m_mass = re.search(r'\bmass\s*=\s*([0-9.]+)', wob_text)
+            if m_mass:
+                wobble_mass = float(m_mass.group(1))
+            m_inten = re.search(r'\bintensity\s*=\s*([0-9.]+)', wob_text)
+            if m_inten:
+                wobble_intensity = float(m_inten.group(1))
+            m_veps = re.search(r'\bvalue_epsilon\s*=\s*([0-9.]+)', wob_text)
+            if m_veps:
+                wobble_value_epsilon = float(m_veps.group(1))
+            m_vleps = re.search(r'\bvelocity_epsilon\s*=\s*([0-9.]+)', wob_text)
+            if m_vleps:
+                wobble_velocity_epsilon = float(m_vleps.group(1))
+
     return {
         "border": float(lua_get(CONFIGS_LUA, "border") or 2),
         "rounding": float(lua_get(CONFIGS_LUA, "rounding") or 8),
         "inner_gap": float(lua_get(CONFIGS_LUA, "inner_gap") or 4),
         "outer_gap": float(lua_get(CONFIGS_LUA, "outer_gap") or 8),
-        "blur_size": float(lua_get(CONFIGS_LUA, "blur_size") or 4),
-        "blur_pass": float(lua_get(CONFIGS_LUA, "blur_pass") or 3),
+        "blur_size": float(blur_size),
+        "blur_pass": float(blur_passes),
         "opacity_act": float(lua_get(CONFIGS_LUA, "opacity_act") or 0.95),
         "opacity_deact": float(lua_get(CONFIGS_LUA, "opacity_deact") or 0.75),
         "shadow_range": float(lua_get(CONFIGS_LUA, "shadow_range") or 12),
         "layout": layout,
         "column_width": col_width,
+        "glow_enabled": glow_enabled,
+        "glow_range": glow_range,
+        "glow_render_power": glow_render_power,
+        "blur_enabled": blur_enabled,
+        "blur_passes": blur_passes,
+        "blur_ignore_opacity": blur_ignore_opacity,
+        "blur_new_optimizations": blur_new_optimizations,
+        "blur_xray": blur_xray,
+        "blur_noise": blur_noise,
+        "blur_contrast": blur_contrast,
+        "blur_brightness": blur_brightness,
+        "blur_vibrancy": blur_vibrancy,
+        "blur_vibrancy_darkness": blur_vibrancy_darkness,
+        "blur_special": blur_special,
+        "blur_popups": blur_popups,
+        "blur_popups_ignorealpha": blur_popups_ignorealpha,
+        "blur_input_methods": blur_input_methods,
+        "blur_input_methods_ignorealpha": blur_input_methods_ignorealpha,
+        "blur_proportional": blur_proportional,
+        "blur_variant": blur_variant,
+        "blur_acrylic_aberration": blur_acrylic_aberration,
+        "blur_acrylic_bulb": blur_acrylic_bulb,
+        "blur_acrylic_clarity": blur_acrylic_clarity,
+        "blur_acrylic_refraction": blur_acrylic_refraction,
+        "blur_aurora_intensity": blur_aurora_intensity,
+        "blur_aurora_speed": blur_aurora_speed,
+        "blur_drops_speed": blur_drops_speed,
+        "blur_fluid_jar_distortion": blur_fluid_jar_distortion,
+        "blur_fluid_jar_fill_amount": blur_fluid_jar_fill_amount,
+        "blur_fluid_jar_mass": blur_fluid_jar_mass,
+        "blur_fluid_jar_precision": blur_fluid_jar_precision,
+        "blur_fluid_jar_speed": blur_fluid_jar_speed,
+        "blur_fluid_jar_turbulence": blur_fluid_jar_turbulence,
+        "blur_glass_refraction": blur_glass_refraction,
+        "blur_glass_roughness": blur_glass_roughness,
+        "blur_glass_size": blur_glass_size,
+        "blur_haze_intensity": blur_haze_intensity,
+        "blur_haze_iridescence": blur_haze_iridescence,
+        "blur_heat_shimmer_speed": blur_heat_shimmer_speed,
+        "blur_ripple_duration": blur_ripple_duration,
+        "blur_ripple_radius": blur_ripple_radius,
+        "blur_ripple_strength": blur_ripple_strength,
+        "blur_ripple_width": blur_ripple_width,
+        "blur_water_damping": blur_water_damping,
+        "blur_water_duration": blur_water_duration,
+        "blur_water_radius": blur_water_radius,
+        "blur_water_speed": blur_water_speed,
+        "blur_water_strength": blur_water_strength,
+        "motion_blur_enabled": motion_blur_enabled,
+        "motion_blur_samples": motion_blur_samples,
+        "wobble_enabled": wobble_enabled,
+        "wobble_mesh": wobble_mesh,
+        "wobble_stiffness": wobble_stiffness,
+        "wobble_damping": wobble_damping,
+        "wobble_mass": wobble_mass,
+        "wobble_intensity": wobble_intensity,
+        "wobble_value_epsilon": wobble_value_epsilon,
+        "wobble_velocity_epsilon": wobble_velocity_epsilon,
     }
 
 
@@ -536,7 +902,76 @@ def _apply_appearance(pending, result):
             "shadow",
         )
     )
-    need_decoration = any(k in pending for k in ("layout", "column_width"))
+    need_decoration = any(
+        k in pending
+        for k in (
+            "layout",
+            "column_width",
+            "glow",
+            "glow_enabled",
+            "glow_range",
+            "glow_render_power",
+            "blur",
+            "blur_enabled",
+            "blur_size",
+            "blur_passes",
+            "blur_ignore_opacity",
+            "blur_new_optimizations",
+            "blur_xray",
+            "blur_noise",
+            "blur_contrast",
+            "blur_brightness",
+            "blur_vibrancy",
+            "blur_vibrancy_darkness",
+            "blur_special",
+            "blur_popups",
+            "blur_popups_ignorealpha",
+            "blur_input_methods",
+            "blur_input_methods_ignorealpha",
+            "blur_proportional",
+            "blur_variant",
+            "blur_acrylic_aberration",
+            "blur_acrylic_bulb",
+            "blur_acrylic_clarity",
+            "blur_acrylic_refraction",
+            "blur_aurora_intensity",
+            "blur_aurora_speed",
+            "blur_drops_speed",
+            "blur_fluid_jar_distortion",
+            "blur_fluid_jar_fill_amount",
+            "blur_fluid_jar_mass",
+            "blur_fluid_jar_precision",
+            "blur_fluid_jar_speed",
+            "blur_fluid_jar_turbulence",
+            "blur_glass_refraction",
+            "blur_glass_roughness",
+            "blur_glass_size",
+            "blur_haze_intensity",
+            "blur_haze_iridescence",
+            "blur_heat_shimmer_speed",
+            "blur_ripple_duration",
+            "blur_ripple_radius",
+            "blur_ripple_strength",
+            "blur_ripple_width",
+            "blur_water_damping",
+            "blur_water_duration",
+            "blur_water_radius",
+            "blur_water_speed",
+            "blur_water_strength",
+            "motion_blur",
+            "motion_blur_enabled",
+            "motion_blur_samples",
+            "wobble",
+            "wobble_enabled",
+            "wobble_mesh",
+            "wobble_stiffness",
+            "wobble_damping",
+            "wobble_mass",
+            "wobble_intensity",
+            "wobble_value_epsilon",
+            "wobble_velocity_epsilon",
+        )
+    )
     need_kitty = "opacity" in pending
     need_gtk = "opacity" in pending
 
@@ -630,15 +1065,345 @@ def _apply_appearance(pending, result):
         else:
             result.err("configs.lua not found — outer gap skipped")
 
-    if "blur" in pending:
-        bsize, bpass = pending["blur"]
-        bsize, bpass = str(bsize), str(bpass)
-        if CONFIGS_LUA.is_file():
-            lua_set(CONFIGS_LUA, "blur_size", bsize)
-            lua_set(CONFIGS_LUA, "blur_pass", bpass)
-            result.ok(f"blur             → size:{bsize}  passes:{bpass}")
+    # Glow
+    glow_keys = ("glow", "glow_enabled", "glow_range", "glow_render_power")
+    if any(k in pending for k in glow_keys):
+        if DECORATION_LUA.is_file():
+            text = DECORATION_LUA.read_text()
+            cur_app = read_appearance()
+            glow_enabled = cur_app["glow_enabled"]
+            glow_range = cur_app["glow_range"]
+            glow_render_power = cur_app["glow_render_power"]
+
+            if "glow" in pending:
+                val = pending["glow"]
+                if isinstance(val, dict):
+                    glow_enabled = val.get("enabled", glow_enabled)
+                    glow_range = val.get("range", glow_range)
+                    glow_render_power = val.get("render_power", glow_render_power)
+                elif isinstance(val, bool):
+                    glow_enabled = val
+            if "glow_enabled" in pending:
+                glow_enabled = bool(pending["glow_enabled"])
+            if "glow_range" in pending:
+                glow_range = int(pending["glow_range"])
+            if "glow_render_power" in pending:
+                glow_render_power = int(pending["glow_render_power"])
+
+            glow_block = (
+                "glow             = {\n"
+                f"            enabled        = {'true' if glow_enabled else 'false'},\n"
+                "            color          = act_border,\n"
+                "            color_inactive = inact_border,\n"
+                f"            range          = {int(glow_range)},\n"
+                f"            render_power   = {int(glow_render_power)},\n"
+                "        },"
+            )
+            tbl_glow, s, e = extract_lua_table(text, "glow")
+            if tbl_glow:
+                if e < len(text) and text[e] == ",":
+                    e += 1
+                text = text[:s] + glow_block + text[e:]
+            else:
+                text = re.sub(r'(decoration\s*=\s*\{)', r'\1\n        ' + glow_block, text)
+
+            DECORATION_LUA.write_text(text)
+            result.ok(f"glow             → enabled:{glow_enabled} range:{glow_range} power:{glow_render_power}")
+
+            try:
+                subprocess.run(
+                    [
+                        "hyprctl",
+                        "eval",
+                        f"hl.config({{ decoration = {{ glow = {{ enabled = {'true' if glow_enabled else 'false'}, range = {int(glow_range)}, render_power = {int(glow_render_power)} }} }} }})",
+                    ],
+                    capture_output=True,
+                    timeout=2,
+                )
+            except Exception:
+                pass
         else:
-            result.err("configs.lua not found — blur skipped")
+            result.err("decoration.lua not found — glow skipped")
+
+    # Comprehensive Blur
+    blur_keys = (
+        "blur",
+        "blur_enabled",
+        "blur_size",
+        "blur_passes",
+        "blur_ignore_opacity",
+        "blur_new_optimizations",
+        "blur_xray",
+        "blur_noise",
+        "blur_contrast",
+        "blur_brightness",
+        "blur_vibrancy",
+        "blur_vibrancy_darkness",
+        "blur_special",
+        "blur_popups",
+        "blur_popups_ignorealpha",
+        "blur_input_methods",
+        "blur_input_methods_ignorealpha",
+        "blur_proportional",
+        "blur_variant",
+        "blur_acrylic_aberration",
+        "blur_acrylic_bulb",
+        "blur_acrylic_clarity",
+        "blur_acrylic_refraction",
+        "blur_aurora_intensity",
+        "blur_aurora_speed",
+        "blur_drops_speed",
+        "blur_fluid_jar_distortion",
+        "blur_fluid_jar_fill_amount",
+        "blur_fluid_jar_mass",
+        "blur_fluid_jar_precision",
+        "blur_fluid_jar_speed",
+        "blur_fluid_jar_turbulence",
+        "blur_glass_refraction",
+        "blur_glass_roughness",
+        "blur_glass_size",
+        "blur_haze_intensity",
+        "blur_haze_iridescence",
+        "blur_heat_shimmer_speed",
+        "blur_ripple_duration",
+        "blur_ripple_radius",
+        "blur_ripple_strength",
+        "blur_ripple_width",
+        "blur_water_damping",
+        "blur_water_duration",
+        "blur_water_radius",
+        "blur_water_speed",
+        "blur_water_strength",
+    )
+    if any(k in pending for k in blur_keys):
+        cur_app = read_appearance()
+        blur_enabled = cur_app["blur_enabled"]
+        blur_size = cur_app["blur_size"]
+        blur_passes = cur_app["blur_passes"]
+        blur_ignore_opacity = cur_app["blur_ignore_opacity"]
+        blur_new_optimizations = cur_app["blur_new_optimizations"]
+        blur_xray = cur_app["blur_xray"]
+        blur_noise = cur_app["blur_noise"]
+        blur_contrast = cur_app["blur_contrast"]
+        blur_brightness = cur_app["blur_brightness"]
+        blur_vibrancy = cur_app["blur_vibrancy"]
+        blur_vibrancy_darkness = cur_app["blur_vibrancy_darkness"]
+        blur_special = cur_app["blur_special"]
+        blur_popups = cur_app["blur_popups"]
+        blur_popups_ignorealpha = cur_app["blur_popups_ignorealpha"]
+        blur_input_methods = cur_app["blur_input_methods"]
+        blur_input_methods_ignorealpha = cur_app["blur_input_methods_ignorealpha"]
+        blur_proportional = cur_app["blur_proportional"]
+        blur_variant = cur_app["blur_variant"]
+
+        blur_acrylic_aberration = cur_app["blur_acrylic_aberration"]
+        blur_acrylic_bulb = cur_app["blur_acrylic_bulb"]
+        blur_acrylic_clarity = cur_app["blur_acrylic_clarity"]
+        blur_acrylic_refraction = cur_app["blur_acrylic_refraction"]
+
+        blur_aurora_intensity = cur_app["blur_aurora_intensity"]
+        blur_aurora_speed = cur_app["blur_aurora_speed"]
+        blur_drops_speed = cur_app["blur_drops_speed"]
+
+        blur_fluid_jar_distortion = cur_app["blur_fluid_jar_distortion"]
+        blur_fluid_jar_fill_amount = cur_app["blur_fluid_jar_fill_amount"]
+        blur_fluid_jar_mass = cur_app["blur_fluid_jar_mass"]
+        blur_fluid_jar_precision = cur_app["blur_fluid_jar_precision"]
+        blur_fluid_jar_speed = cur_app["blur_fluid_jar_speed"]
+        blur_fluid_jar_turbulence = cur_app["blur_fluid_jar_turbulence"]
+
+        blur_glass_refraction = cur_app["blur_glass_refraction"]
+        blur_glass_roughness = cur_app["blur_glass_roughness"]
+        blur_glass_size = cur_app["blur_glass_size"]
+
+        blur_haze_intensity = cur_app["blur_haze_intensity"]
+        blur_haze_iridescence = cur_app["blur_haze_iridescence"]
+        blur_heat_shimmer_speed = cur_app["blur_heat_shimmer_speed"]
+
+        blur_ripple_duration = cur_app["blur_ripple_duration"]
+        blur_ripple_radius = cur_app["blur_ripple_radius"]
+        blur_ripple_strength = cur_app["blur_ripple_strength"]
+        blur_ripple_width = cur_app["blur_ripple_width"]
+
+        blur_water_damping = cur_app["blur_water_damping"]
+        blur_water_duration = cur_app["blur_water_duration"]
+        blur_water_radius = cur_app["blur_water_radius"]
+        blur_water_speed = cur_app["blur_water_speed"]
+        blur_water_strength = cur_app["blur_water_strength"]
+
+        if "blur" in pending:
+            val = pending["blur"]
+            if isinstance(val, (list, tuple)) and len(val) >= 2:
+                blur_size = int(val[0])
+                blur_passes = int(val[1])
+            elif isinstance(val, bool):
+                blur_enabled = val
+
+        if "blur_enabled" in pending: blur_enabled = bool(pending["blur_enabled"])
+        if "blur_size" in pending: blur_size = int(pending["blur_size"])
+        if "blur_passes" in pending: blur_passes = int(pending["blur_passes"])
+        if "blur_ignore_opacity" in pending: blur_ignore_opacity = bool(pending["blur_ignore_opacity"])
+        if "blur_new_optimizations" in pending: blur_new_optimizations = bool(pending["blur_new_optimizations"])
+        if "blur_xray" in pending: blur_xray = bool(pending["blur_xray"])
+        if "blur_noise" in pending: blur_noise = float(pending["blur_noise"])
+        if "blur_contrast" in pending: blur_contrast = float(pending["blur_contrast"])
+        if "blur_brightness" in pending: blur_brightness = float(pending["blur_brightness"])
+        if "blur_vibrancy" in pending: blur_vibrancy = float(pending["blur_vibrancy"])
+        if "blur_vibrancy_darkness" in pending: blur_vibrancy_darkness = float(pending["blur_vibrancy_darkness"])
+        if "blur_special" in pending: blur_special = bool(pending["blur_special"])
+        if "blur_popups" in pending: blur_popups = bool(pending["blur_popups"])
+        if "blur_popups_ignorealpha" in pending: blur_popups_ignorealpha = float(pending["blur_popups_ignorealpha"])
+        if "blur_input_methods" in pending: blur_input_methods = bool(pending["blur_input_methods"])
+        if "blur_input_methods_ignorealpha" in pending: blur_input_methods_ignorealpha = float(pending["blur_input_methods_ignorealpha"])
+        if "blur_proportional" in pending: blur_proportional = bool(pending["blur_proportional"])
+        if "blur_variant" in pending: blur_variant = str(pending["blur_variant"])
+
+        if "blur_acrylic_aberration" in pending: blur_acrylic_aberration = float(pending["blur_acrylic_aberration"])
+        if "blur_acrylic_bulb" in pending: blur_acrylic_bulb = float(pending["blur_acrylic_bulb"])
+        if "blur_acrylic_clarity" in pending: blur_acrylic_clarity = float(pending["blur_acrylic_clarity"])
+        if "blur_acrylic_refraction" in pending: blur_acrylic_refraction = float(pending["blur_acrylic_refraction"])
+
+        if "blur_aurora_intensity" in pending: blur_aurora_intensity = float(pending["blur_aurora_intensity"])
+        if "blur_aurora_speed" in pending: blur_aurora_speed = float(pending["blur_aurora_speed"])
+        if "blur_drops_speed" in pending: blur_drops_speed = float(pending["blur_drops_speed"])
+
+        if "blur_fluid_jar_distortion" in pending: blur_fluid_jar_distortion = float(pending["blur_fluid_jar_distortion"])
+        if "blur_fluid_jar_fill_amount" in pending: blur_fluid_jar_fill_amount = float(pending["blur_fluid_jar_fill_amount"])
+        if "blur_fluid_jar_mass" in pending: blur_fluid_jar_mass = float(pending["blur_fluid_jar_mass"])
+        if "blur_fluid_jar_precision" in pending: blur_fluid_jar_precision = float(pending["blur_fluid_jar_precision"])
+        if "blur_fluid_jar_speed" in pending: blur_fluid_jar_speed = float(pending["blur_fluid_jar_speed"])
+        if "blur_fluid_jar_turbulence" in pending: blur_fluid_jar_turbulence = float(pending["blur_fluid_jar_turbulence"])
+
+        if "blur_glass_refraction" in pending: blur_glass_refraction = float(pending["blur_glass_refraction"])
+        if "blur_glass_roughness" in pending: blur_glass_roughness = float(pending["blur_glass_roughness"])
+        if "blur_glass_size" in pending: blur_glass_size = float(pending["blur_glass_size"])
+
+        if "blur_haze_intensity" in pending: blur_haze_intensity = float(pending["blur_haze_intensity"])
+        if "blur_haze_iridescence" in pending: blur_haze_iridescence = float(pending["blur_haze_iridescence"])
+        if "blur_heat_shimmer_speed" in pending: blur_heat_shimmer_speed = float(pending["blur_heat_shimmer_speed"])
+
+        if "blur_ripple_duration" in pending: blur_ripple_duration = float(pending["blur_ripple_duration"])
+        if "blur_ripple_radius" in pending: blur_ripple_radius = float(pending["blur_ripple_radius"])
+        if "blur_ripple_strength" in pending: blur_ripple_strength = float(pending["blur_ripple_strength"])
+        if "blur_ripple_width" in pending: blur_ripple_width = float(pending["blur_ripple_width"])
+
+        if "blur_water_damping" in pending: blur_water_damping = float(pending["blur_water_damping"])
+        if "blur_water_duration" in pending: blur_water_duration = float(pending["blur_water_duration"])
+        if "blur_water_radius" in pending: blur_water_radius = float(pending["blur_water_radius"])
+        if "blur_water_speed" in pending: blur_water_speed = float(pending["blur_water_speed"])
+        if "blur_water_strength" in pending: blur_water_strength = float(pending["blur_water_strength"])
+
+        if CONFIGS_LUA.is_file():
+            lua_set(CONFIGS_LUA, "blur_size", str(blur_size))
+            lua_set(CONFIGS_LUA, "blur_pass", str(blur_passes))
+
+        if DECORATION_LUA.is_file():
+            text = DECORATION_LUA.read_text()
+            blur_block = (
+                "blur             = {\n"
+                f"            enabled                   = {'true' if blur_enabled else 'false'},\n"
+                f"            size                      = {int(blur_size)},\n"
+                f"            passes                    = {int(blur_passes)},\n"
+                f"            ignore_opacity            = {'true' if blur_ignore_opacity else 'false'},\n"
+                f"            new_optimizations         = {'true' if blur_new_optimizations else 'false'},\n"
+                f"            xray                      = {'true' if blur_xray else 'false'},\n"
+                f"            noise                     = {float(blur_noise)},\n"
+                f"            contrast                  = {float(blur_contrast)},\n"
+                f"            brightness                = {float(blur_brightness)},\n"
+                f"            vibrancy                  = {float(blur_vibrancy)},\n"
+                f"            vibrancy_darkness         = {float(blur_vibrancy_darkness)},\n"
+                f"            special                   = {'true' if blur_special else 'false'},\n"
+                f"            popups                    = {'true' if blur_popups else 'false'},\n"
+                f"            popups_ignorealpha        = {float(blur_popups_ignorealpha)},\n"
+                f"            input_methods             = {'true' if blur_input_methods else 'false'},\n"
+                f"            input_methods_ignorealpha = {float(blur_input_methods_ignorealpha)},\n"
+                f"            proportional              = {'true' if blur_proportional else 'false'},\n"
+                f"            variant                   = \"{blur_variant}\",\n"
+                "\n"
+                "            acrylic = {\n"
+                f"                aberration = {float(blur_acrylic_aberration)},\n"
+                f"                bulb       = {float(blur_acrylic_bulb)},\n"
+                f"                clarity    = {float(blur_acrylic_clarity)},\n"
+                f"                refraction = {float(blur_acrylic_refraction)},\n"
+                "            },\n"
+                "\n"
+                "            aurora = {\n"
+                "                color1    = 0x29F0A0FF,\n"
+                "                color2    = 0x7A4DFFFF,\n"
+                f"                intensity = {float(blur_aurora_intensity)},\n"
+                f"                speed     = {float(blur_aurora_speed)},\n"
+                "            },\n"
+                "\n"
+                "            drops = {\n"
+                f"                speed = {float(blur_drops_speed)},\n"
+                "            },\n"
+                "\n"
+                "            fluid_jar = {\n"
+                "                color       = 0xCC3399FF,\n"
+                f"                distortion  = {float(blur_fluid_jar_distortion)},\n"
+                f"                fill_amount = {float(blur_fluid_jar_fill_amount)},\n"
+                f"                mass        = {float(blur_fluid_jar_mass)},\n"
+                f"                precision   = {float(blur_fluid_jar_precision)},\n"
+                f"                speed       = {float(blur_fluid_jar_speed)},\n"
+                f"                turbulence  = {float(blur_fluid_jar_turbulence)},\n"
+                "            },\n"
+                "\n"
+                "            glass = {\n"
+                f"                refraction = {float(blur_glass_refraction)},\n"
+                f"                roughness  = {float(blur_glass_roughness)},\n"
+                f"                size       = {float(blur_glass_size)},\n"
+                "            },\n"
+                "\n"
+                "            haze = {\n"
+                f"                intensity   = {float(blur_haze_intensity)},\n"
+                f"                iridescence = {float(blur_haze_iridescence)},\n"
+                "            },\n"
+                "\n"
+                "            heat_shimmer = {\n"
+                f"                speed = {float(blur_heat_shimmer_speed)},\n"
+                "            },\n"
+                "\n"
+                "            ripple = {\n"
+                f"                duration = {float(blur_ripple_duration)},\n"
+                f"                radius   = {float(blur_ripple_radius)},\n"
+                f"                strength = {float(blur_ripple_strength)},\n"
+                f"                width    = {float(blur_ripple_width)},\n"
+                "            },\n"
+                "\n"
+                "            water = {\n"
+                f"                damping  = {float(blur_water_damping)},\n"
+                f"                duration = {float(blur_water_duration)},\n"
+                f"                radius   = {float(blur_water_radius)},\n"
+                f"                speed    = {float(blur_water_speed)},\n"
+                f"                strength = {float(blur_water_strength)},\n"
+                "            },\n"
+                "        },"
+            )
+            tbl_blur, s, e = extract_lua_table(text, "blur")
+            if tbl_blur:
+                if e < len(text) and text[e] == ",":
+                    e += 1
+                text = text[:s] + blur_block + text[e:]
+            else:
+                text = re.sub(r'(decoration\s*=\s*\{)', r'\1\n        ' + blur_block, text)
+
+            DECORATION_LUA.write_text(text)
+            result.ok(f"blur             → enabled:{blur_enabled} variant:{blur_variant} size:{blur_size} passes:{blur_passes}")
+
+            try:
+                subprocess.run(
+                    [
+                        "hyprctl",
+                        "eval",
+                        f"hl.config({{ decoration = {{ blur = {{ enabled = {'true' if blur_enabled else 'false'}, size = {int(blur_size)}, passes = {int(blur_passes)}, ignore_opacity = {'true' if blur_ignore_opacity else 'false'}, new_optimizations = {'true' if blur_new_optimizations else 'false'}, xray = {'true' if blur_xray else 'false'}, noise = {float(blur_noise)}, contrast = {float(blur_contrast)}, brightness = {float(blur_brightness)}, vibrancy = {float(blur_vibrancy)}, vibrancy_darkness = {float(blur_vibrancy_darkness)}, special = {'true' if blur_special else 'false'}, popups = {'true' if blur_popups else 'false'}, popups_ignorealpha = {float(blur_popups_ignorealpha)}, input_methods = {'true' if blur_input_methods else 'false'}, input_methods_ignorealpha = {float(blur_input_methods_ignorealpha)}, proportional = {'true' if blur_proportional else 'false'}, variant = \"{blur_variant}\", acrylic = {{ aberration = {float(blur_acrylic_aberration)}, bulb = {float(blur_acrylic_bulb)}, clarity = {float(blur_acrylic_clarity)}, refraction = {float(blur_acrylic_refraction)} }}, aurora = {{ intensity = {float(blur_aurora_intensity)}, speed = {float(blur_aurora_speed)} }}, drops = {{ speed = {float(blur_drops_speed)} }}, fluid_jar = {{ distortion = {float(blur_fluid_jar_distortion)}, fill_amount = {float(blur_fluid_jar_fill_amount)}, mass = {float(blur_fluid_jar_mass)}, precision = {float(blur_fluid_jar_precision)}, speed = {float(blur_fluid_jar_speed)}, turbulence = {float(blur_fluid_jar_turbulence)} }}, glass = {{ refraction = {float(blur_glass_refraction)}, roughness = {float(blur_glass_roughness)}, size = {float(blur_glass_size)} }}, haze = {{ intensity = {float(blur_haze_intensity)}, iridescence = {float(blur_haze_iridescence)} }}, heat_shimmer = {{ speed = {float(blur_heat_shimmer_speed)} }}, ripple = {{ duration = {float(blur_ripple_duration)}, radius = {float(blur_ripple_radius)}, strength = {float(blur_ripple_strength)}, width = {float(blur_ripple_width)} }}, water = {{ damping = {float(blur_water_damping)}, duration = {float(blur_water_duration)}, radius = {float(blur_water_radius)}, speed = {float(blur_water_speed)}, strength = {float(blur_water_strength)} }} }} }} }})",
+                    ],
+                    capture_output=True,
+                    timeout=2,
+                )
+            except Exception:
+                pass
+        else:
+            result.err("decoration.lua not found — blur skipped")
 
     if "opacity" in pending:
         act, deact = pending["opacity"]
@@ -685,6 +1450,151 @@ def _apply_appearance(pending, result):
             result.ok(f"shadow-range     → {val}")
         else:
             result.err("configs.lua not found — shadow skipped")
+
+    # Motion Blur
+    mb_keys = ("motion_blur", "motion_blur_enabled", "motion_blur_samples")
+    if any(k in pending for k in mb_keys):
+        if DECORATION_LUA.is_file():
+            text = DECORATION_LUA.read_text()
+            cur_app = read_appearance()
+            mb_enabled = cur_app["motion_blur_enabled"]
+            mb_samples = cur_app["motion_blur_samples"]
+
+            if "motion_blur" in pending:
+                val = pending["motion_blur"]
+                if isinstance(val, dict):
+                    mb_enabled = val.get("enabled", mb_enabled)
+                    mb_samples = val.get("samples", mb_samples)
+                elif isinstance(val, bool):
+                    mb_enabled = val
+            if "motion_blur_enabled" in pending:
+                mb_enabled = bool(pending["motion_blur_enabled"])
+            if "motion_blur_samples" in pending:
+                mb_samples = int(pending["motion_blur_samples"])
+
+            mb_block = (
+                "motion_blur      = {\n"
+                f"            enabled = {'true' if mb_enabled else 'false'},\n"
+                f"            samples = {int(mb_samples)},\n"
+                "        },"
+            )
+            mb_pattern = r'motion_blur\s*=\s*\{.*?\},?'
+            if re.search(mb_pattern, text, re.DOTALL):
+                text = re.sub(mb_pattern, mb_block, text, flags=re.DOTALL)
+            else:
+                text = re.sub(r'(decoration\s*=\s*\{)', r'\1\n        ' + mb_block, text)
+
+            DECORATION_LUA.write_text(text)
+            result.ok(f"motion_blur      → enabled:{mb_enabled} samples:{mb_samples}")
+
+            try:
+                subprocess.run(
+                    [
+                        "hyprctl",
+                        "eval",
+                        f"hl.config({{ decoration = {{ motion_blur = {{ enabled = {'true' if mb_enabled else 'false'}, samples = {int(mb_samples)} }} }} }})",
+                    ],
+                    capture_output=True,
+                    timeout=2,
+                )
+            except Exception:
+                pass
+        else:
+            result.err("decoration.lua not found — motion_blur skipped")
+
+    # Wobble Physics
+    wob_keys = (
+        "wobble",
+        "wobble_enabled",
+        "wobble_mesh",
+        "wobble_stiffness",
+        "wobble_damping",
+        "wobble_mass",
+        "wobble_intensity",
+        "wobble_value_epsilon",
+        "wobble_velocity_epsilon",
+    )
+    if any(k in pending for k in wob_keys):
+        if DECORATION_LUA.is_file():
+            text = DECORATION_LUA.read_text()
+            cur_app = read_appearance()
+            wob_enabled = cur_app["wobble_enabled"]
+            wob_mesh = cur_app["wobble_mesh"]
+            wob_stiffness = cur_app["wobble_stiffness"]
+            wob_damping = cur_app["wobble_damping"]
+            wob_mass = cur_app["wobble_mass"]
+            wob_intensity = cur_app["wobble_intensity"]
+            wob_val_eps = cur_app["wobble_value_epsilon"]
+            wob_vel_eps = cur_app["wobble_velocity_epsilon"]
+
+            if "wobble" in pending:
+                val = pending["wobble"]
+                if isinstance(val, dict):
+                    wob_enabled = val.get("enabled", wob_enabled)
+                    wob_mesh = val.get("mesh", wob_mesh)
+                    wob_stiffness = val.get("stiffness", wob_stiffness)
+                    wob_damping = val.get("damping", wob_damping)
+                    wob_mass = val.get("mass", wob_mass)
+                    wob_intensity = val.get("intensity", wob_intensity)
+                    wob_val_eps = val.get("value_epsilon", wob_val_eps)
+                    wob_vel_eps = val.get("velocity_epsilon", wob_vel_eps)
+                elif isinstance(val, bool):
+                    wob_enabled = val
+
+            if "wobble_enabled" in pending:
+                wob_enabled = bool(pending["wobble_enabled"])
+            if "wobble_mesh" in pending:
+                wob_mesh = int(pending["wobble_mesh"])
+            if "wobble_stiffness" in pending:
+                wob_stiffness = float(pending["wobble_stiffness"])
+            if "wobble_damping" in pending:
+                wob_damping = float(pending["wobble_damping"])
+            if "wobble_mass" in pending:
+                wob_mass = float(pending["wobble_mass"])
+            if "wobble_intensity" in pending:
+                wob_intensity = float(pending["wobble_intensity"])
+            if "wobble_value_epsilon" in pending:
+                wob_val_eps = float(pending["wobble_value_epsilon"])
+            if "wobble_velocity_epsilon" in pending:
+                wob_vel_eps = float(pending["wobble_velocity_epsilon"])
+
+            wob_block = (
+                "wobble           = {\n"
+                f"            enabled          = {'true' if wob_enabled else 'false'},\n"
+                f"            mesh             = {int(wob_mesh)},\n"
+                f"            stiffness        = {float(wob_stiffness)},\n"
+                f"            damping          = {float(wob_damping)},\n"
+                f"            mass             = {float(wob_mass)},\n"
+                f"            intensity        = {float(wob_intensity)},\n"
+                f"            value_epsilon    = {float(wob_val_eps)},\n"
+                f"            velocity_epsilon = {float(wob_vel_eps)},\n"
+                "        },"
+            )
+            wob_pattern = r'wobble\s*=\s*\{.*?\},?'
+            if re.search(wob_pattern, text, re.DOTALL):
+                text = re.sub(wob_pattern, wob_block, text, flags=re.DOTALL)
+            else:
+                text = re.sub(r'(decoration\s*=\s*\{)', r'\1\n        ' + wob_block, text)
+
+            DECORATION_LUA.write_text(text)
+            result.ok(
+                f"wobble           → enabled:{wob_enabled} mesh:{wob_mesh} stiffness:{wob_stiffness} damping:{wob_damping}"
+            )
+
+            try:
+                subprocess.run(
+                    [
+                        "hyprctl",
+                        "eval",
+                        f"hl.config({{ decoration = {{ wobble = {{ enabled = {'true' if wob_enabled else 'false'}, mesh = {int(wob_mesh)}, stiffness = {float(wob_stiffness)}, damping = {float(wob_damping)}, mass = {float(wob_mass)}, intensity = {float(wob_intensity)}, value_epsilon = {float(wob_val_eps)}, velocity_epsilon = {float(wob_vel_eps)} }} }} }})",
+                    ],
+                    capture_output=True,
+                    timeout=2,
+                )
+            except Exception:
+                pass
+        else:
+            result.err("decoration.lua not found — wobble skipped")
 
 
 def _apply_monitor(pending, result):

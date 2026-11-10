@@ -34,8 +34,8 @@ set_mode() {
     case "$target" in
         0|normal|default)
             # ── MODE 0: Normal Mode ──────────────────────────────────────────
-            # 1. Restore Hyprland obsidian glass, animations & user opacity
-            hyprctl eval "pcall(dofile, os.getenv('HOME') .. '/.hyprconf/hypr/configs/configs.lua') hl.config({ general = { allow_tearing = false }, decoration = { blur = { enabled = true }, shadow = { enabled = true }, active_opacity = opacity_act or 0.9, inactive_opacity = opacity_deact or 0.85 }, animations = { enabled = true } }) hl.window_rule({ match = { tag = 'file-manager' }, opacity = string.format('%.2f %.2f', opacity_act or 0.9, opacity_deact or 0.85) }) hl.window_rule({ match = { tag = 'browser' }, opacity = string.format('1.0 %.2f', opacity_deact or 0.85) })" >/dev/null 2>&1 || true
+            # 1. Restore Hyprland obsidian glass, animations, wobble, blur & user opacity
+            hyprctl eval "pcall(dofile, os.getenv('HOME') .. '/.hyprconf/hypr/configs/configs.lua') pcall(dofile, os.getenv('HOME') .. '/.hyprconf/hypr/configs/decoration.lua') pcall(dofile, os.getenv('HOME') .. '/.hyprconf/hypr/configs/animation.lua') hl.config({ general = { allow_tearing = false } }) hl.window_rule({ match = { tag = 'file-manager' }, opacity = string.format('%.2f %.2f', opacity_act or 0.9, opacity_deact or 0.85) }) hl.window_rule({ match = { tag = 'browser' }, opacity = string.format('1.0 %.2f', opacity_deact or 0.85) })" >/dev/null 2>&1 || true
 
             # 2. DND OFF
             python3 -c "import json, os; p='$dnd_file'; os.makedirs(os.path.dirname(p), exist_ok=True); json.dump({'dnd': False}, open(p, 'w'))" 2>/dev/null || true
@@ -64,8 +64,8 @@ set_mode() {
 
         1|game|gaming)
             # ── MODE 1: Game Mode ────────────────────────────────────────────
-            # 1. Hyprland: 100% opacity, 0ms direct scanout tearing, disable blur/shadows/anim
-            hyprctl eval "hl.config({ general = { allow_tearing = true }, decoration = { blur = { enabled = false }, shadow = { enabled = false }, active_opacity = 1.0, inactive_opacity = 1.0 }, animations = { enabled = false } }) hl.window_rule({ match = { tag = 'file-manager' }, opacity = '1.0 1.0' }) hl.window_rule({ match = { tag = 'browser' }, opacity = '1.0 1.0' })" >/dev/null 2>&1 || true
+            # 1. Hyprland: 100% opacity, 0ms direct scanout tearing, disable blur, wobble, motion blur & animations
+            hyprctl eval "hl.config({ general = { allow_tearing = true }, decoration = { blur = { enabled = false }, wobble = { enabled = false }, motion_blur = { enabled = false }, shadow = { enabled = false }, active_opacity = 1.0, inactive_opacity = 1.0 }, animations = { enabled = false } }) hl.window_rule({ match = { tag = 'file-manager' }, opacity = '1.0 1.0' }) hl.window_rule({ match = { tag = 'browser' }, opacity = '1.0 1.0' })" >/dev/null 2>&1 || true
 
             # 2. DND OFF
             python3 -c "import json, os; p='$dnd_file'; os.makedirs(os.path.dirname(p), exist_ok=True); json.dump({'dnd': False}, open(p, 'w'))" 2>/dev/null || true
@@ -86,16 +86,16 @@ set_mode() {
 
             # 6. Unified OSD
             if [[ -x "$scripts_dir/osd-notify.sh" ]]; then
-                bash "$scripts_dir/osd-notify.sh" "system_mode" "1" "Game Mode" "gamepad" "100% Opacity • 0ms Latency • Blur Off" >/dev/null 2>&1 || true
+                bash "$scripts_dir/osd-notify.sh" "system_mode" "1" "Game Mode" "gamepad" "100% Opacity • 0ms Latency • Blur, Wobble & Motion Blur Off" >/dev/null 2>&1 || true
             else
-                notify-send -a "Hyprconf System Mode" -t 2500 "Game Mode Enabled" "100% Opacity • 0ms Latency • Blur Off" 2>/dev/null || true
+                notify-send -a "Hyprconf System Mode" -t 2500 "Game Mode Enabled" "100% Opacity • 0ms Latency • Blur, Wobble & Motion Blur Off" 2>/dev/null || true
             fi
             ;;
 
         2|presentation|study|class|focus|meeting)
             # ── MODE 2: Presentation / Study / Class Mode ───────────────────
-            # 1. Hyprland: Clean obsidian glass, no tearing (smooth screen share / call video), normal opacity
-            hyprctl eval "pcall(dofile, os.getenv('HOME') .. '/.hyprconf/hypr/configs/configs.lua') hl.config({ general = { allow_tearing = false }, decoration = { blur = { enabled = true }, shadow = { enabled = true }, active_opacity = opacity_act or 0.9, inactive_opacity = opacity_deact or 0.85 }, animations = { enabled = true } }) hl.window_rule({ match = { tag = 'file-manager' }, opacity = string.format('%.2f %.2f', opacity_act or 0.9, opacity_deact or 0.85) }) hl.window_rule({ match = { tag = 'browser' }, opacity = string.format('1.0 %.2f', opacity_deact or 0.85) })" >/dev/null 2>&1 || true
+            # 1. Hyprland: 100% opacity, blur disabled, wobble disabled, animations enabled, no tearing
+            hyprctl eval "pcall(dofile, os.getenv('HOME') .. '/.hyprconf/hypr/configs/configs.lua') pcall(dofile, os.getenv('HOME') .. '/.hyprconf/hypr/configs/decoration.lua') pcall(dofile, os.getenv('HOME') .. '/.hyprconf/hypr/configs/animation.lua') hl.config({ general = { allow_tearing = false }, decoration = { blur = { enabled = false }, wobble = { enabled = false }, shadow = { enabled = true }, active_opacity = 1.0, inactive_opacity = 1.0 }, animations = { enabled = true } }) hl.window_rule({ match = { tag = 'file-manager' }, opacity = '1.0 1.0' }) hl.window_rule({ match = { tag = 'browser' }, opacity = '1.0 1.0' })" >/dev/null 2>&1 || true
 
             # 2. DND ON (silence notification popups and toasts)
             python3 -c "import json, os; p='$dnd_file'; os.makedirs(os.path.dirname(p), exist_ok=True); json.dump({'dnd': True}, open(p, 'w'))" 2>/dev/null || true
@@ -116,9 +116,9 @@ set_mode() {
 
             # 6. Unified OSD
             if [[ -x "$scripts_dir/osd-notify.sh" ]]; then
-                bash "$scripts_dir/osd-notify.sh" "system_mode" "2" "Presentation Mode" "presentation" "DND Active • Inhibit Sleep • Silent Fans" >/dev/null 2>&1 || true
+                bash "$scripts_dir/osd-notify.sh" "system_mode" "2" "Class Mode" "presentation" "100% Opacity • Blur & Wobble Off • Animations Active • DND Active" >/dev/null 2>&1 || true
             else
-                notify-send -a "Hyprconf System Mode" -t 2500 "Presentation Mode" "DND Active • Inhibit Sleep • Silent Fans" 2>/dev/null || true
+                notify-send -a "Hyprconf System Mode" -t 2500 "Class Mode Enabled" "100% Opacity • Blur & Wobble Off • Animations Active • DND Active" 2>/dev/null || true
             fi
             ;;
 

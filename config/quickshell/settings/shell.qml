@@ -32,6 +32,11 @@ FloatingWindow {
             window.activeSection = 0
             window.visible = true
         }
+        function openAppearance() {
+            window.activeRootNav = 0
+            window.activeSection = 1
+            window.visible = true
+        }
         function openIsland() {
             window.activeRootNav = 1
             window.activeSection = 10
@@ -392,7 +397,65 @@ FloatingWindow {
         opacity_deact: 0.90,
         shadow_range: 0,
         layout: "scrolling",
-        column_width: 0.8
+        column_width: 0.8,
+        glow_enabled: false,
+        glow_range: 15,
+        glow_render_power: 2,
+        blur_enabled: true,
+        blur_passes: 1,
+        blur_ignore_opacity: true,
+        blur_new_optimizations: true,
+        blur_xray: false,
+        blur_noise: 0.0117,
+        blur_contrast: 0.8916,
+        blur_brightness: 1.0,
+        blur_vibrancy: 0.1696,
+        blur_vibrancy_darkness: 0.0,
+        blur_special: false,
+        blur_popups: false,
+        blur_popups_ignorealpha: 0.2,
+        blur_input_methods: false,
+        blur_input_methods_ignorealpha: 0.2,
+        blur_proportional: false,
+        blur_variant: "kawase",
+        blur_acrylic_aberration: 0.025,
+        blur_acrylic_bulb: 48.0,
+        blur_acrylic_clarity: 0.82,
+        blur_acrylic_refraction: 24.0,
+        blur_aurora_intensity: 0.35,
+        blur_aurora_speed: 1.0,
+        blur_drops_speed: 3.0,
+        blur_fluid_jar_distortion: 8.0,
+        blur_fluid_jar_fill_amount: 0.5,
+        blur_fluid_jar_mass: 1.4,
+        blur_fluid_jar_precision: 2.0,
+        blur_fluid_jar_speed: 3.7,
+        blur_fluid_jar_turbulence: 1.2,
+        blur_glass_refraction: 20.0,
+        blur_glass_roughness: 1.0,
+        blur_glass_size: 40.0,
+        blur_haze_intensity: 0.35,
+        blur_haze_iridescence: 0.7,
+        blur_heat_shimmer_speed: 1.0,
+        blur_ripple_duration: 0.45,
+        blur_ripple_radius: 400.0,
+        blur_ripple_strength: 30.0,
+        blur_ripple_width: 32.0,
+        blur_water_damping: 0.95,
+        blur_water_duration: 12.0,
+        blur_water_radius: 20.0,
+        blur_water_speed: 0.76,
+        blur_water_strength: 32.0,
+        motion_blur_enabled: false,
+        motion_blur_samples: 7,
+        wobble_enabled: false,
+        wobble_mesh: 12,
+        wobble_stiffness: 200,
+        wobble_damping: 12,
+        wobble_mass: 1.0,
+        wobble_intensity: 0.2,
+        wobble_value_epsilon: 0.25,
+        wobble_velocity_epsilon: 2.0
     })
     property var liveInput: ({
         sensitivity: 0.0,
@@ -963,7 +1026,7 @@ FloatingWindow {
                     Text {
                         text: {
                             if (window.activeSection === 0) return "Overview & status of Hyprland Lua configuration files"
-                            if (window.activeSection === 1) return "Window layout, borders, rounding, gaps, blur, opacity, and shadows"
+                            if (window.activeSection === 1) return "Window layout, borders, rounding, gaps, blur shaders, glow, opacity, shadows, motion blur, and wobble physics"
                             if (window.activeSection === 2) return "Monitors, resolutions, refresh rates, scaling, and positioning"
                             if (window.activeSection === 3) return "Animations toggle, bezier curve controls, and animation speeds"
                             if (window.activeSection === 4) return "Pointer sensitivity, touchpad tap to click, and natural scroll"
@@ -1793,6 +1856,7 @@ FloatingWindow {
                 // SECTION 1: APPEARANCE (Borders, Rounding, Gaps, Blur, Opacity)
                 // =============================================================
                 ScrollView {
+                    id: appearanceScrollView
                     anchors.fill: parent
                     anchors.margins: 18
                     contentWidth: availableWidth
@@ -1958,58 +2022,10 @@ FloatingWindow {
                             }
                         }
 
-                        // Blur & Opacity Card
+                        // Window Opacity Card
                         SettingCard {
-                            title: "Blur & Transparency"
-                            description: "Adjust hardware-accelerated dual-kawase blur and per-window opacity levels."
-
-                            Column {
-                                width: parent.width
-                                spacing: 4
-
-                                RowLayout {
-                                    width: parent.width
-                                    Text { text: "Blur Size"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 13; Layout.fillWidth: true }
-                                    Text { text: Math.round(blurSizeSlider.value) + ""; color: Theme.accent; font.family: "Outfit"; font.pixelSize: 12; font.weight: Font.DemiBold }
-                                }
-
-                                ModernSlider {
-                                    id: blurSizeSlider
-                                    width: parent.width
-                                    from: 1
-                                    to: 20
-                                    stepSize: 1
-                                    value: window.liveAppearance.blur_size || 4
-                                    onMoved: {
-                                        window.liveAppearance.blur_size = Math.round(value)
-                                        window.markHypr("blur", [Math.round(value), Math.round(blurPassSlider.value)])
-                                    }
-                                }
-                            }
-
-                            Column {
-                                width: parent.width
-                                spacing: 4
-
-                                RowLayout {
-                                    width: parent.width
-                                    Text { text: "Blur Passes"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 13; Layout.fillWidth: true }
-                                    Text { text: Math.round(blurPassSlider.value) + ""; color: Theme.accent; font.family: "Outfit"; font.pixelSize: 12; font.weight: Font.DemiBold }
-                                }
-
-                                ModernSlider {
-                                    id: blurPassSlider
-                                    width: parent.width
-                                    from: 1
-                                    to: 8
-                                    stepSize: 1
-                                    value: window.liveAppearance.blur_pass || 4
-                                    onMoved: {
-                                        window.liveAppearance.blur_pass = Math.round(value)
-                                        window.markHypr("blur", [Math.round(blurSizeSlider.value), Math.round(value)])
-                                    }
-                                }
-                            }
+                            title: "Window Opacity"
+                            description: "Adjust transparency levels for active and inactive windows."
 
                             Column {
                                 width: parent.width
@@ -2060,6 +2076,1159 @@ FloatingWindow {
                             }
                         }
 
+                        // Window Glow Card
+                        SettingCard {
+                            title: "Window Glow"
+                            description: "Per-window ambient glow lighting cast outside active and inactive window frames."
+
+                            RowLayout {
+                                width: parent.width
+                                spacing: 16
+
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 2
+                                    Text {
+                                        text: "Enable Window Glow"
+                                        color: Theme.foreground
+                                        font.family: "Outfit"
+                                        font.pixelSize: 13
+                                    }
+                                    Text {
+                                        text: "Casts a soft ambient illumination outline using window border colors"
+                                        color: Theme.alpha(Theme.foreground, 0.55)
+                                        font.family: "Outfit"
+                                        font.pixelSize: 11
+                                    }
+                                }
+
+                                CapsuleSwitch {
+                                    checked: window.liveAppearance.glow_enabled || false
+                                    onToggled: {
+                                        window.liveAppearance.glow_enabled = checked
+                                        window.markHypr("glow_enabled", checked)
+                                    }
+                                }
+                            }
+
+                            Column {
+                                width: parent.width
+                                spacing: 12
+                                visible: window.liveAppearance.glow_enabled || false
+
+                                // Glow Range
+                                Column {
+                                    width: parent.width
+                                    spacing: 4
+
+                                    RowLayout {
+                                        width: parent.width
+                                        Text { text: "Glow Range"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 13; Layout.fillWidth: true }
+                                        Text { text: Math.round(glowRangeSlider.value) + " px"; color: Theme.accent; font.family: "Outfit"; font.pixelSize: 12; font.weight: Font.DemiBold }
+                                    }
+
+                                    ModernSlider {
+                                        id: glowRangeSlider
+                                        width: parent.width
+                                        from: 1
+                                        to: 100
+                                        stepSize: 1
+                                        value: window.liveAppearance.glow_range || 15
+                                        onMoved: {
+                                            window.liveAppearance.glow_range = Math.round(value)
+                                            window.markHypr("glow_range", Math.round(value))
+                                        }
+                                    }
+                                }
+
+                                // Render Power
+                                Column {
+                                    width: parent.width
+                                    spacing: 4
+
+                                    RowLayout {
+                                        width: parent.width
+                                        Text { text: "Glow Render Power"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 13; Layout.fillWidth: true }
+                                        Text { text: Math.round(glowPowerSlider.value) + ""; color: Theme.accent; font.family: "Outfit"; font.pixelSize: 12; font.weight: Font.DemiBold }
+                                    }
+
+                                    Text {
+                                        text: "Falloff exponent curve (1 produces diffuse falloff, 4 creates a compact intense core)."
+                                        color: Theme.alpha(Theme.foreground, 0.50)
+                                        font.family: "Outfit"
+                                        font.pixelSize: 11
+                                    }
+
+                                    ModernSlider {
+                                        id: glowPowerSlider
+                                        width: parent.width
+                                        from: 1
+                                        to: 4
+                                        stepSize: 1
+                                        value: window.liveAppearance.glow_render_power || 2
+                                        onMoved: {
+                                            window.liveAppearance.glow_render_power = Math.round(value)
+                                            window.markHypr("glow_render_power", Math.round(value))
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Window Background Blur Card
+                        SettingCard {
+                            title: "Window Background Blur"
+                            description: "Hardware-accelerated kawase window background blur, post-processing filters, and visual shader variants."
+
+                            RowLayout {
+                                width: parent.width
+                                spacing: 16
+
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 2
+                                    Text {
+                                        text: "Enable Background Blur"
+                                        color: Theme.foreground
+                                        font.family: "Outfit"
+                                        font.pixelSize: 13
+                                    }
+                                    Text {
+                                        text: "Blurs content behind transparent and translucent windows"
+                                        color: Theme.alpha(Theme.foreground, 0.55)
+                                        font.family: "Outfit"
+                                        font.pixelSize: 11
+                                    }
+                                }
+
+                                CapsuleSwitch {
+                                    checked: window.liveAppearance.blur_enabled !== false
+                                    onToggled: {
+                                        window.liveAppearance.blur_enabled = checked
+                                        window.markHypr("blur_enabled", checked)
+                                    }
+                                }
+                            }
+
+                            Column {
+                                width: parent.width
+                                spacing: 14
+                                visible: window.liveAppearance.blur_enabled !== false
+
+                                // Variant Selector Dropdown
+                                RowLayout {
+                                    width: parent.width
+                                    spacing: 12
+
+                                    ColumnLayout {
+                                        Layout.fillWidth: true
+                                        spacing: 2
+                                        Text {
+                                            text: "Blur Variant / Algorithm"
+                                            color: Theme.foreground
+                                            font.family: "Outfit"
+                                            font.pixelSize: 13
+                                        }
+                                        Text {
+                                            text: "Select shader pipeline (e.g. standard kawase, liquid acrylic, aurora streaks, raindrops, fluid jar, or ripples)"
+                                            color: Theme.alpha(Theme.foreground, 0.55)
+                                            font.family: "Outfit"
+                                            font.pixelSize: 11
+                                        }
+                                    }
+
+                                    ModernDropdown {
+                                        model: ["kawase", "acrylic", "aurora", "drops", "fluid_jar", "frost", "haze", "heat_shimmer", "prism", "ripple", "water"]
+                                        currentValue: window.liveAppearance.blur_variant || "kawase"
+                                        onSelected: function(val) {
+                                            window.liveAppearance.blur_variant = val
+                                            window.markHypr("blur_variant", val)
+                                        }
+                                    }
+                                }
+
+                                // Blur Size
+                                Column {
+                                    width: parent.width
+                                    spacing: 4
+
+                                    RowLayout {
+                                        width: parent.width
+                                        Text { text: "Blur Size (Distance)"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 13; Layout.fillWidth: true }
+                                        Text { text: Math.round(blurSizeSlider.value) + " px"; color: Theme.accent; font.family: "Outfit"; font.pixelSize: 12; font.weight: Font.DemiBold }
+                                    }
+
+                                    ModernSlider {
+                                        id: blurSizeSlider
+                                        width: parent.width
+                                        from: 1
+                                        to: 20
+                                        stepSize: 1
+                                        value: window.liveAppearance.blur_size || 8
+                                        onMoved: {
+                                            window.liveAppearance.blur_size = Math.round(value)
+                                            window.markHypr("blur_size", Math.round(value))
+                                        }
+                                    }
+                                }
+
+                                // Blur Passes
+                                Column {
+                                    width: parent.width
+                                    spacing: 4
+
+                                    RowLayout {
+                                        width: parent.width
+                                        Text { text: "Blur Passes"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 13; Layout.fillWidth: true }
+                                        Text { text: Math.round(blurPassSlider.value) + " passes"; color: Theme.accent; font.family: "Outfit"; font.pixelSize: 12; font.weight: Font.DemiBold }
+                                    }
+
+                                    Text {
+                                        text: "Number of downsample/upsample passes. Higher values yield smoother blur at higher GPU load."
+                                        color: Theme.alpha(Theme.foreground, 0.50)
+                                        font.family: "Outfit"
+                                        font.pixelSize: 11
+                                    }
+
+                                    ModernSlider {
+                                        id: blurPassSlider
+                                        width: parent.width
+                                        from: 0
+                                        to: 10
+                                        stepSize: 1
+                                        value: window.liveAppearance.blur_passes !== undefined ? window.liveAppearance.blur_passes : (window.liveAppearance.blur_pass || 1)
+                                        onMoved: {
+                                            window.liveAppearance.blur_passes = Math.round(value)
+                                            window.markHypr("blur_passes", Math.round(value))
+                                        }
+                                    }
+                                }
+
+                                // Brightness Modulation
+                                Column {
+                                    width: parent.width
+                                    spacing: 4
+
+                                    RowLayout {
+                                        width: parent.width
+                                        Text { text: "Brightness Modulation"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 13; Layout.fillWidth: true }
+                                        Text { text: Number(blurBrightnessSlider.value).toFixed(2); color: Theme.accent; font.family: "Outfit"; font.pixelSize: 12; font.weight: Font.DemiBold }
+                                    }
+
+                                    ModernSlider {
+                                        id: blurBrightnessSlider
+                                        width: parent.width
+                                        from: 0.0
+                                        to: 2.0
+                                        stepSize: 0.05
+                                        value: window.liveAppearance.blur_brightness !== undefined ? window.liveAppearance.blur_brightness : 1.0
+                                        onMoved: {
+                                            window.liveAppearance.blur_brightness = Number(value.toFixed(2))
+                                            window.markHypr("blur_brightness", Number(value.toFixed(2)))
+                                        }
+                                    }
+                                }
+
+                                // Contrast Modulation
+                                Column {
+                                    width: parent.width
+                                    spacing: 4
+
+                                    RowLayout {
+                                        width: parent.width
+                                        Text { text: "Contrast Modulation"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 13; Layout.fillWidth: true }
+                                        Text { text: Number(blurContrastSlider.value).toFixed(2); color: Theme.accent; font.family: "Outfit"; font.pixelSize: 12; font.weight: Font.DemiBold }
+                                    }
+
+                                    ModernSlider {
+                                        id: blurContrastSlider
+                                        width: parent.width
+                                        from: 0.0
+                                        to: 2.0
+                                        stepSize: 0.05
+                                        value: window.liveAppearance.blur_contrast !== undefined ? window.liveAppearance.blur_contrast : 0.8916
+                                        onMoved: {
+                                            window.liveAppearance.blur_contrast = Number(value.toFixed(4))
+                                            window.markHypr("blur_contrast", Number(value.toFixed(4)))
+                                        }
+                                    }
+                                }
+
+                                // Noise Texture Amount
+                                Column {
+                                    width: parent.width
+                                    spacing: 4
+
+                                    RowLayout {
+                                        width: parent.width
+                                        Text { text: "Noise Texture Amount"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 13; Layout.fillWidth: true }
+                                        Text { text: Number(blurNoiseSlider.value).toFixed(4); color: Theme.accent; font.family: "Outfit"; font.pixelSize: 12; font.weight: Font.DemiBold }
+                                    }
+
+                                    ModernSlider {
+                                        id: blurNoiseSlider
+                                        width: parent.width
+                                        from: 0.0
+                                        to: 1.0
+                                        stepSize: 0.005
+                                        value: window.liveAppearance.blur_noise !== undefined ? window.liveAppearance.blur_noise : 0.0117
+                                        onMoved: {
+                                            window.liveAppearance.blur_noise = Number(value.toFixed(4))
+                                            window.markHypr("blur_noise", Number(value.toFixed(4)))
+                                        }
+                                    }
+                                }
+
+                                // Vibrancy Saturation
+                                Column {
+                                    width: parent.width
+                                    spacing: 4
+
+                                    RowLayout {
+                                        width: parent.width
+                                        Text { text: "Vibrancy Saturation"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 13; Layout.fillWidth: true }
+                                        Text { text: Number(blurVibrancySlider.value).toFixed(4); color: Theme.accent; font.family: "Outfit"; font.pixelSize: 12; font.weight: Font.DemiBold }
+                                    }
+
+                                    ModernSlider {
+                                        id: blurVibrancySlider
+                                        width: parent.width
+                                        from: 0.0
+                                        to: 1.0
+                                        stepSize: 0.01
+                                        value: window.liveAppearance.blur_vibrancy !== undefined ? window.liveAppearance.blur_vibrancy : 0.1696
+                                        onMoved: {
+                                            window.liveAppearance.blur_vibrancy = Number(value.toFixed(4))
+                                            window.markHypr("blur_vibrancy", Number(value.toFixed(4)))
+                                        }
+                                    }
+                                }
+
+                                // Vibrancy Darkness
+                                Column {
+                                    width: parent.width
+                                    spacing: 4
+
+                                    RowLayout {
+                                        width: parent.width
+                                        Text { text: "Vibrancy Darkness Strength"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 13; Layout.fillWidth: true }
+                                        Text { text: Number(blurVibDarkSlider.value).toFixed(2); color: Theme.accent; font.family: "Outfit"; font.pixelSize: 12; font.weight: Font.DemiBold }
+                                    }
+
+                                    ModernSlider {
+                                        id: blurVibDarkSlider
+                                        width: parent.width
+                                        from: 0.0
+                                        to: 1.0
+                                        stepSize: 0.02
+                                        value: window.liveAppearance.blur_vibrancy_darkness !== undefined ? window.liveAppearance.blur_vibrancy_darkness : 0.0
+                                        onMoved: {
+                                            window.liveAppearance.blur_vibrancy_darkness = Number(value.toFixed(2))
+                                            window.markHypr("blur_vibrancy_darkness", Number(value.toFixed(2)))
+                                        }
+                                    }
+                                }
+
+                                // Compositor Toggles & Advanced Options
+                                Column {
+                                    width: parent.width
+                                    spacing: 10
+
+                                    RowLayout {
+                                        width: parent.width
+                                        Text { text: "Ignore Window Opacity in Blur"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 13; Layout.fillWidth: true }
+                                        CapsuleSwitch {
+                                            checked: window.liveAppearance.blur_ignore_opacity !== false
+                                            onToggled: {
+                                                window.liveAppearance.blur_ignore_opacity = checked
+                                                window.markHypr("blur_ignore_opacity", checked)
+                                            }
+                                        }
+                                    }
+
+                                    RowLayout {
+                                        width: parent.width
+                                        Text { text: "Compositor Performance Optimizations"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 13; Layout.fillWidth: true }
+                                        CapsuleSwitch {
+                                            checked: window.liveAppearance.blur_new_optimizations !== false
+                                            onToggled: {
+                                                window.liveAppearance.blur_new_optimizations = checked
+                                                window.markHypr("blur_new_optimizations", checked)
+                                            }
+                                        }
+                                    }
+
+                                    RowLayout {
+                                        width: parent.width
+                                        Text { text: "X-Ray Mode (Skip tiled windows behind floating blur)"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 13; Layout.fillWidth: true }
+                                        CapsuleSwitch {
+                                            checked: window.liveAppearance.blur_xray || false
+                                            onToggled: {
+                                                window.liveAppearance.blur_xray = checked
+                                                window.markHypr("blur_xray", checked)
+                                            }
+                                        }
+                                    }
+
+                                    RowLayout {
+                                        width: parent.width
+                                        Text { text: "Special Workspace Blur"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 13; Layout.fillWidth: true }
+                                        CapsuleSwitch {
+                                            checked: window.liveAppearance.blur_special || false
+                                            onToggled: {
+                                                window.liveAppearance.blur_special = checked
+                                                window.markHypr("blur_special", checked)
+                                            }
+                                        }
+                                    }
+
+                                    RowLayout {
+                                        width: parent.width
+                                        Text { text: "Opacity-Proportional Blur"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 13; Layout.fillWidth: true }
+                                        CapsuleSwitch {
+                                            checked: window.liveAppearance.blur_proportional || false
+                                            onToggled: {
+                                                window.liveAppearance.blur_proportional = checked
+                                                window.markHypr("blur_proportional", checked)
+                                            }
+                                        }
+                                    }
+
+                                    RowLayout {
+                                        width: parent.width
+                                        Text { text: "Blur Popups & Context Menus"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 13; Layout.fillWidth: true }
+                                        CapsuleSwitch {
+                                            checked: window.liveAppearance.blur_popups || false
+                                            onToggled: {
+                                                window.liveAppearance.blur_popups = checked
+                                                window.markHypr("blur_popups", checked)
+                                            }
+                                        }
+                                    }
+
+                                    Column {
+                                        width: parent.width
+                                        spacing: 4
+                                        visible: window.liveAppearance.blur_popups || false
+
+                                        RowLayout {
+                                            width: parent.width
+                                            Text { text: "Popup Ignore Alpha"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 12; Layout.fillWidth: true }
+                                            Text { text: Number(blurPopupAlphaSlider.value).toFixed(2); color: Theme.accent; font.family: "Outfit"; font.pixelSize: 11; font.weight: Font.DemiBold }
+                                        }
+
+                                        ModernSlider {
+                                            id: blurPopupAlphaSlider
+                                            width: parent.width
+                                            from: 0.0
+                                            to: 1.0
+                                            stepSize: 0.05
+                                            value: window.liveAppearance.blur_popups_ignorealpha !== undefined ? window.liveAppearance.blur_popups_ignorealpha : 0.2
+                                            onMoved: {
+                                                window.liveAppearance.blur_popups_ignorealpha = Number(value.toFixed(2))
+                                                window.markHypr("blur_popups_ignorealpha", Number(value.toFixed(2)))
+                                            }
+                                        }
+                                    }
+
+                                    RowLayout {
+                                        width: parent.width
+                                        Text { text: "Blur Input Methods (fcitx5)"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 13; Layout.fillWidth: true }
+                                        CapsuleSwitch {
+                                            checked: window.liveAppearance.blur_input_methods || false
+                                            onToggled: {
+                                                window.liveAppearance.blur_input_methods = checked
+                                                window.markHypr("blur_input_methods", checked)
+                                            }
+                                        }
+                                    }
+
+                                    Column {
+                                        width: parent.width
+                                        spacing: 4
+                                        visible: window.liveAppearance.blur_input_methods || false
+
+                                        RowLayout {
+                                            width: parent.width
+                                            Text { text: "Input Methods Ignore Alpha"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 12; Layout.fillWidth: true }
+                                            Text { text: Number(blurImAlphaSlider.value).toFixed(2); color: Theme.accent; font.family: "Outfit"; font.pixelSize: 11; font.weight: Font.DemiBold }
+                                        }
+
+                                        ModernSlider {
+                                            id: blurImAlphaSlider
+                                            width: parent.width
+                                            from: 0.0
+                                            to: 1.0
+                                            stepSize: 0.05
+                                            value: window.liveAppearance.blur_input_methods_ignorealpha !== undefined ? window.liveAppearance.blur_input_methods_ignorealpha : 0.2
+                                            onMoved: {
+                                                window.liveAppearance.blur_input_methods_ignorealpha = Number(value.toFixed(2))
+                                                window.markHypr("blur_input_methods_ignorealpha", Number(value.toFixed(2)))
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // ── VARIANT-SPECIFIC CONTROLS ──
+                                // 1. Acrylic Sub-Card
+                                Column {
+                                    width: parent.width
+                                    spacing: 8
+                                    visible: (window.liveAppearance.blur_variant || "kawase") === "acrylic"
+
+                                    Rectangle { width: parent.width; height: 1; color: Theme.alpha(Theme.accent, 0.15) }
+
+                                    Text {
+                                        text: "Acrylic Liquid Glass Parameters"
+                                        color: Theme.accent
+                                        font.family: "Outfit"
+                                        font.pixelSize: 13
+                                        font.weight: Font.DemiBold
+                                    }
+
+                                    Column {
+                                        width: parent.width; spacing: 4
+                                        RowLayout {
+                                            width: parent.width
+                                            Text { text: "Chromatic Aberration"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 12; Layout.fillWidth: true }
+                                            Text { text: Number(acrylicAberrationSlider.value).toFixed(3); color: Theme.accent; font.family: "Outfit"; font.pixelSize: 11; font.weight: Font.DemiBold }
+                                        }
+                                        ModernSlider {
+                                            id: acrylicAberrationSlider
+                                            width: parent.width; from: 0.0; to: 0.25; stepSize: 0.005
+                                            value: window.liveAppearance.blur_acrylic_aberration || 0.025
+                                            onMoved: {
+                                                window.liveAppearance.blur_acrylic_aberration = Number(value.toFixed(3))
+                                                window.markHypr("blur_acrylic_aberration", Number(value.toFixed(3)))
+                                            }
+                                        }
+                                    }
+
+                                    Column {
+                                        width: parent.width; spacing: 4
+                                        RowLayout {
+                                            width: parent.width
+                                            Text { text: "Curved Edge Bulb Width"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 12; Layout.fillWidth: true }
+                                            Text { text: Math.round(acrylicBulbSlider.value) + " px"; color: Theme.accent; font.family: "Outfit"; font.pixelSize: 11; font.weight: Font.DemiBold }
+                                        }
+                                        ModernSlider {
+                                            id: acrylicBulbSlider
+                                            width: parent.width; from: 4.0; to: 256.0; stepSize: 2.0
+                                            value: window.liveAppearance.blur_acrylic_bulb || 48.0
+                                            onMoved: {
+                                                window.liveAppearance.blur_acrylic_bulb = Number(value.toFixed(1))
+                                                window.markHypr("blur_acrylic_bulb", Number(value.toFixed(1)))
+                                            }
+                                        }
+                                    }
+
+                                    Column {
+                                        width: parent.width; spacing: 4
+                                        RowLayout {
+                                            width: parent.width
+                                            Text { text: "Backdrop Optical Clarity"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 12; Layout.fillWidth: true }
+                                            Text { text: Number(acrylicClaritySlider.value).toFixed(2); color: Theme.accent; font.family: "Outfit"; font.pixelSize: 11; font.weight: Font.DemiBold }
+                                        }
+                                        ModernSlider {
+                                            id: acrylicClaritySlider
+                                            width: parent.width; from: 0.0; to: 1.0; stepSize: 0.02
+                                            value: window.liveAppearance.blur_acrylic_clarity || 0.82
+                                            onMoved: {
+                                                window.liveAppearance.blur_acrylic_clarity = Number(value.toFixed(2))
+                                                window.markHypr("blur_acrylic_clarity", Number(value.toFixed(2)))
+                                            }
+                                        }
+                                    }
+
+                                    Column {
+                                        width: parent.width; spacing: 4
+                                        RowLayout {
+                                            width: parent.width
+                                            Text { text: "Lens Refraction Displacement"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 12; Layout.fillWidth: true }
+                                            Text { text: Math.round(acrylicRefractionSlider.value) + " px"; color: Theme.accent; font.family: "Outfit"; font.pixelSize: 11; font.weight: Font.DemiBold }
+                                        }
+                                        ModernSlider {
+                                            id: acrylicRefractionSlider
+                                            width: parent.width; from: 0.0; to: 48.0; stepSize: 1.0
+                                            value: window.liveAppearance.blur_acrylic_refraction || 24.0
+                                            onMoved: {
+                                                window.liveAppearance.blur_acrylic_refraction = Number(value.toFixed(1))
+                                                window.markHypr("blur_acrylic_refraction", Number(value.toFixed(1)))
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // 2. Aurora Sub-Card
+                                Column {
+                                    width: parent.width
+                                    spacing: 8
+                                    visible: (window.liveAppearance.blur_variant || "kawase") === "aurora"
+
+                                    Rectangle { width: parent.width; height: 1; color: Theme.alpha(Theme.accent, 0.15) }
+
+                                    Text {
+                                        text: "Aurora Borealis Streak Parameters"
+                                        color: Theme.accent
+                                        font.family: "Outfit"
+                                        font.pixelSize: 13
+                                        font.weight: Font.DemiBold
+                                    }
+
+                                    Column {
+                                        width: parent.width; spacing: 4
+                                        RowLayout {
+                                            width: parent.width
+                                            Text { text: "Aurora Color Intensity"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 12; Layout.fillWidth: true }
+                                            Text { text: Number(auroraIntensitySlider.value).toFixed(2); color: Theme.accent; font.family: "Outfit"; font.pixelSize: 11; font.weight: Font.DemiBold }
+                                        }
+                                        ModernSlider {
+                                            id: auroraIntensitySlider
+                                            width: parent.width; from: 0.0; to: 1.0; stepSize: 0.05
+                                            value: window.liveAppearance.blur_aurora_intensity || 0.35
+                                            onMoved: {
+                                                window.liveAppearance.blur_aurora_intensity = Number(value.toFixed(2))
+                                                window.markHypr("blur_aurora_intensity", Number(value.toFixed(2)))
+                                            }
+                                        }
+                                    }
+
+                                    Column {
+                                        width: parent.width; spacing: 4
+                                        RowLayout {
+                                            width: parent.width
+                                            Text { text: "Aurora Animation Speed"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 12; Layout.fillWidth: true }
+                                            Text { text: Number(auroraSpeedSlider.value).toFixed(1) + "x"; color: Theme.accent; font.family: "Outfit"; font.pixelSize: 11; font.weight: Font.DemiBold }
+                                        }
+                                        ModernSlider {
+                                            id: auroraSpeedSlider
+                                            width: parent.width; from: 0.0; to: 10.0; stepSize: 0.1
+                                            value: window.liveAppearance.blur_aurora_speed || 1.0
+                                            onMoved: {
+                                                window.liveAppearance.blur_aurora_speed = Number(value.toFixed(1))
+                                                window.markHypr("blur_aurora_speed", Number(value.toFixed(1)))
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // 3. Drops Sub-Card
+                                Column {
+                                    width: parent.width
+                                    spacing: 8
+                                    visible: (window.liveAppearance.blur_variant || "kawase") === "drops"
+
+                                    Rectangle { width: parent.width; height: 1; color: Theme.alpha(Theme.accent, 0.15) }
+
+                                    Text {
+                                        text: "Raindrops Pane Parameters"
+                                        color: Theme.accent
+                                        font.family: "Outfit"
+                                        font.pixelSize: 13
+                                        font.weight: Font.DemiBold
+                                    }
+
+                                    Column {
+                                        width: parent.width; spacing: 4
+                                        RowLayout {
+                                            width: parent.width
+                                            Text { text: "Rain Animation Speed"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 12; Layout.fillWidth: true }
+                                            Text { text: Number(dropsSpeedSlider.value).toFixed(1) + "x"; color: Theme.accent; font.family: "Outfit"; font.pixelSize: 11; font.weight: Font.DemiBold }
+                                        }
+                                        ModernSlider {
+                                            id: dropsSpeedSlider
+                                            width: parent.width; from: 0.0; to: 10.0; stepSize: 0.2
+                                            value: window.liveAppearance.blur_drops_speed || 3.0
+                                            onMoved: {
+                                                window.liveAppearance.blur_drops_speed = Number(value.toFixed(1))
+                                                window.markHypr("blur_drops_speed", Number(value.toFixed(1)))
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // 4. Fluid Jar Sub-Card
+                                Column {
+                                    width: parent.width
+                                    spacing: 8
+                                    visible: (window.liveAppearance.blur_variant || "kawase") === "fluid_jar"
+
+                                    Rectangle { width: parent.width; height: 1; color: Theme.alpha(Theme.accent, 0.15) }
+
+                                    Text {
+                                        text: "Fluid Jar 2D Simulation Parameters"
+                                        color: Theme.accent
+                                        font.family: "Outfit"
+                                        font.pixelSize: 13
+                                        font.weight: Font.DemiBold
+                                    }
+
+                                    Column {
+                                        width: parent.width; spacing: 4
+                                        RowLayout {
+                                            width: parent.width
+                                            Text { text: "Fluid Refraction Distortion"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 12; Layout.fillWidth: true }
+                                            Text { text: Number(fluidDistortionSlider.value).toFixed(1); color: Theme.accent; font.family: "Outfit"; font.pixelSize: 11; font.weight: Font.DemiBold }
+                                        }
+                                        ModernSlider {
+                                            id: fluidDistortionSlider
+                                            width: parent.width; from: 0.0; to: 10.0; stepSize: 0.2
+                                            value: window.liveAppearance.blur_fluid_jar_distortion || 8.0
+                                            onMoved: {
+                                                window.liveAppearance.blur_fluid_jar_distortion = Number(value.toFixed(1))
+                                                window.markHypr("blur_fluid_jar_distortion", Number(value.toFixed(1)))
+                                            }
+                                        }
+                                    }
+
+                                    Column {
+                                        width: parent.width; spacing: 4
+                                        RowLayout {
+                                            width: parent.width
+                                            Text { text: "Fluid Fill Level"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 12; Layout.fillWidth: true }
+                                            Text { text: Math.round(fluidFillSlider.value * 100) + "%"; color: Theme.accent; font.family: "Outfit"; font.pixelSize: 11; font.weight: Font.DemiBold }
+                                        }
+                                        ModernSlider {
+                                            id: fluidFillSlider
+                                            width: parent.width; from: 0.0; to: 1.0; stepSize: 0.05
+                                            value: window.liveAppearance.blur_fluid_jar_fill_amount || 0.5
+                                            onMoved: {
+                                                window.liveAppearance.blur_fluid_jar_fill_amount = Number(value.toFixed(2))
+                                                window.markHypr("blur_fluid_jar_fill_amount", Number(value.toFixed(2)))
+                                            }
+                                        }
+                                    }
+
+                                    Column {
+                                        width: parent.width; spacing: 4
+                                        RowLayout {
+                                            width: parent.width
+                                            Text { text: "Fluid Inertial Mass"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 12; Layout.fillWidth: true }
+                                            Text { text: Number(fluidMassSlider.value).toFixed(2); color: Theme.accent; font.family: "Outfit"; font.pixelSize: 11; font.weight: Font.DemiBold }
+                                        }
+                                        ModernSlider {
+                                            id: fluidMassSlider
+                                            width: parent.width; from: 0.1; to: 10.0; stepSize: 0.1
+                                            value: window.liveAppearance.blur_fluid_jar_mass || 1.4
+                                            onMoved: {
+                                                window.liveAppearance.blur_fluid_jar_mass = Number(value.toFixed(2))
+                                                window.markHypr("blur_fluid_jar_mass", Number(value.toFixed(2)))
+                                            }
+                                        }
+                                    }
+
+                                    Column {
+                                        width: parent.width; spacing: 4
+                                        RowLayout {
+                                            width: parent.width
+                                            Text { text: "Fluid Precision Multiplier"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 12; Layout.fillWidth: true }
+                                            Text { text: Number(fluidPrecSlider.value).toFixed(1) + "x"; color: Theme.accent; font.family: "Outfit"; font.pixelSize: 11; font.weight: Font.DemiBold }
+                                        }
+                                        ModernSlider {
+                                            id: fluidPrecSlider
+                                            width: parent.width; from: 0.5; to: 8.0; stepSize: 0.5
+                                            value: window.liveAppearance.blur_fluid_jar_precision || 2.0
+                                            onMoved: {
+                                                window.liveAppearance.blur_fluid_jar_precision = Number(value.toFixed(1))
+                                                window.markHypr("blur_fluid_jar_precision", Number(value.toFixed(1)))
+                                            }
+                                        }
+                                    }
+
+                                    Column {
+                                        width: parent.width; spacing: 4
+                                        RowLayout {
+                                            width: parent.width
+                                            Text { text: "Fluid Speed"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 12; Layout.fillWidth: true }
+                                            Text { text: Number(fluidSpeedSlider.value).toFixed(1) + "x"; color: Theme.accent; font.family: "Outfit"; font.pixelSize: 11; font.weight: Font.DemiBold }
+                                        }
+                                        ModernSlider {
+                                            id: fluidSpeedSlider
+                                            width: parent.width; from: 0.0; to: 10.0; stepSize: 0.1
+                                            value: window.liveAppearance.blur_fluid_jar_speed || 3.7
+                                            onMoved: {
+                                                window.liveAppearance.blur_fluid_jar_speed = Number(value.toFixed(1))
+                                                window.markHypr("blur_fluid_jar_speed", Number(value.toFixed(1)))
+                                            }
+                                        }
+                                    }
+
+                                    Column {
+                                        width: parent.width; spacing: 4
+                                        RowLayout {
+                                            width: parent.width
+                                            Text { text: "Fluid Turbulence"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 12; Layout.fillWidth: true }
+                                            Text { text: Number(fluidTurbSlider.value).toFixed(2); color: Theme.accent; font.family: "Outfit"; font.pixelSize: 11; font.weight: Font.DemiBold }
+                                        }
+                                        ModernSlider {
+                                            id: fluidTurbSlider
+                                            width: parent.width; from: 0.0; to: 5.0; stepSize: 0.1
+                                            value: window.liveAppearance.blur_fluid_jar_turbulence || 1.2
+                                            onMoved: {
+                                                window.liveAppearance.blur_fluid_jar_turbulence = Number(value.toFixed(2))
+                                                window.markHypr("blur_fluid_jar_turbulence", Number(value.toFixed(2)))
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // 5. Glass Sub-Card (Shared by aurora, drops, heat_shimmer, prism)
+                                Column {
+                                    width: parent.width
+                                    spacing: 8
+                                    visible: ["aurora", "drops", "heat_shimmer", "prism"].indexOf(window.liveAppearance.blur_variant || "kawase") !== -1
+
+                                    Rectangle { width: parent.width; height: 1; color: Theme.alpha(Theme.accent, 0.15) }
+
+                                    Text {
+                                        text: "Glass Substrate Parameters"
+                                        color: Theme.accent
+                                        font.family: "Outfit"
+                                        font.pixelSize: 13
+                                        font.weight: Font.DemiBold
+                                    }
+
+                                    Column {
+                                        width: parent.width; spacing: 4
+                                        RowLayout {
+                                            width: parent.width
+                                            Text { text: "Glass Refraction Displacement"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 12; Layout.fillWidth: true }
+                                            Text { text: Math.round(glassRefractionSlider.value) + " px"; color: Theme.accent; font.family: "Outfit"; font.pixelSize: 11; font.weight: Font.DemiBold }
+                                        }
+                                        ModernSlider {
+                                            id: glassRefractionSlider
+                                            width: parent.width; from: 0.0; to: 20.0; stepSize: 0.5
+                                            value: window.liveAppearance.blur_glass_refraction || 20.0
+                                            onMoved: {
+                                                window.liveAppearance.blur_glass_refraction = Number(value.toFixed(1))
+                                                window.markHypr("blur_glass_refraction", Number(value.toFixed(1)))
+                                            }
+                                        }
+                                    }
+
+                                    Column {
+                                        width: parent.width; spacing: 4
+                                        RowLayout {
+                                            width: parent.width
+                                            Text { text: "Glass Relief Roughness"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 12; Layout.fillWidth: true }
+                                            Text { text: Number(glassRoughnessSlider.value).toFixed(2); color: Theme.accent; font.family: "Outfit"; font.pixelSize: 11; font.weight: Font.DemiBold }
+                                        }
+                                        ModernSlider {
+                                            id: glassRoughnessSlider
+                                            width: parent.width; from: 0.0; to: 1.0; stepSize: 0.05
+                                            value: window.liveAppearance.blur_glass_roughness || 1.0
+                                            onMoved: {
+                                                window.liveAppearance.blur_glass_roughness = Number(value.toFixed(2))
+                                                window.markHypr("blur_glass_roughness", Number(value.toFixed(2)))
+                                            }
+                                        }
+                                    }
+
+                                    Column {
+                                        width: parent.width; spacing: 4
+                                        RowLayout {
+                                            width: parent.width
+                                            Text { text: "Glass Pattern Substrate Size"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 12; Layout.fillWidth: true }
+                                            Text { text: Math.round(glassSizeSlider.value) + " px"; color: Theme.accent; font.family: "Outfit"; font.pixelSize: 11; font.weight: Font.DemiBold }
+                                        }
+                                        ModernSlider {
+                                            id: glassSizeSlider
+                                            width: parent.width; from: 4.0; to: 512.0; stepSize: 4.0
+                                            value: window.liveAppearance.blur_glass_size || 40.0
+                                            onMoved: {
+                                                window.liveAppearance.blur_glass_size = Number(value.toFixed(1))
+                                                window.markHypr("blur_glass_size", Number(value.toFixed(1)))
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // 6. Haze Sub-Card
+                                Column {
+                                    width: parent.width
+                                    spacing: 8
+                                    visible: (window.liveAppearance.blur_variant || "kawase") === "haze"
+
+                                    Rectangle { width: parent.width; height: 1; color: Theme.alpha(Theme.accent, 0.15) }
+
+                                    Text {
+                                        text: "Atmospheric Haze Parameters"
+                                        color: Theme.accent
+                                        font.family: "Outfit"
+                                        font.pixelSize: 13
+                                        font.weight: Font.DemiBold
+                                    }
+
+                                    Column {
+                                        width: parent.width; spacing: 4
+                                        RowLayout {
+                                            width: parent.width
+                                            Text { text: "Pearlescent Sheen Intensity"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 12; Layout.fillWidth: true }
+                                            Text { text: Number(hazeIntensitySlider.value).toFixed(2); color: Theme.accent; font.family: "Outfit"; font.pixelSize: 11; font.weight: Font.DemiBold }
+                                        }
+                                        ModernSlider {
+                                            id: hazeIntensitySlider
+                                            width: parent.width; from: 0.0; to: 1.0; stepSize: 0.05
+                                            value: window.liveAppearance.blur_haze_intensity || 0.35
+                                            onMoved: {
+                                                window.liveAppearance.blur_haze_intensity = Number(value.toFixed(2))
+                                                window.markHypr("blur_haze_intensity", Number(value.toFixed(2)))
+                                            }
+                                        }
+                                    }
+
+                                    Column {
+                                        width: parent.width; spacing: 4
+                                        RowLayout {
+                                            width: parent.width
+                                            Text { text: "Iridescent Color Shift"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 12; Layout.fillWidth: true }
+                                            Text { text: Number(hazeIridescenceSlider.value).toFixed(2); color: Theme.accent; font.family: "Outfit"; font.pixelSize: 11; font.weight: Font.DemiBold }
+                                        }
+                                        ModernSlider {
+                                            id: hazeIridescenceSlider
+                                            width: parent.width; from: 0.0; to: 1.0; stepSize: 0.05
+                                            value: window.liveAppearance.blur_haze_iridescence || 0.7
+                                            onMoved: {
+                                                window.liveAppearance.blur_haze_iridescence = Number(value.toFixed(2))
+                                                window.markHypr("blur_haze_iridescence", Number(value.toFixed(2)))
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // 7. Heat Shimmer Sub-Card
+                                Column {
+                                    width: parent.width
+                                    spacing: 8
+                                    visible: (window.liveAppearance.blur_variant || "kawase") === "heat_shimmer"
+
+                                    Rectangle { width: parent.width; height: 1; color: Theme.alpha(Theme.accent, 0.15) }
+
+                                    Text {
+                                        text: "Heat Shimmer Parameters"
+                                        color: Theme.accent
+                                        font.family: "Outfit"
+                                        font.pixelSize: 13
+                                        font.weight: Font.DemiBold
+                                    }
+
+                                    Column {
+                                        width: parent.width; spacing: 4
+                                        RowLayout {
+                                            width: parent.width
+                                            Text { text: "Shimmer Animation Speed"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 12; Layout.fillWidth: true }
+                                            Text { text: Number(heatShimmerSpeedSlider.value).toFixed(1) + "x"; color: Theme.accent; font.family: "Outfit"; font.pixelSize: 11; font.weight: Font.DemiBold }
+                                        }
+                                        ModernSlider {
+                                            id: heatShimmerSpeedSlider
+                                            width: parent.width; from: 0.0; to: 10.0; stepSize: 0.1
+                                            value: window.liveAppearance.blur_heat_shimmer_speed || 1.0
+                                            onMoved: {
+                                                window.liveAppearance.blur_heat_shimmer_speed = Number(value.toFixed(1))
+                                                window.markHypr("blur_heat_shimmer_speed", Number(value.toFixed(1)))
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // 8. Ripple Sub-Card
+                                Column {
+                                    width: parent.width
+                                    spacing: 8
+                                    visible: (window.liveAppearance.blur_variant || "kawase") === "ripple"
+
+                                    Rectangle { width: parent.width; height: 1; color: Theme.alpha(Theme.accent, 0.15) }
+
+                                    Text {
+                                        text: "Click Ripple Wave Parameters"
+                                        color: Theme.accent
+                                        font.family: "Outfit"
+                                        font.pixelSize: 13
+                                        font.weight: Font.DemiBold
+                                    }
+
+                                    Column {
+                                        width: parent.width; spacing: 4
+                                        RowLayout {
+                                            width: parent.width
+                                            Text { text: "Ripple Duration"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 12; Layout.fillWidth: true }
+                                            Text { text: Number(rippleDurationSlider.value).toFixed(2) + " s"; color: Theme.accent; font.family: "Outfit"; font.pixelSize: 11; font.weight: Font.DemiBold }
+                                        }
+                                        ModernSlider {
+                                            id: rippleDurationSlider
+                                            width: parent.width; from: 0.05; to: 5.0; stepSize: 0.05
+                                            value: window.liveAppearance.blur_ripple_duration || 0.45
+                                            onMoved: {
+                                                window.liveAppearance.blur_ripple_duration = Number(value.toFixed(2))
+                                                window.markHypr("blur_ripple_duration", Number(value.toFixed(2)))
+                                            }
+                                        }
+                                    }
+
+                                    Column {
+                                        width: parent.width; spacing: 4
+                                        RowLayout {
+                                            width: parent.width
+                                            Text { text: "Maximum Ripple Radius"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 12; Layout.fillWidth: true }
+                                            Text { text: Math.round(rippleRadiusSlider.value) + " px"; color: Theme.accent; font.family: "Outfit"; font.pixelSize: 11; font.weight: Font.DemiBold }
+                                        }
+                                        ModernSlider {
+                                            id: rippleRadiusSlider
+                                            width: parent.width; from: 1.0; to: 1000.0; stepSize: 10.0
+                                            value: window.liveAppearance.blur_ripple_radius || 400.0
+                                            onMoved: {
+                                                window.liveAppearance.blur_ripple_radius = Number(value.toFixed(1))
+                                                window.markHypr("blur_ripple_radius", Number(value.toFixed(1)))
+                                            }
+                                        }
+                                    }
+
+                                    Column {
+                                        width: parent.width; spacing: 4
+                                        RowLayout {
+                                            width: parent.width
+                                            Text { text: "Refraction Impulse Strength"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 12; Layout.fillWidth: true }
+                                            Text { text: Math.round(rippleStrengthSlider.value) + " px"; color: Theme.accent; font.family: "Outfit"; font.pixelSize: 11; font.weight: Font.DemiBold }
+                                        }
+                                        ModernSlider {
+                                            id: rippleStrengthSlider
+                                            width: parent.width; from: 0.0; to: 32.0; stepSize: 1.0
+                                            value: window.liveAppearance.blur_ripple_strength || 30.0
+                                            onMoved: {
+                                                window.liveAppearance.blur_ripple_strength = Number(value.toFixed(1))
+                                                window.markHypr("blur_ripple_strength", Number(value.toFixed(1)))
+                                            }
+                                        }
+                                    }
+
+                                    Column {
+                                        width: parent.width; spacing: 4
+                                        RowLayout {
+                                            width: parent.width
+                                            Text { text: "Wavefront Width"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 12; Layout.fillWidth: true }
+                                            Text { text: Math.round(rippleWidthSlider.value) + " px"; color: Theme.accent; font.family: "Outfit"; font.pixelSize: 11; font.weight: Font.DemiBold }
+                                        }
+                                        ModernSlider {
+                                            id: rippleWidthSlider
+                                            width: parent.width; from: 1.0; to: 200.0; stepSize: 2.0
+                                            value: window.liveAppearance.blur_ripple_width || 32.0
+                                            onMoved: {
+                                                window.liveAppearance.blur_ripple_width = Number(value.toFixed(1))
+                                                window.markHypr("blur_ripple_width", Number(value.toFixed(1)))
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // 9. Water Sub-Card
+                                Column {
+                                    width: parent.width
+                                    spacing: 8
+                                    visible: (window.liveAppearance.blur_variant || "kawase") === "water"
+
+                                    Rectangle { width: parent.width; height: 1; color: Theme.alpha(Theme.accent, 0.15) }
+
+                                    Text {
+                                        text: "Heightmap Water Surface Parameters"
+                                        color: Theme.accent
+                                        font.family: "Outfit"
+                                        font.pixelSize: 13
+                                        font.weight: Font.DemiBold
+                                    }
+
+                                    Column {
+                                        width: parent.width; spacing: 4
+                                        RowLayout {
+                                            width: parent.width
+                                            Text { text: "Decay Damping"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 12; Layout.fillWidth: true }
+                                            Text { text: Number(waterDampingSlider.value).toFixed(2); color: Theme.accent; font.family: "Outfit"; font.pixelSize: 11; font.weight: Font.DemiBold }
+                                        }
+                                        ModernSlider {
+                                            id: waterDampingSlider
+                                            width: parent.width; from: 0.0; to: 1.0; stepSize: 0.01
+                                            value: window.liveAppearance.blur_water_damping || 0.95
+                                            onMoved: {
+                                                window.liveAppearance.blur_water_damping = Number(value.toFixed(2))
+                                                window.markHypr("blur_water_damping", Number(value.toFixed(2)))
+                                            }
+                                        }
+                                    }
+
+                                    Column {
+                                        width: parent.width; spacing: 4
+                                        RowLayout {
+                                            width: parent.width
+                                            Text { text: "Maximum Wave Duration"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 12; Layout.fillWidth: true }
+                                            Text { text: Number(waterDurationSlider.value).toFixed(1) + " s"; color: Theme.accent; font.family: "Outfit"; font.pixelSize: 11; font.weight: Font.DemiBold }
+                                        }
+                                        ModernSlider {
+                                            id: waterDurationSlider
+                                            width: parent.width; from: 0.5; to: 60.0; stepSize: 0.5
+                                            value: window.liveAppearance.blur_water_duration || 12.0
+                                            onMoved: {
+                                                window.liveAppearance.blur_water_duration = Number(value.toFixed(1))
+                                                window.markHypr("blur_water_duration", Number(value.toFixed(1)))
+                                            }
+                                        }
+                                    }
+
+                                    Column {
+                                        width: parent.width; spacing: 4
+                                        RowLayout {
+                                            width: parent.width
+                                            Text { text: "Pointer Perturbation Radius"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 12; Layout.fillWidth: true }
+                                            Text { text: Math.round(waterRadiusSlider.value) + " px"; color: Theme.accent; font.family: "Outfit"; font.pixelSize: 11; font.weight: Font.DemiBold }
+                                        }
+                                        ModernSlider {
+                                            id: waterRadiusSlider
+                                            width: parent.width; from: 1.0; to: 1000.0; stepSize: 5.0
+                                            value: window.liveAppearance.blur_water_radius || 20.0
+                                            onMoved: {
+                                                window.liveAppearance.blur_water_radius = Number(value.toFixed(1))
+                                                window.markHypr("blur_water_radius", Number(value.toFixed(1)))
+                                            }
+                                        }
+                                    }
+
+                                    Column {
+                                        width: parent.width; spacing: 4
+                                        RowLayout {
+                                            width: parent.width
+                                            Text { text: "Water Propagation Speed"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 12; Layout.fillWidth: true }
+                                            Text { text: Number(waterSpeedSlider.value).toFixed(2); color: Theme.accent; font.family: "Outfit"; font.pixelSize: 11; font.weight: Font.DemiBold }
+                                        }
+                                        ModernSlider {
+                                            id: waterSpeedSlider
+                                            width: parent.width; from: 0.0; to: 10.0; stepSize: 0.05
+                                            value: window.liveAppearance.blur_water_speed || 0.76
+                                            onMoved: {
+                                                window.liveAppearance.blur_water_speed = Number(value.toFixed(2))
+                                                window.markHypr("blur_water_speed", Number(value.toFixed(2)))
+                                            }
+                                        }
+                                    }
+
+                                    Column {
+                                        width: parent.width; spacing: 4
+                                        RowLayout {
+                                            width: parent.width
+                                            Text { text: "Wave Injection Strength"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 12; Layout.fillWidth: true }
+                                            Text { text: Math.round(waterStrengthSlider.value) + " px"; color: Theme.accent; font.family: "Outfit"; font.pixelSize: 11; font.weight: Font.DemiBold }
+                                        }
+                                        ModernSlider {
+                                            id: waterStrengthSlider
+                                            width: parent.width; from: 0.0; to: 32.0; stepSize: 1.0
+                                            value: window.liveAppearance.blur_water_strength || 32.0
+                                            onMoved: {
+                                                window.liveAppearance.blur_water_strength = Number(value.toFixed(1))
+                                                window.markHypr("blur_water_strength", Number(value.toFixed(1)))
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
                         // Window Shadows Card
                         SettingCard {
                             title: "Window Shadows"
@@ -2085,6 +3254,317 @@ FloatingWindow {
                                     onMoved: {
                                         window.liveAppearance.shadow_range = Math.round(value)
                                         window.markHypr("shadow", Math.round(value))
+                                    }
+                                }
+                            }
+                        }
+
+                        // Motion Blur Card
+                        SettingCard {
+                            title: "Motion Blur"
+                            description: "Hardware-accelerated motion blur rendered on moving and resizing windows."
+
+                            RowLayout {
+                                width: parent.width
+                                spacing: 16
+
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 2
+                                    Text {
+                                        text: "Enable Motion Blur"
+                                        color: Theme.foreground
+                                        font.family: "Outfit"
+                                        font.pixelSize: 13
+                                    }
+                                    Text {
+                                        text: "Applies directional blur trails to windows during motion"
+                                        color: Theme.alpha(Theme.foreground, 0.55)
+                                        font.family: "Outfit"
+                                        font.pixelSize: 11
+                                    }
+                                }
+
+                                CapsuleSwitch {
+                                    checked: window.liveAppearance.motion_blur_enabled || false
+                                    onToggled: {
+                                        window.liveAppearance.motion_blur_enabled = checked
+                                        window.markHypr("motion_blur_enabled", checked)
+                                    }
+                                }
+                            }
+
+                            Column {
+                                width: parent.width
+                                spacing: 4
+                                visible: window.liveAppearance.motion_blur_enabled || false
+
+                                RowLayout {
+                                    width: parent.width
+                                    Text {
+                                        text: "Blur Samples"
+                                        color: Theme.foreground
+                                        font.family: "Outfit"
+                                        font.pixelSize: 13
+                                        Layout.fillWidth: true
+                                    }
+                                    Text {
+                                        text: Math.round(mbSamplesSlider.value) + " samples"
+                                        color: Theme.accent
+                                        font.family: "Outfit"
+                                        font.pixelSize: 12
+                                        font.weight: Font.DemiBold
+                                    }
+                                }
+
+                                Text {
+                                    text: "Higher samples provide clearer, smoother blur at the expense of GPU compute."
+                                    color: Theme.alpha(Theme.foreground, 0.50)
+                                    font.family: "Outfit"
+                                    font.pixelSize: 11
+                                }
+
+                                ModernSlider {
+                                    id: mbSamplesSlider
+                                    width: parent.width
+                                    from: 1
+                                    to: 64
+                                    stepSize: 1
+                                    value: window.liveAppearance.motion_blur_samples || 7
+                                    onMoved: {
+                                        window.liveAppearance.motion_blur_samples = Math.round(value)
+                                        window.markHypr("motion_blur_samples", Math.round(value))
+                                    }
+                                }
+                            }
+                        }
+
+                        // Window Wobble Physics Card
+                        SettingCard {
+                            title: "Window Wobble Physics"
+                            description: "Spring-mesh jelly physics animation when moving and resizing windows."
+
+                            RowLayout {
+                                width: parent.width
+                                spacing: 16
+
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 2
+                                    Text {
+                                        text: "Enable Window Wobble"
+                                        color: Theme.foreground
+                                        font.family: "Outfit"
+                                        font.pixelSize: 13
+                                    }
+                                    Text {
+                                        text: "Deforms windows with organic spring jelly physics when dragging or resizing"
+                                        color: Theme.alpha(Theme.foreground, 0.55)
+                                        font.family: "Outfit"
+                                        font.pixelSize: 11
+                                    }
+                                }
+
+                                CapsuleSwitch {
+                                    checked: window.liveAppearance.wobble_enabled || false
+                                    onToggled: {
+                                        window.liveAppearance.wobble_enabled = checked
+                                        window.markHypr("wobble_enabled", checked)
+                                    }
+                                }
+                            }
+
+                            Column {
+                                width: parent.width
+                                spacing: 12
+                                visible: window.liveAppearance.wobble_enabled || false
+
+                                // Mesh Vertices Slider
+                                Column {
+                                    width: parent.width
+                                    spacing: 4
+
+                                    RowLayout {
+                                        width: parent.width
+                                        Text { text: "Mesh Vertices per Edge"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 13; Layout.fillWidth: true }
+                                        Text { text: Math.round(wobbleMeshSlider.value) + " vertices"; color: Theme.accent; font.family: "Outfit"; font.pixelSize: 12; font.weight: Font.DemiBold }
+                                    }
+
+                                    ModernSlider {
+                                        id: wobbleMeshSlider
+                                        width: parent.width
+                                        from: 2
+                                        to: 32
+                                        stepSize: 1
+                                        value: window.liveAppearance.wobble_mesh || 12
+                                        onMoved: {
+                                            window.liveAppearance.wobble_mesh = Math.round(value)
+                                            window.markHypr("wobble_mesh", Math.round(value))
+                                        }
+                                    }
+                                }
+
+                                // Spring Stiffness Slider
+                                Column {
+                                    width: parent.width
+                                    spacing: 4
+
+                                    RowLayout {
+                                        width: parent.width
+                                        Text { text: "Spring Stiffness"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 13; Layout.fillWidth: true }
+                                        Text { text: Number(wobbleStiffnessSlider.value).toFixed(0); color: Theme.accent; font.family: "Outfit"; font.pixelSize: 12; font.weight: Font.DemiBold }
+                                    }
+
+                                    ModernSlider {
+                                        id: wobbleStiffnessSlider
+                                        width: parent.width
+                                        from: 10
+                                        to: 1000
+                                        stepSize: 5
+                                        value: window.liveAppearance.wobble_stiffness || 200
+                                        onMoved: {
+                                            window.liveAppearance.wobble_stiffness = Number(value.toFixed(1))
+                                            window.markHypr("wobble_stiffness", Number(value.toFixed(1)))
+                                        }
+                                    }
+                                }
+
+                                // Spring Damping Slider
+                                Column {
+                                    width: parent.width
+                                    spacing: 4
+
+                                    RowLayout {
+                                        width: parent.width
+                                        Text { text: "Spring Damping"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 13; Layout.fillWidth: true }
+                                        Text { text: Number(wobbleDampingSlider.value).toFixed(1); color: Theme.accent; font.family: "Outfit"; font.pixelSize: 12; font.weight: Font.DemiBold }
+                                    }
+
+                                    ModernSlider {
+                                        id: wobbleDampingSlider
+                                        width: parent.width
+                                        from: 0
+                                        to: 1000
+                                        stepSize: 1
+                                        value: window.liveAppearance.wobble_damping || 12
+                                        onMoved: {
+                                            window.liveAppearance.wobble_damping = Number(value.toFixed(1))
+                                            window.markHypr("wobble_damping", Number(value.toFixed(1)))
+                                        }
+                                    }
+                                }
+
+                                // Spring Mass Slider
+                                Column {
+                                    width: parent.width
+                                    spacing: 4
+
+                                    RowLayout {
+                                        width: parent.width
+                                        Text { text: "Spring Mass"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 13; Layout.fillWidth: true }
+                                        Text { text: Number(wobbleMassSlider.value).toFixed(2); color: Theme.accent; font.family: "Outfit"; font.pixelSize: 12; font.weight: Font.DemiBold }
+                                    }
+
+                                    ModernSlider {
+                                        id: wobbleMassSlider
+                                        width: parent.width
+                                        from: 0.01
+                                        to: 100.0
+                                        stepSize: 0.1
+                                        value: window.liveAppearance.wobble_mass || 1.0
+                                        onMoved: {
+                                            window.liveAppearance.wobble_mass = Number(value.toFixed(2))
+                                            window.markHypr("wobble_mass", Number(value.toFixed(2)))
+                                        }
+                                    }
+                                }
+
+                                // Impulse Intensity Slider
+                                Column {
+                                    width: parent.width
+                                    spacing: 4
+
+                                    RowLayout {
+                                        width: parent.width
+                                        Text { text: "Deformation Impulse Intensity"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 13; Layout.fillWidth: true }
+                                        Text { text: Number(wobbleIntensitySlider.value).toFixed(2); color: Theme.accent; font.family: "Outfit"; font.pixelSize: 12; font.weight: Font.DemiBold }
+                                    }
+
+                                    ModernSlider {
+                                        id: wobbleIntensitySlider
+                                        width: parent.width
+                                        from: 0.0
+                                        to: 2.0
+                                        stepSize: 0.05
+                                        value: window.liveAppearance.wobble_intensity || 0.2
+                                        onMoved: {
+                                            window.liveAppearance.wobble_intensity = Number(value.toFixed(2))
+                                            window.markHypr("wobble_intensity", Number(value.toFixed(2)))
+                                        }
+                                    }
+                                }
+
+                                // Position Stability Epsilon Slider
+                                Column {
+                                    width: parent.width
+                                    spacing: 4
+
+                                    RowLayout {
+                                        width: parent.width
+                                        Text { text: "Position Stability Epsilon"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 13; Layout.fillWidth: true }
+                                        Text { text: Number(wobbleValEpsSlider.value).toFixed(2); color: Theme.accent; font.family: "Outfit"; font.pixelSize: 12; font.weight: Font.DemiBold }
+                                    }
+
+                                    Text {
+                                        text: "Position delta threshold below which spring wobble settles into rest state."
+                                        color: Theme.alpha(Theme.foreground, 0.50)
+                                        font.family: "Outfit"
+                                        font.pixelSize: 11
+                                    }
+
+                                    ModernSlider {
+                                        id: wobbleValEpsSlider
+                                        width: parent.width
+                                        from: 0.01
+                                        to: 100.0
+                                        stepSize: 0.05
+                                        value: window.liveAppearance.wobble_value_epsilon || 0.25
+                                        onMoved: {
+                                            window.liveAppearance.wobble_value_epsilon = Number(value.toFixed(2))
+                                            window.markHypr("wobble_value_epsilon", Number(value.toFixed(2)))
+                                        }
+                                    }
+                                }
+
+                                // Velocity Stability Epsilon Slider
+                                Column {
+                                    width: parent.width
+                                    spacing: 4
+
+                                    RowLayout {
+                                        width: parent.width
+                                        Text { text: "Velocity Stability Epsilon"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 13; Layout.fillWidth: true }
+                                        Text { text: Number(wobbleVelEpsSlider.value).toFixed(1); color: Theme.accent; font.family: "Outfit"; font.pixelSize: 12; font.weight: Font.DemiBold }
+                                    }
+
+                                    Text {
+                                        text: "Speed threshold below which residual oscillation stops instantly."
+                                        color: Theme.alpha(Theme.foreground, 0.50)
+                                        font.family: "Outfit"
+                                        font.pixelSize: 11
+                                    }
+
+                                    ModernSlider {
+                                        id: wobbleVelEpsSlider
+                                        width: parent.width
+                                        from: 0.1
+                                        to: 1000.0
+                                        stepSize: 0.5
+                                        value: window.liveAppearance.wobble_velocity_epsilon || 2.0
+                                        onMoved: {
+                                            window.liveAppearance.wobble_velocity_epsilon = Number(value.toFixed(1))
+                                            window.markHypr("wobble_velocity_epsilon", Number(value.toFixed(1)))
+                                        }
                                     }
                                 }
                             }
