@@ -163,7 +163,7 @@ Item {
 
     // Only poll when Island is actually open and visible!
     Timer {
-        interval: 4000
+        interval: 10000
         running: root.active
         repeat: true
         onTriggered: root.refreshState()

@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Effects
 import Quickshell
 import Quickshell.Io
 import "."
@@ -76,12 +75,11 @@ Rectangle {
     }
 
     Timer {
-        interval: 1500
-        running: true
+        interval: 5000
+        running: root.opacity > 0.05
         repeat: true
         onTriggered: {
-            modeReader.running = false
-            modeReader.running = true
+            if (!modeReader.running) modeReader.running = true
         }
     }
 
@@ -149,43 +147,24 @@ Rectangle {
 
     Process { id: actionProc }
 
-    // ── WALLPAPER BACKGROUND WITH TRUE ALPHA MASK (RADIUS: 18) ───────────────
-    Item {
-        id: bannerMask
+    // ── WALLPAPER BACKGROUND WITH HARDWARE CLIPPING (RADIUS: 18) ───────────────
+    Rectangle {
+        id: bannerBgContainer
         anchors.fill: parent
-        layer.enabled: true
-        layer.smooth: true
-        visible: false
+        radius: 18
+        color: "transparent"
+        clip: true
 
-        Rectangle {
+        Image {
+            id: rawWallBg
             anchors.fill: parent
-            radius: 18
-            color: "#ffffff"
-            antialiasing: true
+            source: "file://" + root.homeDir + "/.hyprconf/hypr/.cache/current_wallpaper.png"
+            fillMode: Image.PreserveAspectCrop
+            sourceSize: Qt.size(444, 120)
+            cache: true
+            asynchronous: true
+            smooth: true
         }
-    }
-
-    Image {
-        id: rawWallBg
-        anchors.fill: parent
-        source: "file://" + root.homeDir + "/.hyprconf/hypr/.cache/current_wallpaper.png"
-        fillMode: Image.PreserveAspectCrop
-        sourceSize: Qt.size(444, 120)
-        cache: true
-        asynchronous: true
-        smooth: true
-        visible: false
-    }
-
-    MultiEffect {
-        anchors.fill: parent
-        source: rawWallBg
-        visible: rawWallBg.status === Image.Ready
-        autoPaddingEnabled: false
-        maskEnabled: true
-        maskSource: bannerMask
-        maskThresholdMin: 0.5
-        maskSpreadAtMin: 1.0
     }
 
     // Frosted dark overlay
@@ -241,47 +220,24 @@ Rectangle {
                 Behavior on border.color { ColorAnimation { duration: 150 } }
                 Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
 
-                Item {
-                    id: avatarMask
+                Rectangle {
+                    id: avatarClipContainer
                     anchors.centerIn: parent
                     width: 60
                     height: 60
-                    layer.enabled: true
-                    layer.smooth: true
-                    visible: false
+                    radius: 30
+                    color: "transparent"
+                    clip: true
 
-                    Rectangle {
+                    Image {
+                        id: rawAvatar
                         anchors.fill: parent
-                        radius: width / 2
-                        color: "#ffffff"
-                        antialiasing: true
+                        source: "file://" + root.homeDir + "/.hyprconf/hypr/.cache/.face?t=" + root.avatarTimestamp
+                        fillMode: Image.PreserveAspectCrop
+                        smooth: true
+                        mipmap: true
+                        sourceSize: Qt.size(120, 120)
                     }
-                }
-
-                Image {
-                    id: rawAvatar
-                    anchors.centerIn: parent
-                    width: 60
-                    height: 60
-                    source: "file://" + root.homeDir + "/.hyprconf/hypr/.cache/.face?t=" + root.avatarTimestamp
-                    fillMode: Image.PreserveAspectCrop
-                    smooth: true
-                    mipmap: true
-                    sourceSize: Qt.size(256, 256)
-                    visible: false
-                }
-
-                MultiEffect {
-                    anchors.centerIn: parent
-                    width: 60
-                    height: 60
-                    source: rawAvatar
-                    visible: rawAvatar.status === Image.Ready
-                    autoPaddingEnabled: false
-                    maskEnabled: true
-                    maskSource: avatarMask
-                    maskThresholdMin: 0.5
-                    maskSpreadAtMin: 1.0
                 }
 
                 // Dark frosted glass camera overlay on hover

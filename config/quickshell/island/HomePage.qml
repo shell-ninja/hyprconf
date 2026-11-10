@@ -63,7 +63,7 @@ Item {
     }
 
     Timer {
-        interval: 3000
+        interval: 10000
         running: root.active
         repeat: true
         onTriggered: {
@@ -181,33 +181,33 @@ Item {
         SequentialAnimation {
             PauseAnimation { duration: 0 }
             ParallelAnimation {
-                NumberAnimation { target: card0; property: "opacity"; to: 1.0; duration: 220; easing.type: Easing.OutCubic }
-                NumberAnimation { target: t0; property: "y"; to: 0; duration: 240; easing.type: Easing.OutCubic }
+                NumberAnimation { target: card0; property: "opacity"; to: 1.0; duration: 150; easing.type: Easing.OutCubic }
+                NumberAnimation { target: t0; property: "y"; to: 0; duration: 160; easing.type: Easing.OutCubic }
             }
         }
 
-        // 2. Quick Toggles & Sliders (delay: 70ms)
+        // 2. Quick Toggles & Sliders (delay: 35ms)
+        SequentialAnimation {
+            PauseAnimation { duration: 35 }
+            ParallelAnimation {
+                NumberAnimation { target: card1; property: "opacity"; to: 1.0; duration: 150; easing.type: Easing.OutCubic }
+                NumberAnimation { target: t1; property: "y"; to: 0; duration: 160; easing.type: Easing.OutCubic }
+            }
+        }
+
+        // 3. Bottom Card (delay: 70ms)
         SequentialAnimation {
             PauseAnimation { duration: 70 }
             ParallelAnimation {
-                NumberAnimation { target: card1; property: "opacity"; to: 1.0; duration: 220; easing.type: Easing.OutCubic }
-                NumberAnimation { target: t1; property: "y"; to: 0; duration: 240; easing.type: Easing.OutCubic }
+                NumberAnimation { target: card2; property: "opacity"; to: 1.0; duration: 150; easing.type: Easing.OutCubic }
+                NumberAnimation { target: t2; property: "y"; to: 0; duration: 160; easing.type: Easing.OutCubic }
             }
         }
 
-        // 3. Bottom Card (delay: 140ms)
+        // 4. Pagination Dots (delay: 100ms)
         SequentialAnimation {
-            PauseAnimation { duration: 140 }
-            ParallelAnimation {
-                NumberAnimation { target: card2; property: "opacity"; to: 1.0; duration: 220; easing.type: Easing.OutCubic }
-                NumberAnimation { target: t2; property: "y"; to: 0; duration: 240; easing.type: Easing.OutCubic }
-            }
-        }
-
-        // 4. Pagination Dots (delay: 200ms)
-        SequentialAnimation {
-            PauseAnimation { duration: 200 }
-            NumberAnimation { target: card3; property: "opacity"; to: 1.0; duration: 180; easing.type: Easing.OutCubic }
+            PauseAnimation { duration: 100 }
+            NumberAnimation { target: card3; property: "opacity"; to: 1.0; duration: 140; easing.type: Easing.OutCubic }
         }
     }
 
