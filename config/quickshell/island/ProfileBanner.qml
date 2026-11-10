@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Effects
 import Quickshell
 import Quickshell.Io
 import "."
@@ -147,24 +148,43 @@ Rectangle {
 
     Process { id: actionProc }
 
-    // ── WALLPAPER BACKGROUND WITH HARDWARE CLIPPING (RADIUS: 18) ───────────────
-    Rectangle {
-        id: bannerBgContainer
+    // ── WALLPAPER BACKGROUND WITH TRUE ALPHA MASK (RADIUS: 18) ───────────────
+    Item {
+        id: bannerMask
         anchors.fill: parent
-        radius: 18
-        color: "transparent"
-        clip: true
+        layer.enabled: true
+        layer.smooth: true
+        visible: false
 
-        Image {
-            id: rawWallBg
+        Rectangle {
             anchors.fill: parent
-            source: "file://" + root.homeDir + "/.hyprconf/hypr/.cache/current_wallpaper.png"
-            fillMode: Image.PreserveAspectCrop
-            sourceSize: Qt.size(444, 120)
-            cache: true
-            asynchronous: true
-            smooth: true
+            radius: 18
+            color: "#ffffff"
+            antialiasing: true
         }
+    }
+
+    Image {
+        id: rawWallBg
+        anchors.fill: parent
+        source: "file://" + root.homeDir + "/.hyprconf/hypr/.cache/current_wallpaper.png"
+        fillMode: Image.PreserveAspectCrop
+        sourceSize: Qt.size(444, 120)
+        cache: true
+        asynchronous: true
+        smooth: true
+        visible: false
+    }
+
+    MultiEffect {
+        anchors.fill: parent
+        source: rawWallBg
+        visible: rawWallBg.status === Image.Ready
+        autoPaddingEnabled: false
+        maskEnabled: true
+        maskSource: bannerMask
+        maskThresholdMin: 0.5
+        maskSpreadAtMin: 1.0
     }
 
     // Frosted dark overlay
@@ -220,24 +240,47 @@ Rectangle {
                 Behavior on border.color { ColorAnimation { duration: 150 } }
                 Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
 
-                Rectangle {
-                    id: avatarClipContainer
+                Item {
+                    id: avatarMask
                     anchors.centerIn: parent
                     width: 60
                     height: 60
-                    radius: 30
-                    color: "transparent"
-                    clip: true
+                    layer.enabled: true
+                    layer.smooth: true
+                    visible: false
 
-                    Image {
-                        id: rawAvatar
+                    Rectangle {
                         anchors.fill: parent
-                        source: "file://" + root.homeDir + "/.hyprconf/hypr/.cache/.face?t=" + root.avatarTimestamp
-                        fillMode: Image.PreserveAspectCrop
-                        smooth: true
-                        mipmap: true
-                        sourceSize: Qt.size(120, 120)
+                        radius: width / 2
+                        color: "#ffffff"
+                        antialiasing: true
                     }
+                }
+
+                Image {
+                    id: rawAvatar
+                    anchors.centerIn: parent
+                    width: 60
+                    height: 60
+                    source: "file://" + root.homeDir + "/.hyprconf/hypr/.cache/.face?t=" + root.avatarTimestamp
+                    fillMode: Image.PreserveAspectCrop
+                    smooth: true
+                    mipmap: true
+                    sourceSize: Qt.size(120, 120)
+                    visible: false
+                }
+
+                MultiEffect {
+                    anchors.centerIn: parent
+                    width: 60
+                    height: 60
+                    source: rawAvatar
+                    visible: rawAvatar.status === Image.Ready
+                    autoPaddingEnabled: false
+                    maskEnabled: true
+                    maskSource: avatarMask
+                    maskThresholdMin: 0.5
+                    maskSpreadAtMin: 1.0
                 }
 
                 // Dark frosted glass camera overlay on hover
