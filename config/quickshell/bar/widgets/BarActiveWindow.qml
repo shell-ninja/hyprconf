@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
-import Quickshell.Io
 import Quickshell.Hyprland
 import ".."
 
@@ -16,44 +15,21 @@ Pill {
     readonly property bool showIcon: settings.show_icon !== false
     readonly property string fallbackText: settings.fallback || "Desktop"
 
-    property string windowTitle: ""
-    property string windowClass: ""
+    readonly property var activeTl: Hyprland.activeToplevel
+    readonly property string windowTitle: (activeTl && activeTl.title) ? activeTl.title : ((activeTl && activeTl.lastIpcObject && activeTl.lastIpcObject.title) ? activeTl.lastIpcObject.title : "")
+    readonly property string windowClass: (activeTl && activeTl.lastIpcObject && activeTl.lastIpcObject["class"]) ? activeTl.lastIpcObject["class"] : ""
 
     visible: true
     implicitWidth: rowContent.implicitWidth + hPad * 2
 
     Connections {
         target: Hyprland
-        function onFocusedWorkspaceChanged() { if (!winProc.running) winProc.running = true }
+        function onFocusedWorkspaceChanged() { Hyprland.refreshToplevels() }
         function onRawEvent(event) {
-            if (event.name === "activewindow" || event.name === "openwindow" || event.name === "closewindow" || event.name === "workspace") {
-                if (!winProc.running) winProc.running = true
+            if (event.name === "activewindow" || event.name === "activewindowv2" || event.name === "windowtitlev2" || event.name === "closewindow") {
+                Hyprland.refreshToplevels()
             }
         }
-    }
-
-    Process {
-        id: winProc
-        command: ["sh", "-c", "hyprctl activewindow -j 2>/dev/null | python3 -c 'import sys, json; d=json.load(sys.stdin) if not sys.stdin.isatty() else {}; print(json.dumps({\"title\": d.get(\"title\", \"\"), \"class\": d.get(\"class\", \"\")}))'"]
-        running: true
-        stdout: StdioCollector {
-            onStreamFinished: {
-                if (text && text.trim().length > 0) {
-                    try {
-                        var d = JSON.parse(text.trim())
-                        rootPill.windowTitle = d.title || ""
-                        rootPill.windowClass = d.class || ""
-                    } catch(e) {}
-                }
-            }
-        }
-    }
-
-    Timer {
-        interval: 800
-        running: true
-        repeat: true
-        onTriggered: if (!winProc.running) winProc.running = true
     }
 
     RowLayout {

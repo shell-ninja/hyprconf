@@ -42,7 +42,7 @@ if pgrep -x qs >/dev/null 2>&1 || pgrep -x quickshell >/dev/null 2>&1; then
     sleep 0.15
 fi
 
-# 2. Relaunch Active Top Interface (Dynamic Island or Full Top Bar)
+# Active top shell (Dynamic Island or Full Top Bar) natively embeds DockLayer & DesktopWidgetsLayer.
 top_mode="island"
 bar_cfg="$HOME/.local/share/hyprconf/bar.json"
 if [[ -f "$bar_cfg" ]] && grep -q '"top_panel":\s*"bar"' "$bar_cfg" 2>/dev/null; then
@@ -53,16 +53,6 @@ if [[ "$top_mode" == "bar" && -f "$sh_dir/qs-bar.sh" ]]; then
     nohup bash "$sh_dir/qs-bar.sh" --start >/dev/null 2>&1 &
 elif [[ -f "$sh_dir/qs-island.sh" ]]; then
     nohup bash "$sh_dir/qs-island.sh" --start >/dev/null 2>&1 &
-fi
-
-# 3. Relaunch Quickshell Desktop Widgets daemon (if enabled)
-if [[ -f "$sh_dir/qs-widgets.sh" ]]; then
-    nohup bash "$sh_dir/qs-widgets.sh" --start >/dev/null 2>&1 &
-fi
-
-# 4. Relaunch Quickshell Dock daemon (if enabled)
-if [[ -f "$sh_dir/qs-dock.sh" ]]; then
-    nohup bash "$sh_dir/qs-dock.sh" --start >/dev/null 2>&1 &
 fi
 
 

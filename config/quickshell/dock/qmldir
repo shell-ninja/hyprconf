@@ -1,3 +1,4 @@
 singleton Theme 1.0 Theme.qml
+DockLayer 1.0 DockLayer.qml
 DockItem 1.0 DockItem.qml
 DockContextMenu 1.0 DockContextMenu.qml

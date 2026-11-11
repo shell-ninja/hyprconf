@@ -1,4 +1,5 @@
 singleton Theme 1.0 Theme.qml
+DesktopWidgetsLayer 1.0 DesktopWidgetsLayer.qml
 DesktopClock 1.0 DesktopClock.qml
 DesktopVisualizer 1.0 DesktopVisualizer.qml
 DesktopSystemMonitor 1.0 DesktopSystemMonitor.qml

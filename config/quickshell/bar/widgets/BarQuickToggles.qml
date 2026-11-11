@@ -147,8 +147,8 @@ Pill {
         // Glass Attached Monolithic Shape
         Shape {
             anchors.fill: parent
-            layer.enabled: true
-            layer.samples: 4
+            antialiasing: true
+            preferredRendererType: Shape.CurveRenderer
             visible: modeTooltip.isGlass
 
             // 1. Fill Path (Closed across top)

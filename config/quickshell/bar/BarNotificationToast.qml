@@ -125,8 +125,8 @@ Item {
             id: attachedBg
             visible: root.hasFrame
             anchors.fill: parent
-            layer.enabled: true
-            layer.samples: 4
+            antialiasing: true
+            preferredRendererType: Shape.CurveRenderer
 
             readonly property int w: root.width
             readonly property int h: root.height
@@ -372,12 +372,17 @@ Item {
                                : []
 
                         Rectangle {
+                            required property var modelData
+                            required property int index
+                            readonly property bool isPrimary: index === 0
                             Layout.preferredHeight: 24
                             Layout.preferredWidth: Math.max(64, btnText.implicitWidth + 16)
                             radius: 12
-                            color: btnHover.hovered ? Theme.accent : Theme.alpha(Theme.surface, 0.80)
-                            border.width: 1
-                            border.color: btnHover.hovered ? Theme.accent : Theme.alpha(Theme.accent, 0.35)
+                            color: isPrimary
+                                ? (btnHover.hovered ? Theme.accent : Theme.primary)
+                                : (btnHover.hovered ? Theme.alpha(Theme.primary, 0.24) : Theme.alpha(Theme.surface, 0.80))
+                            border.width: isPrimary ? 0 : 1
+                            border.color: isPrimary ? "transparent" : Theme.alpha(Theme.primary, btnHover.hovered ? 0.65 : 0.35)
 
                             HoverHandler { id: btnHover }
 
@@ -388,7 +393,7 @@ Item {
                                 font.family: "Outfit"
                                 font.pixelSize: 10
                                 font.weight: Font.DemiBold
-                                color: btnHover.hovered ? Theme.on_primary : Theme.foreground
+                                color: parent.isPrimary ? Theme.on_primary : Theme.foreground
                             }
 
                             MouseArea {

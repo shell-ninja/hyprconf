@@ -118,6 +118,7 @@ PanelWindow {
     readonly property bool micMuted: source && source.audio ? source.audio.muted : false
 
     property var netTrigger: null
+    readonly property bool isNetOpen: netPop.shown
     property var netProcesses: []
     property string netDownStr: "0 KB/s"
     property string netUpStr: "0 KB/s"
@@ -1057,8 +1058,8 @@ PanelWindow {
             y: screenFrame.topH
             width: screenFrame.cr
             height: screenFrame.cr
-            layer.enabled: true
-            layer.samples: 4
+            antialiasing: true
+            preferredRendererType: Shape.CurveRenderer
             ShapePath {
                 fillColor: screenFrame.frameFill
                 strokeWidth: -1
@@ -1083,8 +1084,8 @@ PanelWindow {
             y: screenFrame.topH
             width: screenFrame.cr
             height: screenFrame.cr
-            layer.enabled: true
-            layer.samples: 4
+            antialiasing: true
+            preferredRendererType: Shape.CurveRenderer
             ShapePath {
                 fillColor: screenFrame.frameFill
                 strokeWidth: -1
@@ -1109,8 +1110,8 @@ PanelWindow {
             y: parent.height - screenFrame.ft - screenFrame.cr
             width: screenFrame.cr
             height: screenFrame.cr
-            layer.enabled: true
-            layer.samples: 4
+            antialiasing: true
+            preferredRendererType: Shape.CurveRenderer
             ShapePath {
                 fillColor: screenFrame.frameFill
                 strokeWidth: -1
@@ -1135,8 +1136,8 @@ PanelWindow {
             y: parent.height - screenFrame.ft - screenFrame.cr
             width: screenFrame.cr
             height: screenFrame.cr
-            layer.enabled: true
-            layer.samples: 4
+            antialiasing: true
+            preferredRendererType: Shape.CurveRenderer
             ShapePath {
                 fillColor: screenFrame.frameFill
                 strokeWidth: -1

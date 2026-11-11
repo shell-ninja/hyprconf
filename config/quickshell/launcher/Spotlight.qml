@@ -40,8 +40,8 @@ Rectangle {
         anchors.top: parent.top
         anchors.bottom: parent.bottom
         width: card.width + fL + fR
-        layer.enabled: true
-        layer.samples: 4
+        antialiasing: true
+        preferredRendererType: Shape.CurveRenderer
         visible: card.isBottomAttached
 
         readonly property color surfaceFill: (rootWindow && rootWindow.barOpacity !== undefined)

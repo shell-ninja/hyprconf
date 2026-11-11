@@ -122,82 +122,58 @@ Item {
         }
     }
 
-    // ── RUNNING / ACTIVE WINDOW INDICATOR ────────────────────────────────────
-    Item {
+    // ── RUNNING / ACTIVE WINDOW INDICATOR (UNIFIED MULTI-INSTANCE DOTS) ─────
+    Grid {
         id: indicatorContainer
-        anchors.fill: parent
         visible: showIndicators && isRunning && !isDragging
+        readonly property bool isHoriz: dockPosition === "bottom" || dockPosition === "top"
+        columns: isHoriz ? 4 : 1
+        spacing: 3
 
-        // Indicator Pill for Bottom dock
-        Rectangle {
-            visible: dockPosition === "bottom"
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.bottom: parent.bottom
-            anchors.bottomMargin: 3
-            width: isActive ? 16 : (windowCount > 1 ? 8 : 4)
-            height: 4
-            radius: 2
-            color: isActive ? Theme.accent : Theme.alpha(Theme.foreground, 0.65)
+        anchors.horizontalCenter: isHoriz ? parent.horizontalCenter : undefined
+        anchors.verticalCenter: !isHoriz ? parent.verticalCenter : undefined
+        anchors.bottom: dockPosition === "bottom" ? parent.bottom : undefined
+        anchors.bottomMargin: dockPosition === "bottom" ? 3 : 0
+        anchors.top: dockPosition === "top" ? parent.top : undefined
+        anchors.topMargin: dockPosition === "top" ? 3 : 0
+        anchors.left: dockPosition === "left" ? parent.left : undefined
+        anchors.leftMargin: dockPosition === "left" ? 3 : 0
+        anchors.right: dockPosition === "right" ? parent.right : undefined
+        anchors.rightMargin: dockPosition === "right" ? 3 : 0
 
-            Behavior on width { NumberAnimation { duration: 180; easing.type: Easing.OutBack } }
-            Behavior on color { ColorAnimation { duration: 180 } }
-        }
+        Repeater {
+            model: Math.min(3, Math.max(1, dockItemRoot.windowCount))
 
-        // Indicator Pill for Top dock
-        Rectangle {
-            visible: dockPosition === "top"
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.top: parent.top
-            anchors.topMargin: 3
-            width: isActive ? 16 : (windowCount > 1 ? 8 : 4)
-            height: 4
-            radius: 2
-            color: isActive ? Theme.accent : Theme.alpha(Theme.foreground, 0.65)
+            delegate: Rectangle {
+                required property int index
+                readonly property bool isPrimaryDot: index === 0
+                readonly property bool isHorizDot: indicatorContainer.isHoriz
+                width: isHorizDot ? ((isPrimaryDot && dockItemRoot.isActive) ? 14 : 4) : 4
+                height: !isHorizDot ? ((isPrimaryDot && dockItemRoot.isActive) ? 14 : 4) : 4
+                radius: 2
+                color: isPrimaryDot
+                    ? (dockItemRoot.isActive ? Theme.primary : Theme.alpha(Theme.foreground, 0.72))
+                    : (dockItemRoot.isActive ? Theme.tertiary : Theme.alpha(Theme.foreground, 0.45))
 
-            Behavior on width { NumberAnimation { duration: 180; easing.type: Easing.OutBack } }
-            Behavior on color { ColorAnimation { duration: 180 } }
-        }
-
-        // Indicator Pill for Left dock
-        Rectangle {
-            visible: dockPosition === "left"
-            anchors.verticalCenter: parent.verticalCenter
-            anchors.left: parent.left
-            anchors.leftMargin: 3
-            width: 4
-            height: isActive ? 16 : (windowCount > 1 ? 8 : 4)
-            radius: 2
-            color: isActive ? Theme.accent : Theme.alpha(Theme.foreground, 0.65)
-
-            Behavior on height { NumberAnimation { duration: 180; easing.type: Easing.OutBack } }
-            Behavior on color { ColorAnimation { duration: 180 } }
-        }
-
-        // Indicator Pill for Right dock
-        Rectangle {
-            visible: dockPosition === "right"
-            anchors.verticalCenter: parent.verticalCenter
-            anchors.right: parent.right
-            anchors.rightMargin: 3
-            width: 4
-            height: isActive ? 16 : (windowCount > 1 ? 8 : 4)
-            radius: 2
-            color: isActive ? Theme.accent : Theme.alpha(Theme.foreground, 0.65)
-
-            Behavior on height { NumberAnimation { duration: 180; easing.type: Easing.OutBack } }
-            Behavior on color { ColorAnimation { duration: 180 } }
+                Behavior on width { NumberAnimation { duration: 180; easing.type: Easing.OutBack } }
+                Behavior on height { NumberAnimation { duration: 180; easing.type: Easing.OutBack } }
+                Behavior on color { ColorAnimation { duration: 180 } }
+            }
         }
     }
 
-    // ── TOOLTIP PILL ────────────────────────────────────────────────────────
+    // ── CONTEXTUAL HOVER PEEK TOOLTIP (APP + OPEN WINDOWS BADGE) ────────────
     Rectangle {
         id: tooltipPill
         visible: showTooltips && dockItemRoot.isHovered && !dockItemRoot.isDragging && itemData && itemData.name
         z: 9999
 
-        width: tooltipText.implicitWidth + 18
-        height: 26
-        radius: 13
+        readonly property var peekWindows: (itemData && itemData.windows) ? itemData.windows.slice(0, 3) : []
+        readonly property int extraCount: (itemData && itemData.windows && itemData.windows.length > 3) ? (itemData.windows.length - 3) : 0
+
+        width: Math.max(tooltipHeaderRow.implicitWidth, peekCol.implicitWidth) + 20
+        height: peekMainCol.implicitHeight + 14
+        radius: 12
         color: Theme.alpha(Theme.surface, 0.96)
         border.width: 1
         border.color: Theme.alpha(Theme.accent, 0.40)
@@ -209,25 +185,109 @@ Item {
             return (parent.width - width) / 2
         }
         y: {
-            if (dockPosition === "bottom") return -36
+            if (dockPosition === "bottom") return -height - 10
             if (dockPosition === "top") return parent.height + 10
             return (parent.height - height) / 2
         }
 
         opacity: dockItemRoot.isHovered && !dockItemRoot.isDragging ? 1.0 : 0.0
-        scale: dockItemRoot.isHovered && !dockItemRoot.isDragging ? 1.0 : 0.80
+        scale: dockItemRoot.isHovered && !dockItemRoot.isDragging ? 1.0 : 0.85
 
         Behavior on opacity { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
         Behavior on scale { NumberAnimation { duration: 140; easing.type: Easing.OutBack } }
 
-        Text {
-            id: tooltipText
+        Column {
+            id: peekMainCol
             anchors.centerIn: parent
-            text: itemData ? (itemData.name || "") : ""
-            color: Theme.foreground
-            font.family: "Outfit"
-            font.pixelSize: 11
-            font.weight: Font.DemiBold
+            spacing: 5
+
+            // App Name + Running Window Count Badge
+            Row {
+                id: tooltipHeaderRow
+                spacing: 6
+
+                Text {
+                    id: tooltipText
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: itemData ? (itemData.name || "") : ""
+                    color: Theme.foreground
+                    font.family: "Outfit"
+                    font.pixelSize: 11
+                    font.weight: Font.DemiBold
+                }
+
+                Rectangle {
+                    visible: dockItemRoot.windowCount > 0
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: winBadgeTxt.implicitWidth + 10
+                    height: 15
+                    radius: 7.5
+                    color: Theme.alpha(Theme.primary, 0.22)
+                    border.width: 1
+                    border.color: Theme.alpha(Theme.primary, 0.45)
+
+                    Text {
+                        id: winBadgeTxt
+                        anchors.centerIn: parent
+                        text: dockItemRoot.windowCount + (dockItemRoot.windowCount === 1 ? " win" : " wins")
+                        font.family: "Outfit"
+                        font.pixelSize: 9
+                        font.weight: Font.Bold
+                        color: Theme.primary
+                    }
+                }
+            }
+
+            // Up to 3 Running Windows Preview
+            Column {
+                id: peekCol
+                visible: tooltipPill.peekWindows.length > 0
+                spacing: 3
+
+                Repeater {
+                    model: tooltipPill.peekWindows
+                    delegate: Row {
+                        required property var modelData
+                        spacing: 5
+
+                        Rectangle {
+                            width: 5
+                            height: 5
+                            radius: 2.5
+                            anchors.verticalCenter: parent.verticalCenter
+                            color: (modelData && modelData.activated) ? Theme.primary : Theme.alpha(Theme.foreground, 0.38)
+                        }
+
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: (modelData && modelData.title) ? modelData.title : (itemData ? itemData.name : "")
+                            font.family: "Outfit"
+                            font.pixelSize: 10
+                            color: (modelData && modelData.activated) ? Theme.foreground : Theme.alpha(Theme.foreground, 0.72)
+                            elide: Text.ElideRight
+                            width: Math.min(160, implicitWidth)
+                        }
+
+                        Text {
+                            visible: modelData && modelData.workspace && modelData.workspace > 0
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: modelData ? ("WS" + modelData.workspace) : ""
+                            font.family: "Outfit"
+                            font.pixelSize: 9
+                            font.weight: Font.Bold
+                            color: Theme.tertiary
+                        }
+                    }
+                }
+
+                Text {
+                    visible: tooltipPill.extraCount > 0
+                    text: "+" + tooltipPill.extraCount + " more open"
+                    font.family: "Outfit"
+                    font.pixelSize: 9
+                    color: Theme.alpha(Theme.foreground, 0.55)
+                }
+            }
         }
     }
 

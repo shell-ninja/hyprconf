@@ -36,29 +36,89 @@ Pill {
     visible: rootPill.hasBattery || rootPill.showOnDesktop
     implicitWidth: visible ? (rowContent.implicitWidth + hPad * 2) : 0
 
+    readonly property string homeDir: Quickshell.env("HOME") || ("/home/" + (Quickshell.env("USER") || ""))
+    property string sysfsBatDir: ""
+    property bool batDetectedDone: false
+    property bool hasMockBattery: false
+
+    function applyBatteryObj(d) {
+        if (!d || d.has_battery === undefined) return false
+        rootPill.hasMockBattery = true
+        rootPill.hasBattery = Boolean(d.has_battery)
+        rootPill.batteryPct = (d.percent !== undefined) ? d.percent : -1
+        rootPill.batteryStatus = d.status || "Discharging"
+        return true
+    }
+
+    FileView {
+        id: mockBatView1
+        path: rootPill.homeDir + "/.local/share/hyprconf/.cache/mock_battery.json"
+        watchChanges: true
+        onLoaded: {
+            try { if (text().trim()) rootPill.applyBatteryObj(JSON.parse(text().trim())) } catch(e) {}
+        }
+        onFileChanged: reload()
+    }
+
+    FileView {
+        id: mockBatView2
+        path: rootPill.homeDir + "/.hyprconf/hypr/.cache/mock_battery.json"
+        watchChanges: true
+        onLoaded: {
+            try { if (!mockBatView1.loaded && text().trim()) rootPill.applyBatteryObj(JSON.parse(text().trim())) } catch(e) {}
+        }
+        onFileChanged: reload()
+    }
+
+    // One-shot startup detection of sysfs battery (0 overhead on desktops afterwards)
     Process {
-        id: batProc
-        command: ["python3", Quickshell.env("HOME") + "/.hyprconf/hypr/scripts/py/island-battery.py"]
+        id: batDetectProc
+        command: ["sh", "-c", "for d in /sys/class/power_supply/*; do [ -r \"$d/type\" ] && grep -qi '^battery$' \"$d/type\" 2>/dev/null && [ -r \"$d/capacity\" ] && echo \"$d\" && break; done"]
         running: true
         stdout: StdioCollector {
             onStreamFinished: {
-                if (text && text.trim().length > 0) {
-                    try {
-                        var d = JSON.parse(text.trim())
-                        rootPill.hasBattery = Boolean(d.has_battery)
-                        rootPill.batteryPct = (d.percent !== undefined) ? d.percent : -1
-                        rootPill.batteryStatus = d.status || "Discharging"
-                    } catch(e) {}
+                var dir = (text || "").trim()
+                rootPill.sysfsBatDir = dir
+                rootPill.batDetectedDone = true
+                if (dir.length > 0) {
+                    batCapView.reload()
+                    batStatView.reload()
                 }
             }
         }
     }
 
+    FileView {
+        id: batCapView
+        path: rootPill.sysfsBatDir.length > 0 ? (rootPill.sysfsBatDir + "/capacity") : ""
+        onLoaded: {
+            if (rootPill.hasMockBattery) return
+            var pct = parseInt(text().trim(), 10)
+            if (!isNaN(pct)) {
+                rootPill.hasBattery = true
+                rootPill.batteryPct = Math.max(0, Math.min(100, pct))
+            }
+        }
+    }
+
+    FileView {
+        id: batStatView
+        path: rootPill.sysfsBatDir.length > 0 ? (rootPill.sysfsBatDir + "/status") : ""
+        onLoaded: {
+            if (rootPill.hasMockBattery) return
+            var st = text().trim()
+            if (st.length > 0) rootPill.batteryStatus = st
+        }
+    }
+
     Timer {
-        interval: 10000
-        running: true
+        interval: 15000
+        running: rootPill.batDetectedDone && rootPill.sysfsBatDir.length > 0 && !rootPill.hasMockBattery
         repeat: true
-        onTriggered: if (!batProc.running) batProc.running = true
+        onTriggered: {
+            batCapView.reload()
+            batStatView.reload()
+        }
     }
 
     RowLayout {

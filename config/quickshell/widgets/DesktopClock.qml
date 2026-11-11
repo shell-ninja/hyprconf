@@ -29,6 +29,13 @@ Item {
     property string secondsString: ""
     property string greetingString: "Welcome"
 
+    property int clockIntervalMs: 1000
+
+    function msToNextMinute() {
+        var now = new Date()
+        return Math.max(500, (60 - now.getSeconds()) * 1000 - now.getMilliseconds() + 30)
+    }
+
     function updateTime() {
         var d = new Date()
         var h = d.getHours()
@@ -56,10 +63,14 @@ Item {
         var days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
         var months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
         root.currentDateString = days[d.getDay()] + ", " + d.getDate() + " " + months[d.getMonth()] + " " + d.getFullYear()
+
+        if (!(widgetConfig && widgetConfig.show_seconds)) {
+            root.clockIntervalMs = root.msToNextMinute()
+        }
     }
 
     Timer {
-        interval: 1000
+        interval: (root.widgetConfig && root.widgetConfig.show_seconds) ? 1000 : root.clockIntervalMs
         running: root.visible && (root.widgetConfig ? root.widgetConfig.enabled !== false : true)
         repeat: true
         triggeredOnStart: true

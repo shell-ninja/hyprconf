@@ -110,15 +110,8 @@ Item {
         }
     }
 
-    // Idle harmonic breathing animation when no audio is playing
-    property real phase: 0.0
-    NumberAnimation on phase {
-        from: 0.0
-        to: Math.PI * 2
-        duration: 3200
-        loops: Animation.Infinite
-        running: !root.hasActiveAudio && !root.isMediaPlaying && root.visible && (root.widgetConfig ? root.widgetConfig.enabled !== false : true)
-    }
+    // Resting contour when audio/media is inactive (zero idle 60fps animation)
+    readonly property real idleBreathBase: 0.22
 
     // Background Obsidian Glass Card
     Rectangle {
@@ -177,9 +170,9 @@ Item {
                             var curved = Math.pow(Math.min(1.0, raw * 1.35), 0.85)
                             return Math.max(0.08 * tier, Math.min(1.0, curved * tier))
                         }
-                        // Idle harmonic breathing synced to aaabbbccccbbbaaa pattern
-                        var breath = 0.25 + 0.15 * Math.sin(root.phase + u * Math.PI)
-                        return Math.max(0.06, breath * tier)
+                        // Static calm symmetrical resting contour when silent
+                        var resting = 0.16 + 0.08 * Math.sin(u * Math.PI)
+                        return Math.max(0.06, resting * tier)
                     }
 
                     width: vizContainer.computedBarWidth

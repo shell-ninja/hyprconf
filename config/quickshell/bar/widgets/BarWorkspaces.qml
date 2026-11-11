@@ -67,58 +67,53 @@ Pill {
         return "󰍹"
     }
 
-    // Dynamic occupied workspace & window detection via hyprctl clients
-    Process {
-        id: occProc
-        command: ["hyprctl", "clients", "-j"]
-        running: true
-        stdout: StdioCollector {
-            onTextChanged: {
-                if (!text || text.trim().length === 0) return
-                try {
-                    var parsed = JSON.parse(text.trim())
-                    var occ = []
-                    var byWs = {}
-                    for (var i = 0; i < parsed.length; i++) {
-                        var c = parsed[i]
-                        if (!c || !c.workspace || c.workspace.id <= 0) continue
-                        var wid = c.workspace.id
-                        if (occ.indexOf(wid) === -1) occ.push(wid)
-                        if (!byWs[wid]) byWs[wid] = []
-                        byWs[wid].push({
-                            title: c.title || c.initialTitle || "Window",
-                            class: c.class || c.initialClass || "app",
-                            pid: c.pid,
-                            address: c.address
-                        })
-                    }
-                    rootPill.occupiedWorkspaces = occ
-                    rootPill.windowsByWs = byWs
-                } catch(e) {}
-            }
+    // Native zero-fork workspace & window aggregation via Hyprland.toplevels
+    function rebuildWorkspaces() {
+        var occ = []
+        var byWs = {}
+        var list = (Hyprland.toplevels && Hyprland.toplevels.values) ? Hyprland.toplevels.values : []
+        for (var i = 0; i < list.length; i++) {
+            var tl = list[i]
+            if (!tl) continue
+            var obj = tl.lastIpcObject || ({})
+            if (obj.hidden || obj.mapped === false) continue
+            var wid = (obj.workspace && obj.workspace.id) ? obj.workspace.id : (tl.workspace ? tl.workspace.id : -1)
+            if (wid <= 0) continue
+            if (occ.indexOf(wid) === -1) occ.push(wid)
+            if (!byWs[wid]) byWs[wid] = []
+            byWs[wid].push({
+                title: tl.title || obj.title || obj.initialTitle || "Window",
+                class: obj["class"] || obj.initialClass || "app",
+                pid: obj.pid || 0,
+                address: tl.address || ""
+            })
         }
+        rootPill.occupiedWorkspaces = occ
+        rootPill.windowsByWs = byWs
     }
 
-    Timer {
-        interval: 6000
-        repeat: true
-        running: true
-        onTriggered: if (!occProc.running) occProc.running = true
+    Component.onCompleted: rebuildWorkspaces()
+
+    Connections {
+        target: Hyprland.toplevels ? Hyprland.toplevels : null
+        function onValuesChanged() { rootPill.rebuildWorkspaces() }
     }
 
     Connections {
         target: Hyprland
 
         function onFocusedWorkspaceChanged() {
-            if (!occProc.running) occProc.running = true
+            Hyprland.refreshToplevels()
+            rootPill.rebuildWorkspaces()
         }
 
         function onRawEvent(event) {
             if (event.name === "workspace" || event.name === "workspacev2" ||
                 event.name === "openwindow" || event.name === "closewindow" ||
                 event.name === "movewindow" || event.name === "createworkspace" ||
-                event.name === "destroyworkspace") {
-                if (!occProc.running) occProc.running = true
+                event.name === "destroyworkspace" || event.name === "windowtitlev2") {
+                Hyprland.refreshToplevels()
+                rootPill.rebuildWorkspaces()
             }
         }
     }
@@ -269,17 +264,18 @@ Pill {
                         }
                     }
 
-                    // Occupied micro-dot indicator (if no app icons shown)
+                    // Occupied multi-window micro-pill indicator (if no app icons shown)
                     Rectangle {
                         anchors.horizontalCenter: parent.horizontalCenter
                         anchors.bottom: parent.bottom
                         anchors.bottomMargin: 1
-                        width: 3
+                        width: slotItem.winList.length > 1 ? Math.min(11, 4 + slotItem.winList.length * 2) : 3
                         height: 3
                         radius: 1.5
-                        color: Theme.secondary
+                        color: slotItem.winList.length > 1 ? Theme.primary : Theme.secondary
                         visible: slotItem.isOccupied && !slotItem.isActive && slotItem.visibleAppCount === 0
-                        opacity: visible ? 0.9 : 0.0
+                        opacity: visible ? 0.92 : 0.0
+                        Behavior on width { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
                         Behavior on opacity { NumberAnimation { duration: 160 } }
                     }
 
@@ -342,8 +338,8 @@ Pill {
             // Glass Attached Monolithic Shape
             Shape {
                 anchors.fill: parent
-                layer.enabled: true
-                layer.samples: 4
+                antialiasing: true
+                preferredRendererType: Shape.CurveRenderer
                 visible: wsTooltip.isGlass
 
                 // 1. Fill Path (Closed across top)
@@ -450,12 +446,29 @@ Pill {
                 spacing: 4
 
                 RowLayout {
+                    Layout.fillWidth: true
                     spacing: 5
                     Rectangle { width: 5; height: 5; radius: 2.5; color: Theme.accent }
                     Text {
                         text: "WORKSPACE " + rootPill.hoveredWsId
                         font.family: "Outfit"; font.bold: true; font.pixelSize: 9
                         color: Theme.accent; font.letterSpacing: 0.6
+                    }
+                    Item { Layout.fillWidth: true }
+                    Rectangle {
+                        implicitWidth: openBadgeTxt.implicitWidth + 10
+                        implicitHeight: 14
+                        radius: 7
+                        color: Theme.alpha(Theme.primary, 0.20)
+                        border.width: 1
+                        border.color: Theme.alpha(Theme.primary, 0.40)
+                        Text {
+                            id: openBadgeTxt
+                            anchors.centerIn: parent
+                            text: wsTooltip.winList.length + " open"
+                            font.family: "Outfit"; font.bold: true; font.pixelSize: 8
+                            color: Theme.primary
+                        }
                     }
                 }
 

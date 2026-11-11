@@ -8,8 +8,14 @@ import threading
 from pathlib import Path
 
 HOME = Path(os.environ.get("HOME", str(Path.home())))
-MOCK_REC_FILE = HOME / ".hyprconf" / "hypr" / ".cache" / "mock_recording.json"
-MOCK_MIC_FILE = HOME / ".hyprconf" / "hypr" / ".cache" / "mock_mic.json"
+MOCK_REC_FILES = [
+    HOME / ".hyprconf" / "hypr" / ".cache" / "mock_recording.json",
+    HOME / ".local" / "share" / "hyprconf" / ".cache" / "mock_recording.json"
+]
+MOCK_MIC_FILES = [
+    HOME / ".hyprconf" / "hypr" / ".cache" / "mock_mic.json",
+    HOME / ".local" / "share" / "hyprconf" / ".cache" / "mock_mic.json"
+]
 
 last_sink_state = None
 last_source_state = None
@@ -83,14 +89,15 @@ def is_obs_recording_or_streaming(pid):
     return False
 
 def check_screen_recording():
-    if MOCK_REC_FILE.exists():
-        try:
-            with open(MOCK_REC_FILE, "r", encoding="utf-8") as f:
-                d = json.load(f)
-                if "recording" in d:
-                    return bool(d["recording"])
-        except Exception:
-            pass
+    for fpath in MOCK_REC_FILES:
+        if fpath.exists():
+            try:
+                with open(fpath, "r", encoding="utf-8") as f:
+                    d = json.load(f)
+                    if "recording" in d:
+                        return bool(d["recording"])
+            except Exception:
+                pass
 
     # Dedicated CLI tools that only run when recording
     for proc in ["wf-recorder", "wl-screenrec"]:
@@ -148,14 +155,15 @@ def get_active_mic_apps():
     return apps
 
 def check_mic_captured():
-    if MOCK_MIC_FILE.exists():
-        try:
-            with open(MOCK_MIC_FILE, "r", encoding="utf-8") as f:
-                d = json.load(f)
-                if "mic_captured" in d:
-                    return bool(d["mic_captured"])
-        except Exception:
-            pass
+    for fpath in MOCK_MIC_FILES:
+        if fpath.exists():
+            try:
+                with open(fpath, "r", encoding="utf-8") as f:
+                    d = json.load(f)
+                    if "mic_captured" in d:
+                        return bool(d["mic_captured"])
+            except Exception:
+                pass
 
     apps = get_active_mic_apps()
     if not apps:
@@ -251,7 +259,7 @@ def periodic_checker():
             emit_mic_active()
         except Exception:
             pass
-        time.sleep(1.2)
+        time.sleep(3.0)
 
 import atexit
 import ctypes

@@ -134,8 +134,8 @@ Item {
     Shape {
         id: unifiedBg
         anchors.fill: parent
-        layer.enabled: true
-        layer.samples: 4
+        antialiasing: true
+        preferredRendererType: Shape.CurveRenderer
         visible: !popup.isFloating
 
         readonly property int fL: popup.fL

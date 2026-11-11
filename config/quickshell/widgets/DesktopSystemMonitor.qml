@@ -34,65 +34,106 @@ Item {
     property string netDownStr: "1.2 MB/s"
     property string netUpStr: "42 KB/s"
 
-    // System Stats Poller
+    // Zero-fork native System Stats using /proc + /sys FileViews (60s df -kP / for disk)
+    property real _prevIdle: -1
+    property real _prevTotal: -1
+    property string _thermalPath: "/sys/class/thermal/thermal_zone0/temp"
+    readonly property bool _statsActive: !root.editMode && (root.widgetConfig ? root.widgetConfig.enabled !== false : true) && root.visible
+
+    function _parseProcStat(txt) {
+        if (!txt) return
+        var line = txt.split("\n")[0] || ""
+        var parts = line.trim().split(/\s+/)
+        if (parts.length < 8) return
+        var total = 0
+        for (var i = 1; i <= 7; i++) total += parseFloat(parts[i]) || 0
+        var idle = (parseFloat(parts[4]) || 0) + (parseFloat(parts[5]) || 0)
+        if (root._prevTotal > 0 && total > root._prevTotal) {
+            var dTotal = total - root._prevTotal
+            var dIdle = idle - root._prevIdle
+            root.cpuPercent = Math.max(0, Math.min(100, Math.round(100 * (1.0 - dIdle / dTotal))))
+        }
+        root._prevIdle = idle
+        root._prevTotal = total
+    }
+
+    function _parseMeminfo(txt) {
+        if (!txt) return
+        var totKb = 0
+        var availKb = 0
+        var lines = txt.split("\n")
+        for (var i = 0; i < lines.length; i++) {
+            var l = lines[i]
+            if (l.indexOf("MemTotal:") === 0) totKb = parseInt(l.replace(/\D+/g, ""), 10) || 0
+            else if (l.indexOf("MemAvailable:") === 0) availKb = parseInt(l.replace(/\D+/g, ""), 10) || 0
+            if (totKb > 0 && availKb > 0) break
+        }
+        if (totKb > 0) {
+            var totGb = totKb / (1024.0 * 1024.0)
+            var usedGb = Math.max(0.0, (totKb - availKb) / (1024.0 * 1024.0))
+            root.ramTotalGb = Math.round(totGb * 10) / 10
+            root.ramUsedGb = Math.round(usedGb * 10) / 10
+            root.ramPercent = Math.max(0, Math.min(100, Math.round(100.0 * usedGb / totGb)))
+        }
+    }
+
+    FileView {
+        id: statFile
+        path: "/proc/stat"
+        onLoaded: root._parseProcStat(text())
+    }
+
+    FileView {
+        id: memFile
+        path: "/proc/meminfo"
+        onLoaded: root._parseMeminfo(text())
+    }
+
+    FileView {
+        id: tempFile
+        path: root._thermalPath
+        onLoaded: {
+            var raw = parseInt((text() || "").trim(), 10)
+            if (!isNaN(raw)) {
+                var c = Math.floor(raw / 1000)
+                if (c >= 15 && c <= 115) root.cpuTemp = c + "°C"
+            }
+        }
+    }
+
     Process {
-        id: statsProc
-        command: ["python3", "-c", "import os, sys, json, shutil\n" +
-            "def get_cpu():\n" +
-            "    try:\n" +
-            "        with open('/proc/stat') as f: line = f.readline()\n" +
-            "        fields = [float(x) for x in line.split()[1:8]]\n" +
-            "        idle, total = fields[3] + fields[4], sum(fields)\n" +
-            "        return idle, total\n" +
-            "    except: return 0, 1\n" +
-            "i1, t1 = get_cpu()\n" +
-            "import time; time.sleep(0.15)\n" +
-            "i2, t2 = get_cpu()\n" +
-            "cpu_pct = int(100 * (1.0 - (i2 - i1) / max(0.001, t2 - t1)))\n" +
-            "# RAM\n" +
-            "mem = {}\n" +
-            "try:\n" +
-            "    for l in open('/proc/meminfo'):\n" +
-            "        p = l.split(':')\n" +
-            "        if len(p) == 2: mem[p[0].strip()] = int(p[1].strip().split()[0])\n" +
-            "    tot = mem.get('MemTotal', 1) / (1024*1024)\n" +
-            "    avail = mem.get('MemAvailable', 0) / (1024*1024)\n" +
-            "    used = tot - avail\n" +
-            "    ram_pct = int(100 * used / tot)\n" +
-            "except: tot, used, ram_pct = 16.0, 4.0, 25\n" +
-            "# Disk free on /\n" +
-            "try:\n" +
-            "    usage = shutil.disk_usage('/')\n" +
-            "    disk_free = usage.free / (1024**3)\n" +
-            "    disk_tot = usage.total / (1024**3)\n" +
-            "    disk_pct = int(100 * (usage.used / usage.total))\n" +
-            "except: disk_free, disk_tot, disk_pct = 80, 256, 30\n" +
-            "# Temp\n" +
-            "temp_str = '48°C'\n" +
-            "try:\n" +
-            "    for d in os.listdir('/sys/class/thermal'):\n" +
-            "        tp = os.path.join('/sys/class/thermal', d, 'temp')\n" +
-            "        if os.path.exists(tp):\n" +
-            "            t = int(open(tp).read().strip()) // 1000\n" +
-            "            if 20 <= t <= 110: temp_str = f'{t}°C'; break\n" +
-            "except: pass\n" +
-            "print(json.dumps({'cpu': cpu_pct, 'ram_used': round(used, 1), 'ram_tot': round(tot, 1), 'ram_pct': ram_pct, 'disk_free': round(disk_free, 1), 'disk_tot': round(disk_tot, 1), 'disk_pct': disk_pct, 'temp': temp_str}))"
-        ]
-        running: !root.editMode && (root.widgetConfig ? root.widgetConfig.enabled !== false : true) && root.visible
+        id: tempDiscoverProc
+        command: ["sh", "-c", "for tp in /sys/class/thermal/thermal_zone*/temp /sys/class/hwmon/hwmon*/temp*_input; do [ -r \"$tp\" ] && read -r v < \"$tp\" && [ \"$v\" -ge 20000 ] 2>/dev/null && [ \"$v\" -le 115000 ] 2>/dev/null && { echo \"$tp\"; break; }; done"]
+        running: root._statsActive
         stdout: StdioCollector {
             onTextChanged: {
-                if (!text || text.trim().length === 0) return
-                try {
-                    var d = JSON.parse(text.trim())
-                    if (d.cpu !== undefined) root.cpuPercent = d.cpu
-                    if (d.ram_used !== undefined) root.ramUsedGb = d.ram_used
-                    if (d.ram_tot !== undefined) root.ramTotalGb = d.ram_tot
-                    if (d.ram_pct !== undefined) root.ramPercent = d.ram_pct
-                    if (d.disk_free !== undefined) root.diskFreeGb = d.disk_free
-                    if (d.disk_tot !== undefined) root.diskTotalGb = d.disk_tot
-                    if (d.disk_pct !== undefined) root.diskPercent = d.disk_pct
-                    if (d.temp !== undefined) root.cpuTemp = d.temp
-                } catch(e) {}
+                var p = (text || "").trim()
+                if (p.length > 0) {
+                    root._thermalPath = p
+                    tempFile.reload()
+                }
+            }
+        }
+    }
+
+    Process {
+        id: diskProc
+        command: ["df", "-kP", "/"]
+        running: root._statsActive
+        stdout: StdioCollector {
+            onTextChanged: {
+                var lines = (text || "").trim().split("\n")
+                if (lines.length < 2) return
+                var parts = lines[1].trim().split(/\s+/)
+                if (parts.length < 5) return
+                var totKb = parseFloat(parts[1]) || 0
+                var usedKb = parseFloat(parts[2]) || 0
+                var availKb = parseFloat(parts[3]) || 0
+                if (totKb > 0) {
+                    root.diskTotalGb = Math.round((totKb / (1024 * 1024)) * 10) / 10
+                    root.diskFreeGb = Math.round((availKb / (1024 * 1024)) * 10) / 10
+                    root.diskPercent = Math.max(0, Math.min(100, Math.round(100 * usedKb / totKb)))
+                }
             }
         }
     }
@@ -100,9 +141,20 @@ Item {
     Timer {
         interval: 4000
         repeat: true
-        running: !root.editMode && (root.widgetConfig ? root.widgetConfig.enabled !== false : true) && root.visible
+        running: root._statsActive
         onTriggered: {
-            if (!statsProc.running) statsProc.running = true
+            statFile.reload()
+            memFile.reload()
+            tempFile.reload()
+        }
+    }
+
+    Timer {
+        interval: 60000
+        repeat: true
+        running: root._statsActive
+        onTriggered: {
+            if (!diskProc.running) diskProc.running = true
         }
     }
 

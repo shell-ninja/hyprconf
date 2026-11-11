@@ -18,6 +18,7 @@ Item {
     property real wallpaperTimestamp: Date.now()
     signal clearAllNotifications()
     signal dismissNotification(var notifId)
+    signal dismissAppNotifications(string appName)
 
     property bool isAudioPlaying: false
     property var cavaBars: []
@@ -40,6 +41,34 @@ Item {
     readonly property string volumeSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.foreground + '" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>')
     readonly property string muteSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.error + '" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>')
     readonly property string brightnessSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.foreground + '" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>')
+
+    // ── THEME VARIANT SWITCHER ──────────────────────────────────────────────
+    readonly property string homeDir: {
+        var h = Quickshell.env("HOME")
+        return (h && h.length > 0) ? h : (Quickshell.env("USER") ? ("/home/" + Quickshell.env("USER")) : "/home")
+    }
+    property string pendingVariant: ""
+    readonly property var colorVariants: [
+        { key: "vibrant", label: "Vib" },
+        { key: "original", label: "Orig" },
+        { key: "pastel", label: "Pastel" },
+        { key: "warm", label: "Warm" },
+        { key: "cool", label: "Cool" },
+        { key: "muted", label: "Muted" },
+        { key: "expressive", label: "Expr" }
+    ]
+
+    Process {
+        id: variantSwitcherProc
+        onExited: root.pendingVariant = ""
+    }
+
+    function applyColorVariant(variantKey) {
+        if (!variantKey || variantSwitcherProc.running) return
+        root.pendingVariant = variantKey
+        variantSwitcherProc.command = ["python3", root.homeDir + "/.hyprconf/hypr/scripts/py/hypr-colors.py", "--variant", variantKey]
+        variantSwitcherProc.running = true
+    }
 
     // ── AUDIO INTEGRATION ────────────────────────────────────────────────────
     property int currentVolume: 50
@@ -186,6 +215,15 @@ Item {
             }
         }
 
+        // 1b. Color Variant & Swatch Strip (delay: 18ms)
+        SequentialAnimation {
+            PauseAnimation { duration: 18 }
+            ParallelAnimation {
+                NumberAnimation { target: variantStrip; property: "opacity"; to: 1.0; duration: 150; easing.type: Easing.OutCubic }
+                NumberAnimation { target: tVar; property: "y"; to: 0; duration: 160; easing.type: Easing.OutCubic }
+            }
+        }
+
         // 2. Quick Toggles & Sliders (delay: 35ms)
         SequentialAnimation {
             PauseAnimation { duration: 35 }
@@ -214,11 +252,13 @@ Item {
     ParallelAnimation {
         id: cascadeExitAnim
         NumberAnimation { target: card0; property: "opacity"; to: 0.0; duration: 100 }
+        NumberAnimation { target: variantStrip; property: "opacity"; to: 0.0; duration: 100 }
         NumberAnimation { target: card1; property: "opacity"; to: 0.0; duration: 100 }
         NumberAnimation { target: card2; property: "opacity"; to: 0.0; duration: 100 }
         NumberAnimation { target: card3; property: "opacity"; to: 0.0; duration: 100 }
         NumberAnimation { target: bottomVisualizerBar; property: "opacity"; to: 0.0; duration: 100 }
         NumberAnimation { target: t0; property: "y"; to: 14; duration: 50 }
+        NumberAnimation { target: tVar; property: "y"; to: 16; duration: 50 }
         NumberAnimation { target: t1; property: "y"; to: 18; duration: 50 }
         NumberAnimation { target: t2; property: "y"; to: 22; duration: 50 }
     }
@@ -226,17 +266,106 @@ Item {
     // ── MAIN CONTENT COLUMN ──────────────────────────────────────────────────
     Column {
         anchors.fill: parent
-        spacing: 10
+        spacing: 8
 
         // 1. Profile Banner Card
         ProfileBanner {
             id: card0
             width: parent.width
-            height: 104
+            height: 100
             wallpaperTimestamp: root.wallpaperTimestamp
             opacity: 0.0
             transform: Translate { id: t0; y: 14 }
             onPowerClicked: root.powerClicked()
+        }
+
+        // 1b. Live Swatches & 1-Click Color Variant Strip
+        Rectangle {
+            id: variantStrip
+            width: parent.width
+            height: 26
+            radius: 13
+            color: Theme.alpha(Theme.surface, 0.58)
+            border.color: Theme.alpha(Theme.foreground, 0.08)
+            border.width: 1
+            opacity: 0.0
+            transform: Translate { id: tVar; y: 16 }
+
+            Row {
+                anchors.fill: parent
+                anchors.leftMargin: 10
+                anchors.rightMargin: 6
+                spacing: 8
+
+                // Live 4-token wallpaper palette swatches
+                Row {
+                    id: swatchRow
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: 4
+
+                    Repeater {
+                        model: [Theme.primary, Theme.secondary, Theme.tertiary, Theme.surface]
+                        delegate: Rectangle {
+                            width: 10
+                            height: 10
+                            radius: 5
+                            color: modelData
+                            border.width: 1
+                            border.color: Theme.alpha(Theme.foreground, 0.28)
+                            Behavior on color { ColorAnimation { duration: 220 } }
+                        }
+                    }
+                }
+
+                // Subtle separator
+                Rectangle {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 1
+                    height: 13
+                    color: Theme.alpha(Theme.foreground, 0.12)
+                }
+
+                // 7 clickable harmony variant chips
+                Row {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: parent.width - swatchRow.width - 17 - 8
+                    spacing: 3
+
+                    Repeater {
+                        model: root.colorVariants
+                        delegate: Rectangle {
+                            readonly property string activeVar: root.pendingVariant !== "" ? root.pendingVariant : (Theme.variant || "vibrant")
+                            readonly property bool isCurrent: activeVar === modelData.key
+                            width: (parent.width - 6 * 3) / 7
+                            height: 20
+                            radius: 10
+                            anchors.verticalCenter: parent.verticalCenter
+                            color: isCurrent
+                                ? (root.pendingVariant === modelData.key ? Theme.alpha(Theme.primary, 0.72) : Theme.primary)
+                                : (varMouse.containsMouse ? Theme.alpha(Theme.foreground, 0.10) : "transparent")
+                            Behavior on color { ColorAnimation { duration: 140 } }
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: modelData.label
+                                font.family: "Outfit"
+                                font.pixelSize: 10
+                                font.weight: isCurrent ? Font.DemiBold : Font.Medium
+                                color: isCurrent ? Theme.on_primary : Theme.alpha(Theme.foreground, varMouse.containsMouse ? 0.92 : 0.65)
+                                Behavior on color { ColorAnimation { duration: 140 } }
+                            }
+
+                            MouseArea {
+                                id: varMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: root.applyColorVariant(modelData.key)
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         // 2. Middle Row: Quick Toggles (280) + Sliders (150) = 444
@@ -251,7 +380,7 @@ Item {
             QuickToggles {
                 id: quickToggles
                 width: 280
-                height: 165
+                height: 162
                 active: root.active
                 onOpenWifiDialogRequested: {
                     wifiDialog.open()
@@ -266,7 +395,7 @@ Item {
                 VerticalSlider {
                     id: brightnessSlider
                     width: 70
-                    height: 165
+                    height: 162
                     title: "Brightness"
                     value: root.currentBrightness
                     fillColor: Theme.primary
@@ -280,7 +409,7 @@ Item {
                 VerticalSlider {
                     id: volumeSlider
                     width: 70
-                    height: 165
+                    height: 162
                     title: "Volume"
                     value: root.currentVolume
                     isMuted: root.isMuted
@@ -301,9 +430,9 @@ Item {
             id: card2
             width: parent.width
             height: {
-                if (root.isAudioPlaying && root.visualizerEnabled) return 130
-                if (root.notificationList && root.notificationList.length > 0) return 172
-                return 160
+                if (root.isAudioPlaying && root.visualizerEnabled) return 102
+                if (root.notificationList && root.notificationList.length > 0) return 144
+                return 138
             }
             opacity: 0.0
             transform: Translate { id: t2; y: 22 }
@@ -314,6 +443,9 @@ Item {
             onClearAllNotifications: root.clearAllNotifications()
             onDismissNotification: function(notifId) {
                 root.dismissNotification(notifId)
+            }
+            onDismissAppNotifications: function(appName) {
+                root.dismissAppNotifications(appName)
             }
             onOpenWeatherRequested: root.navigateToWeather()
         }
@@ -471,7 +603,7 @@ Item {
         Rectangle {
             id: bottomVisualizerBar
             width: parent.width
-            height: (root.isAudioPlaying && root.visualizerEnabled) ? 46 : 0
+            height: (root.isAudioPlaying && root.visualizerEnabled) ? 40 : 0
             radius: 16
             color: Theme.alpha(Theme.surface, 0.65)
             border.color: Theme.alpha(Theme.accent, 0.35)

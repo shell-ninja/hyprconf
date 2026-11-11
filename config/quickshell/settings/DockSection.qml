@@ -111,7 +111,7 @@ Item {
 
     Process {
         id: dockReloader
-        command: ["sh", "-c", "qs ipc -c dock call dock reloadConfig 2>/dev/null || " + root.homeDir + "/.hyprconf/hypr/scripts/sh/qs-dock.sh --restart"]
+        command: ["sh", "-c", "qs ipc -c island call dock reloadConfig 2>/dev/null || qs ipc -c bar call dock reloadConfig 2>/dev/null || qs ipc -c dock call dock reloadConfig 2>/dev/null || " + root.homeDir + "/.hyprconf/hypr/scripts/sh/qs-dock.sh --restart"]
     }
 
     // Debounced save timer for sliders

@@ -9,6 +9,34 @@ import Quickshell.Services.Notifications
 import Quickshell.Services.Polkit
 import Quickshell.Services.Mpris
 import "."
+import "./dock_mod" as DockMod
+import "./widgets_mod" as WidgetsMod
+
+ShellRoot {
+    id: shellRoot
+
+    DockMod.DockLayer {}
+    WidgetsMod.DesktopWidgetsLayer {}
+
+    // Lightweight one-shot package update notification check (avoids 19 MB idle Python daemon)
+    Process {
+        id: pkgNotifyOnceProc
+        command: ["python3", (Quickshell.env("HOME") || "/home") + "/.hyprconf/hypr/scripts/py/pkgupdate-notifier.py", "--once"]
+    }
+    Timer {
+        id: pkgBootTimer
+        interval: 90000
+        running: true
+        repeat: false
+        onTriggered: if (!pkgNotifyOnceProc.running) pkgNotifyOnceProc.running = true
+    }
+    Timer {
+        id: pkgPeriodicTimer
+        interval: 18000000
+        running: true
+        repeat: true
+        onTriggered: if (!pkgNotifyOnceProc.running) pkgNotifyOnceProc.running = true
+    }
 
 PanelWindow {
     id: root
@@ -858,6 +886,7 @@ PanelWindow {
         function openStatus() {
             root.expanded = true
             if (expandedContent) {
+                expandedContent.pendingNetworkDetail = false
                 expandedContent.currentView = 0
                 expandedContent.dashboardPage = 2
                 if (expandedContent.statusPage) {
@@ -868,10 +897,12 @@ PanelWindow {
         function openProcessNet() {
             root.expanded = true
             if (expandedContent) {
+                expandedContent.pendingNetworkDetail = true
                 expandedContent.currentView = 0
                 expandedContent.dashboardPage = 2
                 if (expandedContent.statusPage) {
                     expandedContent.statusPage.showingNetworkDetail = true
+                    expandedContent.pendingNetworkDetail = false
                 }
             }
         }
@@ -1410,6 +1441,32 @@ PanelWindow {
         root.saveNotificationsToCache()
     }
 
+    function dismissAppNotifications(appName) {
+        var target = (appName && appName.length > 0) ? appName : "System"
+        var copy = []
+        for (var i = 0; i < root.notificationList.length; i++) {
+            var item = root.notificationList[i]
+            var itemApp = (item && item.app && item.app.length > 0) ? item.app : "System"
+            if (item && itemApp === target) {
+                if (item.rawNotif && typeof item.rawNotif.dismiss === "function") {
+                    try { item.rawNotif.dismiss() } catch(e) {}
+                }
+            } else if (item) {
+                copy.push(item)
+            }
+        }
+        root.notificationList = copy
+        if (root.currentPopupNotification) {
+            var popApp = (root.currentPopupNotification.app && root.currentPopupNotification.app.length > 0) ? root.currentPopupNotification.app : "System"
+            if (popApp === target) {
+                root.hasNotificationPopup = false
+                root.currentPopupNotification = null
+                notifPopupTimer.stop()
+            }
+        }
+        root.saveNotificationsToCache()
+    }
+
     // ── LIVE TIME, DATE & SYSTEM STATS ───────────────────────────────────────
     property string timeString: "12:00 PM"
     property string dateString: "Fri, 16 Oct"
@@ -1844,6 +1901,9 @@ PanelWindow {
             onDismissNotification: function(notifId) {
                 root.dismissNotification(notifId)
             }
+            onDismissAppNotifications: function(appName) {
+                root.dismissAppNotifications(appName)
+            }
 
             onCloseRequested: {
                 root.closeIsland()
@@ -1907,4 +1967,5 @@ PanelWindow {
     mask: Region {
         item: shapeContainer
     }
+}
 }

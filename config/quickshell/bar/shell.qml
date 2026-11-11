@@ -1,8 +1,33 @@
 import Quickshell
 import Quickshell.Wayland
+import Quickshell.Io
 import QtQuick
+import "./dock_mod" as DockMod
+import "./widgets_mod" as WidgetsMod
 
 ShellRoot {
+    DockMod.DockLayer {}
+    WidgetsMod.DesktopWidgetsLayer {}
+
+    Process {
+        id: pkgNotifyOnceProc
+        command: ["python3", (Quickshell.env("HOME") || "/home") + "/.hyprconf/hypr/scripts/py/pkgupdate-notifier.py", "--once"]
+    }
+    Timer {
+        id: pkgBootTimer
+        interval: 90000
+        running: true
+        repeat: false
+        onTriggered: if (!pkgNotifyOnceProc.running) pkgNotifyOnceProc.running = true
+    }
+    Timer {
+        id: pkgPeriodicTimer
+        interval: 18000000
+        running: true
+        repeat: true
+        onTriggered: if (!pkgNotifyOnceProc.running) pkgNotifyOnceProc.running = true
+    }
+
     component Reserve: PanelWindow {
         property string side: "top"
         property int zone: 44

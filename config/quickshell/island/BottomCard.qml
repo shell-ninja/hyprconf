@@ -159,8 +159,47 @@ Rectangle {
     readonly property bool hasNotifications: notificationsList.length > 0
     signal clearAllNotifications()
     signal dismissNotification(var notifId)
+    signal dismissAppNotifications(string appName)
+
+    property var expandedGroups: ({})
+
+    function toggleGroup(appKey) {
+        var next = Object.assign({}, root.expandedGroups)
+        next[appKey] = !next[appKey]
+        root.expandedGroups = next
+    }
+
+    readonly property var groupedNotifications: {
+        var list = root.notificationsList || []
+        var order = []
+        var buckets = {}
+        for (var i = 0; i < list.length; i++) {
+            var n = list[i]
+            if (!n) continue
+            var appKey = (n.app && n.app.length > 0) ? n.app : "System"
+            if (!buckets[appKey]) {
+                buckets[appKey] = []
+                order.push(appKey)
+            }
+            buckets[appKey].push(n)
+        }
+        var out = []
+        for (var j = 0; j < order.length; j++) {
+            var k = order[j]
+            var items = buckets[k]
+            out.push({
+                app: k,
+                count: items.length,
+                latest: items[0],
+                items: items,
+                expanded: (root.expandedGroups[k] === true)
+            })
+        }
+        return out
+    }
 
     function handleClearAll() {
+        root.expandedGroups = ({})
         root.clearAllNotifications()
     }
 
@@ -354,168 +393,426 @@ Rectangle {
         anchors.topMargin: 2
         visible: root.currentTab === 0
 
-        // Scrollable list
+        // Reusable single notification card (shared across flat cards, stack leaders & expanded items)
+        component SingleNotifItem: Rectangle {
+            id: cardItem
+            property var notif: null
+            property int stackCount: 1
+            property bool isGroupExpanded: false
+            property bool nested: false
+            property string groupApp: ""
+
+            implicitHeight: Math.max(54, contentCol.implicitHeight + 16)
+            height: implicitHeight
+            radius: nested ? 10 : 12
+            color: itemHoverArea.containsMouse ? Theme.alpha(Theme.surface, 0.90) : Theme.alpha(Theme.background, nested ? 0.42 : 0.55)
+            border.color: itemHoverArea.containsMouse ? Theme.alpha(Theme.accent, 0.35) : Theme.alpha(Theme.foreground, nested ? 0.06 : 0.08)
+            border.width: 1
+
+            Behavior on color { ColorAnimation { duration: 150 } }
+            Behavior on border.color { ColorAnimation { duration: 150 } }
+
+            MouseArea {
+                id: itemHoverArea
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: {
+                    if (!cardItem.notif) return
+                    if (cardItem.stackCount > 1 && !cardItem.isGroupExpanded) {
+                        root.toggleGroup(cardItem.groupApp)
+                        return
+                    }
+                    if (cardItem.notif.rawNotif && typeof cardItem.notif.rawNotif.invoke === "function") {
+                        try { cardItem.notif.rawNotif.invoke("default") } catch(e) {}
+                    }
+                }
+            }
+
+            // App / Category Icon Squircle (hidden in nested expanded rows)
+            Rectangle {
+                id: notifIconBox
+                width: cardItem.nested ? 0 : 32
+                height: cardItem.nested ? 0 : 32
+                radius: 10
+                visible: !cardItem.nested
+                color: Theme.alpha(Theme.accent, 0.14)
+                border.color: Theme.alpha(Theme.accent, 0.28)
+                border.width: 1
+                anchors.left: parent.left
+                anchors.leftMargin: cardItem.nested ? 0 : 10
+                anchors.top: parent.top
+                anchors.topMargin: 10
+                clip: true
+
+                Image {
+                    anchors.centerIn: parent
+                    width: 18
+                    height: 18
+                    fillMode: Image.PreserveAspectFit
+                    source: cardItem.notif ? root.getNotificationIcon(cardItem.notif.icon, cardItem.notif.app, cardItem.notif.summary) : ""
+                    sourceSize: Qt.size(36, 36)
+                }
+            }
+
+            // Stack Badge (+N) when collapsed stack has multiple items
+            Rectangle {
+                id: stackBadge
+                visible: cardItem.stackCount > 1 && !cardItem.isGroupExpanded
+                width: visible ? (stackText.implicitWidth + 12) : 0
+                height: 20
+                radius: 10
+                z: 5
+                color: stackMouse.containsMouse ? Theme.primary : Theme.alpha(Theme.primary, 0.22)
+                border.color: Theme.alpha(Theme.primary, 0.45)
+                border.width: 1
+                anchors.right: notifDismissBtn.left
+                anchors.rightMargin: 4
+                anchors.top: parent.top
+                anchors.topMargin: 9
+                Behavior on color { ColorAnimation { duration: 120 } }
+
+                Text {
+                    id: stackText
+                    anchors.centerIn: parent
+                    text: "+" + (cardItem.stackCount - 1)
+                    font.family: "Outfit"
+                    font.pixelSize: 10
+                    font.weight: Font.Bold
+                    color: stackMouse.containsMouse ? Theme.on_primary : Theme.primary
+                }
+
+                MouseArea {
+                    id: stackMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    preventStealing: true
+                    onClicked: function(mouse) {
+                        mouse.accepted = true
+                        root.toggleGroup(cardItem.groupApp)
+                    }
+                }
+            }
+
+            // Dismiss Button (dismisses whole collapsed stack OR individual notification)
+            Rectangle {
+                id: notifDismissBtn
+                width: 22
+                height: 22
+                radius: 11
+                z: 5
+                color: dismissMouse.containsMouse ? Theme.alpha(Theme.error, 0.25) : "transparent"
+                border.color: dismissMouse.containsMouse ? Theme.alpha(Theme.error, 0.40) : "transparent"
+                border.width: 1
+                anchors.right: parent.right
+                anchors.rightMargin: 8
+                anchors.top: parent.top
+                anchors.topMargin: 8
+
+                Image {
+                    anchors.centerIn: parent
+                    width: 11
+                    height: 11
+                    source: root.trashSvg
+                    opacity: dismissMouse.containsMouse ? 1.0 : 0.42
+                }
+
+                MouseArea {
+                    id: dismissMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    preventStealing: true
+                    onClicked: function(mouse) {
+                        mouse.accepted = true
+                        if (!cardItem.notif) return
+                        if (cardItem.stackCount > 1 && !cardItem.isGroupExpanded) {
+                            root.dismissAppNotifications(cardItem.groupApp)
+                        } else {
+                            root.handleDismiss(cardItem.notif.id)
+                        }
+                    }
+                }
+            }
+
+            // Content Column
+            Column {
+                id: contentCol
+                anchors.left: cardItem.nested ? parent.left : notifIconBox.right
+                anchors.leftMargin: cardItem.nested ? 10 : 10
+                anchors.right: (stackBadge.visible ? stackBadge.left : notifDismissBtn.left)
+                anchors.rightMargin: 6
+                anchors.top: parent.top
+                anchors.topMargin: 8
+                spacing: 3
+
+                // Meta Row: App name & Timestamp (simplified in nested rows)
+                Row {
+                    width: parent.width
+                    spacing: 5
+
+                    Text {
+                        text: cardItem.notif && cardItem.notif.app && cardItem.notif.app.length > 0 ? cardItem.notif.app : "System"
+                        font.family: "Outfit"
+                        font.pixelSize: 10
+                        font.weight: Font.DemiBold
+                        color: Theme.accent
+                        elide: Text.ElideRight
+                        maximumLineCount: 1
+                        visible: !cardItem.nested
+                    }
+
+                    Text {
+                        text: "•"
+                        font.pixelSize: 9
+                        color: Theme.alpha(Theme.foreground, 0.30)
+                        anchors.verticalCenter: parent.verticalCenter
+                        visible: !cardItem.nested
+                    }
+
+                    Text {
+                        text: cardItem.notif ? root.formatNotifTime(cardItem.notif.time) : "Just now"
+                        font.family: "Outfit"
+                        font.pixelSize: 9
+                        font.weight: Font.Normal
+                        color: Theme.alpha(Theme.foreground, 0.45)
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                }
+
+                // Summary / Title
+                Text {
+                    text: (cardItem.notif && cardItem.notif.summary) ? cardItem.notif.summary : "Notification"
+                    font.family: "Outfit"
+                    font.pixelSize: 12
+                    font.weight: Font.Bold
+                    color: Theme.foreground
+                    wrapMode: Text.Wrap
+                    width: parent.width
+                    maximumLineCount: 2
+                    elide: Text.ElideRight
+                }
+
+                // Body
+                Text {
+                    text: (cardItem.notif && cardItem.notif.body) ? cardItem.notif.body : ""
+                    font.family: "Outfit"
+                    font.pixelSize: 11
+                    font.weight: Font.Normal
+                    color: Theme.alpha(Theme.foreground, 0.78)
+                    lineHeight: 1.22
+                    wrapMode: Text.Wrap
+                    width: parent.width
+                    maximumLineCount: 4
+                    elide: Text.ElideRight
+                    visible: text.length > 0
+                }
+
+                // Inline Notification Action Pills (Primary + Secondary)
+                Flow {
+                    id: actionsFlow
+                    width: parent.width
+                    spacing: 5
+                    visible: !!(cardItem.notif && cardItem.notif.actions && cardItem.notif.actions.length > 0)
+
+                    Repeater {
+                        model: (cardItem.notif && cardItem.notif.actions) ? cardItem.notif.actions : []
+
+                        delegate: Rectangle {
+                            required property var modelData
+                            required property int index
+                            readonly property bool isPrimary: index === 0
+                            height: 20
+                            width: Math.min(actLbl.implicitWidth + 14, 130)
+                            radius: 10
+                            color: isPrimary
+                                ? (actMouse.containsMouse ? Theme.accent : Theme.primary)
+                                : (actMouse.containsMouse ? Theme.alpha(Theme.primary, 0.25) : Theme.alpha(Theme.surface, 0.85))
+                            border.color: isPrimary
+                                ? "transparent"
+                                : Theme.alpha(Theme.primary, actMouse.containsMouse ? 0.65 : 0.30)
+                            border.width: isPrimary ? 0 : 1
+                            Behavior on color { ColorAnimation { duration: 120 } }
+
+                            Text {
+                                id: actLbl
+                                anchors.centerIn: parent
+                                text: modelData.text || ""
+                                font.family: "Outfit"
+                                font.pixelSize: 10
+                                font.weight: Font.DemiBold
+                                color: parent.isPrimary ? Theme.on_primary : Theme.foreground
+                                elide: Text.ElideRight
+                                maximumLineCount: 1
+                            }
+
+                            MouseArea {
+                                id: actMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                preventStealing: true
+                                onClicked: function(mouse) {
+                                    mouse.accepted = true
+                                    try { if (modelData.action) modelData.action.invoke() } catch(e) {}
+                                    if (cardItem.notif) root.handleDismiss(cardItem.notif.id)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Scrollable Grouped Notification Stack List
         ListView {
             id: notifListView
             anchors.fill: parent
             visible: root.hasNotifications
-            model: root.notificationsList
-            spacing: 6
+            model: root.groupedNotifications
+            spacing: 7
             clip: true
             boundsBehavior: Flickable.StopAtBounds
 
-            delegate: Rectangle {
-                id: notifCard
+            delegate: Item {
+                id: groupDelegate
                 width: notifListView.width
-                implicitHeight: Math.max(56, contentCol.implicitHeight + 18)
+                implicitHeight: groupCol.implicitHeight + ((modelData.count > 1 && !modelData.expanded) ? 4 : 0)
                 height: implicitHeight
-                radius: 12
-                color: itemHoverArea.containsMouse ? Theme.alpha(Theme.surface, 0.90) : Theme.alpha(Theme.background, 0.55)
-                border.color: itemHoverArea.containsMouse ? Theme.alpha(Theme.accent, 0.35) : Theme.alpha(Theme.foreground, 0.08)
-                border.width: 1
 
-                Behavior on color { ColorAnimation { duration: 150 } }
-                Behavior on border.color { ColorAnimation { duration: 150 } }
-
-                MouseArea {
-                    id: itemHoverArea
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: {
-                        if (modelData.rawNotif && typeof modelData.rawNotif.invoke === "function") {
-                            try { modelData.rawNotif.invoke("default") } catch(e) {}
-                        }
-                    }
-                }
-
-                // App / Category Icon Squircle
+                // Physical Stack Edge Card behind collapsed group
                 Rectangle {
-                    id: notifIconBox
-                    width: 32
-                    height: 32
+                    visible: modelData.count > 1 && !modelData.expanded
+                    width: parent.width - 14
+                    height: 16
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.bottom: parent.bottom
                     radius: 10
-                    color: Theme.alpha(Theme.accent, 0.14)
-                    border.color: Theme.alpha(Theme.accent, 0.28)
+                    color: Theme.alpha(Theme.surface, 0.55)
+                    border.color: Theme.alpha(Theme.primary, 0.22)
                     border.width: 1
-                    anchors.left: parent.left
-                    anchors.leftMargin: 10
-                    anchors.top: parent.top
-                    anchors.topMargin: 10
-                    clip: true
-
-                    Image {
-                        id: notifItemImg
-                        anchors.centerIn: parent
-                        width: 18
-                        height: 18
-                        fillMode: Image.PreserveAspectFit
-                        source: root.getNotificationIcon(modelData.icon, modelData.app, modelData.summary)
-                        sourceSize: Qt.size(36, 36)
-                    }
+                    z: 0
                 }
 
-                // Individual Dismiss Button
-                Rectangle {
-                    id: notifDismissBtn
-                    width: 22
-                    height: 22
-                    radius: 11
-                    z: 5
-                    color: dismissMouse.containsMouse ? Theme.alpha(Theme.error, 0.25) : "transparent"
-                    border.color: dismissMouse.containsMouse ? Theme.alpha(Theme.error, 0.40) : "transparent"
-                    border.width: 1
-                    anchors.right: parent.right
-                    anchors.rightMargin: 8
-                    anchors.top: parent.top
-                    anchors.topMargin: 9
-
-                    Image {
-                        anchors.centerIn: parent
-                        width: 11
-                        height: 11
-                        source: root.trashSvg
-                        opacity: dismissMouse.containsMouse ? 1.0 : 0.40
-                    }
-
-                    MouseArea {
-                        id: dismissMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: root.handleDismiss(modelData.id)
-                    }
-                }
-
-                // Content Column (dynamically expands with content)
                 Column {
-                    id: contentCol
-                    anchors.left: notifIconBox.right
-                    anchors.leftMargin: 10
-                    anchors.right: notifDismissBtn.left
-                    anchors.rightMargin: 6
-                    anchors.top: parent.top
-                    anchors.topMargin: 9
-                    spacing: 2
+                    id: groupCol
+                    width: parent.width
+                    spacing: 4
+                    z: 1
 
-                    // Meta Row: App name & Timestamp
-                    Row {
+                    // Expanded Multi-App Group Header Bar
+                    Rectangle {
+                        visible: modelData.count > 1 && modelData.expanded
                         width: parent.width
-                        spacing: 5
+                        height: 26
+                        radius: 9
+                        color: Theme.alpha(Theme.surface, 0.72)
+                        border.color: Theme.alpha(Theme.primary, 0.22)
+                        border.width: 1
 
-                        Text {
-                            text: (modelData.app && modelData.app.length > 0) ? modelData.app : "System"
-                            font.family: "Outfit"
-                            font.pixelSize: 10
-                            font.weight: Font.DemiBold
-                            color: Theme.accent
-                            elide: Text.ElideRight
-                            maximumLineCount: 1
-                        }
+                        Row {
+                            anchors.fill: parent
+                            anchors.leftMargin: 8
+                            anchors.rightMargin: 6
+                            spacing: 6
 
-                        Text {
-                            text: "•"
-                            font.pixelSize: 9
-                            color: Theme.alpha(Theme.foreground, 0.30)
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
+                            Image {
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: 14
+                                height: 14
+                                fillMode: Image.PreserveAspectFit
+                                source: modelData.latest ? root.getNotificationIcon(modelData.latest.icon, modelData.app, modelData.latest.summary) : ""
+                                sourceSize: Qt.size(28, 28)
+                            }
 
-                        Text {
-                            text: root.formatNotifTime(modelData.time)
-                            font.family: "Outfit"
-                            font.pixelSize: 9
-                            font.weight: Font.Normal
-                            color: Theme.alpha(Theme.foreground, 0.45)
-                            anchors.verticalCenter: parent.verticalCenter
+                            Text {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: modelData.app + " (" + modelData.count + ")"
+                                font.family: "Outfit"
+                                font.pixelSize: 11
+                                font.weight: Font.Bold
+                                color: Theme.foreground
+                                elide: Text.ElideRight
+                                width: Math.max(40, parent.width - 110)
+                            }
+
+                            Rectangle {
+                                anchors.verticalCenter: parent.verticalCenter
+                                height: 18
+                                width: hideLbl.implicitWidth + 12
+                                radius: 9
+                                color: hideMouse.containsMouse ? Theme.alpha(Theme.foreground, 0.14) : Theme.alpha(Theme.foreground, 0.07)
+
+                                Text {
+                                    id: hideLbl
+                                    anchors.centerIn: parent
+                                    text: "Collapse"
+                                    font.family: "Outfit"
+                                    font.pixelSize: 9
+                                    font.weight: Font.Medium
+                                    color: Theme.alpha(Theme.foreground, 0.85)
+                                }
+
+                                MouseArea {
+                                    id: hideMouse
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: root.toggleGroup(modelData.app)
+                                }
+                            }
+
+                            Rectangle {
+                                anchors.verticalCenter: parent.verticalCenter
+                                height: 18
+                                width: clrAppLbl.implicitWidth + 12
+                                radius: 9
+                                color: clrAppMouse.containsMouse ? Theme.alpha(Theme.error, 0.28) : Theme.alpha(Theme.error, 0.14)
+
+                                Text {
+                                    id: clrAppLbl
+                                    anchors.centerIn: parent
+                                    text: "Clear"
+                                    font.family: "Outfit"
+                                    font.pixelSize: 9
+                                    font.weight: Font.DemiBold
+                                    color: Theme.error
+                                }
+
+                                MouseArea {
+                                    id: clrAppMouse
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: root.dismissAppNotifications(modelData.app)
+                                }
+                            }
                         }
                     }
 
-                    // Summary / Title
-                    Text {
-                        text: modelData.summary ? modelData.summary : "Notification"
-                        font.family: "Outfit"
-                        font.pixelSize: 12
-                        font.weight: Font.Bold
-                        color: Theme.foreground
-                        wrapMode: Text.Wrap
+                    // Collapsed Leader Card (or Single Item)
+                    SingleNotifItem {
+                        visible: !modelData.expanded || modelData.count === 1
                         width: parent.width
-                        maximumLineCount: 2
-                        elide: Text.ElideRight
+                        notif: modelData.latest
+                        stackCount: modelData.count
+                        isGroupExpanded: modelData.expanded
+                        groupApp: modelData.app
+                        nested: false
                     }
 
-                    // Body
-                    Text {
-                        text: modelData.body ? modelData.body : ""
-                        font.family: "Outfit"
-                        font.pixelSize: 11
-                        font.weight: Font.Normal
-                        color: Theme.alpha(Theme.foreground, 0.78)
-                        lineHeight: 1.25
-                        wrapMode: Text.Wrap
-                        width: parent.width
-                        maximumLineCount: 6
-                        elide: Text.ElideRight
-                        visible: text.length > 0
+                    // Expanded Child Cards
+                    Repeater {
+                        model: (modelData.count > 1 && modelData.expanded) ? modelData.items : []
+                        delegate: SingleNotifItem {
+                            required property var modelData
+                            width: groupCol.width
+                            notif: modelData
+                            stackCount: 1
+                            isGroupExpanded: true
+                            nested: true
+                        }
                     }
                 }
             }

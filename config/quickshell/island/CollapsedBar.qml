@@ -4,6 +4,7 @@ import QtQuick.Shapes
 import Quickshell
 import Quickshell.Io
 import Quickshell.Hyprland
+import Quickshell.Services.Mpris
 import "."
 
 Item {
@@ -12,7 +13,7 @@ Item {
     readonly property real requiredWidth: {
         if (root.islandStyle === "split_wings") return (splitWingsItem && splitWingsItem.width > 0) ? Math.ceil(splitWingsItem.width + 16) : 412
         if (root.islandStyle === "orbital") return (orbitalItem && orbitalItem.width > 0) ? Math.ceil(orbitalItem.width + 16) : 340
-        if (root.islandStyle === "minimal_rail") return 586
+        if (root.islandStyle === "minimal_rail") return (minimalRailItem && minimalRailItem.width > 0) ? Math.ceil(minimalRailItem.width + 16) : 586
         return (capsuleRow && capsuleRow.width > 0) ? Math.ceil(capsuleRow.width + 56) : 316
     }
     implicitWidth: requiredWidth
@@ -123,6 +124,32 @@ Item {
     readonly property string micSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.accent + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>')
     readonly property string micMuteSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.error + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V5a3 3 0 0 0-5.94-.6"/><path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>')
     readonly property string sunSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.accent + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>')
+    readonly property string miniMusicSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.accent + '" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>')
+
+    // ── COLLAPSED MEDIA MINI-ACTIVITY (MPRIS, ZERO IDLE TIMERS) ────────────
+    readonly property var activeMprisPlayer: {
+        var players = Mpris.players ? Mpris.players.values : []
+        for (var i = 0; i < players.length; i++) {
+            var p = players[i]
+            if (p && (p.playbackState === MprisPlaybackState.Playing || p.isPlaying)) return p
+        }
+        return null
+    }
+    readonly property bool hasPlayingMedia: activeMprisPlayer !== null
+    property int mediaPosTick: 0
+    readonly property real mediaProgress: {
+        var _t = root.mediaPosTick
+        var p = root.activeMprisPlayer
+        if (!p || !p.length || p.length <= 0) return 0.0
+        return Math.max(0.0, Math.min(1.0, p.position / p.length))
+    }
+
+    Timer {
+        interval: 1000
+        running: root.hasPlayingMedia && !root.expanded && root.visible && !root.hasNotification && !root.hasOsd && (root.activeMprisPlayer && root.activeMprisPlayer.length > 0)
+        repeat: true
+        onTriggered: root.mediaPosTick = (root.mediaPosTick + 1) % 3600
+    }
     readonly property string keyboardSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.accent + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2" ry="2"/><line x1="6" y1="8" x2="6" y2="8"/><line x1="10" y1="8" x2="10" y2="8"/><line x1="14" y1="8" x2="14" y2="8"/><line x1="18" y1="8" x2="18" y2="8"/><line x1="6" y1="12" x2="6" y2="12"/><line x1="10" y1="12" x2="10" y2="12"/><line x1="14" y1="12" x2="14" y2="12"/><line x1="18" y1="12" x2="18" y2="12"/><line x1="8" y1="16" x2="16" y2="16"/></svg>')
     readonly property string ethernetSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.accent + '" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v10c0 1.1-.9 2-2 2h-4v2h2v2H6v-2h2v-2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="M7 9h2v4H7zM11 9h2v4h-2zM15 9h2v4h-2z"/></svg>')
     readonly property string wifiSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.accent + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1.2" fill="' + Theme.accent + '"/></svg>')
@@ -142,38 +169,51 @@ Item {
     }
 
     property var occupiedWorkspaces: []
+    property var wsWindowCounts: ({})
 
-    Process {
-        id: occupiedFetcher
-        command: ["hyprctl", "workspaces", "-j"]
-        running: true
-        stdout: StdioCollector {
-            onTextChanged: {
-                if (text && text.trim().length > 0) {
-                    try {
-                        var parsed = JSON.parse(text.trim())
-                        var occ = []
-                        for (var i = 0; i < parsed.length; i++) {
-                            var ws = parsed[i]
-                            if (ws && ws.id > 0 && ws.windows > 0) {
-                                occ.push(ws.id)
-                            }
-                        }
-                        root.occupiedWorkspaces = occ
-                    } catch(e) {}
-                }
+    function updateOccupiedWorkspaces() {
+        var occ = []
+        var counts = {}
+        var wsList = (Hyprland.workspaces && Hyprland.workspaces.values) ? Hyprland.workspaces.values : []
+        for (var i = 0; i < wsList.length; i++) {
+            var w = wsList[i]
+            if (!w || w.id <= 0) continue
+            var wins = (w.toplevels && w.toplevels.values) ? w.toplevels.values.length : ((w.lastIpcObject && w.lastIpcObject.windows !== undefined) ? w.lastIpcObject.windows : 0)
+            if (wins > 0) {
+                if (occ.indexOf(w.id) === -1) occ.push(w.id)
+                counts[w.id] = wins
             }
         }
+        var tls = (Hyprland.toplevels && Hyprland.toplevels.values) ? Hyprland.toplevels.values : []
+        var tlCounts = {}
+        for (var j = 0; j < tls.length; j++) {
+            var tl = tls[j]
+            if (!tl) continue
+            var obj = tl.lastIpcObject || ({})
+            if (obj.hidden || obj.mapped === false) continue
+            var wid = (obj.workspace && obj.workspace.id) ? obj.workspace.id : (tl.workspace ? tl.workspace.id : -1)
+            if (wid > 0) {
+                if (occ.indexOf(wid) === -1) occ.push(wid)
+                tlCounts[wid] = (tlCounts[wid] || 0) + 1
+            }
+        }
+        for (var k in tlCounts) {
+            counts[k] = Math.max(counts[k] || 0, tlCounts[k])
+        }
+        root.occupiedWorkspaces = occ
+        root.wsWindowCounts = counts
     }
 
-    Timer {
-        id: occupiedPollTimer
-        interval: 10000
-        repeat: true
-        running: true
-        onTriggered: {
-            if (!occupiedFetcher.running) occupiedFetcher.running = true
-        }
+    Component.onCompleted: updateOccupiedWorkspaces()
+
+    Connections {
+        target: Hyprland.workspaces ? Hyprland.workspaces : null
+        function onValuesChanged() { root.updateOccupiedWorkspaces() }
+    }
+
+    Connections {
+        target: Hyprland.toplevels ? Hyprland.toplevels : null
+        function onValuesChanged() { root.updateOccupiedWorkspaces() }
     }
 
     // ── NATIVE ZERO-LATENCY HYPRLAND WORKSPACE INTEGRATION ───────────────────
@@ -184,7 +224,8 @@ Item {
             if (Hyprland.focusedWorkspace && Hyprland.focusedWorkspace.id > 0) {
                 root.activeWorkspace = Hyprland.focusedWorkspace.id
             }
-            if (!occupiedFetcher.running) occupiedFetcher.running = true
+            Hyprland.refreshWorkspaces()
+            root.updateOccupiedWorkspaces()
         }
 
         function onRawEvent(event) {
@@ -193,9 +234,12 @@ Item {
                 if (!isNaN(ws) && ws > 0) {
                     root.activeWorkspace = ws
                 }
-                if (!occupiedFetcher.running) occupiedFetcher.running = true
-            } else if (event.name === "openwindow" || event.name === "closewindow" || event.name === "movewindow" || event.name === "createworkspace" || event.name === "destroyworkspace") {
-                if (!occupiedFetcher.running) occupiedFetcher.running = true
+                Hyprland.refreshWorkspaces()
+                root.updateOccupiedWorkspaces()
+            } else if (event.name === "openwindow" || event.name === "closewindow" || event.name === "movewindow" || event.name === "createworkspace" || event.name === "destroyworkspace" || event.name === "windowtitlev2") {
+                Hyprland.refreshWorkspaces()
+                Hyprland.refreshToplevels()
+                root.updateOccupiedWorkspaces()
             } else if (event.name === "activelayout") {
                 if (event.data && event.data.length > 0) {
                     var parts = event.data.split(",")
@@ -275,44 +319,86 @@ Item {
     }
 
     // ── HARDWARE STATUS (BATTERY DETECTION) ──────────────────────────────────
+    // ── BATTERY & NETWORK STATUS (SYSFS + MOCK WATCHERS + EVENT-DRIVEN) ──
+    property string sysfsBatDir: ""
+    property bool batDetectedDone: false
+    property bool hasMockBattery: false
+
+    function applyBatteryObj(d) {
+        if (!d || d.has_battery === undefined) return false
+        root.hasMockBattery = true
+        root.hasBattery = Boolean(d.has_battery)
+        root.batteryPct = (d.percent !== undefined) ? d.percent : -1
+        root.batteryStatus = d.status || "Discharging"
+        root.isCharging = Boolean(d.is_charging)
+        return true
+    }
+
+    FileView {
+        id: mockBatView1
+        path: root.homeDir + "/.local/share/hyprconf/.cache/mock_battery.json"
+        watchChanges: true
+        onLoaded: {
+            try { if (text().trim()) root.applyBatteryObj(JSON.parse(text().trim())) } catch(e) {}
+        }
+        onFileChanged: reload()
+    }
+
+    FileView {
+        id: mockBatView2
+        path: root.homeDir + "/.hyprconf/hypr/.cache/mock_battery.json"
+        watchChanges: true
+        onLoaded: {
+            try { if (!mockBatView1.loaded && text().trim()) root.applyBatteryObj(JSON.parse(text().trim())) } catch(e) {}
+        }
+        onFileChanged: reload()
+    }
+
     Process {
-        id: batFetcher
-        command: ["python3", root.homeDir + "/.hyprconf/hypr/scripts/py/island-battery.py"]
+        id: batDetectProc
+        command: ["sh", "-c", "for d in /sys/class/power_supply/*; do [ -r \"$d/type\" ] && grep -qi '^battery$' \"$d/type\" 2>/dev/null && [ -r \"$d/capacity\" ] && echo \"$d\" && break; done"]
         running: true
         stdout: StdioCollector {
-            onTextChanged: {
-                if (text && text.trim().length > 0) {
-                    try {
-                        var d = JSON.parse(text.trim())
-                        root.hasBattery = Boolean(d.has_battery)
-                        root.batteryPct = (d.percent !== undefined) ? d.percent : -1
-                        root.batteryStatus = d.status || "Discharging"
-                        root.isCharging = Boolean(d.is_charging)
-                    } catch(e) {}
+            onStreamFinished: {
+                var dir = (text || "").trim()
+                root.sysfsBatDir = dir
+                root.batDetectedDone = true
+                if (dir.length > 0) {
+                    batCapView.reload()
+                    batStatView.reload()
                 }
             }
         }
     }
 
-    // ── MEDIA & RECORDING STATUS FALLBACK FETCHER ────────────────────────────
-    Process {
-        id: mediaStatusFetcher
-        command: ["python3", root.homeDir + "/.hyprconf/hypr/scripts/py/island-media-status.py"]
-        running: true
-        stdout: StdioCollector {
-            onTextChanged: {
-                if (text && text.trim().length > 0) {
-                    try {
-                        var m = JSON.parse(text.trim())
-                        root.isScreenRecording = Boolean(m.recording)
-                        root.isMicActive = Boolean(m.mic_captured)
-                    } catch(e) {}
-                }
+    FileView {
+        id: batCapView
+        path: root.sysfsBatDir.length > 0 ? (root.sysfsBatDir + "/capacity") : ""
+        onLoaded: {
+            if (root.hasMockBattery) return
+            var pct = parseInt(text().trim(), 10)
+            if (!isNaN(pct)) {
+                root.hasBattery = true
+                root.batteryPct = Math.max(0, Math.min(100, pct))
             }
         }
     }
 
-    // ── NETWORK STATUS (ETHERNET / WI-FI) ────────────────────────────────────
+    FileView {
+        id: batStatView
+        path: root.sysfsBatDir.length > 0 ? (root.sysfsBatDir + "/status") : ""
+        onLoaded: {
+            if (root.hasMockBattery) return
+            var st = text().trim()
+            if (st.length > 0) {
+                root.batteryStatus = st
+                var sl = st.toLowerCase()
+                root.isCharging = (sl.indexOf("charging") !== -1 && sl.indexOf("dis") === -1 && sl.indexOf("not") === -1)
+            }
+        }
+    }
+
+    // ── NETWORK STATUS (EVENT-DRIVEN VIA NMCLI MONITOR) ──────────────────────
     property string barNetType: "none"
     property int barNetSignal: 0
     property bool barNetConnected: false
@@ -334,15 +420,33 @@ Item {
         }
     }
 
+    Process {
+        id: netMonitorProc
+        command: ["nmcli", "monitor"]
+        running: true
+        stdout: SplitParser {
+            onRead: line => {
+                if (line && line.trim().length > 0 && !barNetFetcher.running) {
+                    barNetFetcher.running = true
+                }
+            }
+        }
+    }
+
     Timer {
         id: batPollTimer
-        interval: 6000
+        interval: 15000
         repeat: true
-        running: true
+        // Only wake periodically on laptop batteries or active Wi-Fi in minimal_rail mode
+        running: (root.batDetectedDone && root.sysfsBatDir.length > 0 && !root.hasMockBattery) || (root.barNetType === "wifi" && root.islandStyle === "minimal_rail")
         onTriggered: {
-            if (!batFetcher.running) batFetcher.running = true
-            if (!barNetFetcher.running) barNetFetcher.running = true
-            if (!mediaStatusFetcher.running) mediaStatusFetcher.running = true
+            if (root.sysfsBatDir.length > 0 && !root.hasMockBattery) {
+                batCapView.reload()
+                batStatView.reload()
+            }
+            if (root.barNetType === "wifi" && root.islandStyle === "minimal_rail" && !barNetFetcher.running) {
+                barNetFetcher.running = true
+            }
         }
     }
 
@@ -377,6 +481,123 @@ Item {
 
         Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
         Behavior on scale { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+
+        // Compact Playing-Only Media Mini-Activity Pill (Album Art + Progress Bar + Play/Pause)
+        component MediaMiniPill: Item {
+            id: mediaMini
+            property bool pillFrame: false
+            implicitWidth: visible ? (pillFrame ? (miniMediaRow.implicitWidth + 18) : (miniMediaRow.implicitWidth + 4)) : 0
+            implicitHeight: pillFrame ? 28 : 24
+            width: implicitWidth
+            height: implicitHeight
+            anchors.verticalCenter: parent ? parent.verticalCenter : undefined
+            visible: root.hasPlayingMedia
+
+            Rectangle {
+                anchors.fill: parent
+                radius: 14
+                visible: mediaMini.pillFrame
+                color: mediaMiniMouse.containsMouse ? Theme.alpha(Theme.background, 0.92) : Theme.alpha(Theme.background, 0.84)
+                border.color: mediaMiniMouse.containsMouse ? Theme.alpha(Theme.accent, 0.65) : Theme.alpha(Theme.accent, 0.28)
+                border.width: 1
+                Behavior on color { ColorAnimation { duration: 150 } }
+                Behavior on border.color { ColorAnimation { duration: 150 } }
+            }
+
+            Row {
+                id: miniMediaRow
+                anchors.centerIn: parent
+                spacing: 6
+
+                // Framed Album Artwork (zero offscreen FBO)
+                Rectangle {
+                    width: 18
+                    height: 18
+                    radius: 4
+                    color: Theme.alpha(Theme.surface, 0.9)
+                    border.color: Theme.alpha(Theme.primary, 0.55)
+                    border.width: 1
+                    anchors.verticalCenter: parent.verticalCenter
+
+                    Image {
+                        anchors.fill: parent
+                        anchors.margins: 1.5
+                        source: (root.activeMprisPlayer && root.activeMprisPlayer.trackArtUrl) ? root.activeMprisPlayer.trackArtUrl : ""
+                        fillMode: Image.PreserveAspectCrop
+                        sourceSize: Qt.size(36, 36)
+                        asynchronous: true
+                        cache: true
+                        visible: status === Image.Ready && source.toString().length > 0
+                    }
+
+                    Image {
+                        anchors.centerIn: parent
+                        width: 11
+                        height: 11
+                        source: root.miniMusicSvg
+                        visible: !(root.activeMprisPlayer && root.activeMprisPlayer.trackArtUrl && root.activeMprisPlayer.trackArtUrl.length > 0)
+                    }
+                }
+
+                // Track Title + 2px Progress Bar
+                Column {
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: 2
+                    width: Math.max(46, Math.min(82, miniTitleMetrics.implicitWidth))
+
+                    Text {
+                        id: miniTitleMetrics
+                        text: (root.activeMprisPlayer && root.activeMprisPlayer.trackTitle) ? root.activeMprisPlayer.trackTitle : "Playing"
+                        font.family: "Outfit"
+                        font.pixelSize: 10
+                        font.weight: Font.DemiBold
+                        color: Theme.foreground
+                        elide: Text.ElideRight
+                        maximumLineCount: 1
+                        width: parent.width
+                    }
+
+                    Rectangle {
+                        width: parent.width
+                        height: 2
+                        radius: 1
+                        color: Theme.alpha(Theme.foreground, 0.16)
+
+                        Rectangle {
+                            width: parent.width * root.mediaProgress
+                            height: parent.height
+                            radius: 1
+                            gradient: Gradient {
+                                orientation: Gradient.Horizontal
+                                GradientStop { position: 0.0; color: Theme.primary }
+                                GradientStop { position: 1.0; color: Theme.tertiary }
+                            }
+                            Behavior on width { NumberAnimation { duration: 400; easing.type: Easing.OutCubic } }
+                        }
+                    }
+                }
+            }
+
+            MouseArea {
+                id: mediaMiniMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
+                cursorShape: Qt.PointingHandCursor
+                onClicked: function(mouse) {
+                    mouse.accepted = true
+                    var p = root.activeMprisPlayer
+                    if (!p) return
+                    if (mouse.button === Qt.RightButton) {
+                        if (p.canGoNext) p.next()
+                    } else if (mouse.button === Qt.MiddleButton) {
+                        root.clockClicked()
+                    } else {
+                        p.togglePlaying()
+                    }
+                }
+            }
+        }
 
         // ═════════════════════════════════════════════════════════════════════
         // STYLE 1: CAPSULE (ORGANIC MONOLITHIC FLOATING PILL)
@@ -440,6 +661,7 @@ Item {
                             readonly property int wsId: index + 1
                             readonly property bool isActive: (root.activeWorkspace === wsId)
                             readonly property bool isOccupied: (root.occupiedWorkspaces && root.occupiedWorkspaces.indexOf(wsId) !== -1)
+                            readonly property int winCount: (root.wsWindowCounts && root.wsWindowCounts[wsId]) ? root.wsWindowCounts[wsId] : 0
                             readonly property string labelText: (index >= 0 && index < root.wsLabels.length) ? root.wsLabels[index] : wsId.toString()
 
                             width: 22
@@ -463,12 +685,13 @@ Item {
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 anchors.bottom: parent.bottom
                                 anchors.bottomMargin: 2
-                                width: 3
+                                width: parent.winCount > 1 ? Math.min(11, 3 + parent.winCount * 2.5) : 3
                                 height: 3
                                 radius: 1.5
-                                color: Theme.secondary
+                                color: parent.winCount > 1 ? Theme.primary : Theme.secondary
                                 visible: parent.isOccupied && !parent.isActive
                                 opacity: visible ? 1.0 : 0.0
+                                Behavior on width { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
                                 Behavior on opacity { NumberAnimation { duration: 180 } }
                             }
 
@@ -595,6 +818,10 @@ Item {
                     cursorShape: Qt.PointingHandCursor
                     onClicked: root.clockClicked()
                 }
+            }
+
+            MediaMiniPill {
+                pillFrame: false
             }
 
             AudioVisualizer {
@@ -833,12 +1060,19 @@ Item {
                         border.width: 1.2
                         z: 10
 
-                        // Soft ambient breathing pulse when unread notifications exist
-                        SequentialAnimation on scale {
-                            running: root.notificationCount > 0
-                            loops: Animation.Infinite
-                            NumberAnimation { to: 1.15; duration: 1200; easing.type: Easing.InOutQuad }
-                            NumberAnimation { to: 1.0; duration: 1200; easing.type: Easing.InOutQuad }
+                        // Brief breathing pulse on unread notifications without permanent 60fps loop
+                        SequentialAnimation {
+                            id: notifPulseAnim
+                            loops: 3
+                            NumberAnimation { target: orbitalNotifBadge; property: "scale"; to: 1.15; duration: 450; easing.type: Easing.InOutQuad }
+                            NumberAnimation { target: orbitalNotifBadge; property: "scale"; to: 1.0; duration: 450; easing.type: Easing.InOutQuad }
+                        }
+
+                        Connections {
+                            target: root
+                            function onNotificationCountChanged() {
+                                if (root.notificationCount > 0) notifPulseAnim.restart()
+                            }
                         }
 
                         Text {
@@ -898,6 +1132,10 @@ Item {
                         isCharging: root.isCharging
                         anchors.verticalCenter: parent.verticalCenter
                         onClicked: root.clockClicked()
+                    }
+
+                    MediaMiniPill {
+                        pillFrame: false
                     }
                 }
             }
@@ -967,11 +1205,11 @@ Item {
                 width: parent.wingW
                 height: parent.wingH
 
-                // Concave Hugging Silhouette with Rounded Fillet Shoulders
+                // Concave Hugging Silhouette with GPU-native CurveRenderer (zero MSAA offscreen FBO)
                 Shape {
                     anchors.fill: parent
-                    layer.enabled: true
-                    layer.samples: 4
+                    antialiasing: true
+                    preferredRendererType: Shape.CurveRenderer
 
                     ShapePath {
                         strokeColor: Theme.alpha(Theme.accent, 0.55)
@@ -1252,11 +1490,11 @@ Item {
                 width: parent.wingW
                 height: parent.wingH
 
-                // Concave Hugging Silhouette with Rounded Fillet Shoulders
+                // Concave Hugging Silhouette with GPU-native CurveRenderer (zero MSAA offscreen FBO)
                 Shape {
                     anchors.fill: parent
-                    layer.enabled: true
-                    layer.samples: 4
+                    antialiasing: true
+                    preferredRendererType: Shape.CurveRenderer
 
                     ShapePath {
                         strokeColor: Theme.alpha(Theme.accent, 0.55)
@@ -1663,15 +1901,17 @@ Item {
                                 }
 
                                 Rectangle {
+                                    readonly property int winCount: (root.wsWindowCounts && root.wsWindowCounts[parent.wsId]) ? root.wsWindowCounts[parent.wsId] : 0
                                     anchors.horizontalCenter: parent.horizontalCenter
                                     anchors.bottom: parent.bottom
                                     anchors.bottomMargin: 2
-                                    width: 2.5
+                                    width: winCount > 1 ? Math.min(10, 2.5 + winCount * 2.2) : 2.5
                                     height: 2.5
                                     radius: 1.25
-                                    color: Theme.secondary
+                                    color: winCount > 1 ? Theme.primary : Theme.secondary
                                     visible: parent.isOccupied && !parent.isActive
                                     opacity: visible ? 1.0 : 0.0
+                                    Behavior on width { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
                                     Behavior on opacity { NumberAnimation { duration: 180 } }
                                 }
 
@@ -1870,6 +2110,17 @@ Item {
                         }
                     }
                 }
+
+                // ── Conduit 3 (Active Media Only): Net -> Playing Media ───
+                RyokuStreamBridge {
+                    width: 42
+                    visible: root.hasPlayingMedia
+                }
+
+                // ── Module 4 (Active Media Only): Media Mini-Activity ──────
+                MediaMiniPill {
+                    pillFrame: true
+                }
             }
         }
     }
@@ -2019,16 +2270,18 @@ Item {
 
                         delegate: Rectangle {
                             required property var modelData
+                            required property int index
+                            readonly property bool isPrimary: index === 0
                             height: 20
                             width: Math.min(actionLabel.implicitWidth + 14, 120)
                             radius: 10
-                            color: actionBtnMouse.containsMouse
-                                   ? Theme.alpha(Theme.accent, 0.28)
-                                   : Theme.alpha(Theme.accent, 0.12)
-                            border.color: actionBtnMouse.containsMouse
-                                          ? Theme.alpha(Theme.accent, 0.60)
-                                          : Theme.alpha(Theme.accent, 0.28)
-                            border.width: 1
+                            color: isPrimary
+                                   ? (actionBtnMouse.containsMouse ? Theme.accent : Theme.primary)
+                                   : (actionBtnMouse.containsMouse ? Theme.alpha(Theme.primary, 0.25) : Theme.alpha(Theme.surface, 0.78))
+                            border.color: isPrimary
+                                          ? "transparent"
+                                          : Theme.alpha(Theme.primary, actionBtnMouse.containsMouse ? 0.65 : 0.32)
+                            border.width: isPrimary ? 0 : 1
 
                             Behavior on color { ColorAnimation { duration: 120 } }
 
@@ -2039,7 +2292,7 @@ Item {
                                 font.family: "Outfit"
                                 font.pixelSize: 9
                                 font.weight: Font.DemiBold
-                                color: Theme.accent
+                                color: parent.isPrimary ? Theme.on_primary : Theme.foreground
                                 elide: Text.ElideRight
                                 maximumLineCount: 1
                             }

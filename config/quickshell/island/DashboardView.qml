@@ -16,6 +16,7 @@ Item {
     property var notificationList: []
     signal clearAllNotifications()
     signal dismissNotification(var notifId)
+    signal dismissAppNotifications(string appName)
 
     property var polkitFlow: null
 
@@ -78,7 +79,7 @@ Item {
                 }
                 return true
             }
-            if (root.dashboardPage === 2 && statusPage.showingNetworkDetail) {
+            if (root.dashboardPage === 2 && statusPage && statusPage.showingNetworkDetail) {
                 if (event.key === Qt.Key_Escape || event.key === Qt.Key_Left) {
                     statusPage.showingNetworkDetail = false
                     event.accepted = true
@@ -165,10 +166,13 @@ Item {
     }
 
 
+    property bool pendingNetworkDetail: false
+
     property alias homePage: homePage
-    property alias statusPage: statusPage
-    property alias networkDetailPage: statusPage.networkDetailPage
-    property alias weatherPage: weatherPage
+    readonly property var statusPage: statusLoader.item
+    readonly property var networkDetailPage: statusLoader.item ? statusLoader.item.networkDetailPage : null
+    readonly property var weatherPage: weatherLoader.item
+    readonly property var powerView: powerLoader.item
     readonly property var wallpaperView: wallpaperLoader.item
     readonly property var launcherView: launcherLoader.item
     readonly property var themeSwitcherView: themeSwitcherLoader.item
@@ -177,6 +181,43 @@ Item {
     readonly property var clipboardView: clipboardLoader.item
     readonly property var emojiView: emojiLoader.item
     readonly property var keybindsView: keybindsLoader.item
+
+    property bool keepWeatherAlive: false
+    property bool keepStatusAlive: false
+    property bool keepPowerAlive: false
+
+    readonly property bool wantWeather: root.currentView === 0 && root.dashboardPage === 0
+    readonly property bool wantStatus: root.currentView === 0 && root.dashboardPage === 2
+    readonly property bool wantPower: root.currentView === 1
+
+    onWantWeatherChanged: {
+        if (wantWeather) {
+            weatherUnloadTimer.stop()
+            keepWeatherAlive = true
+        } else {
+            weatherUnloadTimer.restart()
+        }
+    }
+    onWantStatusChanged: {
+        if (wantStatus) {
+            statusUnloadTimer.stop()
+            keepStatusAlive = true
+        } else {
+            statusUnloadTimer.restart()
+        }
+    }
+    onWantPowerChanged: {
+        if (wantPower) {
+            powerUnloadTimer.stop()
+            keepPowerAlive = true
+        } else {
+            powerUnloadTimer.restart()
+        }
+    }
+
+    Timer { id: weatherUnloadTimer; interval: 280; onTriggered: root.keepWeatherAlive = false }
+    Timer { id: statusUnloadTimer; interval: 280; onTriggered: root.keepStatusAlive = false }
+    Timer { id: powerUnloadTimer; interval: 280; onTriggered: root.keepPowerAlive = false }
 
     property bool isClosingWallpaper: false
     property real animProgress: 1.0
@@ -192,34 +233,28 @@ Item {
     property int systemBrightness: -1
     property int systemVolume: -1
 
-    // ── 1A. WEATHER FORECAST PAGE (PAGE 1 / INDEX 0) ─────────────────────────
-    WeatherPage {
-        id: weatherPage
+    // ── 1A. WEATHER FORECAST PAGE (PAGE 1 / INDEX 0 — LAZY-LOADED) ───────────
+    Loader {
+        id: weatherLoader
         anchors.fill: parent
-        active: root.active && root.currentView === 0 && root.dashboardPage === 0
+        active: root.wantWeather || root.keepWeatherAlive
         visible: opacity > 0.001
-        opacity: (root.currentView === 0 && root.dashboardPage === 0) ? 1.0 : 0.0
-        scale: (root.currentView === 0 && root.dashboardPage === 0) ? 1.0 : 0.95
+        opacity: root.wantWeather ? 1.0 : 0.0
+        scale: root.wantWeather ? 1.0 : 0.95
         x: (root.dashboardPage === 0) ? 0 : -28
 
-        Behavior on opacity {
-            NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
-        }
-        Behavior on scale {
-            NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
-        }
-        Behavior on x {
-            NumberAnimation { duration: 240; easing.type: Easing.OutCubic }
-        }
+        Behavior on opacity { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+        Behavior on scale { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+        Behavior on x { NumberAnimation { duration: 240; easing.type: Easing.OutCubic } }
 
-        onBackClicked: {
-            root.dashboardPage = 1
-        }
-        onNavigateToControl: {
-            root.dashboardPage = 1
-        }
-        onPageDotClicked: function(pageIdx) {
-            root.dashboardPage = pageIdx
+        sourceComponent: Component {
+            WeatherPage {
+                anchors.fill: parent
+                active: root.active && root.currentView === 0 && root.dashboardPage === 0
+                onBackClicked: root.dashboardPage = 1
+                onNavigateToControl: root.dashboardPage = 1
+                onPageDotClicked: function(pageIdx) { root.dashboardPage = pageIdx }
+            }
         }
     }
 
@@ -249,6 +284,9 @@ Item {
         onDismissNotification: function(notifId) {
             root.dismissNotification(notifId)
         }
+        onDismissAppNotifications: function(appName) {
+            root.dismissAppNotifications(appName)
+        }
 
         Behavior on opacity {
             NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
@@ -271,39 +309,42 @@ Item {
         }
     }
 
-    // ── 1C. SYSTEM STATUS & METRICS (PAGE 3 / INDEX 2) ───────────────────────
-    StatusPage {
-        id: statusPage
+    // ── 1C. SYSTEM STATUS & METRICS (PAGE 3 / INDEX 2 — LAZY-LOADED) ─────────
+    Loader {
+        id: statusLoader
         anchors.fill: parent
-        active: root.active && root.currentView === 0 && root.dashboardPage === 2
+        active: root.wantStatus || root.keepStatusAlive
         visible: opacity > 0.001
-        opacity: (root.currentView === 0 && root.dashboardPage === 2) ? 1.0 : 0.0
-        scale: (root.currentView === 0 && root.dashboardPage === 2) ? 1.0 : 0.95
+        opacity: root.wantStatus ? 1.0 : 0.0
+        scale: root.wantStatus ? 1.0 : 0.95
         x: (root.dashboardPage === 2) ? 0 : 28
 
-        Behavior on opacity {
-            NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
-        }
-        Behavior on scale {
-            NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
-        }
-        Behavior on x {
-            NumberAnimation { duration: 240; easing.type: Easing.OutCubic }
+        Behavior on opacity { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+        Behavior on scale { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+        Behavior on x { NumberAnimation { duration: 240; easing.type: Easing.OutCubic } }
+
+        onLoaded: {
+            if (item && root.pendingNetworkDetail) {
+                item.showingNetworkDetail = true
+                root.pendingNetworkDetail = false
+            }
         }
 
-        onBackClicked: {
-            root.dashboardPage = 1
-        }
-        onPageDotClicked: function(pageIdx) {
-            root.dashboardPage = pageIdx
+        sourceComponent: Component {
+            StatusPage {
+                anchors.fill: parent
+                active: root.active && root.currentView === 0 && root.dashboardPage === 2
+                onBackClicked: root.dashboardPage = 1
+                onPageDotClicked: function(pageIdx) { root.dashboardPage = pageIdx }
+            }
         }
     }
 
-    // ── 2. POWER CONTROL PAGE ────────────────────────────────────────────────
-    PowerView {
-        id: powerView
+    // ── 2. POWER CONTROL PAGE (LAZY-LOADED) ──────────────────────────────────
+    Loader {
+        id: powerLoader
         anchors.fill: parent
-        active: root.active && root.currentView === 1
+        active: root.wantPower || root.keepPowerAlive
         visible: opacity > 0.001
         opacity: root.currentView === 1 ? 1.0 : 0.0
         scale: root.currentView === 1 ? 1.0 : 0.94
@@ -315,8 +356,14 @@ Item {
             NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
         }
 
-        onBackClicked: {
-            root.currentView = 0
+        sourceComponent: Component {
+            PowerView {
+                anchors.fill: parent
+                active: root.active && root.currentView === 1
+                onBackClicked: {
+                    root.currentView = 0
+                }
+            }
         }
     }
 
