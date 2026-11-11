@@ -388,6 +388,7 @@ FloatingWindow {
     property var pendingHyprChanges: ({})
     property var liveAppearance: ({
         border: 2,
+        dual_tone_border: true,
         rounding: 16,
         inner_gap: 4,
         outer_gap: 10,
@@ -1945,6 +1946,38 @@ FloatingWindow {
                                     onMoved: {
                                         window.liveAppearance.border = Math.round(value)
                                         window.markHypr("border_size", Math.round(value))
+                                    }
+                                }
+                            }
+
+                            RowLayout {
+                                width: parent.width
+                                spacing: 16
+
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 2
+                                    Text {
+                                        text: "Dual-Tone Active Border"
+                                        color: Theme.foreground
+                                        font.family: "Outfit"
+                                        font.pixelSize: 13
+                                    }
+                                    Text {
+                                        text: "Blend primary and accent palette colors along a 45° gradient border"
+                                        color: Theme.alpha(Theme.foreground, 0.55)
+                                        font.family: "Outfit"
+                                        font.pixelSize: 11
+                                        wrapMode: Text.WordWrap
+                                        Layout.fillWidth: true
+                                    }
+                                }
+
+                                CapsuleSwitch {
+                                    checked: window.liveAppearance.dual_tone_border !== false
+                                    onToggled: {
+                                        window.liveAppearance.dual_tone_border = checked
+                                        window.markHypr("dual_tone_border", checked)
                                     }
                                 }
                             }

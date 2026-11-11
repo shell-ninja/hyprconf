@@ -478,11 +478,17 @@ def get_fallback_colors():
     }
 
 
-def generate_hypr_lua(colors):
+def generate_hypr_lua(colors, dual_tone=None):
     """Write hypr/theme.lua so Hyprland window borders stay synchronized."""
     theme_file = Path(HOME) / ".hyprconf/hypr/theme.lua"
     legacy_noctalia = Path(HOME) / ".hyprconf/hypr/noctalia.lua"
     legacy_config_noctalia = Path(HOME) / ".config/hypr/noctalia.lua"
+
+    if dual_tone is None:
+        dual_tone = get_dual_tone_border()
+
+    active_border_expr = "{ colors = {primary, tertiary}, angle = 45 }" if dual_tone else "primary"
+    group_border_expr = "{ colors = {primary, secondary}, angle = 45 }" if dual_tone else "primary"
 
     def strip_hash(h):
         return str(h).lstrip("#")
@@ -503,13 +509,13 @@ local function apply_theme()
     hl.config({{
         general = {{
             col = {{
-                active_border = {{ colors = {{primary, tertiary}}, angle = 45 }},
+                active_border = {active_border_expr},
                 inactive_border = inactive_border,
             }},
         }},
         group = {{
             col = {{
-                border_active = {{ colors = {{primary, secondary}}, angle = 45 }},
+                border_active = {group_border_expr},
                 border_inactive = inactive_border,
                 border_locked_active = error,
                 border_locked_inactive = inactive_border,
@@ -1434,18 +1440,79 @@ def notify_kde_reload():
         pass
 
 
-def get_saved_variant():
-    """Retrieve user-selected color variant from wallpaper_config.json."""
+def _wallpaper_config_path(for_write=False) -> Path:
+    """Resolve user wallpaper_config.json path with cache fallback."""
     user_cfg = Path.home() / ".local" / "share" / "hyprconf" / "wallpaper_config.json"
-    cfg_file = user_cfg if user_cfg.exists() else (CACHE_DIR / "wallpaper_config.json")
+    if for_write:
+        return user_cfg if user_cfg.parent.exists() else (CACHE_DIR / "wallpaper_config.json")
+    return user_cfg if user_cfg.exists() else (CACHE_DIR / "wallpaper_config.json")
+
+
+def _read_wallpaper_config() -> dict:
+    """Load persisted theme preferences from wallpaper_config.json."""
+    cfg_file = _wallpaper_config_path(for_write=False)
     if cfg_file.exists():
         try:
             data = json.loads(cfg_file.read_text())
-            if isinstance(data, dict) and data.get("color_variant"):
-                return str(data["color_variant"]).lower()
+            if isinstance(data, dict):
+                return data
         except Exception:
             pass
-    return "vibrant"
+    return {}
+
+
+def _write_wallpaper_config(updates: dict):
+    """Persist one or more theme preference keys to wallpaper_config.json."""
+    cfg_file = _wallpaper_config_path(for_write=True)
+    try:
+        cfg_data = _read_wallpaper_config()
+        changed = False
+        for k, v in updates.items():
+            if cfg_data.get(k) != v:
+                cfg_data[k] = v
+                changed = True
+        if changed or not cfg_file.exists():
+            cfg_file.parent.mkdir(parents=True, exist_ok=True)
+            cfg_file.write_text(json.dumps(cfg_data, indent=2))
+    except Exception:
+        pass
+
+
+def get_saved_variant():
+    """Retrieve user-selected color variant from wallpaper_config.json."""
+    variant = _read_wallpaper_config().get("color_variant")
+    return str(variant).lower() if variant else "vibrant"
+
+
+def get_dual_tone_border() -> bool:
+    """Return whether 45-degree dual-tone active borders are enabled (default True)."""
+    val = _read_wallpaper_config().get("dual_tone_border")
+    return val if isinstance(val, bool) else True
+
+
+def sync_hypr_border_only(dual_tone=None):
+    """Regenerate only hypr/theme.lua from colors.json and reload Hyprland borders."""
+    if dual_tone is not None:
+        _write_wallpaper_config({"dual_tone_border": bool(dual_tone)})
+    else:
+        dual_tone = get_dual_tone_border()
+
+    colors = None
+    colors_file = QS_DIR / "colors.json"
+    if colors_file.exists():
+        try:
+            colors = json.loads(colors_file.read_text())
+        except Exception:
+            colors = None
+    if not colors:
+        wall = resolve_current_wallpaper()
+        if wall and os.path.exists(wall):
+            colors = extract_wallpaper_palette(wall, variant=get_saved_variant())
+    if not colors:
+        colors = get_fallback_colors()
+
+    generate_hypr_lua(colors, dual_tone=dual_tone)
+    subprocess.run(["hyprctl", "reload", "config-only"], capture_output=True)
 
 
 def sync_theme(wallpaper_path=None, variant=None):
@@ -1456,19 +1523,7 @@ def sync_theme(wallpaper_path=None, variant=None):
     if not variant:
         variant = get_saved_variant()
     else:
-        # Persist chosen variant into wallpaper_config.json
-        user_cfg = Path.home() / ".local" / "share" / "hyprconf" / "wallpaper_config.json"
-        cfg_file = user_cfg if user_cfg.parent.exists() else (CACHE_DIR / "wallpaper_config.json")
-        try:
-            cfg_data = json.loads(cfg_file.read_text()) if cfg_file.exists() else {}
-            if not isinstance(cfg_data, dict):
-                cfg_data = {}
-            if cfg_data.get("color_variant") != variant:
-                cfg_data["color_variant"] = variant
-                cfg_file.parent.mkdir(parents=True, exist_ok=True)
-                cfg_file.write_text(json.dumps(cfg_data, indent=2))
-        except Exception:
-            pass
+        _write_wallpaper_config({"color_variant": variant})
 
     colors = None
     if wallpaper_path and os.path.exists(wallpaper_path):
@@ -1513,11 +1568,17 @@ def sync_theme(wallpaper_path=None, variant=None):
     print(f"Theme colors applied ({variant}): primary={colors.get('primary')} accent={colors.get('accent')} surface={colors.get('surface')}")
 
 
+def _parse_bool_flag(raw: str) -> bool:
+    return raw.strip().lower() in ("1", "true", "on", "yes", "enable", "enabled")
+
+
 def _parse_cli_args(args):
     wall = None
     variant = None
     palette_mode = False
     all_variants = False
+    dual_border = None
+    sync_lua_only = False
 
     idx = 0
     while idx < len(args):
@@ -1528,6 +1589,15 @@ def _parse_cli_args(args):
         elif arg == "--all-variants":
             palette_mode = True
             all_variants = True
+            idx += 1
+        elif arg == "--sync-lua":
+            sync_lua_only = True
+            idx += 1
+        elif arg == "--dual-border" and idx + 1 < len(args):
+            dual_border = _parse_bool_flag(args[idx + 1])
+            idx += 2
+        elif arg.startswith("--dual-border="):
+            dual_border = _parse_bool_flag(arg.split("=", 1)[1])
             idx += 1
         elif arg in ("--variant", "-v") and idx + 1 < len(args):
             variant = args[idx + 1].strip().lower()
@@ -1544,11 +1614,11 @@ def _parse_cli_args(args):
         else:
             idx += 1
 
-    return wall, variant, palette_mode, all_variants
+    return wall, variant, palette_mode, all_variants, dual_border, sync_lua_only
 
 
 def main():
-    wall, variant, palette_mode, all_variants = _parse_cli_args(sys.argv[1:])
+    wall, variant, palette_mode, all_variants, dual_border, sync_lua_only = _parse_cli_args(sys.argv[1:])
 
     # Fast read-only preview mode skips system sync lock & compositor writes
     if palette_mode:
@@ -1574,10 +1644,16 @@ def main():
         sys.exit(0)
 
     try:
-        if not wall:
-            wall = resolve_current_wallpaper()
+        if dual_border is not None:
+            _write_wallpaper_config({"dual_tone_border": dual_border})
 
-        sync_theme(wall, variant=variant)
+        if sync_lua_only or (dual_border is not None and not wall and not variant):
+            sync_hypr_border_only(dual_tone=dual_border if dual_border is not None else get_dual_tone_border())
+        else:
+            if not wall:
+                wall = resolve_current_wallpaper()
+
+            sync_theme(wall, variant=variant)
     finally:
         try:
             fcntl.flock(lock_fd, fcntl.LOCK_UN)

@@ -243,6 +243,19 @@ def extract_lua_table(text, table_name):
     return None, -1, -1
 
 
+def _read_dual_tone_border() -> bool:
+    """Return dual_tone_border preference from wallpaper_config.json (default True)."""
+    cfg_file = Path.home() / ".local" / "share" / "hyprconf" / "wallpaper_config.json"
+    if cfg_file.exists():
+        try:
+            data = json.loads(cfg_file.read_text())
+            if isinstance(data, dict) and isinstance(data.get("dual_tone_border"), bool):
+                return data["dual_tone_border"]
+        except Exception:
+            pass
+    return True
+
+
 def read_appearance():
     layout = "scrolling"
     col_width = 1.0
@@ -541,6 +554,7 @@ def read_appearance():
 
     return {
         "border": float(lua_get(CONFIGS_LUA, "border") or 2),
+        "dual_tone_border": _read_dual_tone_border(),
         "rounding": float(lua_get(CONFIGS_LUA, "rounding") or 8),
         "inner_gap": float(lua_get(CONFIGS_LUA, "inner_gap") or 4),
         "outer_gap": float(lua_get(CONFIGS_LUA, "outer_gap") or 8),
@@ -1040,6 +1054,25 @@ def _apply_appearance(pending, result):
             result.ok(f"border-size      → {val}")
         else:
             result.err("configs.lua not found — border size skipped")
+
+    if "dual_tone_border" in pending:
+        enabled = bool(pending["dual_tone_border"])
+        hypr_colors_py = Path(__file__).resolve().parent / "hypr-colors.py"
+        if not hypr_colors_py.is_file():
+            hypr_colors_py = Path.home() / ".hyprconf" / "hypr" / "scripts" / "py" / "hypr-colors.py"
+        if hypr_colors_py.is_file():
+            r = subprocess.run(
+                [sys.executable, str(hypr_colors_py), "--dual-border", "on" if enabled else "off"],
+                capture_output=True,
+                text=True,
+                timeout=8,
+            )
+            if r.returncode == 0:
+                result.ok(f"dual-tone-border → {'on' if enabled else 'off'}")
+            else:
+                result.err(f"dual-tone-border failed: {r.stderr.strip() or r.returncode}")
+        else:
+            result.err("hypr-colors.py not found — dual-tone border skipped")
 
     if "roundness" in pending:
         val = str(pending["roundness"])
