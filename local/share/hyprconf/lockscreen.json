@@ -80,7 +80,8 @@
         "format_24h": false,
         "show_am_pm": true,
         "size": 100,
-        "weight": "Bold"
+        "weight": "Bold",
+        "preset": "editorial_split"
     },
     "date": {
         "enabled": true,

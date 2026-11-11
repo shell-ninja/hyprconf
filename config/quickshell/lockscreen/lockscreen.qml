@@ -52,7 +52,8 @@ Scope {
                 format_24h: false,
                 show_am_pm: true,
                 size: 84,
-                weight: "Light"
+                weight: "Light",
+                preset: "editorial_split"
             },
             date: {
                 enabled: true,
@@ -280,6 +281,9 @@ Scope {
 
     // Micro-interactions
     property real keypressBounce: 0.0
+    property real keystrokeFlare: 0.0
+    property real unlockRingScale: 0.85
+    property real unlockRingOpacity: 0.0
 
     // Continuous Avatar Breathing & Orbit properties
     property real avatarBreath: 0.0
@@ -456,21 +460,26 @@ Scope {
     }
 
     readonly property date now: clock.date
-    readonly property string timeStr: {
+    readonly property string hoursStr: {
         var is24h = Boolean(root.cfg && root.cfg.clock && root.cfg.clock.format_24h)
-        if (is24h) {
-            return Qt.formatDateTime(now, "HH:mm")
-        }
-        var h = now.getHours() % 12
-        if (h === 0) h = 12
-        var hStr = (h < 10 ? "0" : "") + h
-        var mStr = (now.getMinutes() < 10 ? "0" : "") + now.getMinutes()
-        return hStr + ":" + mStr
+        var h = is24h ? now.getHours() : ((now.getHours() % 12) || 12)
+        return (h < 10 ? "0" : "") + h
     }
-    readonly property string amPmStr: Qt.formatDateTime(now, "AP")
+    readonly property string minutesStr: (now.getMinutes() < 10 ? "0" : "") + now.getMinutes()
+    readonly property string timeStr: hoursStr + ":" + minutesStr
+    readonly property string amPmStr: (root.cfg && root.cfg.clock && root.cfg.clock.format_24h) ? "" : Qt.formatDateTime(now, "AP")
     readonly property string dateStr: (root.cfg.date && root.cfg.date.format === "compact")
         ? Qt.formatDateTime(now, "ddd, MMM d")
         : Qt.formatDateTime(now, "dddd, MMMM d")
+    readonly property string dayUpperStr: Qt.formatDateTime(now, "dddd").toUpperCase()
+    readonly property string monthDayStr: Qt.formatDateTime(now, "dd MMM").toUpperCase()
+    readonly property string compactDateStr: Qt.formatDateTime(now, "ddd, MMM d")
+    readonly property string isoDateStr: Qt.formatDateTime(now, "yyyy-MM-dd") + " // " + Qt.formatDateTime(now, "ddd").toUpperCase()
+    readonly property string clockPreset: {
+        var raw = (root.cfg && root.cfg.clock && root.cfg.clock.preset) ? String(root.cfg.clock.preset).toLowerCase().replace(/\s+/g, "_") : "editorial_split"
+        if (raw === "classic" || raw === "editorial_split" || raw === "mono_telemetry" || raw === "minimal_pill") return raw
+        return "editorial_split"
+    }
 
     PamContext {
         id: pam
@@ -491,6 +500,7 @@ Scope {
                 root.statusMessage = ""
                 root.passwordBuffer = ""
                 root.unlocked = true
+                unlockHaloAnim.restart()
                 unlockShrinkAnim.start()
             } else {
                 root.authError = true
@@ -511,16 +521,31 @@ Scope {
         }
     }
 
-    // Micro tactile bounce on lock icon when typing
+    // Micro tactile bounce & keystroke rim flare on typing
     SequentialAnimation {
         id: bounceAnim
         NumberAnimation { target: root; property: "keypressBounce"; to: -2.5; duration: 40; easing.type: Easing.OutQuad }
         NumberAnimation { target: root; property: "keypressBounce"; to: 0.0; duration: 60; easing.type: Easing.OutBounce }
     }
 
-    // Continuous Organic Avatar Breathing & Halo Glow Pulse (runs all the time)
     SequentialAnimation {
-        running: true
+        id: keystrokeFlareAnim
+        NumberAnimation { target: root; property: "keystrokeFlare"; to: 1.0; duration: 45; easing.type: Easing.OutQuad }
+        NumberAnimation { target: root; property: "keystrokeFlare"; to: 0.0; duration: 280; easing.type: Easing.OutCubic }
+    }
+
+    ParallelAnimation {
+        id: unlockHaloAnim
+        NumberAnimation { target: root; property: "unlockRingScale"; from: 0.85; to: 1.75; duration: 460; easing.type: Easing.OutCubic }
+        SequentialAnimation {
+            NumberAnimation { target: root; property: "unlockRingOpacity"; to: 0.90; duration: 60; easing.type: Easing.OutQuad }
+            NumberAnimation { target: root; property: "unlockRingOpacity"; to: 0.0; duration: 400; easing.type: Easing.OutCubic }
+        }
+    }
+
+    // Organic Avatar Breathing & Halo Glow Pulse (gated by config toggles)
+    SequentialAnimation {
+        running: Boolean(root.cfg && root.cfg.avatar && (root.cfg.avatar.breathing_enabled || root.cfg.avatar.glow_enabled))
         loops: Animation.Infinite
         ParallelAnimation {
             NumberAnimation { target: root; property: "avatarBreath"; to: 1.0; duration: 3200; easing.type: Easing.InOutSine }
@@ -924,11 +949,23 @@ Scope {
                         return Math.max(0.4, Math.min(3.0, sc))
                     }
 
-                    // 1. Clock & AM/PM & Date Module
+                    // 1. Clock & AM/PM & Date Module (4 Editorial Presets)
                     Item {
                         id: clockModule
-                        width: Math.max(timeRow.implicitWidth, dateText.implicitWidth)
-                        height: timeRow.implicitHeight + (dateText.visible ? (dateText.implicitHeight + 4) : 0)
+                        readonly property real clockPx: (root.cfg && root.cfg.clock && root.cfg.clock.size) ? root.cfg.clock.size : 84
+                        readonly property int clockWt: (root.cfg && root.cfg.clock && root.cfg.clock.weight === "Bold") ? Font.Bold : ((root.cfg && root.cfg.clock && root.cfg.clock.weight === "Medium") ? Font.Medium : Font.Light)
+                        width: {
+                            if (root.clockPreset === "editorial_split") return splitLockRow.implicitWidth + 12
+                            if (root.clockPreset === "mono_telemetry") return monoLockCol.implicitWidth + 16
+                            if (root.clockPreset === "minimal_pill") return minimalLockRow.implicitWidth + 44
+                            return Math.max(timeRow.implicitWidth, dateText.implicitWidth)
+                        }
+                        height: {
+                            if (root.clockPreset === "editorial_split") return splitLockRow.implicitHeight + 8
+                            if (root.clockPreset === "mono_telemetry") return monoLockCol.implicitHeight + 8
+                            if (root.clockPreset === "minimal_pill") return minimalLockRow.implicitHeight + 22
+                            return timeRow.implicitHeight + (dateText.visible ? (dateText.implicitHeight + 4) : 0)
+                        }
                         x: modulesContainer.getModuleX("clock", 0.50, width)
                         y: modulesContainer.getModuleY("clock", 0.18, height)
                         scale: modulesContainer.getModuleScale("clock", 1.0)
@@ -937,19 +974,39 @@ Scope {
 
                         Rectangle {
                             anchors.fill: parent
-                            anchors.margins: -12
-                            radius: 20
-                            visible: Boolean(root.cfg && root.cfg.widget_backgrounds && root.cfg.widget_backgrounds.clock)
-                            color: Theme.alpha(Theme.surface, 0.45)
+                            anchors.margins: root.clockPreset === "minimal_pill" ? 0 : -12
+                            radius: root.clockPreset === "minimal_pill" ? height / 2 : 20
+                            clip: true
+                            visible: root.clockPreset === "minimal_pill"
+                                     ? (Boolean(root.cfg && root.cfg.widget_backgrounds && root.cfg.widget_backgrounds.clock !== false))
+                                     : Boolean(root.cfg && root.cfg.widget_backgrounds && root.cfg.widget_backgrounds.clock)
+                            color: Theme.alpha(Theme.mix(Theme.background, Theme.surface, 0.55), 0.55)
                             border.width: 1
-                            border.color: Theme.alpha(Theme.accent, 0.30)
+                            border.color: Theme.alpha(Theme.foreground, 0.16)
                             z: -1
+
+                            Rectangle {
+                                anchors.top: parent.top
+                                anchors.left: parent.left
+                                anchors.right: parent.right
+                                anchors.leftMargin: 18
+                                anchors.rightMargin: 18
+                                height: 1
+                                gradient: Gradient {
+                                    orientation: Gradient.Horizontal
+                                    GradientStop { position: 0.0; color: "transparent" }
+                                    GradientStop { position: 0.5; color: Theme.alpha(Theme.foreground, 0.25) }
+                                    GradientStop { position: 1.0; color: "transparent" }
+                                }
+                            }
                         }
 
+                        // Preset 1: Classic
                         Column {
                             id: clockCol
-                            anchors.fill: parent
+                            anchors.centerIn: parent
                             spacing: 4
+                            visible: root.clockPreset === "classic"
 
                             Row {
                                 id: timeRow
@@ -961,8 +1018,8 @@ Scope {
                                     text: root.timeStr
                                     color: Theme.accent
                                     font.family: "Outfit"
-                                    font.pixelSize: (root.cfg && root.cfg.clock && root.cfg.clock.size) ? root.cfg.clock.size : 84
-                                    font.weight: (root.cfg && root.cfg.clock && root.cfg.clock.weight === "Bold") ? Font.Bold : ((root.cfg && root.cfg.clock && root.cfg.clock.weight === "Medium") ? Font.Medium : Font.Light)
+                                    font.pixelSize: clockModule.clockPx
+                                    font.weight: clockModule.clockWt
                                     font.letterSpacing: 2
                                 }
 
@@ -990,6 +1047,207 @@ Scope {
                                 font.pixelSize: 13
                                 font.weight: Font.Medium
                                 font.letterSpacing: 4
+                            }
+                        }
+
+                        // Preset 2: Editorial Split
+                        Row {
+                            id: splitLockRow
+                            anchors.centerIn: parent
+                            spacing: 16
+                            visible: root.clockPreset === "editorial_split"
+
+                            Row {
+                                anchors.verticalCenter: parent.verticalCenter
+                                spacing: 3
+
+                                Text {
+                                    text: root.hoursStr
+                                    color: Theme.foreground
+                                    font.family: "Outfit"
+                                    font.pixelSize: clockModule.clockPx
+                                    font.weight: Font.Black
+                                    font.letterSpacing: -1.5
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
+
+                                Text {
+                                    text: ":"
+                                    color: Theme.alpha(Theme.accent, 0.70)
+                                    font.family: "Outfit"
+                                    font.pixelSize: Math.round(clockModule.clockPx * 0.85)
+                                    font.weight: Font.Light
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    anchors.verticalCenterOffset: -3
+                                }
+
+                                Text {
+                                    text: root.minutesStr
+                                    color: Theme.accent
+                                    font.family: "Outfit"
+                                    font.pixelSize: clockModule.clockPx
+                                    font.weight: Font.Light
+                                    font.letterSpacing: 0.5
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
+                            }
+
+                            Rectangle {
+                                width: 2
+                                height: Math.max(36, clockModule.clockPx * 0.72)
+                                radius: 1
+                                anchors.verticalCenter: parent.verticalCenter
+                                visible: ((root.cfg && root.cfg.date) ? root.cfg.date.enabled : true) || ((root.cfg && root.cfg.clock) ? (!root.cfg.clock.format_24h && root.cfg.clock.show_am_pm) : true)
+                                gradient: Gradient {
+                                    orientation: Gradient.Vertical
+                                    GradientStop { position: 0.0; color: Theme.accent }
+                                    GradientStop { position: 1.0; color: Theme.alpha(Theme.primary, 0.25) }
+                                }
+                            }
+
+                            Column {
+                                anchors.verticalCenter: parent.verticalCenter
+                                spacing: 3
+                                visible: ((root.cfg && root.cfg.date) ? root.cfg.date.enabled : true) || ((root.cfg && root.cfg.clock) ? (!root.cfg.clock.format_24h && root.cfg.clock.show_am_pm) : true)
+
+                                Text {
+                                    visible: (root.cfg && root.cfg.clock) ? (!root.cfg.clock.format_24h && root.cfg.clock.show_am_pm) : true
+                                    text: root.amPmStr
+                                    color: Theme.accent
+                                    font.family: "JetBrainsMono Nerd Font"
+                                    font.pixelSize: 12
+                                    font.weight: Font.Bold
+                                    font.letterSpacing: 1.5
+                                }
+
+                                Text {
+                                    visible: (root.cfg && root.cfg.date) ? root.cfg.date.enabled : true
+                                    text: root.dayUpperStr
+                                    color: Theme.foreground
+                                    font.family: "Outfit"
+                                    font.pixelSize: 13
+                                    font.weight: Font.Bold
+                                    font.letterSpacing: 2.2
+                                }
+
+                                Text {
+                                    visible: (root.cfg && root.cfg.date) ? root.cfg.date.enabled : true
+                                    text: root.monthDayStr
+                                    color: Theme.alpha(Theme.foreground, 0.68)
+                                    font.family: "Outfit"
+                                    font.pixelSize: 12
+                                    font.weight: Font.Medium
+                                    font.letterSpacing: 2.0
+                                }
+                            }
+                        }
+
+                        // Preset 3: Mono Telemetry
+                        Column {
+                            id: monoLockCol
+                            anchors.centerIn: parent
+                            spacing: 6
+                            visible: root.clockPreset === "mono_telemetry"
+
+                            Text {
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                visible: (root.cfg && root.cfg.clock) ? (!root.cfg.clock.format_24h && root.cfg.clock.show_am_pm) : true
+                                text: "[ LOCAL // " + root.amPmStr + " ]"
+                                color: Theme.alpha(Theme.accent, 0.88)
+                                font.family: "JetBrainsMono Nerd Font"
+                                font.pixelSize: 11
+                                font.weight: Font.Bold
+                                font.letterSpacing: 1.8
+                            }
+
+                            Text {
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                text: root.timeStr
+                                color: Theme.foreground
+                                font.family: "JetBrainsMono Nerd Font"
+                                font.pixelSize: clockModule.clockPx
+                                font.weight: Font.DemiBold
+                                font.letterSpacing: 1.5
+                            }
+
+                            Rectangle {
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                width: Math.max(180, monoDateTxt.implicitWidth + 32)
+                                height: 1
+                                visible: (root.cfg && root.cfg.date) ? root.cfg.date.enabled : true
+                                gradient: Gradient {
+                                    orientation: Gradient.Horizontal
+                                    GradientStop { position: 0.0; color: "transparent" }
+                                    GradientStop { position: 0.5; color: Theme.alpha(Theme.accent, 0.65) }
+                                    GradientStop { position: 1.0; color: "transparent" }
+                                }
+                            }
+
+                            Text {
+                                id: monoDateTxt
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                visible: (root.cfg && root.cfg.date) ? root.cfg.date.enabled : true
+                                text: root.isoDateStr
+                                color: Theme.alpha(Theme.foreground, 0.72)
+                                font.family: "JetBrainsMono Nerd Font"
+                                font.pixelSize: 12
+                                font.weight: Font.Medium
+                                font.letterSpacing: 1.8
+                            }
+                        }
+
+                        // Preset 4: Minimal Pill
+                        Row {
+                            id: minimalLockRow
+                            anchors.centerIn: parent
+                            spacing: 14
+                            visible: root.clockPreset === "minimal_pill"
+
+                            Rectangle {
+                                width: 8
+                                height: 8
+                                radius: 4
+                                color: Theme.accent
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+
+                            Text {
+                                text: root.timeStr
+                                color: Theme.foreground
+                                font.family: "Outfit"
+                                font.pixelSize: Math.max(28, Math.round(clockModule.clockPx * 0.52))
+                                font.weight: Font.Bold
+                                font.letterSpacing: 1.0
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+
+                            Text {
+                                visible: (root.cfg && root.cfg.clock) ? (!root.cfg.clock.format_24h && root.cfg.clock.show_am_pm) : true
+                                text: root.amPmStr
+                                color: Theme.accent
+                                font.family: "Outfit"
+                                font.pixelSize: 13
+                                font.weight: Font.Bold
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+
+                            Rectangle {
+                                visible: (root.cfg && root.cfg.date) ? root.cfg.date.enabled : true
+                                width: 4
+                                height: 4
+                                radius: 2
+                                color: Theme.alpha(Theme.foreground, 0.40)
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+
+                            Text {
+                                visible: (root.cfg && root.cfg.date) ? root.cfg.date.enabled : true
+                                text: root.compactDateStr
+                                color: Theme.alpha(Theme.foreground, 0.78)
+                                font.family: "Outfit"
+                                font.pixelSize: 15
+                                font.weight: Font.Medium
+                                anchors.verticalCenter: parent.verticalCenter
                             }
                         }
                     }
@@ -1029,7 +1287,7 @@ Scope {
                                 Behavior on color { ColorAnimation { duration: 240 } }
                             }
 
-                            // Layer 2: Keystroke Resonance Ripple Ring
+                            // Layer 2: Keystroke Resonance Ripple Ring & PAM Unlock Halo
                             Rectangle {
                                 anchors.centerIn: parent
                                 width: userAvatarModule.baseSize + 16
@@ -1039,6 +1297,18 @@ Scope {
                                 opacity: root.avatarRippleOpacity
                                 color: "transparent"
                                 border.width: 2.0
+                                border.color: Theme.accent
+                            }
+
+                            Rectangle {
+                                anchors.centerIn: parent
+                                width: userAvatarModule.baseSize + 18
+                                height: userAvatarModule.baseSize + 18
+                                radius: width / 2
+                                scale: root.unlockRingScale
+                                opacity: root.unlockRingOpacity
+                                color: Theme.alpha(Theme.accent, 0.14)
+                                border.width: 2.5
                                 border.color: Theme.accent
                             }
 
@@ -1054,7 +1324,7 @@ Scope {
                                     to: 360
                                     duration: root.verifying ? 1000 : (avatarHoverArea.containsMouse ? 2800 : 6500)
                                     loops: Animation.Infinite
-                                    running: true
+                                    running: Boolean(root.cfg && root.cfg.avatar && root.cfg.avatar.orbit_satellites_enabled)
                                 }
 
                                 // Concentric Orbit Guide Ring
@@ -1437,13 +1707,13 @@ Scope {
                                 radius: height / 2
                                 antialiasing: true
                                 color: "transparent"
-                                border.width: root.unlocked ? 1.8 : (root.authError ? 1.5 : (passwordField.activeFocus ? 1.4 : 1.1))
+                                border.width: root.unlocked ? 2.0 : (root.authError ? 1.6 : (passwordField.activeFocus ? 1.4 : 1.1))
                                 border.color: root.unlocked
                                     ? Theme.accent
                                     : (root.authError
-                                        ? Theme.alpha(Theme.error, 0.85)
-                                        : (passwordField.activeFocus ? Theme.alpha(Theme.accent, 0.85) : Theme.alpha(Theme.foreground, 0.30)))
-                                Behavior on border.color { ColorAnimation { duration: 150 } }
+                                        ? Theme.alpha(Theme.error, 0.88)
+                                        : (passwordField.activeFocus ? Theme.alpha(Theme.accent, 0.55 + root.keystrokeFlare * 0.45) : Theme.alpha(Theme.foreground, 0.30)))
+                                Behavior on border.color { ColorAnimation { duration: 120 } }
                                 Behavior on border.width { NumberAnimation { duration: 150 } }
                             }
 
@@ -1519,6 +1789,7 @@ Scope {
                                             root.statusMessage = ""
                                         }
                                         bounceAnim.restart()
+                                        keystrokeFlareAnim.restart()
                                         avatarRippleAnim.restart()
                                     }
 

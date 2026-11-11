@@ -48,7 +48,7 @@ Item {
         enabled: true,
         global_glass_opacity: 0.65,
         widgets: {
-            clock: { id: "clock", type: "clock", title: "Desktop Clock", enabled: true, x: 0.50, y: 0.28, width: 360, height: 130, scale: 1.0, format_24h: false, show_seconds: false, show_date: true, show_greeting: true, font_size: 44, font_family: "Outfit", show_background: true, glass_opacity: 0.65 },
+            clock: { id: "clock", type: "clock", title: "Desktop Clock", enabled: true, x: 0.50, y: 0.28, width: 360, height: 130, scale: 1.0, format_24h: false, show_seconds: false, show_date: true, show_greeting: true, preset: "editorial_split", font_size: 44, font_family: "Outfit", show_background: true, glass_opacity: 0.65 },
             visualizer: { id: "visualizer", type: "visualizer", title: "Audio Visualizer", enabled: true, x: 0.50, y: 0.74, width: 520, height: 90, scale: 1.0, bar_count: 12, style: "bars", show_background: true, glass_opacity: 0.55 },
             system_monitor: { id: "system_monitor", type: "system_monitor", title: "System Monitor", enabled: true, x: 0.84, y: 0.34, width: 280, height: 230, scale: 1.0, show_cpu: true, show_ram: true, show_disk: true, show_temp: true, show_background: true, glass_opacity: 0.65 },
             audio_player: { id: "audio_player", type: "audio_player", title: "Audio Player", enabled: true, x: 0.16, y: 0.34, width: 380, height: 148, scale: 1.0, compact: false, show_vinyl: true, show_visualizer: true, hide_when_idle: false, show_background: true, glass_opacity: 0.65 },
@@ -1187,6 +1187,42 @@ Item {
                                                 id: optClockGreet
                                                 checked: Boolean(customizerTab.activeCfg && customizerTab.activeCfg.show_greeting !== false)
                                                 onToggled: root.updateWidgetOption("clock", "show_greeting", optClockGreet.checked)
+                                            }
+                                        }
+
+                                        // Clock Editorial Style Preset
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            Text {
+                                                text: "Typography Preset"
+                                                color: Theme.foreground
+                                                font.family: "Outfit"
+                                                font.pixelSize: 11
+                                            }
+                                            Item { Layout.fillWidth: true }
+                                            ModernDropdown {
+                                                implicitWidth: 170
+                                                implicitHeight: 30
+                                                readonly property var keyToLabel: ({
+                                                    "editorial_split": "Editorial Split",
+                                                    "classic": "Classic",
+                                                    "mono_telemetry": "Mono Telemetry",
+                                                    "minimal_pill": "Minimal Pill"
+                                                })
+                                                readonly property var labelToKey: ({
+                                                    "Editorial Split": "editorial_split",
+                                                    "Classic": "classic",
+                                                    "Mono Telemetry": "mono_telemetry",
+                                                    "Minimal Pill": "minimal_pill"
+                                                })
+                                                model: ["Editorial Split", "Classic", "Mono Telemetry", "Minimal Pill"]
+                                                currentValue: {
+                                                    var p = (customizerTab.activeCfg && customizerTab.activeCfg.preset) ? String(customizerTab.activeCfg.preset) : "editorial_split"
+                                                    return keyToLabel[p] || "Editorial Split"
+                                                }
+                                                onSelected: function(val) {
+                                                    root.updateWidgetOption("clock", "preset", labelToKey[val] || "editorial_split")
+                                                }
                                             }
                                         }
 

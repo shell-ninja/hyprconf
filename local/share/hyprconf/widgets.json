@@ -14,6 +14,7 @@
       "scale": 1.15,
       "font_size": 72,
       "font_family": "Outfit",
+      "preset": "editorial_split",
       "style": "glass",
       "format_24h": false,
       "show_seconds": true,

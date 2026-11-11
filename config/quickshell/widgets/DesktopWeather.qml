@@ -121,8 +121,9 @@ Item {
         id: bgCard
         anchors.fill: parent
         radius: 20
+        clip: true
         visible: (root.widgetConfig && root.widgetConfig.show_background !== undefined) ? (root.widgetConfig.show_background !== false) : true
-        color: Theme.alpha(Theme.background, (root.widgetConfig && root.widgetConfig.glass_opacity !== undefined) ? root.widgetConfig.glass_opacity : 0.65)
+        color: Theme.alpha(Theme.mix(Theme.background, Theme.surface, 0.45), (root.widgetConfig && root.widgetConfig.glass_opacity !== undefined) ? root.widgetConfig.glass_opacity : 0.65)
         border.width: 1
         border.color: Theme.alpha(Theme.foreground, 0.12)
 
@@ -134,7 +135,14 @@ Item {
             anchors.leftMargin: 20
             anchors.rightMargin: 20
             height: 1
-            color: Theme.alpha(Theme.foreground, 0.14)
+            gradient: Gradient {
+                orientation: Gradient.Horizontal
+                GradientStop { position: 0.0; color: "transparent" }
+                GradientStop { position: 0.25; color: Theme.alpha(Theme.foreground, 0.10) }
+                GradientStop { position: 0.50; color: Theme.alpha(Theme.foreground, 0.22) }
+                GradientStop { position: 0.75; color: Theme.alpha(Theme.foreground, 0.10) }
+                GradientStop { position: 1.0; color: "transparent" }
+            }
         }
     }
 

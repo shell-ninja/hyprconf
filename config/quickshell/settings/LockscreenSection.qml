@@ -456,23 +456,51 @@ Item {
                             onWidgetSelected: function(key) { lockscreenRoot.selectedModuleKey = key }
 
                             Item {
-                                width: Math.max(timeRow.implicitWidth, dateText.implicitWidth)
-                                height: timeRow.implicitHeight + (dateText.visible ? (dateText.implicitHeight + 4) : 0)
+                                id: lockClockPreviewItem
+                                readonly property string activePreset: {
+                                    var raw = (window.config.clock && window.config.clock.preset) ? String(window.config.clock.preset).toLowerCase().replace(/\s+/g, "_") : "editorial_split"
+                                    if (raw === "classic" || raw === "editorial_split" || raw === "mono_telemetry" || raw === "minimal_pill") return raw
+                                    return "editorial_split"
+                                }
+                                readonly property string hoursStr: {
+                                    var d = window.currentTime
+                                    var is24h = Boolean(window.config.clock && window.config.clock.format_24h)
+                                    var h = is24h ? d.getHours() : ((d.getHours() % 12) || 12)
+                                    return (h < 10 ? "0" : "") + h
+                                }
+                                readonly property string minutesStr: (window.currentTime.getMinutes() < 10 ? "0" : "") + window.currentTime.getMinutes()
+                                readonly property string timeStr: hoursStr + ":" + minutesStr
+                                readonly property string amPmStr: (window.config.clock && window.config.clock.format_24h) ? "" : Qt.formatTime(window.currentTime, "AP")
+                                readonly property real clockPx: (window.config.clock ? window.config.clock.size : 84)
+
+                                width: {
+                                    if (activePreset === "editorial_split") return previewSplitRow.implicitWidth + 12
+                                    if (activePreset === "mono_telemetry") return previewMonoCol.implicitWidth + 16
+                                    if (activePreset === "minimal_pill") return previewMinimalRow.implicitWidth + 44
+                                    return Math.max(timeRow.implicitWidth, dateText.implicitWidth)
+                                }
+                                height: {
+                                    if (activePreset === "editorial_split") return previewSplitRow.implicitHeight + 8
+                                    if (activePreset === "mono_telemetry") return previewMonoCol.implicitHeight + 8
+                                    if (activePreset === "minimal_pill") return previewMinimalRow.implicitHeight + 22
+                                    return timeRow.implicitHeight + (dateText.visible ? (dateText.implicitHeight + 4) : 0)
+                                }
 
                                 Rectangle {
                                     anchors.fill: parent
-                                    anchors.margins: -12
-                                    radius: 20
-                                    visible: lockscreenRoot.getWidgetBackground("clock")
-                                    color: Theme.alpha(Theme.surface, 0.45)
+                                    anchors.margins: lockClockPreviewItem.activePreset === "minimal_pill" ? 0 : -12
+                                    radius: lockClockPreviewItem.activePreset === "minimal_pill" ? height / 2 : 20
+                                    visible: lockClockPreviewItem.activePreset === "minimal_pill" ? true : lockscreenRoot.getWidgetBackground("clock")
+                                    color: Theme.alpha(Theme.mix(Theme.background, Theme.surface, 0.55), 0.55)
                                     border.width: 1
-                                    border.color: Theme.alpha(Theme.accent, 0.30)
+                                    border.color: Theme.alpha(Theme.foreground, 0.16)
                                 }
 
                                 Column {
                                     id: clockCol
-                                    anchors.fill: parent
+                                    anchors.centerIn: parent
                                     spacing: 4
+                                    visible: lockClockPreviewItem.activePreset === "classic"
 
                                     Row {
                                         id: timeRow
@@ -481,19 +509,10 @@ Item {
 
                                         Text {
                                             id: previewTimeText
-                                            text: {
-                                                var d = window.currentTime
-                                                var is24h = Boolean(window.config.clock && window.config.clock.format_24h)
-                                                if (is24h) return Qt.formatDateTime(d, "HH:mm")
-                                                var h = d.getHours() % 12
-                                                if (h === 0) h = 12
-                                                var hStr = (h < 10 ? "0" : "") + h
-                                                var mStr = (d.getMinutes() < 10 ? "0" : "") + d.getMinutes()
-                                                return hStr + ":" + mStr
-                                            }
+                                            text: lockClockPreviewItem.timeStr
                                             color: Theme.accent
                                             font.family: "Outfit"
-                                            font.pixelSize: (window.config.clock ? window.config.clock.size : 84)
+                                            font.pixelSize: lockClockPreviewItem.clockPx
                                             font.weight: {
                                                 var w = window.config.clock ? window.config.clock.weight : "Light"
                                                 if (w === "Bold") return Font.Bold
@@ -506,7 +525,7 @@ Item {
                                         Text {
                                             anchors.bottom: previewTimeText.bottom
                                             anchors.bottomMargin: 14
-                                            text: Qt.formatTime(window.currentTime, "AP")
+                                            text: lockClockPreviewItem.amPmStr
                                             visible: window.config.clock && !window.config.clock.format_24h && window.config.clock.show_am_pm
                                             color: Theme.alpha(Theme.accent, 0.90)
                                             font.family: "Outfit"
@@ -533,6 +552,53 @@ Item {
                                         font.weight: Font.Medium
                                         font.letterSpacing: 4
                                     }
+                                }
+
+                                Row {
+                                    id: previewSplitRow
+                                    anchors.centerIn: parent
+                                    spacing: 16
+                                    visible: lockClockPreviewItem.activePreset === "editorial_split"
+
+                                    Row {
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        spacing: 3
+                                        Text { text: lockClockPreviewItem.hoursStr; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: lockClockPreviewItem.clockPx; font.weight: Font.Black; font.letterSpacing: -1.5; anchors.verticalCenter: parent.verticalCenter }
+                                        Text { text: ":"; color: Theme.alpha(Theme.accent, 0.70); font.family: "Outfit"; font.pixelSize: Math.round(lockClockPreviewItem.clockPx * 0.85); font.weight: Font.Light; anchors.verticalCenter: parent.verticalCenter; anchors.verticalCenterOffset: -3 }
+                                        Text { text: lockClockPreviewItem.minutesStr; color: Theme.accent; font.family: "Outfit"; font.pixelSize: lockClockPreviewItem.clockPx; font.weight: Font.Light; font.letterSpacing: 0.5; anchors.verticalCenter: parent.verticalCenter }
+                                    }
+
+                                    Rectangle {
+                                        width: 2; height: Math.max(36, lockClockPreviewItem.clockPx * 0.72); radius: 1; anchors.verticalCenter: parent.verticalCenter
+                                        color: Theme.accent
+                                    }
+
+                                    Column {
+                                        anchors.verticalCenter: parent.verticalCenter; spacing: 3
+                                        Text { visible: window.config.clock && !window.config.clock.format_24h && window.config.clock.show_am_pm; text: lockClockPreviewItem.amPmStr; color: Theme.accent; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 12; font.weight: Font.Bold; font.letterSpacing: 1.5 }
+                                        Text { visible: window.config.date ? window.config.date.enabled : true; text: Qt.formatDate(window.currentTime, "dddd").toUpperCase(); color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 13; font.weight: Font.Bold; font.letterSpacing: 2.2 }
+                                        Text { visible: window.config.date ? window.config.date.enabled : true; text: Qt.formatDate(window.currentTime, "dd MMM").toUpperCase(); color: Theme.alpha(Theme.foreground, 0.68); font.family: "Outfit"; font.pixelSize: 12; font.weight: Font.Medium; font.letterSpacing: 2.0 }
+                                    }
+                                }
+
+                                Column {
+                                    id: previewMonoCol
+                                    anchors.centerIn: parent; spacing: 6
+                                    visible: lockClockPreviewItem.activePreset === "mono_telemetry"
+                                    Text { anchors.horizontalCenter: parent.horizontalCenter; visible: window.config.clock && !window.config.clock.format_24h && window.config.clock.show_am_pm; text: "[ LOCAL // " + lockClockPreviewItem.amPmStr + " ]"; color: Theme.alpha(Theme.accent, 0.88); font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 11; font.weight: Font.Bold; font.letterSpacing: 1.8 }
+                                    Text { anchors.horizontalCenter: parent.horizontalCenter; text: lockClockPreviewItem.timeStr; color: Theme.foreground; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: lockClockPreviewItem.clockPx; font.weight: Font.DemiBold; font.letterSpacing: 1.5 }
+                                    Text { anchors.horizontalCenter: parent.horizontalCenter; visible: window.config.date ? window.config.date.enabled : true; text: Qt.formatDate(window.currentTime, "yyyy-MM-dd") + " // " + Qt.formatDate(window.currentTime, "ddd").toUpperCase(); color: Theme.alpha(Theme.foreground, 0.72); font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 12; font.weight: Font.Medium; font.letterSpacing: 1.8 }
+                                }
+
+                                Row {
+                                    id: previewMinimalRow
+                                    anchors.centerIn: parent; spacing: 14
+                                    visible: lockClockPreviewItem.activePreset === "minimal_pill"
+                                    Rectangle { width: 8; height: 8; radius: 4; color: Theme.accent; anchors.verticalCenter: parent.verticalCenter }
+                                    Text { text: lockClockPreviewItem.timeStr; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: Math.max(28, Math.round(lockClockPreviewItem.clockPx * 0.52)); font.weight: Font.Bold; anchors.verticalCenter: parent.verticalCenter }
+                                    Text { visible: window.config.clock && !window.config.clock.format_24h && window.config.clock.show_am_pm; text: lockClockPreviewItem.amPmStr; color: Theme.accent; font.family: "Outfit"; font.pixelSize: 13; font.weight: Font.Bold; anchors.verticalCenter: parent.verticalCenter }
+                                    Rectangle { visible: window.config.date ? window.config.date.enabled : true; width: 4; height: 4; radius: 2; color: Theme.alpha(Theme.foreground, 0.40); anchors.verticalCenter: parent.verticalCenter }
+                                    Text { visible: window.config.date ? window.config.date.enabled : true; text: Qt.formatDate(window.currentTime, "ddd, MMM d"); color: Theme.alpha(Theme.foreground, 0.78); font.family: "Outfit"; font.pixelSize: 15; font.weight: Font.Medium; anchors.verticalCenter: parent.verticalCenter }
                                 }
                             }
                         }
@@ -1385,6 +1451,43 @@ Item {
                                     font.pixelSize: 11
                                     font.weight: Font.Bold
                                     font.letterSpacing: 1.5
+                                }
+
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    Text {
+                                        Layout.fillWidth: true
+                                        text: "Typography Preset"
+                                        color: Theme.foreground
+                                        font.family: "Outfit"
+                                        font.pixelSize: 13
+                                    }
+                                    ModernDropdown {
+                                        implicitWidth: 170
+                                        implicitHeight: 32
+                                        readonly property var keyToLabel: ({
+                                            "editorial_split": "Editorial Split",
+                                            "classic": "Classic",
+                                            "mono_telemetry": "Mono Telemetry",
+                                            "minimal_pill": "Minimal Pill"
+                                        })
+                                        readonly property var labelToKey: ({
+                                            "Editorial Split": "editorial_split",
+                                            "Classic": "classic",
+                                            "Mono Telemetry": "mono_telemetry",
+                                            "Minimal Pill": "minimal_pill"
+                                        })
+                                        model: ["Editorial Split", "Classic", "Mono Telemetry", "Minimal Pill"]
+                                        currentValue: {
+                                            var p = (window.config.clock && window.config.clock.preset) ? String(window.config.clock.preset) : "editorial_split"
+                                            return keyToLabel[p] || "Editorial Split"
+                                        }
+                                        onSelected: function(val) {
+                                            if (!window.config.clock) window.config.clock = {}
+                                            window.config.clock.preset = labelToKey[val] || "editorial_split"
+                                            window.markDirty()
+                                        }
+                                    }
                                 }
 
                                 RowLayout {
