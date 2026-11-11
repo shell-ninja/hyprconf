@@ -13,7 +13,7 @@ Item {
     property real animatedHeight: 485
     property real cornerRadius: 26
 
-    property color fillColor: Theme.alpha(Theme.background, 0.96)
+    property color fillColor: Theme.alpha(Theme.background, 0.84)
     property color strokeColor: Theme.alpha(Theme.accent, 0.45)
     property real strokeWidth: 1.5
 

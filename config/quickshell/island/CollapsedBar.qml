@@ -645,7 +645,7 @@ Item {
             Rectangle {
                 anchors.fill: parent
                 radius: 17
-                color: Theme.alpha(Theme.background, 0.92)
+                color: Theme.alpha(Theme.background, 0.84)
                 border.color: Theme.alpha(Theme.accent, 0.55)
                 border.width: 1.2
             }
@@ -976,7 +976,7 @@ Item {
                     ShapePath {
                         strokeColor: Theme.alpha(Theme.accent, 0.55)
                         strokeWidth: 1.2
-                        fillColor: Theme.alpha(Theme.background, 0.94)
+                        fillColor: Theme.alpha(Theme.background, 0.84)
                         capStyle: ShapePath.RoundCap
                         joinStyle: ShapePath.RoundJoin
 
@@ -1261,7 +1261,7 @@ Item {
                     ShapePath {
                         strokeColor: Theme.alpha(Theme.accent, 0.55)
                         strokeWidth: 1.2
-                        fillColor: Theme.alpha(Theme.background, 0.94)
+                        fillColor: Theme.alpha(Theme.background, 0.84)
                         capStyle: ShapePath.RoundCap
                         joinStyle: ShapePath.RoundJoin
 
@@ -1614,7 +1614,7 @@ Item {
                     width: 136
                     height: 28
                     radius: 14
-                    color: Theme.alpha(Theme.background, 0.92)
+                    color: Theme.alpha(Theme.background, 0.84)
                     border.color: Theme.alpha(Theme.foreground, 0.16)
                     border.width: 1
                     anchors.verticalCenter: parent.verticalCenter
@@ -1739,7 +1739,7 @@ Item {
                     width: minimalClockRow.implicitWidth + 24
                     height: 28
                     radius: 14
-                    color: clockHover.hovered ? Theme.alpha(Theme.background, 0.98) : Theme.alpha(Theme.background, 0.92)
+                    color: clockHover.hovered ? Theme.alpha(Theme.background, 0.90) : Theme.alpha(Theme.background, 0.84)
                     border.color: clockHover.hovered ? Theme.alpha(Theme.accent, 0.60) : Theme.alpha(Theme.foreground, 0.16)
                     border.width: 1
                     anchors.verticalCenter: parent.verticalCenter
@@ -1806,7 +1806,7 @@ Item {
                     width: 140
                     height: 28
                     radius: 14
-                    color: Theme.alpha(Theme.background, 0.92)
+                    color: Theme.alpha(Theme.background, 0.84)
                     border.color: Theme.alpha(Theme.foreground, 0.16)
                     border.width: 1
                     anchors.verticalCenter: parent.verticalCenter

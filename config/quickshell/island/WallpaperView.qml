@@ -270,6 +270,116 @@ Item {
         folderChooserProc.running = true
     }
 
+    // ── LIVE PER-WALLPAPER COLOR PALETTE PREVIEW ENGINE ──────────────────────
+    property var wallpaperPaletteCache: ({})
+    property var activePalettePreview: null
+    property string palettePendingPath: ""
+    property string hoveredSwatchHex: ""
+    property string hoveredSwatchLabel: ""
+    property string copiedSwatchHex: ""
+
+    function resolvePreviewImagePath() {
+        if (!root.filteredWallpapers || root.filteredWallpapers.length === 0) return ""
+        var idx = Math.max(0, Math.min(root.selectedIndex, root.filteredWallpapers.length - 1))
+        var item = root.filteredWallpapers[idx]
+        if (!item) return ""
+        var raw = item.source ? String(item.source) : (item.path ? String(item.path) : "")
+        if (raw.indexOf("file://") === 0) {
+            raw = raw.slice(7)
+        }
+        if (raw.indexOf("/") !== 0) return ""
+        return raw
+    }
+
+    function applyCachedPalette(imgPath) {
+        var entry = root.wallpaperPaletteCache[imgPath]
+        if (!entry || !entry.variants) return false
+        var vKey = (root.colorVariant || "vibrant").toLowerCase()
+        root.activePalettePreview = entry.variants[vKey] || entry.variants["vibrant"] || null
+        return root.activePalettePreview !== null
+    }
+
+    function updateSelectedPalette() {
+        var imgPath = root.resolvePreviewImagePath()
+        if (!imgPath || imgPath.length === 0) {
+            root.activePalettePreview = null
+            paletteDebounceTimer.stop()
+            return
+        }
+        if (root.applyCachedPalette(imgPath)) {
+            paletteDebounceTimer.stop()
+            return
+        }
+        root.palettePendingPath = imgPath
+        paletteDebounceTimer.restart()
+    }
+
+    Timer {
+        id: swatchCopyResetTimer
+        interval: 1200
+        repeat: false
+        onTriggered: root.copiedSwatchHex = ""
+    }
+
+    Timer {
+        id: paletteDebounceTimer
+        interval: 45
+        repeat: false
+        onTriggered: {
+            var targetPath = root.palettePendingPath
+            if (!targetPath || targetPath.length === 0) return
+            if (root.applyCachedPalette(targetPath)) return
+            paletteExtractProc.running = false
+            paletteExtractProc.command = [
+                "python3",
+                root.homeDir + "/.hyprconf/hypr/scripts/py/hypr-colors.py",
+                "--palette",
+                "--all-variants",
+                targetPath
+            ]
+            paletteExtractProc.running = true
+        }
+    }
+
+    Process {
+        id: paletteExtractProc
+        command: []
+        running: false
+        stdout: StdioCollector {
+            onStreamFinished: {
+                if (!text || text.trim().length === 0) return
+                try {
+                    var parsed = JSON.parse(text.trim())
+                    if (parsed && parsed.path && parsed.variants) {
+                        var nextCache = {}
+                        var keys = Object.keys(root.wallpaperPaletteCache)
+                        var startIdx = Math.max(0, keys.length - 64)
+                        for (var i = startIdx; i < keys.length; i++) {
+                            nextCache[keys[i]] = root.wallpaperPaletteCache[keys[i]]
+                        }
+                        nextCache[parsed.path] = parsed
+                        root.wallpaperPaletteCache = nextCache
+                        if (parsed.path === root.resolvePreviewImagePath()) {
+                            root.applyCachedPalette(parsed.path)
+                        }
+                    }
+                } catch(e) {}
+            }
+        }
+    }
+
+    Connections {
+        target: root
+        function onSelectedIndexChanged() {
+            root.hoveredSwatchHex = ""
+            root.hoveredSwatchLabel = ""
+            root.updateSelectedPalette()
+        }
+        function onFilteredWallpapersChanged() { root.updateSelectedPalette() }
+        function onColorVariantChanged() { root.updateSelectedPalette() }
+        function onActiveModeChanged() { root.updateSelectedPalette() }
+    }
+
     Process {
         id: videoChooserProc
         command: [
@@ -1332,6 +1442,182 @@ Item {
                         font.pixelSize: 11
                         font.weight: Font.Bold
                         color: root.isSearchingOnline ? Theme.accent : Theme.foreground
+                    }
+                }
+            }
+
+            // ── LIVE PER-WALLPAPER COLOR PALETTE STRIP ──────────────────────
+            Rectangle {
+                id: palettePill
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.top: titlePill.bottom
+                anchors.topMargin: 6
+                height: 28
+                width: Math.max(180, paletteRow.implicitWidth + 22)
+                radius: 14
+                color: Theme.alpha(Theme.surface, 0.86)
+                border.color: (root.activePalettePreview && root.activePalettePreview.primary)
+                              ? Theme.alpha(root.activePalettePreview.primary, 0.45)
+                              : Theme.alpha(Theme.accent, 0.35)
+                border.width: 1
+                z: 110
+                visible: titlePill.visible && root.activePalettePreview !== null
+                opacity: visible ? 1.0 : 0.0
+
+                Behavior on border.color { ColorAnimation { duration: 220 } }
+                Behavior on opacity { NumberAnimation { duration: 160 } }
+
+                Row {
+                    id: paletteRow
+                    anchors.centerIn: parent
+                    spacing: 8
+
+                    // Vector palette SVG icon (no emoji)
+                    Image {
+                        width: 13
+                        height: 13
+                        anchors.verticalCenter: parent.verticalCenter
+                        sourceSize: Qt.size(26, 26)
+                        source: {
+                            var strokeHex = (root.activePalettePreview && root.activePalettePreview.primary)
+                                            ? root.activePalettePreview.primary
+                                            : String(Theme.accent)
+                            var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + strokeHex + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5" fill="' + strokeHex + '"/><circle cx="17.5" cy="10.5" r=".5" fill="' + strokeHex + '"/><circle cx="8.5" cy="7.5" r=".5" fill="' + strokeHex + '"/><circle cx="6.5" cy="12.5" r=".5" fill="' + strokeHex + '"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>'
+                            return "data:image/svg+xml;utf8," + encodeURIComponent(svg)
+                        }
+                    }
+
+                    // Theme Swatches (BG -> Surface -> Primary -> Secondary -> Accent -> FG)
+                    Row {
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: 5
+
+                        Repeater {
+                            model: (root.activePalettePreview && root.activePalettePreview.swatches) ? root.activePalettePreview.swatches : []
+                            Rectangle {
+                                id: themeSwatchDot
+                                property string hexVal: modelData && modelData.color ? String(modelData.color) : "#161820"
+                                property string roleLabel: modelData && modelData.label ? String(modelData.label) : ""
+                                width: swatchMouse.containsMouse ? 17 : 15
+                                height: swatchMouse.containsMouse ? 17 : 15
+                                radius: 5
+                                anchors.verticalCenter: parent.verticalCenter
+                                color: hexVal
+                                border.color: swatchMouse.containsMouse ? "#ffffff" : Theme.alpha("#ffffff", 0.24)
+                                border.width: swatchMouse.containsMouse ? 1.5 : 1
+
+                                Behavior on color { ColorAnimation { duration: 220 } }
+                                Behavior on width { NumberAnimation { duration: 120 } }
+                                Behavior on height { NumberAnimation { duration: 120 } }
+
+                                MouseArea {
+                                    id: swatchMouse
+                                    anchors.fill: parent
+                                    anchors.margins: -2
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onEntered: {
+                                        root.hoveredSwatchHex = themeSwatchDot.hexVal
+                                        root.hoveredSwatchLabel = themeSwatchDot.roleLabel
+                                    }
+                                    onExited: {
+                                        if (root.hoveredSwatchHex === themeSwatchDot.hexVal) {
+                                            root.hoveredSwatchHex = ""
+                                            root.hoveredSwatchLabel = ""
+                                        }
+                                    }
+                                    onClicked: {
+                                        Quickshell.execDetached(["wl-copy", themeSwatchDot.hexVal])
+                                        root.copiedSwatchHex = themeSwatchDot.hexVal
+                                        swatchCopyResetTimer.restart()
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Subtle Divider between generated scheme and raw wallpaper pigments
+                    Rectangle {
+                        width: 1
+                        height: 12
+                        anchors.verticalCenter: parent.verticalCenter
+                        color: Theme.alpha(Theme.foreground, 0.16)
+                        visible: rawPigmentRepeater.count > 0
+                    }
+
+                    // Raw Extracted Wallpaper Pigments (up to 4)
+                    Row {
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: 4
+                        visible: rawPigmentRepeater.count > 0
+
+                        Repeater {
+                            id: rawPigmentRepeater
+                            model: (root.activePalettePreview && root.activePalettePreview.wallpaper_colors)
+                                   ? root.activePalettePreview.wallpaper_colors.slice(0, 4)
+                                   : []
+                            Rectangle {
+                                id: pigmentDot
+                                property string hexVal: String(modelData || "#58a6ff")
+                                width: pigmentMouse.containsMouse ? 13 : 11
+                                height: pigmentMouse.containsMouse ? 13 : 11
+                                radius: width / 2
+                                anchors.verticalCenter: parent.verticalCenter
+                                color: hexVal
+                                border.color: pigmentMouse.containsMouse ? "#ffffff" : Theme.alpha("#ffffff", 0.22)
+                                border.width: 1
+
+                                Behavior on color { ColorAnimation { duration: 220 } }
+                                Behavior on width { NumberAnimation { duration: 120 } }
+                                Behavior on height { NumberAnimation { duration: 120 } }
+
+                                MouseArea {
+                                    id: pigmentMouse
+                                    anchors.fill: parent
+                                    anchors.margins: -2
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onEntered: {
+                                        root.hoveredSwatchHex = pigmentDot.hexVal
+                                        root.hoveredSwatchLabel = "Tone"
+                                    }
+                                    onExited: {
+                                        if (root.hoveredSwatchHex === pigmentDot.hexVal) {
+                                            root.hoveredSwatchHex = ""
+                                            root.hoveredSwatchLabel = ""
+                                        }
+                                    }
+                                    onClicked: {
+                                        Quickshell.execDetached(["wl-copy", pigmentDot.hexVal])
+                                        root.copiedSwatchHex = pigmentDot.hexVal
+                                        swatchCopyResetTimer.restart()
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Compact Hex / Variant Readout
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        font.family: "JetBrainsMono Nerd Font"
+                        font.pixelSize: 10
+                        font.weight: Font.Medium
+                        color: {
+                            if (root.copiedSwatchHex.length > 0) return Theme.accent
+                            if (root.hoveredSwatchHex.length > 0) return Theme.foreground
+                            return (root.activePalettePreview && root.activePalettePreview.primary)
+                                   ? root.activePalettePreview.primary
+                                   : Theme.alpha(Theme.foreground, 0.72)
+                        }
+                        text: {
+                            if (root.copiedSwatchHex.length > 0) return "Copied " + root.copiedSwatchHex
+                            if (root.hoveredSwatchHex.length > 0) {
+                                return (root.hoveredSwatchLabel.length > 0 ? (root.hoveredSwatchLabel + " ") : "") + root.hoveredSwatchHex
+                            }
+                            var vName = (root.colorVariant || "vibrant")
+                            return vName.charAt(0).toUpperCase() + vName.slice(1)
+                        }
                     }
                 }
             }

@@ -183,7 +183,7 @@ PanelWindow {
         height: 520
         anchors.centerIn: parent
         radius: 24
-        color: Theme.alpha(Theme.background, 0.92)
+        color: Theme.alpha(Theme.background, 0.84)
         border.color: Theme.alpha(Theme.foreground, 0.16)
         border.width: 1
         clip: true

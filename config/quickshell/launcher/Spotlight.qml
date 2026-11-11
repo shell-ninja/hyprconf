@@ -23,7 +23,7 @@ Rectangle {
     anchors.fill: isIsland ? parent : undefined
     anchors.centerIn: (isIsland || isBottomAttached) ? undefined : parent
     radius: (isIsland || isBottomAttached) ? 0 : 16
-    color: (isIsland || isBottomAttached) ? "transparent" : Theme.alpha(Theme.surface, 0.96)
+    color: (isIsland || isBottomAttached) ? "transparent" : Theme.alpha(Theme.surface, 0.85)
     border.width: (isIsland || isBottomAttached) ? 0 : 1.2
     border.color: Theme.alpha(Theme.accent, 0.35)
     clip: false
@@ -46,7 +46,7 @@ Rectangle {
 
         readonly property color surfaceFill: (rootWindow && rootWindow.barOpacity !== undefined)
                                              ? Theme.alpha(Theme.surface, rootWindow.barOpacity)
-                                             : Theme.alpha(Theme.surface, 0.96)
+                                             : Theme.alpha(Theme.surface, 0.85)
         readonly property color strokeColor: Theme.alpha(Theme.accent, 0.35)
         readonly property int fL: 14
         readonly property int fR: 14

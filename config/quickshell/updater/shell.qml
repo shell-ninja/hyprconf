@@ -430,7 +430,7 @@ FloatingWindow {
     Rectangle {
         id: rootSurface
         anchors.fill: parent
-        color: Theme.alpha(Theme.background, 0.94)
+        color: Theme.alpha(Theme.background, 0.85)
         border.color: Theme.alpha(Theme.accent, 0.22)
         border.width: 1
         radius: 16

@@ -19,7 +19,18 @@ from PIL import Image
 HOME = os.getenv("HOME", str(Path.home()))
 LOCAL_CACHE = Path(HOME) / ".local" / "share" / "hyprconf" / ".cache"
 CACHE_DIR = LOCAL_CACHE if (LOCAL_CACHE.exists() or LOCAL_CACHE.parent.exists()) else (Path(HOME) / ".hyprconf" / "hypr" / ".cache")
-CURRENT_WALLPAPER = CACHE_DIR / "current_wallpaper.png"
+LEGACY_CACHE = Path(HOME) / ".hyprconf" / "hypr" / ".cache"
+CURRENT_WALLPAPER = LOCAL_CACHE / "current_wallpaper.png"
+
+
+def resolve_current_wallpaper():
+    for candidate in (LOCAL_CACHE / "current_wallpaper.png", LEGACY_CACHE / "current_wallpaper.png"):
+        if candidate.exists():
+            try:
+                return str(candidate.resolve())
+            except Exception:
+                return str(candidate)
+    return None
 SCRIPTS_DIR = Path(HOME) / ".hyprconf/hypr/scripts"
 COLORS_SH = SCRIPTS_DIR / "sh/colors.sh"
 QS_DIR = Path(HOME) / ".hyprconf/quickshell"
@@ -45,256 +56,400 @@ def rgb_to_hex(r, g, b):
     return f"#{int(max(0, min(255, r))):02x}{int(max(0, min(255, g))):02x}{int(max(0, min(255, b))):02x}"
 
 
+ALL_VARIANTS = ("vibrant", "muted", "expressive", "warm", "cool", "pastel", "original")
+
+
+def hex_to_rgb(hex_str):
+    h = str(hex_str).lstrip("#")
+    if len(h) != 6:
+        return (22, 24, 32)
+    return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
+
+
+def hls_to_hex(h, l, s):
+    r, g, b = colorsys.hls_to_rgb(
+        h % 1.0,
+        max(0.0, min(1.0, l)),
+        max(0.0, min(1.0, s)),
+    )
+    return rgb_to_hex(round(r * 255), round(g * 255), round(b * 255))
+
+
+def blend_rgb(rgb_a, rgb_b, t):
+    t = max(0.0, min(1.0, t))
+    return tuple(round(rgb_a[i] * (1.0 - t) + rgb_b[i] * t) for i in range(3))
+
+
+def blend_hex(hex_a, hex_b, t):
+    return rgb_to_hex(*blend_rgb(hex_to_rgb(hex_a), hex_to_rgb(hex_b), t))
+
+
+def relative_luminance(hex_str):
+    def _lin(c):
+        v = c / 255.0
+        return v / 12.92 if v <= 0.04045 else ((v + 0.055) / 1.055) ** 2.4
+
+    r, g, b = hex_to_rgb(hex_str)
+    return 0.2126 * _lin(r) + 0.7152 * _lin(g) + 0.0722 * _lin(b)
+
+
+def contrast_ratio(hex_a, hex_b):
+    la = relative_luminance(hex_a)
+    lb = relative_luminance(hex_b)
+    hi, lo = max(la, lb), min(la, lb)
+    return (hi + 0.05) / (lo + 0.05)
+
+
+def pick_on_color(bg_hex, dark_hex, light_hex):
+    return dark_hex if contrast_ratio(bg_hex, dark_hex) >= contrast_ratio(bg_hex, light_hex) else light_hex
+
+
+def hue_diff(h1, h2):
+    d = abs((h1 % 1.0) - (h2 % 1.0))
+    return min(d, 1.0 - d)
+
+
+def lerp_hue(h_from, h_to, t):
+    d = ((h_to % 1.0) - (h_from % 1.0) + 0.5) % 1.0 - 0.5
+    return (h_from + d * t) % 1.0
+
+
 def tint_color(hex_str, lum_factor=1.15):
     """Adjust color luminance while keeping hue and saturation."""
     try:
-        h = str(hex_str).lstrip("#")
-        r, g, b = tuple(int(h[i:i+2], 16) for i in (0, 2, 4))
+        r, g, b = hex_to_rgb(hex_str)
         hls_h, hls_l, hls_s = colorsys.rgb_to_hls(r / 255.0, g / 255.0, b / 255.0)
         new_l = max(0.0, min(1.0, hls_l * lum_factor))
-        nr, ng, nb = [int(x * 255) for x in colorsys.hls_to_rgb(hls_h, new_l, hls_s)]
-        return rgb_to_hex(nr, ng, nb)
+        return hls_to_hex(hls_h, new_l, hls_s)
     except Exception:
         return hex_str
 
 
+def _extract_image_clusters(wallpaper_path):
+    """Extract distinct chromatic clusters from a wallpaper sorted by prominence."""
+    img = Image.open(wallpaper_path).convert("RGB")
+    img.thumbnail((320, 320))
+    colors_list = img.getcolors(maxcolors=200000)
+    if not colors_list:
+        q = img.convert("P", palette=Image.ADAPTIVE, colors=64)
+        pal = q.getpalette()[:192]
+        colors_list = []
+        for count, idx in q.getcolors(maxcolors=256):
+            colors_list.append((count, (pal[idx * 3], pal[idx * 3 + 1], pal[idx * 3 + 2])))
+
+    # 1. Cluster image pixels into 24 distinct hue sectors (15 deg each)
+    sectors = {}
+    for count, (r, g, b) in colors_list:
+        h, l, s = colorsys.rgb_to_hls(r / 255.0, g / 255.0, b / 255.0)
+        if s >= 0.08 and 0.08 <= l <= 0.92:
+            bin_idx = int(h * 24) % 24
+            if bin_idx not in sectors:
+                sectors[bin_idx] = {"pixels": 0, "samples": []}
+            sectors[bin_idx]["pixels"] += count
+            sectors[bin_idx]["samples"].append((count, r, g, b, h, l, s))
+
+    # 2. Extract distinct color clusters with ~25 deg minimum separation
+    distinct_clusters = []
+    for _, data in sorted(sectors.items(), key=lambda x: x[1]["pixels"], reverse=True):
+        data["samples"].sort(key=lambda x: x[6] * (x[0] ** 0.4), reverse=True)
+        top = data["samples"][0]
+        h = top[4]
+        if any(hue_diff(h, prev["h"]) < 0.07 for prev in distinct_clusters):
+            continue
+        distinct_clusters.append({
+            "h": top[4],
+            "l": top[5],
+            "s": top[6],
+            "rgb": (top[1], top[2], top[3]),
+            "pixels": data["pixels"],
+        })
+
+    if not distinct_clusters:
+        distinct_clusters = [{
+            "h": 0.60,
+            "l": 0.56,
+            "s": 0.70,
+            "rgb": (92, 148, 250),
+            "pixels": 1000,
+        }]
+
+    return distinct_clusters
+
+
+def _derive_palette_from_clusters(distinct_clusters, variant="vibrant"):
+    """Build foreground-matched dark UI, semantic, and ANSI tokens from image clusters."""
+    dom_cluster = distinct_clusters[0]
+    dom_h = dom_cluster["h"]
+    var = (variant or "vibrant").lower()
+
+    # 3. Derive Primary, Secondary, and chosen tonal hue based on requested variant
+    if var == "original":
+        h, l, s = dom_cluster["h"], dom_cluster["l"], dom_cluster["s"]
+        primary = hls_to_hex(h, min(0.72, max(0.55, l)), min(0.92, max(0.28, s)))
+
+        sec_cluster = distinct_clusters[1] if len(distinct_clusters) > 1 else dom_cluster
+        sh, sl, ss = sec_cluster["h"], sec_cluster["l"], sec_cluster["s"]
+        if hue_diff(sh, h) < 0.06:
+            sh = (h + 0.14) % 1.0
+        secondary = hls_to_hex(sh, min(0.70, max(0.53, sl)), min(0.88, max(0.28, ss)))
+        chosen_hue = h
+
+    elif var == "muted":
+        h = dom_cluster["h"]
+        primary = hls_to_hex(h, 0.58, min(0.45, max(0.24, dom_cluster["s"] * 1.05)))
+
+        sec_cluster = distinct_clusters[1] if len(distinct_clusters) > 1 else dom_cluster
+        sh = sec_cluster["h"]
+        if hue_diff(sh, h) < 0.06:
+            sh = (h + 0.12) % 1.0
+        secondary = hls_to_hex(sh, 0.54, min(0.40, max(0.22, sec_cluster["s"] * 0.95)))
+        chosen_hue = h
+
+    elif var == "expressive":
+        expr_cands = [c for c in distinct_clusters if hue_diff(c["h"], dom_h) >= 0.16]
+        target_cluster = expr_cands[0] if expr_cands else (distinct_clusters[1] if len(distinct_clusters) > 1 else dom_cluster)
+        h = target_cluster["h"]
+        if target_cluster == dom_cluster and len(distinct_clusters) == 1:
+            h = (dom_h + 0.33) % 1.0
+        primary = hls_to_hex(h, 0.63, min(0.95, max(0.68, target_cluster["s"] * 2.1)))
+
+        sec_h = (h + 0.12) % 1.0
+        secondary = hls_to_hex(sec_h, 0.60, 0.72)
+        chosen_hue = h
+
+    elif var == "warm":
+        warm_sorted = sorted(distinct_clusters, key=lambda c: hue_diff(c["h"], 0.08))
+        warm_cluster = warm_sorted[0]
+        h = warm_cluster["h"]
+        if hue_diff(h, 0.08) > 0.28:
+            h = 0.08
+        primary = hls_to_hex(h, 0.63, min(0.95, max(0.68, warm_cluster["s"] * 2.2)))
+
+        sec_h = (h + 0.07) % 1.0
+        secondary = hls_to_hex(sec_h, 0.60, 0.72)
+        chosen_hue = h
+
+    elif var == "cool":
+        cool_sorted = sorted(distinct_clusters, key=lambda c: hue_diff(c["h"], 0.58))
+        cool_cluster = cool_sorted[0]
+        h = cool_cluster["h"]
+        if hue_diff(h, 0.58) > 0.28:
+            h = 0.58
+        primary = hls_to_hex(h, 0.63, min(0.95, max(0.68, cool_cluster["s"] * 2.2)))
+
+        sec_h = (h + 0.10) % 1.0
+        secondary = hls_to_hex(sec_h, 0.60, 0.72)
+        chosen_hue = h
+
+    elif var == "pastel":
+        fs_cands = [c for c in distinct_clusters if hue_diff(c["h"], dom_h) >= 0.18]
+        target_cluster = fs_cands[0] if fs_cands else (distinct_clusters[1] if len(distinct_clusters) > 1 else dom_cluster)
+        h = target_cluster["h"]
+        primary = hls_to_hex(h, 0.75, min(0.68, max(0.45, target_cluster["s"] * 1.55)))
+
+        sec_h = (h + 0.09) % 1.0
+        secondary = hls_to_hex(sec_h, 0.71, 0.50)
+        chosen_hue = h
+
+    else:
+        vib_cluster = sorted(distinct_clusters, key=lambda c: c["s"] * 2.0 + (c["pixels"] ** 0.15), reverse=True)[0]
+        h = vib_cluster["h"]
+        primary = hls_to_hex(h, 0.62, min(0.96, max(0.70, vib_cluster["s"] * 2.2)))
+
+        sec_cluster = distinct_clusters[1] if len(distinct_clusters) > 1 else vib_cluster
+        sh = sec_cluster["h"]
+        if hue_diff(sh, h) < 0.08:
+            sh = (h + 0.12) % 1.0
+        secondary = hls_to_hex(sh, 0.60, min(0.92, max(0.64, sec_cluster["s"] * 1.9)))
+        chosen_hue = h
+
+    # 3b. Derive a distinct 3rd accent from remaining wallpaper clusters or split-complement
+    pr, pg, pb = hex_to_rgb(primary)
+    sr, sg, sb = hex_to_rgb(secondary)
+    prim_h = colorsys.rgb_to_hls(pr / 255.0, pg / 255.0, pb / 255.0)[0]
+    sec_h = colorsys.rgb_to_hls(sr / 255.0, sg / 255.0, sb / 255.0)[0]
+    tert_cands = [c for c in distinct_clusters if hue_diff(c["h"], prim_h) >= 0.11 and hue_diff(c["h"], sec_h) >= 0.11]
+    if tert_cands:
+        th = tert_cands[0]["h"]
+        ts = min(0.75, max(0.42, tert_cands[0]["s"] * 1.6))
+    else:
+        th = (chosen_hue + 0.42) % 1.0
+        ts = 0.58 if var not in ("muted", "pastel") else 0.44
+    tertiary = hls_to_hex(th, 0.66 if var != "pastel" else 0.74, ts)
+
+    # 4. Foreground-matched dark tonal scale directly anchored to chosen_hue
+    fg_hue = chosen_hue
+    fg_sat = 0.14 if var in ("muted", "pastel") else 0.22
+    foreground = hls_to_hex(fg_hue, 0.93, fg_sat)
+    inactive_tab_fg = hls_to_hex(fg_hue, 0.72, fg_sat * 0.85)
+
+    dark_sat = 0.20 if var == "muted" else (0.24 if var == "pastel" else 0.30)
+    background = hls_to_hex(fg_hue, 0.095, dark_sat)
+    surface = hls_to_hex(fg_hue, 0.135, max(0.16, dark_sat - 0.03))
+    color0 = hls_to_hex(fg_hue, 0.195, max(0.14, dark_sat - 0.07))
+    muted = hls_to_hex(fg_hue, 0.48, 0.18 if var != "muted" else 0.13)
+
+    # 5. Contrast-guaranteed foreground text on primary/secondary/error surfaces
+    accent = primary
+    on_primary = pick_on_color(primary, background, foreground)
+    on_secondary = pick_on_color(secondary, background, foreground)
+    error = hls_to_hex(lerp_hue(0.975, chosen_hue, 0.08), 0.66, 0.80 if var != "muted" else 0.60)
+    on_error = pick_on_color(error, background, foreground)
+
+    # 6. Harmonized ANSI palette (distinct semantic terminal colors gently aligned with palette)
+    ansi_sat = 0.62 if var == "muted" else (0.64 if var == "pastel" else 0.78)
+    ansi_hi_sat = min(0.92, ansi_sat + 0.06)
+
+    color1 = error
+    color9 = hls_to_hex(lerp_hue(0.975, chosen_hue, 0.08), 0.73, ansi_hi_sat)
+
+    green_h = lerp_hue(0.39, chosen_hue, 0.10)
+    color2 = hls_to_hex(green_h, 0.66, ansi_sat * 0.90)
+    color10 = hls_to_hex(green_h, 0.73, ansi_hi_sat * 0.92)
+
+    yellow_h = lerp_hue(0.11, chosen_hue, 0.08)
+    color3 = hls_to_hex(yellow_h, 0.70, ansi_sat)
+    color11 = hls_to_hex(yellow_h, 0.77, ansi_hi_sat)
+
+    blue_h = prim_h if 0.52 <= prim_h <= 0.72 else lerp_hue(0.60, chosen_hue, 0.14)
+    color4 = primary if 0.52 <= prim_h <= 0.72 else hls_to_hex(blue_h, 0.67, ansi_sat)
+    color12 = tint_color(color4, 1.10) if relative_luminance(color4) < 0.45 else color4
+
+    mag_h = sec_h if 0.73 <= sec_h <= 0.95 else lerp_hue(0.79, chosen_hue, 0.14)
+    color5 = secondary if 0.73 <= sec_h <= 0.95 else hls_to_hex(mag_h, 0.68, ansi_sat)
+    color13 = tint_color(color5, 1.10) if relative_luminance(color5) < 0.45 else color5
+
+    cyan_h = prim_h if 0.45 <= prim_h < 0.52 else (sec_h if 0.45 <= sec_h < 0.52 else lerp_hue(0.50, chosen_hue, 0.14))
+    color6 = primary if 0.45 <= prim_h < 0.52 else hls_to_hex(cyan_h, 0.67, ansi_sat * 0.92)
+    color14 = tint_color(color6, 1.10) if relative_luminance(color6) < 0.45 else color6
+
+    color15 = hls_to_hex(fg_hue, 0.97, 0.22)
+
+    colors = {
+        "primary": primary,
+        "secondary": secondary,
+        "tertiary": tertiary,
+        "accent": accent,
+        "surface": surface,
+        "background": background,
+        "foreground": foreground,
+        "on_primary": on_primary,
+        "on_secondary": on_secondary,
+        "on_surface": foreground,
+        "error": error,
+        "on_error": on_error,
+        "muted": muted,
+        "color0": color0,
+        "color1": color1,
+        "color2": color2,
+        "color3": color3,
+        "color4": color4,
+        "color5": color5,
+        "color6": color6,
+        "color7": foreground,
+        "color8": muted,
+        "color9": color9,
+        "color10": color10,
+        "color11": color11,
+        "color12": color12,
+        "color13": color13,
+        "color14": color14,
+        "color15": color15,
+        "cursor": foreground,
+        "cursor_text_color": background,
+        "selection_foreground": foreground,
+        "selection_background": color0,
+        "active_border_color": primary,
+        "inactive_border_color": color0,
+        "url_color": primary,
+        "active_tab_foreground": on_primary,
+        "active_tab_background": primary,
+        "inactive_tab_foreground": inactive_tab_fg,
+        "inactive_tab_background": color0,
+        "cursor_trail_color": primary,
+        "variant": var,
+    }
+    return colors
+
 
 def extract_wallpaper_palette(wallpaper_path, variant="vibrant"):
-    """Extract distinct color scheme variants directly from the wallpaper itself,
-    following Noctalia Shell's Material You color generation theory:
-      - 'vibrant': Boosts the highest-chroma, most energetic color present in the wallpaper.
-      - 'muted': Samples the wallpaper's primary dominant tonal spot with calm, refined saturation.
-      - 'expressive': Discovers secondary/divergent hue clusters present in the image (hue shift >= 50°).
-      - 'warm': Finds the warmest hue present in the wallpaper (reds, oranges, ambers, warm coppers).
-      - 'cool': Finds the coolest hue present in the wallpaper (cyans, blues, glacial teals, indigos).
-      - 'pastel': Lightens an authentic secondary wallpaper tone into an airy, luminous pastel accent.
-      - 'original': Direct dominant sampling preserving authentic lightness and saturation.
-    """
+    """Extract a harmonized obsidian color scheme directly from a wallpaper."""
     try:
-        img = Image.open(wallpaper_path).convert("RGB")
-        img.thumbnail((320, 320))
-        colors_list = img.getcolors(maxcolors=200000)
-        if not colors_list:
-            # Fallback if getcolors exceeds maxcolors
-            q = img.convert("P", palette=Image.ADAPTIVE, colors=64)
-            pal = q.getpalette()[:192]
-            colors_list = []
-            for count, idx in q.getcolors(maxcolors=256):
-                colors_list.append((count, (pal[idx * 3], pal[idx * 3 + 1], pal[idx * 3 + 2])))
-
-        # 1. Cluster all image pixels into 24 distinct hue sectors (15° each)
-        sectors = {}
-        total_colored_pixels = 0
-        for count, (r, g, b) in colors_list:
-            h, l, s = colorsys.rgb_to_hls(r / 255.0, g / 255.0, b / 255.0)
-            # Filter out near-pure monochrome/near-black/near-white
-            if s >= 0.08 and 0.08 <= l <= 0.92:
-                bin_idx = int(h * 24) % 24
-                if bin_idx not in sectors:
-                    sectors[bin_idx] = {"pixels": 0, "samples": []}
-                sectors[bin_idx]["pixels"] += count
-                sectors[bin_idx]["samples"].append((count, r, g, b, h, l, s))
-                total_colored_pixels += count
-
-        # 2. Extract distinct color clusters from the wallpaper, ordered by prominence
-        distinct_clusters = []
-        for bin_idx, data in sorted(sectors.items(), key=lambda x: x[1]["pixels"], reverse=True):
-            # Sort samples in cluster by weighted saturation & count
-            data["samples"].sort(key=lambda x: x[6] * (x[0] ** 0.4), reverse=True)
-            top = data["samples"][0]
-            h = top[4]
-            # Ensure minimum ~25° hue separation between clusters
-            if any(abs(h - prev["h"]) < 0.07 or abs(abs(h - prev["h"]) - 1.0) < 0.07 for prev in distinct_clusters):
-                continue
-            distinct_clusters.append({
-                "h": top[4],
-                "l": top[5],
-                "s": top[6],
-                "rgb": (top[1], top[2], top[3]),
-                "pixels": data["pixels"]
-            })
-
-        # Fallback if image has very few distinct colored clusters
-        if not distinct_clusters:
-            distinct_clusters = [{
-                "h": 0.60,
-                "l": 0.50,
-                "s": 0.70,
-                "rgb": (68, 138, 255),
-                "pixels": 1000
-            }]
-
-        # Dominant cluster (Tonal spot / main color of the wallpaper)
-        dom_cluster = distinct_clusters[0]
-        dom_h = dom_cluster["h"]
-
-        var = (variant or "vibrant").lower()
-
-        # 3. Derive Primary and Secondary colors based on the requested Noctalia variant
-        if var == "original":
-            # Direct dominant sampling preserving authentic lightness and saturation
-            h, l, s = dom_cluster["h"], dom_cluster["l"], dom_cluster["s"]
-            target_l = min(0.70, max(0.40, l))
-            target_s = min(0.95, max(0.25, s))
-            r, g, b = [int(x * 255) for x in colorsys.hls_to_rgb(h, target_l, target_s)]
-            primary = rgb_to_hex(r, g, b)
-
-            sec_cluster = distinct_clusters[1] if len(distinct_clusters) > 1 else dom_cluster
-            sh, sl, ss = sec_cluster["h"], sec_cluster["l"], sec_cluster["s"]
-            sr, sg, sb = [int(x * 255) for x in colorsys.hls_to_rgb(sh, min(0.70, max(0.40, sl)), min(0.90, max(0.25, ss)))]
-            secondary = rgb_to_hex(sr, sg, sb)
-            chosen_hue = h
-
-        elif var == "muted":
-            # Soft, refined atmospheric tone from the wallpaper's dominant cluster
-            h = dom_cluster["h"]
-            target_l = 0.56
-            target_s = min(0.42, max(0.22, dom_cluster["s"] * 1.05))
-            r, g, b = [int(x * 255) for x in colorsys.hls_to_rgb(h, target_l, target_s)]
-            primary = rgb_to_hex(r, g, b)
-
-            sec_cluster = distinct_clusters[1] if len(distinct_clusters) > 1 else dom_cluster
-            sh = sec_cluster["h"]
-            sr, sg, sb = [int(x * 255) for x in colorsys.hls_to_rgb(sh, 0.52, min(0.38, max(0.20, sec_cluster["s"] * 0.95)))]
-            secondary = rgb_to_hex(sr, sg, sb)
-            chosen_hue = h
-
-        elif var == "expressive":
-            # Material You Expressive: Discovers a divergent secondary hue cluster from the wallpaper
-            expr_cands = [c for c in distinct_clusters if abs(c["h"] - dom_h) >= 0.16 and abs(c["h"] - dom_h) <= 0.84]
-            target_cluster = expr_cands[0] if expr_cands else (distinct_clusters[1] if len(distinct_clusters) > 1 else dom_cluster)
-            h = target_cluster["h"]
-            # If the image was monochrome and only 1 hue existed, shift hue by 120° for genuine expressiveness
-            if target_cluster == dom_cluster and len(distinct_clusters) == 1:
-                h = (dom_h + 0.33) % 1.0
-            r, g, b = [int(x * 255) for x in colorsys.hls_to_rgb(h, 0.62, min(1.0, max(0.68, target_cluster["s"] * 2.2)))]
-            primary = rgb_to_hex(r, g, b)
-
-            sec_h = (h + 0.12) % 1.0
-            sr, sg, sb = [int(x * 255) for x in colorsys.hls_to_rgb(sec_h, 0.58, 0.72)]
-            secondary = rgb_to_hex(sr, sg, sb)
-            chosen_hue = h
-
-        elif var == "warm":
-            # Finds the warmest color cluster present in the wallpaper (reds/oranges/yellows/ambers)
-            # Hue distance to pure warm orange (~0.08 = 28°)
-            warm_sorted = sorted(distinct_clusters, key=lambda c: min(abs(c["h"] - 0.08), abs(c["h"] - 1.08)))
-            warm_cluster = warm_sorted[0]
-            h = warm_cluster["h"]
-            # If wallpaper has no warm tones at all, synthesize an analogous warm counterpart
-            if abs(h - 0.08) > 0.28 and abs(h - 1.08) > 0.28:
-                h = 0.08  # Warm amber
-            r, g, b = [int(x * 255) for x in colorsys.hls_to_rgb(h, 0.62, min(1.0, max(0.70, warm_cluster["s"] * 2.4)))]
-            primary = rgb_to_hex(r, g, b)
-
-            sec_h = (h + 0.06) % 1.0
-            sr, sg, sb = [int(x * 255) for x in colorsys.hls_to_rgb(sec_h, 0.58, 0.72)]
-            secondary = rgb_to_hex(sr, sg, sb)
-            chosen_hue = h
-
-        elif var == "cool":
-            # Finds the coolest color cluster present in the wallpaper (cyans/blues/glacial teals)
-            # Hue distance to pure cool blue-cyan (~0.58 = 210°)
-            cool_sorted = sorted(distinct_clusters, key=lambda c: abs(c["h"] - 0.58))
-            cool_cluster = cool_sorted[0]
-            h = cool_cluster["h"]
-            # If wallpaper has no cool tones at all, synthesize an analogous cool counterpart
-            if abs(h - 0.58) > 0.28:
-                h = 0.58  # Cool blue-cyan
-            r, g, b = [int(x * 255) for x in colorsys.hls_to_rgb(h, 0.62, min(1.0, max(0.70, cool_cluster["s"] * 2.4)))]
-            primary = rgb_to_hex(r, g, b)
-
-            sec_h = (h + 0.10) % 1.0
-            sr, sg, sb = [int(x * 255) for x in colorsys.hls_to_rgb(sec_h, 0.58, 0.72)]
-            secondary = rgb_to_hex(sr, sg, sb)
-            chosen_hue = h
-
-        elif var == "pastel":
-            # Luminous, airy pastel tone sampled from the wallpaper's distinct secondary harmonies
-            fs_cands = [c for c in distinct_clusters if abs(c["h"] - dom_h) >= 0.18]
-            target_cluster = fs_cands[0] if fs_cands else (distinct_clusters[1] if len(distinct_clusters) > 1 else dom_cluster)
-            h = target_cluster["h"]
-            r, g, b = [int(x * 255) for x in colorsys.hls_to_rgb(h, 0.74, min(0.70, max(0.45, target_cluster["s"] * 1.6)))]
-            primary = rgb_to_hex(r, g, b)
-
-            sec_h = (h + 0.08) % 1.0
-            sr, sg, sb = [int(x * 255) for x in colorsys.hls_to_rgb(sec_h, 0.70, 0.50)]
-            secondary = rgb_to_hex(sr, sg, sb)
-            chosen_hue = h
-
-        else:
-            # Vibrant (Default): Samples the highest-chroma color cluster found in the wallpaper and boosts vibrancy
-            vib_cluster = sorted(distinct_clusters, key=lambda c: c["s"] * 2.0 + (c["pixels"] ** 0.15), reverse=True)[0]
-            h = vib_cluster["h"]
-            r, g, b = [int(x * 255) for x in colorsys.hls_to_rgb(h, 0.60, min(1.0, max(0.72, vib_cluster["s"] * 2.4)))]
-            primary = rgb_to_hex(r, g, b)
-
-            sec_cluster = distinct_clusters[1] if len(distinct_clusters) > 1 else vib_cluster
-            sh = sec_cluster["h"]
-            if abs(sh - h) < 0.08:
-                sh = (h + 0.12) % 1.0
-            sr, sg, sb = [int(x * 255) for x in colorsys.hls_to_rgb(sh, 0.58, min(1.0, max(0.65, sec_cluster["s"] * 2.0)))]
-            secondary = rgb_to_hex(sr, sg, sb)
-            chosen_hue = h
-
-        # 4. Deep obsidian surface, background, and dark tints harmonized with the chosen variant's hue
-        br, bg, bb = [int(x * 255) for x in colorsys.hls_to_rgb(chosen_hue, 0.07, 0.18)]
-        sr, sg, sb = [int(x * 255) for x in colorsys.hls_to_rgb(chosen_hue, 0.11, 0.16)]
-        cr, cg, cb = [int(x * 255) for x in colorsys.hls_to_rgb(chosen_hue, 0.16, 0.14)]
-
-        background = rgb_to_hex(br, bg, bb)
-        surface = rgb_to_hex(sr, sg, sb)
-        color0 = rgb_to_hex(cr, cg, cb)
-        accent = primary
-        on_primary = "#12151c"
-
-        colors = {
-            "primary": primary,
-            "secondary": secondary,
-            "accent": accent,
-            "surface": surface,
-            "background": background,
-            "foreground": "#f2f2f3",
-            "on_primary": on_primary,
-            "on_secondary": on_primary,
-            "on_surface": "#f2f2f3",
-            "error": "#fd4663",
-            "on_error": "#181f25",
-            "muted": "#6b6372",
-            "color0": color0,
-            "color1": "#fd4663",
-            "color2": primary,
-            "color3": secondary,
-            "color4": primary,
-            "color5": secondary,
-            "color6": primary,
-            "color7": "#f2f2f3",
-            "color8": "#6b6372",
-            "color9": "#fd4663",
-            "color10": primary,
-            "color11": secondary,
-            "color12": primary,
-            "color13": secondary,
-            "color14": primary,
-            "color15": "#ffffff",
-            "cursor": "#f2f2f3",
-            "cursor_text_color": background,
-            "selection_foreground": "#f2f2f3",
-            "selection_background": color0,
-            "active_border_color": primary,
-            "inactive_border_color": color0,
-            "url_color": primary,
-            "active_tab_foreground": on_primary,
-            "active_tab_background": primary,
-            "inactive_tab_foreground": "#afb3b6",
-            "inactive_tab_background": color0,
-            "cursor_trail_color": primary,
-            "variant": var,
-        }
-        return colors
+        distinct_clusters = _extract_image_clusters(wallpaper_path)
+        return _derive_palette_from_clusters(distinct_clusters, variant=variant)
     except Exception as e:
         print(f"Warning: Failed to extract palette from {wallpaper_path}: {e}", file=sys.stderr)
         return None
+
+
+def _build_preview_payload(wallpaper_path, distinct_clusters, variant):
+    palette = _derive_palette_from_clusters(distinct_clusters, variant=variant)
+    raw_swatches = [
+        rgb_to_hex(*c["rgb"])
+        for c in distinct_clusters[:6]
+    ]
+    swatches = [
+        {"color": palette["background"], "label": "BG"},
+        {"color": palette["surface"], "label": "Surface"},
+        {"color": palette["primary"], "label": "Primary"},
+        {"color": palette["secondary"], "label": "Secondary"},
+        {"color": palette["tertiary"], "label": "Accent"},
+        {"color": palette["foreground"], "label": "FG"},
+    ]
+    return {
+        "variant": palette["variant"],
+        "background": palette["background"],
+        "surface": palette["surface"],
+        "color0": palette["color0"],
+        "muted": palette["muted"],
+        "primary": palette["primary"],
+        "secondary": palette["secondary"],
+        "tertiary": palette["tertiary"],
+        "accent": palette["accent"],
+        "foreground": palette["foreground"],
+        "error": palette["error"],
+        "swatches": swatches,
+        "wallpaper_colors": raw_swatches,
+    }
+
+
+def extract_wallpaper_preview(wallpaper_path, variant="vibrant", all_variants=False):
+    """Fast read-only palette preview payload for UI wallpaper browsers."""
+    try:
+        distinct_clusters = _extract_image_clusters(wallpaper_path)
+        if all_variants:
+            variants_map = {}
+            for var_name in ALL_VARIANTS:
+                variants_map[var_name] = _build_preview_payload(wallpaper_path, distinct_clusters, var_name)
+            return {
+                "path": str(wallpaper_path),
+                "variants": variants_map,
+            }
+        payload = _build_preview_payload(wallpaper_path, distinct_clusters, variant or "vibrant")
+        payload["path"] = str(wallpaper_path)
+        return payload
+    except Exception as e:
+        fb = get_fallback_colors()
+        return {
+            "path": str(wallpaper_path),
+            "variant": (variant or "vibrant").lower(),
+            "error_msg": str(e),
+            "background": fb["background"],
+            "surface": fb["surface"],
+            "primary": fb["primary"],
+            "secondary": fb["secondary"],
+            "tertiary": fb.get("tertiary", fb["secondary"]),
+            "foreground": fb["foreground"],
+            "swatches": [
+                {"color": fb["background"], "label": "BG"},
+                {"color": fb["surface"], "label": "Surface"},
+                {"color": fb["primary"], "label": "Primary"},
+                {"color": fb["secondary"], "label": "Secondary"},
+                {"color": fb.get("tertiary", fb["secondary"]), "label": "Accent"},
+                {"color": fb["foreground"], "label": "FG"},
+            ],
+            "wallpaper_colors": [],
+        }
 
 
 def get_fallback_colors():
@@ -307,18 +462,19 @@ def get_fallback_colors():
             pass
 
     return {
-        "primary": "#48bbf2",
-        "secondary": "#676fac",
-        "accent": "#48bbf2",
-        "surface": "#171d20",
-        "background": "#0e1315",
-        "foreground": "#f2f2f3",
-        "on_primary": "#12151c",
-        "on_secondary": "#12151c",
-        "on_surface": "#f2f2f3",
-        "error": "#fd4663",
-        "on_error": "#181f25",
-        "muted": "#6b6372",
+        "primary": "#58a6ff",
+        "secondary": "#8980f5",
+        "tertiary": "#4ad9c8",
+        "accent": "#58a6ff",
+        "surface": "#1e222d",
+        "background": "#161922",
+        "foreground": "#eceff6",
+        "on_primary": "#161922",
+        "on_secondary": "#161922",
+        "on_surface": "#eceff6",
+        "error": "#f4637d",
+        "on_error": "#161922",
+        "muted": "#6c7388",
     }
 
 
@@ -1232,11 +1388,8 @@ def get_saved_variant():
 
 def sync_theme(wallpaper_path=None, variant=None):
     # Auto-resolve current wallpaper if none provided
-    if not wallpaper_path and CURRENT_WALLPAPER.exists():
-        try:
-            wallpaper_path = str(CURRENT_WALLPAPER.resolve())
-        except Exception:
-            pass
+    if not wallpaper_path:
+        wallpaper_path = resolve_current_wallpaper()
 
     if not variant:
         variant = get_saved_variant()
@@ -1298,7 +1451,51 @@ def sync_theme(wallpaper_path=None, variant=None):
     print(f"Theme colors applied ({variant}): primary={colors.get('primary')} accent={colors.get('accent')} surface={colors.get('surface')}")
 
 
+def _parse_cli_args(args):
+    wall = None
+    variant = None
+    palette_mode = False
+    all_variants = False
+
+    idx = 0
+    while idx < len(args):
+        arg = args[idx]
+        if arg in ("--palette", "--json"):
+            palette_mode = True
+            idx += 1
+        elif arg == "--all-variants":
+            palette_mode = True
+            all_variants = True
+            idx += 1
+        elif arg in ("--variant", "-v") and idx + 1 < len(args):
+            variant = args[idx + 1].strip().lower()
+            idx += 2
+        elif arg.startswith("--variant="):
+            variant = arg.split("=", 1)[1].strip().lower()
+            idx += 1
+        elif not wall and os.path.exists(arg):
+            wall = arg
+            idx += 1
+        elif not variant and arg.lower() in ALL_VARIANTS:
+            variant = arg.lower()
+            idx += 1
+        else:
+            idx += 1
+
+    return wall, variant, palette_mode, all_variants
+
+
 def main():
+    wall, variant, palette_mode, all_variants = _parse_cli_args(sys.argv[1:])
+
+    # Fast read-only preview mode skips system sync lock & compositor writes
+    if palette_mode:
+        if not wall:
+            wall = resolve_current_wallpaper()
+        payload = extract_wallpaper_preview(wall, variant=variant or "vibrant", all_variants=all_variants)
+        print(json.dumps(payload))
+        return
+
     # Use user-isolated lock to avoid multi-user permission collisions
     lock_file = get_lock_file()
     try:
@@ -1315,31 +1512,8 @@ def main():
         sys.exit(0)
 
     try:
-        wall = None
-        variant = None
-
-        # Parse CLI arguments: supports `hypr-colors.py <wall> [variant]` or `--variant <var>`
-        args = sys.argv[1:]
-        idx = 0
-        while idx < len(args):
-            arg = args[idx]
-            if arg in ("--variant", "-v") and idx + 1 < len(args):
-                variant = args[idx + 1].strip().lower()
-                idx += 2
-            elif arg.startswith("--variant="):
-                variant = arg.split("=", 1)[1].strip().lower()
-                idx += 1
-            elif not wall and os.path.exists(arg):
-                wall = arg
-                idx += 1
-            elif not variant and arg.lower() in ("vibrant", "muted", "original", "warm", "cool", "pastel"):
-                variant = arg.lower()
-                idx += 1
-            else:
-                idx += 1
-
-        if not wall and CURRENT_WALLPAPER.exists():
-            wall = str(CURRENT_WALLPAPER.resolve())
+        if not wall:
+            wall = resolve_current_wallpaper()
 
         sync_theme(wall, variant=variant)
     finally:

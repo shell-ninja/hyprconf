@@ -12,7 +12,7 @@ FloatingWindow {
     title: "Hyprland & Quickshell Settings"
     implicitWidth: 1220
     implicitHeight: 800
-    color: Theme.background
+    color: "transparent"
     onClosed: Qt.quit()
 
     readonly property string homeDir: {
@@ -952,7 +952,7 @@ FloatingWindow {
         // Outer Background & Rim
         Rectangle {
             anchors.fill: parent
-            color: Theme.background
+            color: Theme.alpha(Theme.background, 0.85)
             border.width: 1
             border.color: Theme.alpha(Theme.accent, 0.35)
         }
