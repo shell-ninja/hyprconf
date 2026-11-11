@@ -111,10 +111,28 @@ PopupWindow {
     Rectangle {
         id: menuContainer
         anchors.fill: parent
-        radius: 12
-        color: Theme.alpha(Theme.surface, 0.95)
+        radius: 13
+        clip: true
+        color: Theme.glassElevated
         border.width: 1
-        border.color: Theme.alpha(Theme.accent, 0.35)
+        border.color: Theme.alpha(Theme.foreground, 0.14)
+
+        // Top specular rim reflection
+        Rectangle {
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.leftMargin: 12
+            anchors.rightMargin: 12
+            height: 1
+            z: 5
+            gradient: Gradient {
+                orientation: Gradient.Horizontal
+                GradientStop { position: 0.0; color: "transparent" }
+                GradientStop { position: 0.50; color: Theme.alpha(Theme.foreground, 0.24) }
+                GradientStop { position: 1.0; color: "transparent" }
+            }
+        }
 
         Column {
             id: menuCol

@@ -688,9 +688,58 @@ Scope {
                     height: isHorizontal ? (iconSz + dockPad * 2 + 16) : (dockContentCol.implicitHeight + dockPad * 2)
 
                     radius: dockRadius
-                    color: Theme.alpha(Theme.surface, root.config.bg_opacity !== undefined ? root.config.bg_opacity : 0.85)
+                    color: Theme.alpha(Theme.mix(Theme.background, Theme.surface, 0.72), root.config.bg_opacity !== undefined ? root.config.bg_opacity : 0.85)
                     border.width: 1
-                    border.color: Theme.alpha(Theme.accent, root.config.border_glow ? 0.38 : 0.20)
+                    border.color: dockWin.isHovered
+                                  ? Theme.alpha(Theme.accent, root.config.border_glow ? 0.48 : 0.30)
+                                  : (root.config.border_glow ? Theme.alpha(Theme.accent, 0.34) : Theme.alpha(Theme.foreground, 0.14))
+
+                    Behavior on border.color { ColorAnimation { duration: 180 } }
+
+                    // Top/Side directional specular glass rim on the floating dock shelf
+                    Rectangle {
+                        anchors.top: isHorizontal || pos === "left" || pos === "right" ? parent.top : undefined
+                        anchors.left: isHorizontal ? parent.left : (pos === "left" ? parent.left : undefined)
+                        anchors.right: isHorizontal ? parent.right : (pos === "right" ? parent.right : undefined)
+                        anchors.leftMargin: isHorizontal ? Math.min(28, dockRadius) : 0
+                        anchors.rightMargin: isHorizontal ? Math.min(28, dockRadius) : 0
+                        anchors.topMargin: isHorizontal ? 0 : Math.min(28, dockRadius)
+                        anchors.bottom: !isHorizontal ? parent.bottom : undefined
+                        anchors.bottomMargin: !isHorizontal ? Math.min(28, dockRadius) : 0
+                        width: isHorizontal ? parent.width : 1
+                        height: isHorizontal ? 1 : parent.height
+                        z: 20
+
+                        gradient: Gradient {
+                            orientation: isHorizontal ? Gradient.Horizontal : Gradient.Vertical
+                            GradientStop { position: 0.0; color: "transparent" }
+                            GradientStop { position: 0.22; color: Theme.alpha(Theme.foreground, 0.12) }
+                            GradientStop { position: 0.50; color: Theme.alpha(Theme.foreground, 0.24) }
+                            GradientStop { position: 0.78; color: Theme.alpha(Theme.foreground, 0.12) }
+                            GradientStop { position: 1.0; color: "transparent" }
+                        }
+                    }
+
+                    // Subtle bottom ambient bounce rim (horizontal docks)
+                    Rectangle {
+                        visible: isHorizontal
+                        anchors.bottom: parent.bottom
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.leftMargin: Math.min(36, dockRadius + 8)
+                        anchors.rightMargin: Math.min(36, dockRadius + 8)
+                        height: 1
+                        z: 20
+                        gradient: Gradient {
+                            orientation: Gradient.Horizontal
+                            GradientStop { position: 0.0; color: "transparent" }
+                            GradientStop { position: 0.50; color: Theme.alpha(Theme.accent, dockWin.isHovered ? 0.22 : 0.08) }
+                            GradientStop { position: 1.0; color: "transparent" }
+                        }
+                    }
+
+                    readonly property real pointerAxisPos: dockHH.hovered ? (isHorizontal ? dockHH.point.position.x : dockHH.point.position.y) : -1
+                    readonly property bool pointerActive: dockHH.hovered && !contextMenu.visible
 
                     // Centering & Sliding Animation
                     // Uses fullWidth/fullHeight for hidden position so the dock
@@ -755,10 +804,14 @@ Scope {
                                 anchors.centerIn: parent
                                 width: iconSz
                                 height: iconSz
-                                radius: iconSz / 2
-                                color: launcherMouse.containsMouse ? Theme.alpha(Theme.accent, 0.25) : "transparent"
+                                radius: iconSz * 0.28
+                                color: launcherMouse.containsMouse ? Theme.alpha(Theme.accent, 0.22) : Theme.alpha(Theme.foreground, 0.04)
                                 border.width: 1
-                                border.color: launcherMouse.containsMouse ? Theme.accent : "transparent"
+                                border.color: launcherMouse.containsMouse ? Theme.alpha(Theme.accent, 0.65) : Theme.alpha(Theme.foreground, 0.08)
+                                scale: launcherMouse.pressed ? 0.90 : (launcherMouse.containsMouse ? 1.12 : 1.0)
+                                Behavior on scale { NumberAnimation { duration: 130; easing.type: Easing.OutBack } }
+                                Behavior on color { ColorAnimation { duration: 140 } }
+                                Behavior on border.color { ColorAnimation { duration: 140 } }
 
                                 Image {
                                     anchors.centerIn: parent
@@ -806,6 +859,9 @@ Scope {
                                 hoverEffect: hoverFx
                                 showTooltips: showTips && !contextMenu.visible
                                 showIndicators: showInds
+                                pointerAxisPos: dockContainer.pointerAxisPos
+                                pointerActive: dockContainer.pointerActive
+                                containerOrigin: dockContentRow.x
 
                                 onItemClicked: {
                                     contextMenu.close()
@@ -847,6 +903,9 @@ Scope {
                                 hoverEffect: hoverFx
                                 showTooltips: showTips && !contextMenu.visible
                                 showIndicators: showInds
+                                pointerAxisPos: dockContainer.pointerAxisPos
+                                pointerActive: dockContainer.pointerActive
+                                containerOrigin: dockContentRow.x
 
                                 onItemClicked: {
                                     contextMenu.close()
@@ -881,10 +940,14 @@ Scope {
                                 anchors.centerIn: parent
                                 width: iconSz
                                 height: iconSz
-                                radius: iconSz / 2
-                                color: launcherMouseV.containsMouse ? Theme.alpha(Theme.accent, 0.25) : "transparent"
+                                radius: iconSz * 0.28
+                                color: launcherMouseV.containsMouse ? Theme.alpha(Theme.accent, 0.22) : Theme.alpha(Theme.foreground, 0.04)
                                 border.width: 1
-                                border.color: launcherMouseV.containsMouse ? Theme.accent : "transparent"
+                                border.color: launcherMouseV.containsMouse ? Theme.alpha(Theme.accent, 0.65) : Theme.alpha(Theme.foreground, 0.08)
+                                scale: launcherMouseV.pressed ? 0.90 : (launcherMouseV.containsMouse ? 1.12 : 1.0)
+                                Behavior on scale { NumberAnimation { duration: 130; easing.type: Easing.OutBack } }
+                                Behavior on color { ColorAnimation { duration: 140 } }
+                                Behavior on border.color { ColorAnimation { duration: 140 } }
 
                                 Image {
                                     anchors.centerIn: parent
@@ -932,6 +995,9 @@ Scope {
                                 hoverEffect: hoverFx
                                 showTooltips: showTips && !contextMenu.visible
                                 showIndicators: showInds
+                                pointerAxisPos: dockContainer.pointerAxisPos
+                                pointerActive: dockContainer.pointerActive
+                                containerOrigin: dockContentCol.y
 
                                 onItemClicked: {
                                     contextMenu.close()
@@ -973,6 +1039,9 @@ Scope {
                                 hoverEffect: hoverFx
                                 showTooltips: showTips && !contextMenu.visible
                                 showIndicators: showInds
+                                pointerAxisPos: dockContainer.pointerAxisPos
+                                pointerActive: dockContainer.pointerActive
+                                containerOrigin: dockContentCol.y
 
                                 onItemClicked: {
                                     contextMenu.close()

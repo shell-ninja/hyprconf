@@ -14,10 +14,24 @@ Item {
     property string hoverEffect: "zoom"    // "zoom" | "lift" | "glow" | "subtle" | "none"
     property bool showTooltips: true
     property bool showIndicators: true
+    property real pointerAxisPos: -1
+    property bool pointerActive: false
+    property real containerOrigin: 0
+
+    readonly property bool isHorizDock: dockPosition === "bottom" || dockPosition === "top"
+    readonly property real itemAxisCenter: containerOrigin + (isHorizDock ? (x + width * 0.5) : (y + height * 0.5))
+    readonly property real parabolicProximity: {
+        if (hoverEffect !== "zoom" || isDragging || !pointerActive || pointerAxisPos < 0) return 0.0
+        var reach = iconSize * 2.25
+        var dist = Math.abs(pointerAxisPos - itemAxisCenter)
+        if (dist >= reach) return 0.0
+        var norm = 1.0 - (dist / reach) * (dist / reach)
+        return norm * norm
+    }
 
     width: iconSize + 16
     height: iconSize + 16
-    z: isDragging ? 100 : 1
+    z: isDragging ? 100 : (isHovered ? 30 : (parabolicProximity > 0.05 ? 10 : 1))
 
     readonly property bool isPinned: itemData ? !!itemData.isPinned : false
     readonly property bool isHovered: itemMouse.containsMouse
@@ -44,16 +58,18 @@ Item {
     Rectangle {
         id: glowAura
         anchors.centerIn: iconContainer
-        width: iconSize * 1.3
-        height: iconSize * 1.3
-        radius: width / 2
-        color: Theme.alpha(Theme.accent, 0.35)
+        width: iconSize * 1.24
+        height: iconSize * 1.24
+        radius: iconSize * 0.34
+        color: Theme.alpha(Theme.accent, 0.20)
+        border.width: 1
+        border.color: Theme.alpha(Theme.accent, 0.38)
         opacity: (dockItemRoot.isHovered && !dockItemRoot.isDragging && (hoverEffect === "glow" || hoverEffect === "zoom")) ? 1.0 : 0.0
-        scale: dockItemRoot.isHovered ? 1.05 : 0.6
+        scale: dockItemRoot.isHovered ? 1.04 : 0.72
         visible: hoverEffect === "glow" || hoverEffect === "zoom"
 
-        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutBack } }
+        Behavior on opacity { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+        Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutBack } }
     }
 
     // ── ICON CONTAINER & ANIMATIONS ─────────────────────────────────────────
@@ -63,11 +79,15 @@ Item {
         width: iconSize
         height: iconSize
 
-        // Transformations based on hoverEffect & dragging
+        // Transformations based on hoverEffect, parabolic neighbor wave & dragging/press
         scale: {
-            if (dockItemRoot.isDragging) return 1.20
+            if (dockItemRoot.isDragging) return 1.18
+            if (itemMouse.pressed) return 0.92
+            if (hoverEffect === "zoom") {
+                var p = dockItemRoot.isHovered ? 1.0 : dockItemRoot.parabolicProximity
+                return 1.0 + 0.30 * p
+            }
             if (!dockItemRoot.isHovered) return 1.0
-            if (hoverEffect === "zoom") return 1.28
             if (hoverEffect === "subtle") return 1.10
             return 1.0
         }
@@ -77,21 +97,33 @@ Item {
                 id: liftTranslate
                 x: {
                     if (dockItemRoot.isDragging) return 0
-                    if (!dockItemRoot.isHovered || hoverEffect !== "lift") return 0
-                    if (dockPosition === "left") return 8
-                    if (dockPosition === "right") return -8
+                    var shift = 0
+                    if (hoverEffect === "zoom") {
+                        shift = 7.0 * (dockItemRoot.isHovered ? 1.0 : dockItemRoot.parabolicProximity)
+                    } else if (dockItemRoot.isHovered && hoverEffect === "lift") {
+                        shift = 8.0
+                    }
+                    if (shift <= 0) return 0
+                    if (dockPosition === "left") return shift
+                    if (dockPosition === "right") return -shift
                     return 0
                 }
                 y: {
                     if (dockItemRoot.isDragging) return 0
-                    if (!dockItemRoot.isHovered || hoverEffect !== "lift") return 0
-                    if (dockPosition === "bottom") return -8
-                    if (dockPosition === "top") return 8
+                    var shift = 0
+                    if (hoverEffect === "zoom") {
+                        shift = 7.0 * (dockItemRoot.isHovered ? 1.0 : dockItemRoot.parabolicProximity)
+                    } else if (dockItemRoot.isHovered && hoverEffect === "lift") {
+                        shift = 8.0
+                    }
+                    if (shift <= 0) return 0
+                    if (dockPosition === "bottom") return -shift
+                    if (dockPosition === "top") return shift
                     return 0
                 }
 
-                Behavior on x { NumberAnimation { duration: 160; easing.type: Easing.OutBack } }
-                Behavior on y { NumberAnimation { duration: 160; easing.type: Easing.OutBack } }
+                Behavior on x { NumberAnimation { duration: 110; easing.type: Easing.OutCubic } }
+                Behavior on y { NumberAnimation { duration: 110; easing.type: Easing.OutCubic } }
             },
             Translate {
                 id: dragTranslate
@@ -101,7 +133,7 @@ Item {
         ]
 
         Behavior on scale {
-            NumberAnimation { duration: 160; easing.type: Easing.OutBack }
+            NumberAnimation { duration: 110; easing.type: Easing.OutCubic }
         }
 
         // The Application Icon Image
@@ -148,12 +180,23 @@ Item {
                 required property int index
                 readonly property bool isPrimaryDot: index === 0
                 readonly property bool isHorizDot: indicatorContainer.isHoriz
-                width: isHorizDot ? ((isPrimaryDot && dockItemRoot.isActive) ? 14 : 4) : 4
-                height: !isHorizDot ? ((isPrimaryDot && dockItemRoot.isActive) ? 14 : 4) : 4
+                width: isHorizDot ? ((isPrimaryDot && dockItemRoot.isActive) ? 16 : 5) : 4
+                height: !isHorizDot ? ((isPrimaryDot && dockItemRoot.isActive) ? 16 : 5) : 4
                 radius: 2
                 color: isPrimaryDot
-                    ? (dockItemRoot.isActive ? Theme.primary : Theme.alpha(Theme.foreground, 0.72))
+                    ? (dockItemRoot.isActive ? Theme.accent : Theme.alpha(Theme.foreground, 0.78))
                     : (dockItemRoot.isActive ? Theme.tertiary : Theme.alpha(Theme.foreground, 0.45))
+
+                // Soft luminous halo behind active app indicator pill
+                Rectangle {
+                    visible: isPrimaryDot && dockItemRoot.isActive
+                    anchors.centerIn: parent
+                    width: parent.width + 6
+                    height: parent.height + 4
+                    radius: height / 2
+                    color: Theme.alpha(Theme.accent, 0.28)
+                    z: -1
+                }
 
                 Behavior on width { NumberAnimation { duration: 180; easing.type: Easing.OutBack } }
                 Behavior on height { NumberAnimation { duration: 180; easing.type: Easing.OutBack } }
@@ -171,22 +214,39 @@ Item {
         readonly property var peekWindows: (itemData && itemData.windows) ? itemData.windows.slice(0, 3) : []
         readonly property int extraCount: (itemData && itemData.windows && itemData.windows.length > 3) ? (itemData.windows.length - 3) : 0
 
-        width: Math.max(tooltipHeaderRow.implicitWidth, peekCol.implicitWidth) + 20
+        width: Math.max(tooltipHeaderRow.implicitWidth, peekCol.implicitWidth) + 22
         height: peekMainCol.implicitHeight + 14
         radius: 12
-        color: Theme.alpha(Theme.surface, 0.96)
+        clip: true
+        color: Theme.glassElevated
         border.width: 1
-        border.color: Theme.alpha(Theme.accent, 0.40)
+        border.color: Theme.alpha(Theme.foreground, 0.14)
+
+        // Specular top rim on floating tooltip pill
+        Rectangle {
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.leftMargin: 12
+            anchors.rightMargin: 12
+            height: 1
+            gradient: Gradient {
+                orientation: Gradient.Horizontal
+                GradientStop { position: 0.0; color: "transparent" }
+                GradientStop { position: 0.50; color: Theme.alpha(Theme.foreground, 0.22) }
+                GradientStop { position: 1.0; color: "transparent" }
+            }
+        }
 
         // Accurate Positioning relative to dock orientation
         x: {
-            if (dockPosition === "left") return parent.width + 12
-            if (dockPosition === "right") return -width - 12
+            if (dockPosition === "left") return parent.width + 14
+            if (dockPosition === "right") return -width - 14
             return (parent.width - width) / 2
         }
         y: {
-            if (dockPosition === "bottom") return -height - 10
-            if (dockPosition === "top") return parent.height + 10
+            if (dockPosition === "bottom") return -height - 14
+            if (dockPosition === "top") return parent.height + 14
             return (parent.height - height) / 2
         }
 
