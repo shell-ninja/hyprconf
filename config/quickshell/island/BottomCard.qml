@@ -9,12 +9,14 @@ Rectangle {
 
     implicitWidth: 444
     implicitHeight: 155
-    radius: 18
+    radius: Theme.radiusCard
 
-    color: Theme.alpha(Theme.surface, 0.65)
-    border.color: Theme.alpha(Theme.foreground, 0.08)
+    color: Theme.glassCard
+    border.color: Theme.alpha(Theme.foreground, 0.10)
     border.width: 1
     clip: true
+
+    GlassRim { horizontalInset: 20; peakOpacity: 1.0 }
 
     signal openWeatherRequested()
 
@@ -405,10 +407,15 @@ Rectangle {
             implicitHeight: Math.max(54, contentCol.implicitHeight + 16)
             height: implicitHeight
             radius: nested ? 10 : 12
-            color: itemHoverArea.containsMouse ? Theme.alpha(Theme.surface, 0.90) : Theme.alpha(Theme.background, nested ? 0.42 : 0.55)
-            border.color: itemHoverArea.containsMouse ? Theme.alpha(Theme.accent, 0.35) : Theme.alpha(Theme.foreground, nested ? 0.06 : 0.08)
+            clip: true
+            color: itemHoverArea.containsMouse ? Theme.glassElevated : (nested ? Theme.alpha(Theme.background, 0.44) : Theme.glassWell)
+            border.color: itemHoverArea.containsMouse ? Theme.alpha(Theme.accent, 0.42) : Theme.alpha(Theme.foreground, nested ? 0.07 : 0.09)
             border.width: 1
+            scale: itemHoverArea.pressed ? 0.985 : 1.0
 
+            GlassRim { horizontalInset: 14; peakOpacity: itemHoverArea.containsMouse ? 0.85 : 0.55 }
+
+            Behavior on scale { NumberAnimation { duration: 100; easing.type: Easing.OutCubic } }
             Behavior on color { ColorAnimation { duration: 150 } }
             Behavior on border.color { ColorAnimation { duration: 150 } }
 
@@ -857,111 +864,316 @@ Rectangle {
 
     // ── MEDIA PLAYER CONTENT ─────────────────────────────────────────────────
     Item {
+        id: mediaContainer
         anchors.top: headerRow.bottom
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        anchors.margins: 10
+        anchors.leftMargin: 8
+        anchors.rightMargin: 8
+        anchors.topMargin: 4
+        anchors.bottomMargin: 6
         visible: root.currentTab === 1
 
-        Row {
+        readonly property real trackLength: (root.activePlayer && root.activePlayer.length > 0) ? root.activePlayer.length : 0
+        readonly property bool isPlaying: Boolean(root.activePlayer && root.activePlayer.playbackState === MprisPlaybackState.Playing)
+        property real displayPosition: (root.activePlayer && root.activePlayer.position >= 0) ? root.activePlayer.position : 0
+
+        function formatMediaTime(seconds) {
+            if (!seconds || isNaN(seconds) || seconds < 0) return "0:00"
+            var s = Math.floor(seconds)
+            var m = Math.floor(s / 60)
+            s = s % 60
+            return m + ":" + (s < 10 ? "0" + s : s)
+        }
+
+        function syncPosition() {
+            if (root.activePlayer && typeof root.activePlayer.position === "number" && !isNaN(root.activePlayer.position) && root.activePlayer.position >= 0) {
+                mediaContainer.displayPosition = root.activePlayer.position
+            } else {
+                mediaContainer.displayPosition = 0
+            }
+        }
+
+        function seekToFraction(fraction) {
+            if (mediaContainer.trackLength <= 0) return
+            var target = Math.max(0, Math.min(mediaContainer.trackLength, fraction * mediaContainer.trackLength))
+            mediaContainer.displayPosition = target
+            Quickshell.execDetached(["playerctl", "position", Math.round(target).toString()])
+        }
+
+        onVisibleChanged: if (visible) syncPosition()
+
+        Connections {
+            target: root
+            function onActivePlayerChanged() { mediaContainer.syncPosition() }
+        }
+
+        Connections {
+            target: root.activePlayer
+            ignoreUnknownSignals: true
+            function onPositionChanged() { mediaContainer.syncPosition() }
+            function onTrackTitleChanged() { mediaContainer.syncPosition() }
+        }
+
+        // Only ticks when the Island & Media tab are visible and actively playing (0% idle cost).
+        Timer {
+            interval: 1000
+            repeat: true
+            running: root.visible && mediaContainer.visible && mediaContainer.isPlaying && mediaContainer.trackLength > 0
+            onTriggered: {
+                if (root.activePlayer && typeof root.activePlayer.position === "number" && !isNaN(root.activePlayer.position) && root.activePlayer.position >= 0) {
+                    var p = root.activePlayer.position
+                    if (Math.abs(p - mediaContainer.displayPosition) > 2.5 || p === 0) {
+                        mediaContainer.displayPosition = p
+                    } else {
+                        mediaContainer.displayPosition = Math.min(mediaContainer.trackLength, mediaContainer.displayPosition + 1)
+                    }
+                }
+            }
+        }
+
+        // Ambient media inner glass stage with subtle faded artwork backdrop
+        Rectangle {
+            id: mediaStage
             anchors.fill: parent
-            spacing: 14
+            radius: 13
+            color: Theme.glassWell
+            border.color: Theme.alpha(Theme.foreground, 0.08)
+            border.width: 1
+            clip: true
+
+            Image {
+                anchors.fill: parent
+                source: (root.activePlayer && root.activePlayer.trackArtUrl) ? root.activePlayer.trackArtUrl : ""
+                fillMode: Image.PreserveAspectCrop
+                sourceSize: Qt.size(256, 128)
+                asynchronous: true
+                cache: true
+                opacity: source.toString().length > 0 ? 0.16 : 0.0
+                visible: opacity > 0.001
+            }
 
             Rectangle {
-                width: 64
-                height: 64
-                radius: 12
-                color: Theme.alpha(Theme.surface, 0.9)
-                border.color: Theme.alpha(Theme.foreground, 0.1)
-                anchors.verticalCenter: parent.verticalCenter
-                clip: true
-
-                Image {
-                    anchors.fill: parent
-                    source: (root.activePlayer && root.activePlayer.trackArtUrl) ? root.activePlayer.trackArtUrl : ""
-                    fillMode: Image.PreserveAspectCrop
-                    sourceSize: Qt.size(128, 128)
-                    asynchronous: true
-                    cache: true
-                    visible: source.toString().length > 0
-                }
-
-                Image {
-                    anchors.centerIn: parent
-                    width: 26; height: 26
-                    source: root.musicSvg
-                    visible: !(root.activePlayer && root.activePlayer.trackArtUrl && root.activePlayer.trackArtUrl.length > 0)
+                anchors.fill: parent
+                gradient: Gradient {
+                    orientation: Gradient.Horizontal
+                    GradientStop { position: 0.0; color: Theme.alpha(Theme.background, 0.35) }
+                    GradientStop { position: 0.55; color: Theme.alpha(Theme.background, 0.62) }
+                    GradientStop { position: 1.0; color: Theme.alpha(Theme.background, 0.78) }
                 }
             }
 
-            Column {
-                anchors.verticalCenter: parent.verticalCenter
-                width: parent.width - 78
-                spacing: 6
+            GlassRim { horizontalInset: 14; peakOpacity: 0.65 }
 
-                Column {
-                    spacing: 2
-                    width: parent.width
+            Row {
+                id: mediaLayoutRow
+                anchors.fill: parent
+                anchors.leftMargin: 7
+                anchors.rightMargin: 10
+                anchors.topMargin: 5
+                anchors.bottomMargin: 5
+                spacing: 10
 
-                    Text {
-                        text: (root.activePlayer && root.activePlayer.trackTitle) ? root.activePlayer.trackTitle : "Nothing Playing"
-                        font.family: "Outfit"
-                        font.pixelSize: 13
-                        font.weight: Font.Bold
-                        color: Theme.foreground
-                        elide: Text.ElideRight
-                        width: parent.width
+                Rectangle {
+                    id: mediaArtBox
+                    readonly property int artSize: Math.max(42, Math.min(64, mediaLayoutRow.height))
+                    width: artSize
+                    height: artSize
+                    radius: Math.min(12, Math.round(artSize * 0.2))
+                    color: Theme.alpha(Theme.surface, 0.92)
+                    border.color: mediaContainer.isPlaying ? Theme.alpha(Theme.accent, 0.45) : Theme.alpha(Theme.foreground, 0.12)
+                    border.width: 1
+                    anchors.verticalCenter: parent.verticalCenter
+                    clip: true
+                    Behavior on border.color { ColorAnimation { duration: 180 } }
+
+                    Image {
+                        anchors.fill: parent
+                        source: (root.activePlayer && root.activePlayer.trackArtUrl) ? root.activePlayer.trackArtUrl : ""
+                        fillMode: Image.PreserveAspectCrop
+                        sourceSize: Qt.size(128, 128)
+                        asynchronous: true
+                        cache: true
+                        visible: source.toString().length > 0
                     }
 
-                    Text {
-                        text: (root.activePlayer && root.activePlayer.trackArtist) ? root.activePlayer.trackArtist : "Idle"
-                        font.family: "Outfit"
-                        font.pixelSize: 11
-                        font.weight: Font.Medium
-                        color: Theme.alpha(Theme.foreground, 0.70)
-                        elide: Text.ElideRight
-                        width: parent.width
+                    Image {
+                        anchors.centerIn: parent
+                        width: 22; height: 22
+                        source: root.musicSvg
+                        visible: !(root.activePlayer && root.activePlayer.trackArtUrl && root.activePlayer.trackArtUrl.length > 0)
                     }
                 }
 
-                Row {
-                    spacing: 12
+                Column {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: Math.max(120, parent.width - mediaArtBox.width - mediaLayoutRow.spacing)
+                    spacing: mediaContainer.trackLength > 0 ? 4 : 0
 
-                    Rectangle {
-                        width: 28; height: 28; radius: 14; color: Theme.alpha(Theme.surface, 0.8)
-                        anchors.verticalCenter: parent.verticalCenter
-                        Image { anchors.centerIn: parent; width: 12; height: 12; source: root.prevSvg }
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: if (root.activePlayer && root.activePlayer.canGoPrevious) root.activePlayer.previous()
+                    // Top strip: Track Title + Artist on left, Transport Buttons on right
+                    Item {
+                        width: parent.width
+                        height: Math.max(metaCol.implicitHeight, transportRow.height)
+
+                        Column {
+                            id: metaCol
+                            anchors.left: parent.left
+                            anchors.right: transportRow.left
+                            anchors.rightMargin: 8
+                            anchors.verticalCenter: parent.verticalCenter
+                            spacing: 1
+
+                            Text {
+                                text: (root.activePlayer && root.activePlayer.trackTitle) ? root.activePlayer.trackTitle : "Nothing Playing"
+                                font.family: "Outfit"
+                                font.pixelSize: 12
+                                font.weight: Font.Bold
+                                color: Theme.foreground
+                                elide: Text.ElideRight
+                                width: parent.width
+                            }
+
+                            Text {
+                                text: (root.activePlayer && root.activePlayer.trackArtist) ? root.activePlayer.trackArtist : "Idle"
+                                font.family: "Outfit"
+                                font.pixelSize: 10
+                                font.weight: Font.Medium
+                                color: Theme.alpha(Theme.foreground, 0.68)
+                                elide: Text.ElideRight
+                                width: parent.width
+                            }
+                        }
+
+                        Row {
+                            id: transportRow
+                            anchors.right: parent.right
+                            anchors.verticalCenter: parent.verticalCenter
+                            spacing: 6
+
+                            Rectangle {
+                                width: 24; height: 24; radius: 12
+                                color: prevMouse.containsMouse ? Theme.glassElevated : Theme.alpha(Theme.surface, 0.85)
+                                border.width: 1
+                                border.color: prevMouse.containsMouse ? Theme.alpha(Theme.accent, 0.35) : Theme.alpha(Theme.foreground, 0.09)
+                                anchors.verticalCenter: parent.verticalCenter
+                                scale: prevMouse.pressed ? 0.90 : (prevMouse.containsMouse ? 1.06 : 1.0)
+                                Behavior on scale { NumberAnimation { duration: 100; easing.type: Easing.OutCubic } }
+                                Behavior on color { ColorAnimation { duration: 120 } }
+                                Image { anchors.centerIn: parent; width: 10; height: 10; source: root.prevSvg }
+                                MouseArea {
+                                    id: prevMouse
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: if (root.activePlayer && root.activePlayer.canGoPrevious) root.activePlayer.previous()
+                                }
+                            }
+
+                            Rectangle {
+                                width: 28; height: 28; radius: 14
+                                color: playMouse.containsMouse ? Theme.mix(Theme.accent, Theme.foreground, 0.15) : Theme.accent
+                                anchors.verticalCenter: parent.verticalCenter
+                                scale: playMouse.pressed ? 0.90 : (playMouse.containsMouse ? 1.07 : 1.0)
+                                Behavior on scale { NumberAnimation { duration: 100; easing.type: Easing.OutCubic } }
+                                Behavior on color { ColorAnimation { duration: 120 } }
+                                Image {
+                                    anchors.centerIn: parent
+                                    width: 12; height: 12
+                                    source: mediaContainer.isPlaying ? root.pauseSvg : root.playSvg
+                                }
+                                MouseArea {
+                                    id: playMouse
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: if (root.activePlayer) root.activePlayer.togglePlaying()
+                                }
+                            }
+
+                            Rectangle {
+                                width: 24; height: 24; radius: 12
+                                color: nextMouse.containsMouse ? Theme.glassElevated : Theme.alpha(Theme.surface, 0.85)
+                                border.width: 1
+                                border.color: nextMouse.containsMouse ? Theme.alpha(Theme.accent, 0.35) : Theme.alpha(Theme.foreground, 0.09)
+                                anchors.verticalCenter: parent.verticalCenter
+                                scale: nextMouse.pressed ? 0.90 : (nextMouse.containsMouse ? 1.06 : 1.0)
+                                Behavior on scale { NumberAnimation { duration: 100; easing.type: Easing.OutCubic } }
+                                Behavior on color { ColorAnimation { duration: 120 } }
+                                Image { anchors.centerIn: parent; width: 10; height: 10; source: root.nextSvg }
+                                MouseArea {
+                                    id: nextMouse
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: if (root.activePlayer && root.activePlayer.canGoNext) root.activePlayer.next()
+                                }
+                            }
                         }
                     }
 
-                    Rectangle {
-                        width: 32; height: 32; radius: 16; color: Theme.accent
-                        anchors.verticalCenter: parent.verticalCenter
-                        Image {
-                            anchors.centerIn: parent
-                            width: 14; height: 14
-                            source: (root.activePlayer && root.activePlayer.playbackState === MprisPlaybackState.Playing) ? root.pauseSvg : root.playSvg
-                        }
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: if (root.activePlayer) root.activePlayer.togglePlaying()
-                        }
-                    }
+                    // Bottom strip: Interactive Scrubber + Timestamps
+                    Row {
+                        width: parent.width
+                        spacing: 6
+                        visible: mediaContainer.trackLength > 0
 
-                    Rectangle {
-                        width: 28; height: 28; radius: 14; color: Theme.alpha(Theme.surface, 0.8)
-                        anchors.verticalCenter: parent.verticalCenter
-                        Image { anchors.centerIn: parent; width: 12; height: 12; source: root.nextSvg }
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: if (root.activePlayer && root.activePlayer.canGoNext) root.activePlayer.next()
+                        Text {
+                            text: mediaContainer.formatMediaTime(mediaContainer.displayPosition)
+                            font.family: "JetBrains Mono"
+                            font.pixelSize: 9
+                            font.weight: Font.Medium
+                            color: Theme.alpha(Theme.foreground, 0.62)
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+
+                        Item {
+                            id: seekTrackHit
+                            width: Math.max(40, parent.width - 68)
+                            height: 11
+                            anchors.verticalCenter: parent.verticalCenter
+
+                            Rectangle {
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: parent.width
+                                height: 3
+                                radius: 1.5
+                                color: Theme.alpha(Theme.foreground, 0.14)
+                                clip: true
+
+                                Rectangle {
+                                    anchors.left: parent.left
+                                    anchors.top: parent.top
+                                    anchors.bottom: parent.bottom
+                                    radius: 1.5
+                                    width: mediaContainer.trackLength > 0
+                                        ? Math.max(4, parent.width * Math.min(1.0, Math.max(0.0, mediaContainer.displayPosition / mediaContainer.trackLength)))
+                                        : 0
+                                    gradient: Gradient {
+                                        orientation: Gradient.Horizontal
+                                        GradientStop { position: 0.0; color: Theme.primary }
+                                        GradientStop { position: 1.0; color: Theme.accent }
+                                    }
+                                    Behavior on width { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                                }
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: function(mouse) {
+                                    mediaContainer.seekToFraction(mouse.x / Math.max(1, width))
+                                }
+                            }
+                        }
+
+                        Text {
+                            text: mediaContainer.formatMediaTime(mediaContainer.trackLength)
+                            font.family: "JetBrains Mono"
+                            font.pixelSize: 9
+                            font.weight: Font.Medium
+                            color: Theme.alpha(Theme.foreground, 0.48)
+                            anchors.verticalCenter: parent.verticalCenter
                         }
                     }
                 }

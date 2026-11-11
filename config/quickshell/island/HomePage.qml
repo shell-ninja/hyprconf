@@ -285,11 +285,17 @@ Item {
             width: parent.width
             height: 26
             radius: 13
-            color: Theme.alpha(Theme.surface, 0.58)
-            border.color: Theme.alpha(Theme.foreground, 0.08)
+            color: Theme.glassCard
+            border.color: Theme.alpha(Theme.foreground, 0.10)
             border.width: 1
             opacity: 0.0
+            clip: true
             transform: Translate { id: tVar; y: 16 }
+
+            GlassRim {
+                horizontalInset: 14
+                peakOpacity: 0.75
+            }
 
             Row {
                 anchors.fill: parent
@@ -605,11 +611,16 @@ Item {
             width: parent.width
             height: (root.isAudioPlaying && root.visualizerEnabled) ? 40 : 0
             radius: 16
-            color: Theme.alpha(Theme.surface, 0.65)
+            color: Theme.glassCard
             border.color: Theme.alpha(Theme.accent, 0.35)
             border.width: (root.isAudioPlaying && root.visualizerEnabled) ? 1 : 0
             visible: (root.isAudioPlaying && root.visualizerEnabled)
             clip: true
+
+            GlassRim {
+                horizontalInset: 18
+                peakOpacity: 0.9
+            }
 
             opacity: (root.isAudioPlaying && root.visualizerEnabled) ? Math.min(1.0, Math.max(0.0, (root.animProgress - 0.25) / 0.75)) : 0.0
 

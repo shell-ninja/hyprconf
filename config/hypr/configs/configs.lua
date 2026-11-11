@@ -4,15 +4,15 @@
 local status, theme = pcall(require, "theme")
 local colors        = theme.colors
 
-opacity_act         = 0.9
-opacity_deact       = 0.85
+opacity_act         = 0.95
+opacity_deact       = 0.88
 blur_size           = 4
-blur_pass           = 4
-shadow_range        = 0
-rounding            = 13
+blur_pass           = 2
+shadow_range        = 18
+rounding            = 14
 border              = 2
-inner_gap           = 4
-outer_gap           = 8
+inner_gap           = 5
+outer_gap           = 10
 
 -- Border and theme colors from Noctalia
 act_border          = colors.primary

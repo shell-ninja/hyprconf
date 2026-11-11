@@ -22,14 +22,14 @@ hl.config({
 
     decoration = {
         rounding         = rounding,
-        rounding_power   = 2,
+        rounding_power   = 3.5,
 
         active_opacity   = opacity_act,
         inactive_opacity = opacity_deact,
 
-        dim_inactive     = false,
-        dim_strength     = 0.1,
-        dim_special      = 0.2,
+        dim_inactive     = true,
+        dim_strength     = 0.08,
+        dim_special      = 0.25,
         wobble           = {
             enabled          = false,
             mesh             = 5,
@@ -45,8 +45,8 @@ hl.config({
             enabled        = true,
             range          = shadow_range,
             render_power   = 3,
-            color          = act_border,
-            color_inactive = inact_border,
+            color          = "rgba(04050acc)",
+            color_inactive = "rgba(04050a66)",
         },
 
         glow             = {
@@ -59,19 +59,19 @@ hl.config({
 
         blur             = {
             enabled                   = true,
-            size                      = 3,
+            size                      = 4,
             passes                    = 2,
             ignore_opacity            = true,
             new_optimizations         = true,
             xray                      = false,
-            noise                     = 0.12,
-            contrast                  = 1.0,
-            brightness                = 1.0,
-            vibrancy                  = 0.12,
-            vibrancy_darkness         = 0.3,
+            noise                     = 0.025,
+            contrast                  = 1.04,
+            brightness                = 0.96,
+            vibrancy                  = 0.22,
+            vibrancy_darkness         = 0.25,
             special                   = false,
-            popups                    = false,
-            popups_ignorealpha        = 0.5,
+            popups                    = true,
+            popups_ignorealpha        = 0.35,
             input_methods             = false,
             input_methods_ignorealpha = 0.2,
             proportional              = false,

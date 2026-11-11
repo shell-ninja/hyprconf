@@ -92,6 +92,33 @@ Item {
     readonly property string displayCurrentTemp: root.useFahrenheit ? (root.currentTempF + "°") : (root.currentTempC + "°")
     readonly property string displayFeelsLike: root.useFahrenheit ? (root.feelsLikeF + "°") : (root.feelsLikeC + "°")
 
+    readonly property color atmosphereColor: {
+        var cat = (root.weatherCategory || "").toLowerCase()
+        if (cat.indexOf("thunder") !== -1 || cat.indexOf("storm") !== -1) return "#f59e0b"
+        if (cat.indexOf("rain") !== -1 || cat.indexOf("drizzle") !== -1) return "#38bdf8"
+        if (cat.indexOf("snow") !== -1 || cat.indexOf("ice") !== -1) return "#bae6fd"
+        if (cat.indexOf("cloud") !== -1 || cat.indexOf("fog") !== -1 || cat.indexOf("mist") !== -1 || cat.indexOf("haze") !== -1) {
+            return Theme.mix(Theme.accent, "#94a3b8", 0.5)
+        }
+        return root.isDay ? Theme.accent : "#818cf8"
+    }
+
+    readonly property var weekTempBounds: {
+        var lo = 999
+        var hi = -999
+        var arr = root.forecast7Days || []
+        for (var i = 0; i < arr.length; i++) {
+            var item = arr[i]
+            if (!item) continue
+            var mn = Number(root.useFahrenheit ? item.temp_min_F : item.temp_min_C)
+            var mx = Number(root.useFahrenheit ? item.temp_max_F : item.temp_max_C)
+            if (!isNaN(mn) && mn < lo) lo = mn
+            if (!isNaN(mx) && mx > hi) hi = mx
+        }
+        if (lo > hi) return { min: 0, max: 30 }
+        return { min: lo, max: Math.max(lo + 1, hi) }
+    }
+
     function applyWeatherData(data) {
         if (!data) return
         if (data.location) root.location = data.location
@@ -386,24 +413,26 @@ Item {
             id: heroCard
             width: parent.width
             height: 168
-            radius: 18
+            radius: Theme.radiusCard
             opacity: 0.0
             transform: Translate { id: heroTranslate; y: 14 }
-            color: Theme.alpha(Theme.surface, 0.65)
-            border.color: Theme.alpha(Theme.foreground, 0.08)
+            color: Theme.glassCard
+            border.color: Theme.alpha(Theme.foreground, 0.10)
             border.width: 1
             clip: true
 
-            // Top specular highlight
+            // Atmospheric condition-tinted vertical veil (0% shader cost)
             Rectangle {
-                anchors.top: parent.top
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.leftMargin: 20
-                anchors.rightMargin: 20
-                height: 1
-                color: Theme.alpha(Theme.foreground, 0.14)
+                anchors.fill: parent
+                gradient: Gradient {
+                    orientation: Gradient.Vertical
+                    GradientStop { position: 0.0; color: Theme.alpha(root.atmosphereColor, 0.16) }
+                    GradientStop { position: 0.55; color: Theme.alpha(root.atmosphereColor, 0.04) }
+                    GradientStop { position: 1.0; color: "transparent" }
+                }
             }
+
+            GlassRim { horizontalInset: 18; peakOpacity: 1.15 }
 
             Column {
                 anchors.fill: parent
@@ -605,13 +634,15 @@ Item {
             id: forecastCard
             width: parent.width
             height: 234
-            radius: 18
+            radius: Theme.radiusCard
             opacity: 0.0
             transform: Translate { id: forecastTranslate; y: 18 }
-            color: Theme.alpha(Theme.surface, 0.65)
-            border.color: Theme.alpha(Theme.foreground, 0.08)
+            color: Theme.glassCard
+            border.color: Theme.alpha(Theme.foreground, 0.10)
             border.width: 1
             clip: true
+
+            GlassRim { horizontalInset: 18; peakOpacity: 0.9 }
 
             Column {
                 anchors.fill: parent
@@ -620,7 +651,7 @@ Item {
                 spacing: 4
 
                 // Header: Calendar Icon + "7-Day Forecast"
-                Row {
+                RowLayout {
                     width: parent.width
                     height: 18
                     spacing: 6
@@ -629,7 +660,7 @@ Item {
                         width: 12
                         height: 12
                         source: root.calendarSvg
-                        anchors.verticalCenter: parent.verticalCenter
+                        Layout.alignment: Qt.AlignVCenter
                     }
 
                     Text {
@@ -638,17 +669,17 @@ Item {
                         font.pixelSize: 11
                         font.weight: Font.Bold
                         color: Theme.foreground
-                        anchors.verticalCenter: parent.verticalCenter
+                        Layout.alignment: Qt.AlignVCenter
                     }
 
-                    Item { Layout.fillWidth: true; width: 1 }
+                    Item { Layout.fillWidth: true }
 
                     Text {
                         text: "Next 7 Days Outlook"
                         font.family: "Outfit"
                         font.pixelSize: 10
                         color: Theme.alpha(Theme.foreground, 0.55)
-                        anchors.verticalCenter: parent.verticalCenter
+                        Layout.alignment: Qt.AlignVCenter
                     }
                 }
 
@@ -753,24 +784,32 @@ Item {
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
 
-                                // Visual Temperature Bar Pill
+                                // Visual Temperature Bar Pill (mapped proportionally across weekly min..max)
                                 Rectangle {
                                     width: 46
                                     height: 4
                                     radius: 2
                                     color: Theme.alpha(Theme.foreground, 0.12)
                                     anchors.verticalCenter: parent.verticalCenter
+                                    clip: true
+
+                                    readonly property real dayMin: Number(root.useFahrenheit ? modelData.temp_min_F : modelData.temp_min_C) || root.weekTempBounds.min
+                                    readonly property real dayMax: Number(root.useFahrenheit ? modelData.temp_max_F : modelData.temp_max_C) || root.weekTempBounds.max
+                                    readonly property real weekSpan: Math.max(1, root.weekTempBounds.max - root.weekTempBounds.min)
+                                    readonly property real startFrac: Math.max(0.0, Math.min(0.82, (dayMin - root.weekTempBounds.min) / weekSpan))
+                                    readonly property real endFrac: Math.max(startFrac + 0.16, Math.min(1.0, (dayMax - root.weekTempBounds.min) / weekSpan))
 
                                     Rectangle {
-                                        anchors.left: parent.left
+                                        x: parent.width * parent.startFrac
                                         anchors.top: parent.top
                                         anchors.bottom: parent.bottom
                                         radius: 2
-                                        width: Math.max(8, parent.width * 0.7)
+                                        width: Math.max(7, parent.width * (parent.endFrac - parent.startFrac))
                                         gradient: Gradient {
                                             orientation: Gradient.Horizontal
-                                            GradientStop { position: 0.0; color: Theme.alpha(Theme.accent, 0.4) }
-                                            GradientStop { position: 1.0; color: Theme.accent }
+                                            GradientStop { position: 0.0; color: "#38bdf8" }
+                                            GradientStop { position: 0.55; color: Theme.accent }
+                                            GradientStop { position: 1.0; color: "#f59e0b" }
                                         }
                                     }
                                 }

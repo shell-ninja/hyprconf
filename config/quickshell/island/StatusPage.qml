@@ -282,10 +282,15 @@ Item {
             width: parent.width
             height: 114
             radius: 14
-            color: Theme.alpha(Theme.surface, 0.55)
+            color: Theme.glassCard
             border.width: 1
-            border.color: Theme.alpha(Theme.foreground, 0.12)
+            border.color: Theme.alpha(Theme.foreground, 0.10)
             clip: true
+
+            GlassRim {
+                horizontalInset: 16
+                peakOpacity: 0.9
+            }
 
             // Top Legend Row
             Row {
@@ -451,9 +456,12 @@ Item {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 radius: 12
-                color: Theme.alpha(Theme.surface, 0.55)
+                color: Theme.glassCard
                 border.width: 1
-                border.color: Theme.alpha(Theme.foreground, 0.12)
+                border.color: Theme.alpha(Theme.foreground, 0.10)
+                clip: true
+
+                GlassRim { horizontalInset: 14; peakOpacity: 0.85 }
 
                 ColumnLayout {
                     anchors.fill: parent
@@ -507,9 +515,12 @@ Item {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 radius: 12
-                color: Theme.alpha(Theme.surface, 0.55)
+                color: Theme.glassCard
                 border.width: 1
-                border.color: Theme.alpha(Theme.foreground, 0.12)
+                border.color: Theme.alpha(Theme.foreground, 0.10)
+                clip: true
+
+                GlassRim { horizontalInset: 14; peakOpacity: 0.85 }
 
                 ColumnLayout {
                     anchors.fill: parent
@@ -578,13 +589,16 @@ Item {
             width: parent.width
             height: 48
             radius: 12
-            color: netCardMouse.containsMouse ? Theme.alpha(Theme.foreground, 0.14) : Theme.alpha(Theme.surface, 0.55)
+            color: netCardMouse.containsMouse ? Theme.mix(Theme.surface, "#06b6d4", 0.16) : Theme.glassCard
             border.width: 1
-            border.color: netCardMouse.containsMouse ? Theme.alpha("#06b6d4", 0.55) : Theme.alpha(Theme.foreground, 0.12)
+            border.color: netCardMouse.containsMouse ? Theme.alpha("#06b6d4", 0.50) : Theme.alpha(Theme.foreground, 0.10)
+            clip: true
             scale: netCardMouse.pressed ? 0.98 : (netCardMouse.containsMouse ? 1.01 : 1.0)
             Behavior on scale { NumberAnimation { duration: 120 } }
             Behavior on color { ColorAnimation { duration: 120 } }
             Behavior on border.color { ColorAnimation { duration: 120 } }
+
+            GlassRim { horizontalInset: 16; peakOpacity: 0.90 }
 
             RowLayout {
                 anchors.fill: parent
@@ -695,10 +709,12 @@ Item {
             width: parent.width
             height: 124
             radius: 14
-            color: Theme.alpha(Theme.surface, 0.55)
+            color: Theme.glassCard
             border.width: 1
-            border.color: Theme.alpha(Theme.foreground, 0.12)
+            border.color: Theme.alpha(Theme.foreground, 0.10)
             clip: true
+
+            GlassRim { horizontalInset: 16; peakOpacity: 0.90 }
 
             Column {
                 anchors.fill: parent

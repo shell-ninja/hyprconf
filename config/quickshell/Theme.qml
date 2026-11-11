@@ -68,4 +68,32 @@ QtObject {
     function alpha(c, a) {
         return Qt.rgba(c.r, c.g, c.b, a)
     }
+
+    function mix(c1, c2, ratio) {
+        var t = Math.max(0.0, Math.min(1.0, ratio))
+        return Qt.rgba(
+            c1.r + (c2.r - c1.r) * t,
+            c1.g + (c2.g - c1.g) * t,
+            c1.b + (c2.b - c1.b) * t,
+            c1.a + (c2.a - c1.a) * t
+        )
+    }
+
+    // Unified Obsidian Frosted Glass Tokens (zero-cost reactive palette derivatives)
+    readonly property color glassBase: Qt.rgba(background.r, background.g, background.b, 0.82)
+    readonly property color glassElevated: Qt.rgba(surface.r, surface.g, surface.b, 0.72)
+    readonly property color glassCard: Qt.rgba(surface.r, surface.g, surface.b, 0.56)
+    readonly property color glassWell: Qt.rgba(background.r, background.g, background.b, 0.52)
+    readonly property color glassRimTop: Qt.rgba(foreground.r, foreground.g, foreground.b, 0.16)
+    readonly property color glassRimMid: Qt.rgba(accent.r, accent.g, accent.b, 0.20)
+    readonly property color glassRimBottom: Qt.rgba(foreground.r, foreground.g, foreground.b, 0.04)
+    readonly property color glassShadow: Qt.rgba(0, 0, 0, 0.48)
+    readonly property color accentSoft: Qt.rgba(accent.r, accent.g, accent.b, 0.16)
+    readonly property color accentGlow: Qt.rgba(accent.r, accent.g, accent.b, 0.34)
+    readonly property color primarySoft: Qt.rgba(primary.r, primary.g, primary.b, 0.16)
+
+    readonly property int radiusModal: 22
+    readonly property int radiusCard: 16
+    readonly property int radiusTile: 13
+    readonly property int radiusPill: 999
 }

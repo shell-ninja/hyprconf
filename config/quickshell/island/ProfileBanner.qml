@@ -187,21 +187,18 @@ Rectangle {
         maskSpreadAtMin: 1.0
     }
 
-    // Frosted dark overlay
+    // Frosted dark gradient scrim (lighter top to showcase wallpaper rim, richer bottom for legibility)
     Rectangle {
         anchors.fill: parent
-        color: Theme.alpha(Theme.background, 0.78)
         radius: 18
+        gradient: Gradient {
+            GradientStop { position: 0.0; color: Theme.alpha(Theme.background, 0.70) }
+            GradientStop { position: 1.0; color: Theme.alpha(Theme.background, 0.86) }
+        }
 
-        // Top specular line
-        Rectangle {
-            anchors.top: parent.top
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.leftMargin: 18
-            anchors.rightMargin: 18
-            height: 1
-            color: Theme.alpha(Theme.foreground, 0.22)
+        GlassRim {
+            horizontalInset: 18
+            peakOpacity: 1.35
         }
     }
 
@@ -446,9 +443,13 @@ Rectangle {
                 width: 30
                 height: 30
                 radius: 15
-                color: setMouse.containsMouse ? Theme.alpha(Theme.surface, 0.9) : Theme.alpha(Theme.surface, 0.5)
-                border.color: setMouse.containsMouse ? Theme.alpha(Theme.foreground, 0.2) : Theme.alpha(Theme.foreground, 0.08)
+                color: setMouse.containsMouse ? Theme.alpha(Theme.surface, 0.92) : Theme.alpha(Theme.surface, 0.55)
+                border.color: setMouse.containsMouse ? Theme.alpha(Theme.foreground, 0.24) : Theme.alpha(Theme.foreground, 0.10)
                 border.width: 1
+                scale: setMouse.pressed ? 0.92 : (setMouse.containsMouse ? 1.06 : 1.0)
+                Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+                Behavior on color { ColorAnimation { duration: 140 } }
+                Behavior on border.color { ColorAnimation { duration: 140 } }
 
                 Image { anchors.centerIn: parent; width: 15; height: 15; source: root.settingsSvg }
 
@@ -469,9 +470,13 @@ Rectangle {
                 width: 30
                 height: 30
                 radius: 15
-                color: pwrMouse.containsMouse ? Theme.alpha(Theme.error, 0.25) : Theme.alpha(Theme.surface, 0.5)
-                border.color: pwrMouse.containsMouse ? Theme.error : Theme.alpha(Theme.foreground, 0.08)
+                color: pwrMouse.containsMouse ? Theme.alpha(Theme.error, 0.28) : Theme.alpha(Theme.surface, 0.55)
+                border.color: pwrMouse.containsMouse ? Theme.error : Theme.alpha(Theme.foreground, 0.10)
                 border.width: 1
+                scale: pwrMouse.pressed ? 0.92 : (pwrMouse.containsMouse ? 1.06 : 1.0)
+                Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+                Behavior on color { ColorAnimation { duration: 140 } }
+                Behavior on border.color { ColorAnimation { duration: 140 } }
 
                 Image { anchors.centerIn: parent; width: 15; height: 15; source: root.powerSvg }
 

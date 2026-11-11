@@ -24,12 +24,21 @@ Item {
         id: track
         anchors.fill: parent
         radius: 20
-        color: Theme.alpha(Theme.surface, 0.70)
-        border.color: Theme.alpha(Theme.foreground, 0.10)
+        color: Theme.glassElevated
+        border.color: trackMouse.containsMouse ? Theme.alpha(root.fillColor, 0.35) : Theme.alpha(Theme.foreground, 0.10)
         border.width: 1
         clip: true
+        scale: trackMouse.pressed ? 0.985 : 1.0
 
-        // Filled level indicator (grows upward from bottom)
+        Behavior on border.color { ColorAnimation { duration: 150 } }
+        Behavior on scale { NumberAnimation { duration: 110; easing.type: Easing.OutCubic } }
+
+        GlassRim {
+            horizontalInset: 12
+            peakOpacity: 0.9
+        }
+
+        // Filled level indicator (grows upward from bottom with luminous liquid top edge)
         Rectangle {
             id: fillLevel
             anchors.left: parent.left
@@ -37,14 +46,29 @@ Item {
             anchors.bottom: parent.bottom
             height: parent.height * Math.max(0.0, Math.min(1.0, root.value / root.maxValue))
             radius: 20
-            color: root.isMuted ? Theme.muted : root.fillColor
-            opacity: 0.95
+            opacity: 0.96
+            clip: true
+
+            gradient: Gradient {
+                GradientStop { position: 0.0; color: root.isMuted ? Theme.muted : Qt.lighter(root.fillColor, 1.10) }
+                GradientStop { position: 1.0; color: root.isMuted ? Theme.alpha(Theme.muted, 0.85) : root.fillColor }
+            }
+
+            // Luminous liquid meniscus highlight at top lip
+            Rectangle {
+                visible: fillLevel.height >= 12
+                anchors.top: parent.top
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.leftMargin: 10
+                anchors.rightMargin: 10
+                height: 2
+                radius: 1
+                color: Theme.alpha(Theme.foreground, 0.36)
+            }
 
             Behavior on height {
                 NumberAnimation { duration: 80; easing.type: Easing.OutQuad }
-            }
-            Behavior on color {
-                ColorAnimation { duration: 150 }
             }
         }
 
