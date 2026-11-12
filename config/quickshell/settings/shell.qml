@@ -375,6 +375,8 @@ FloatingWindow {
         if (leaf === "layersIn") return { title: "Layers Entrance", badge: "Layers / UI", icon: 0 }
         if (leaf === "layersOut") return { title: "Layers Exit", badge: "Layers / UI", icon: 0 }
         if (leaf === "fade") return { title: "Opacity Fade", badge: "Fade", icon: 1 }
+        if (leaf === "fadeIn") return { title: "Fade Entrance", badge: "Fade", icon: 1 }
+        if (leaf === "fadeOut") return { title: "Fade Exit", badge: "Fade", icon: 1 }
         if (leaf === "border") return { title: "Active Border", badge: "Border", icon: 1 }
         if (leaf === "borderangle") return { title: "Border Angle", badge: "Gradient", icon: 1 }
         return { title: leaf, badge: "Animation", icon: 3 }
@@ -447,16 +449,16 @@ FloatingWindow {
         blur_water_radius: 20.0,
         blur_water_speed: 0.76,
         blur_water_strength: 32.0,
-        motion_blur_enabled: false,
-        motion_blur_samples: 7,
-        wobble_enabled: false,
-        wobble_mesh: 12,
-        wobble_stiffness: 200,
-        wobble_damping: 12,
-        wobble_mass: 1.0,
-        wobble_intensity: 0.2,
+        motion_blur_enabled: true,
+        motion_blur_samples: 6,
+        wobble_enabled: true,
+        wobble_mesh: 8,
+        wobble_stiffness: 310,
+        wobble_damping: 11.5,
+        wobble_mass: 1.2,
+        wobble_intensity: 0.14,
         wobble_value_epsilon: 0.25,
-        wobble_velocity_epsilon: 2.0
+        wobble_velocity_epsilon: 3.2
     })
     property var liveInput: ({
         sensitivity: 0.0,

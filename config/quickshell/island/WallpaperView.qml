@@ -1033,9 +1033,20 @@ Item {
         anchors.right: parent.right
         anchors.bottom: parent.bottom
         radius: 18 + (24 - 18) * root.animProgress
-        color: Theme.alpha(Theme.background, 0.88)
+        clip: true
+        color: Theme.glassBase
         border.color: Theme.alpha(Theme.foreground, 0.14)
         border.width: 1.5
+
+        Rectangle {
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.leftMargin: 28
+            anchors.rightMargin: 28
+            height: 1
+            color: Theme.glassRimTop
+        }
     }
 
     // ── GLOBAL MOUSE WHEEL SCROLLING HANDLER ─────────────────────────────────
@@ -1191,8 +1202,27 @@ Item {
                         anchors.fill: parent
                         radius: 14
                         color: Theme.surface
-                        border.width: slotItem.dist < 0.5 ? 2.8 : (cardMouse.containsMouse ? 2.0 : 1.2)
-                        border.color: slotItem.dist < 0.5 ? Theme.accent : (cardMouse.containsMouse ? Theme.alpha(Theme.accent, 0.6) : Theme.alpha(Theme.foreground, 0.18))
+                        border.width: slotItem.dist < 0.5 ? 2.6 : (cardMouse.containsMouse ? 2.0 : 1.2)
+                        border.color: slotItem.dist < 0.5 ? Theme.accent : (cardMouse.containsMouse ? Theme.alpha(Theme.accent, 0.65) : Theme.alpha(Theme.foreground, 0.22))
+
+                        // Subtle glass top edge sheen on active/hovered card
+                        Rectangle {
+                            z: 25
+                            visible: slotItem.dist < 0.8 || cardMouse.containsMouse
+                            anchors.top: parent.top
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.leftMargin: 14
+                            anchors.rightMargin: 14
+                            height: 1
+                            gradient: Gradient {
+                                orientation: Gradient.Horizontal
+                                GradientStop { position: 0.0; color: "transparent" }
+                                GradientStop { position: 0.3; color: Theme.alpha("#ffffff", 0.35) }
+                                GradientStop { position: 0.7; color: Theme.alpha("#ffffff", 0.35) }
+                                GradientStop { position: 1.0; color: "transparent" }
+                            }
+                        }
 
                         // Masked Thumbnail with anti-aliased 12px rounded corners
                         Item {
@@ -1455,7 +1485,8 @@ Item {
                 height: 28
                 width: Math.max(180, paletteRow.implicitWidth + 22)
                 radius: 14
-                color: Theme.alpha(Theme.surface, 0.86)
+                clip: true
+                color: Theme.glassElevated
                 border.color: (root.activePalettePreview && root.activePalettePreview.primary)
                               ? Theme.alpha(root.activePalettePreview.primary, 0.45)
                               : Theme.alpha(Theme.accent, 0.35)
@@ -1463,6 +1494,14 @@ Item {
                 z: 110
                 visible: titlePill.visible && root.activePalettePreview !== null
                 opacity: visible ? 1.0 : 0.0
+
+                Rectangle {
+                    anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right
+                    anchors.leftMargin: 14; anchors.rightMargin: 14; height: 1
+                    color: (root.activePalettePreview && root.activePalettePreview.primary)
+                           ? Theme.alpha(root.activePalettePreview.primary, 0.40)
+                           : Theme.glassRimTop
+                }
 
                 Behavior on border.color { ColorAnimation { duration: 220 } }
                 Behavior on opacity { NumberAnimation { duration: 160 } }
@@ -1653,9 +1692,11 @@ Item {
                         width: sortText.implicitWidth + 18
                         height: 26
                         radius: 7
-                        color: isSelected ? Theme.alpha(Theme.accent, 0.22) : Theme.alpha(Theme.surface, 0.50)
-                        border.color: isSelected ? Theme.accent : Theme.alpha(Theme.foreground, 0.10)
+                        color: isSelected ? Theme.alpha(Theme.accent, 0.22) : Theme.glassCard
+                        border.color: isSelected ? Theme.accent : Theme.alpha(Theme.foreground, 0.11)
                         border.width: 1
+                        Behavior on color { ColorAnimation { duration: 120 } }
+                        Behavior on border.color { ColorAnimation { duration: 120 } }
 
                         Text {
                             id: sortText
@@ -1693,9 +1734,11 @@ Item {
                     height: 26
                     width: dirBadgeContent.implicitWidth + 20
                     radius: 7
-                    color: dirBadgeMouse.containsMouse ? Theme.alpha(Theme.surface, 0.90) : Theme.alpha(Theme.surface, 0.50)
-                    border.color: dirBadgeMouse.containsMouse ? Theme.alpha(Theme.accent, 0.5) : Theme.alpha(Theme.foreground, 0.10)
+                    color: dirBadgeMouse.containsMouse ? Theme.glassElevated : Theme.glassCard
+                    border.color: dirBadgeMouse.containsMouse ? Theme.alpha(Theme.accent, 0.50) : Theme.alpha(Theme.foreground, 0.11)
                     border.width: 1
+                    Behavior on color { ColorAnimation { duration: 120 } }
+                    Behavior on border.color { ColorAnimation { duration: 120 } }
 
                     Row {
                         id: dirBadgeContent

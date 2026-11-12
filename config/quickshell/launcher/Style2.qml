@@ -263,10 +263,17 @@ ClippingRectangle {
             width: parent.width - 48
             height: 48
             radius: 24
-            color: Theme.alpha(Theme.background, 0.92)
+            clip: true
+            color: Theme.glassBase
             border.width: 1.5
             border.color: searchInput.activeFocus ? Theme.accent : Theme.alpha(Theme.foreground, 0.18)
             Behavior on border.color { ColorAnimation { duration: 150 } }
+
+            Rectangle {
+                anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right
+                anchors.leftMargin: 24; anchors.rightMargin: 24; height: 1
+                color: searchInput.activeFocus ? Theme.alpha(Theme.accent, 0.45) : Theme.glassRimTop
+            }
 
             RowLayout {
                 anchors.fill: parent
@@ -426,9 +433,13 @@ ClippingRectangle {
                     width: 28
                     height: 28
                     radius: 8
-                    color: themeMouse.containsMouse ? Theme.alpha(Theme.accent, 0.20) : "transparent"
+                    color: themeMouse.containsMouse ? Theme.alpha(Theme.accent, 0.22) : Theme.glassCard
                     border.width: 1
-                    border.color: themeMouse.containsMouse ? Theme.accent : Theme.alpha(Theme.foreground, 0.12)
+                    border.color: themeMouse.containsMouse ? Theme.accent : Theme.alpha(Theme.foreground, 0.14)
+                    scale: themeMouse.pressed ? 0.92 : 1.0
+                    Behavior on color { ColorAnimation { duration: 120 } }
+                    Behavior on border.color { ColorAnimation { duration: 120 } }
+                    Behavior on scale { NumberAnimation { duration: 100; easing.type: Easing.OutCubic } }
 
                     Image {
                         anchors.centerIn: parent
@@ -452,9 +463,13 @@ ClippingRectangle {
                     width: 28
                     height: 28
                     radius: 8
-                    color: closeBtnMouse.containsMouse ? Theme.alpha("#ef4444", 0.25) : "transparent"
+                    color: closeBtnMouse.containsMouse ? Theme.alpha("#ef4444", 0.25) : Theme.glassCard
                     border.width: 1
-                    border.color: closeBtnMouse.containsMouse ? "#ef4444" : Theme.alpha(Theme.foreground, 0.12)
+                    border.color: closeBtnMouse.containsMouse ? "#ef4444" : Theme.alpha(Theme.foreground, 0.14)
+                    scale: closeBtnMouse.pressed ? 0.92 : 1.0
+                    Behavior on color { ColorAnimation { duration: 120 } }
+                    Behavior on border.color { ColorAnimation { duration: 120 } }
+                    Behavior on scale { NumberAnimation { duration: 100; easing.type: Easing.OutCubic } }
 
                     Image {
                         anchors.centerIn: parent
@@ -506,8 +521,8 @@ ClippingRectangle {
                 var ctx = getContext("2d")
                 ctx.reset()
 
-                // Frosted obsidian glass fill (65% opacity)
-                ctx.fillStyle = Theme.alpha(Theme.background, 0.65)
+                // Frosted obsidian glass fill
+                ctx.fillStyle = Theme.glassBase
                 ctx.beginPath()
                 ctx.moveTo(0, card.cornerR)
                 ctx.arcTo(0, 0, card.cornerR, 0, card.cornerR)
@@ -518,8 +533,8 @@ ClippingRectangle {
                 ctx.closePath()
                 ctx.fill()
 
-                // Plain border separation line at junction
-                ctx.strokeStyle = Theme.alpha(Theme.foreground, 0.18)
+                // Specular border separation line at junction
+                ctx.strokeStyle = Theme.alpha(Theme.foreground, 0.20)
                 ctx.lineWidth = 1.5
                 ctx.beginPath()
                 ctx.moveTo(0, card.cornerR)
@@ -548,11 +563,15 @@ ClippingRectangle {
                     implicitWidth: catText2.implicitWidth + 20
                     color: rootWindow.activeCategory === modelData
                         ? Theme.accent
-                        : (catMouse2.containsMouse ? Theme.alpha(Theme.surface, 0.90) : Theme.alpha(Theme.surface, 0.65))
+                        : (catMouse2.containsMouse ? Theme.glassElevated : Theme.glassCard)
                     border.width: 1
                     border.color: rootWindow.activeCategory === modelData
                         ? Theme.accent
-                        : Theme.alpha(Theme.foreground, 0.15)
+                        : (catMouse2.containsMouse ? Theme.alpha(Theme.foreground, 0.22) : Theme.alpha(Theme.foreground, 0.12))
+                    scale: catMouse2.pressed ? 0.95 : 1.0
+                    Behavior on color { ColorAnimation { duration: 120 } }
+                    Behavior on border.color { ColorAnimation { duration: 120 } }
+                    Behavior on scale { NumberAnimation { duration: 100; easing.type: Easing.OutCubic } }
 
                     Text {
                         id: catText2
@@ -624,11 +643,16 @@ ClippingRectangle {
                         readonly property bool isSelected: index === rootWindow.selectedIndex
 
                         color: isSelected
-                            ? Theme.alpha(Theme.accent, 0.16)
-                            : (tileMouse.containsMouse ? Theme.alpha(Theme.foreground, 0.06) : "transparent")
-                        border.width: isSelected ? 1.5 : (tileMouse.containsMouse ? 1 : 0)
-                        border.color: isSelected ? Theme.accent : Theme.alpha(Theme.foreground, 0.12)
-                        Behavior on color { ColorAnimation { duration: 90 } }
+                            ? Theme.mix(Theme.glassElevated, Theme.accent, 0.16)
+                            : (tileMouse.containsMouse ? Theme.glassCard : "transparent")
+                        border.width: isSelected ? 1.5 : 1
+                        border.color: isSelected
+                            ? Theme.alpha(Theme.accent, 0.72)
+                            : (tileMouse.containsMouse ? Theme.alpha(Theme.foreground, 0.14) : "transparent")
+                        scale: tileMouse.pressed ? 0.95 : (isSelected ? 1.03 : 1.0)
+                        Behavior on color { ColorAnimation { duration: 100 } }
+                        Behavior on border.color { ColorAnimation { duration: 100 } }
+                        Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
 
                         Column {
                             anchors.centerIn: parent
@@ -643,9 +667,9 @@ ClippingRectangle {
                                 radius: 23
                                 color: appTile.isSelected
                                     ? Theme.alpha(Theme.accent, 0.25)
-                                    : (tileMouse.containsMouse ? Theme.alpha(Theme.foreground, 0.10) : Theme.alpha(Theme.surface, 0.60))
+                                    : (tileMouse.containsMouse ? Theme.glassElevated : Theme.glassCard)
                                 border.width: 1
-                                border.color: appTile.isSelected ? Theme.accent : Theme.alpha(Theme.foreground, 0.10)
+                                border.color: appTile.isSelected ? Theme.accent : Theme.alpha(Theme.foreground, 0.12)
 
                                 Image {
                                     anchors.centerIn: parent
@@ -744,10 +768,14 @@ ClippingRectangle {
                         radius: 12
                         readonly property bool isSelected: index === windowsGrid.currentIndex
                         color: isSelected
-                            ? Theme.alpha(Theme.accent, 0.18)
-                            : (winMouse.containsMouse ? Theme.alpha(Theme.foreground, 0.08) : Theme.alpha(Theme.surface, 0.50))
+                            ? Theme.mix(Theme.glassElevated, Theme.accent, 0.18)
+                            : (winMouse.containsMouse ? Theme.glassElevated : Theme.glassCard)
                         border.width: 1
-                        border.color: isSelected ? Theme.accent : Theme.alpha(Theme.foreground, 0.10)
+                        border.color: isSelected ? Theme.accent : Theme.alpha(Theme.foreground, 0.11)
+                        scale: winMouse.pressed ? 0.97 : 1.0
+                        Behavior on color { ColorAnimation { duration: 110 } }
+                        Behavior on border.color { ColorAnimation { duration: 110 } }
+                        Behavior on scale { NumberAnimation { duration: 100; easing.type: Easing.OutCubic } }
 
                         RowLayout {
                             anchors.fill: parent
@@ -827,10 +855,13 @@ ClippingRectangle {
                     readonly property bool isSelected: card.activeMode === 0
                     color: isSelected
                         ? Theme.accent
-                        : (m1Mouse.containsMouse ? Theme.alpha(Theme.surface, 0.90) : Theme.alpha(Theme.surface, 0.45))
+                        : (m1Mouse.containsMouse ? Theme.glassElevated : Theme.glassCard)
                     border.width: 1
-                    border.color: isSelected ? Theme.accent : Theme.alpha(Theme.foreground, 0.12)
+                    border.color: isSelected ? Theme.accent : (m1Mouse.containsMouse ? Theme.alpha(Theme.foreground, 0.22) : Theme.alpha(Theme.foreground, 0.12))
+                    scale: m1Mouse.pressed ? 0.96 : 1.0
                     Behavior on color { ColorAnimation { duration: 120 } }
+                    Behavior on border.color { ColorAnimation { duration: 120 } }
+                    Behavior on scale { NumberAnimation { duration: 100; easing.type: Easing.OutCubic } }
 
                     Text {
                         anchors.centerIn: parent
@@ -861,10 +892,13 @@ ClippingRectangle {
                     readonly property bool isSelected: card.activeMode === 1
                     color: isSelected
                         ? Theme.accent
-                        : (m2Mouse.containsMouse ? Theme.alpha(Theme.surface, 0.90) : Theme.alpha(Theme.surface, 0.45))
+                        : (m2Mouse.containsMouse ? Theme.glassElevated : Theme.glassCard)
                     border.width: 1
-                    border.color: isSelected ? Theme.accent : Theme.alpha(Theme.foreground, 0.12)
+                    border.color: isSelected ? Theme.accent : (m2Mouse.containsMouse ? Theme.alpha(Theme.foreground, 0.22) : Theme.alpha(Theme.foreground, 0.12))
+                    scale: m2Mouse.pressed ? 0.96 : 1.0
                     Behavior on color { ColorAnimation { duration: 120 } }
+                    Behavior on border.color { ColorAnimation { duration: 120 } }
+                    Behavior on scale { NumberAnimation { duration: 100; easing.type: Easing.OutCubic } }
 
                     Text {
                         anchors.centerIn: parent
@@ -895,10 +929,13 @@ ClippingRectangle {
                     readonly property bool isSelected: card.activeMode === 2
                     color: isSelected
                         ? Theme.accent
-                        : (m3Mouse.containsMouse ? Theme.alpha(Theme.surface, 0.90) : Theme.alpha(Theme.surface, 0.45))
+                        : (m3Mouse.containsMouse ? Theme.glassElevated : Theme.glassCard)
                     border.width: 1
-                    border.color: isSelected ? Theme.accent : Theme.alpha(Theme.foreground, 0.12)
+                    border.color: isSelected ? Theme.accent : (m3Mouse.containsMouse ? Theme.alpha(Theme.foreground, 0.22) : Theme.alpha(Theme.foreground, 0.12))
+                    scale: m3Mouse.pressed ? 0.96 : 1.0
                     Behavior on color { ColorAnimation { duration: 120 } }
+                    Behavior on border.color { ColorAnimation { duration: 120 } }
+                    Behavior on scale { NumberAnimation { duration: 100; easing.type: Easing.OutCubic } }
 
                     Text {
                         anchors.centerIn: parent

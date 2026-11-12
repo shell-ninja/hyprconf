@@ -38,7 +38,7 @@ hl.curve("elegant_bounce", {
     type = "bezier",
     points = {
         { 0.03, 1.53 },
-        { 0.8, 0.91 },
+        { 0.25, 0.91 },
     },
 })
 
@@ -66,6 +66,25 @@ hl.curve("smooth_pop", {
     },
 })
 
+-- Slide curves sculpted specifically for wobble + directional motion blur:
+-- Smooth 2-frame velocity ramp prevents frame-1 smudge/snap, peaking mid-flight
+-- and settling softly so spring wobble rebounds cleanly without jiggling.
+hl.curve("slide_glide", {
+    type = "bezier",
+    points = {
+        { 0.20, 0.92 },
+        { 0.26, 1.0  },
+    },
+})
+
+hl.curve("slide_exit", {
+    type = "bezier",
+    points = {
+        { 0.34, 0.0  },
+        { 0.82, 0.30 },
+    },
+})
+
 hl.curve("linear", {
     type = "bezier",
     points = {
@@ -86,28 +105,28 @@ hl.curve("test", {
 -- Animations
 ----------------------------------------------------------------------
 
--- Windows
+-- Windows (slide + wobble + motion blur tuned in lockstep)
 hl.animation({
     leaf = "windowsIn",
     enabled = 1,
-    speed = 4.2,
-    bezier = "expo_out",
-    style = "popin 88%",
+    speed = 3.4,
+    bezier = "slide_glide",
+    style = "slide down",
 })
 
 hl.animation({
     leaf = "windowsOut",
     enabled = 1,
-    speed = 3.6,
-    bezier = "md3_accel",
-    style = "popin 92%",
+    speed = 2.6,
+    bezier = "slide_exit",
+    style = "slide down",
 })
 
 hl.animation({
     leaf = "windowsMove",
     enabled = 1,
-    speed = 4.5,
-    bezier = "expo_out",
+    speed = 3.8,
+    bezier = "slide_glide",
     style = "slide",
 })
 
@@ -127,12 +146,26 @@ hl.animation({
     style = "loop",
 })
 
--- Fading
+-- Fading (fast opaque arrival on open, synchronized exit fade so closing wobble + blur remain visible)
 hl.animation({
     leaf = "fade",
     enabled = 1,
-    speed = 3.5,
+    speed = 3.2,
     bezier = "expo_out",
+})
+
+hl.animation({
+    leaf = "fadeIn",
+    enabled = 1,
+    speed = 2.4,
+    bezier = "expo_out",
+})
+
+hl.animation({
+    leaf = "fadeOut",
+    enabled = 1,
+    speed = 2.6,
+    bezier = "slide_exit",
 })
 
 -- Workspaces

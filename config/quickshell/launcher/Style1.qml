@@ -15,9 +15,9 @@ ClippingRectangle {
     anchors.fill: (rootWindow && rootWindow.isIslandView) ? parent : undefined
     radius: (rootWindow && rootWindow.isIslandView && rootWindow.animProgress !== undefined)
             ? (18 + (20 - 18) * rootWindow.animProgress) : 20
-    color: (rootWindow && rootWindow.isIslandView) ? "transparent" : Theme.alpha(Theme.background, 0.78)
+    color: (rootWindow && rootWindow.isIslandView) ? "transparent" : Theme.glassBase
     border.width: (rootWindow && rootWindow.isIslandView) ? 0 : 1
-    border.color: Theme.alpha(Theme.accent, 0.35)
+    border.color: Theme.alpha(Theme.foreground, 0.14)
 
     required property var rootWindow
 
@@ -160,10 +160,17 @@ ClippingRectangle {
                 Layout.fillWidth: true
                 height: 44
                 radius: 12
-                color: Theme.alpha(Theme.background, 0.90)
+                clip: true
+                color: Theme.glassWell
                 border.width: 1.5
-                border.color: searchInput.activeFocus ? Theme.accent : Theme.alpha(Theme.foreground, 0.12)
+                border.color: searchInput.activeFocus ? Theme.accent : Theme.alpha(Theme.foreground, 0.14)
                 Behavior on border.color { ColorAnimation { duration: 150 } }
+
+                Rectangle {
+                    anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right
+                    anchors.leftMargin: 12; anchors.rightMargin: 12; height: 1
+                    color: searchInput.activeFocus ? Theme.alpha(Theme.accent, 0.45) : Theme.glassRimTop
+                }
 
                 RowLayout {
                     anchors.fill: parent
@@ -270,9 +277,13 @@ ClippingRectangle {
                         width: 24
                         height: 24
                         radius: 6
-                        color: themeBtnMouse.containsMouse ? Theme.alpha(Theme.accent, 0.20) : "transparent"
+                        color: themeBtnMouse.containsMouse ? Theme.alpha(Theme.accent, 0.20) : Theme.glassCard
                         border.width: 1
-                        border.color: themeBtnMouse.containsMouse ? Theme.accent : Theme.alpha(Theme.foreground, 0.10)
+                        border.color: themeBtnMouse.containsMouse ? Theme.accent : Theme.alpha(Theme.foreground, 0.12)
+                        scale: themeBtnMouse.pressed ? 0.92 : 1.0
+                        Behavior on color { ColorAnimation { duration: 120 } }
+                        Behavior on border.color { ColorAnimation { duration: 120 } }
+                        Behavior on scale { NumberAnimation { duration: 100; easing.type: Easing.OutCubic } }
 
                         Image {
                             anchors.centerIn: parent
@@ -296,9 +307,13 @@ ClippingRectangle {
                         width: 24
                         height: 24
                         radius: 6
-                        color: closeBtnMouse.containsMouse ? Theme.alpha("#ef4444", 0.25) : "transparent"
+                        color: closeBtnMouse.containsMouse ? Theme.alpha("#ef4444", 0.25) : Theme.glassCard
                         border.width: 1
-                        border.color: closeBtnMouse.containsMouse ? "#ef4444" : Theme.alpha(Theme.foreground, 0.10)
+                        border.color: closeBtnMouse.containsMouse ? "#ef4444" : Theme.alpha(Theme.foreground, 0.12)
+                        scale: closeBtnMouse.pressed ? 0.92 : 1.0
+                        Behavior on color { ColorAnimation { duration: 120 } }
+                        Behavior on border.color { ColorAnimation { duration: 120 } }
+                        Behavior on scale { NumberAnimation { duration: 100; easing.type: Easing.OutCubic } }
 
                         Image {
                             anchors.centerIn: parent
@@ -337,12 +352,15 @@ ClippingRectangle {
                         implicitWidth: catText.implicitWidth + 18
                         color: rootWindow.activeCategory === modelData
                             ? Theme.accent
-                            : (catMouse.containsMouse ? Theme.alpha(Theme.foreground, 0.12) : Theme.alpha(Theme.foreground, 0.05))
+                            : (catMouse.containsMouse ? Theme.glassElevated : Theme.glassCard)
                         border.width: 1
                         border.color: rootWindow.activeCategory === modelData
                             ? Theme.accent
-                            : Theme.alpha(Theme.foreground, 0.08)
+                            : (catMouse.containsMouse ? Theme.alpha(Theme.foreground, 0.20) : Theme.alpha(Theme.foreground, 0.10))
+                        scale: catMouse.pressed ? 0.95 : 1.0
                         Behavior on color { ColorAnimation { duration: 120 } }
+                        Behavior on border.color { ColorAnimation { duration: 120 } }
+                        Behavior on scale { NumberAnimation { duration: 100; easing.type: Easing.OutCubic } }
 
                         Text {
                             id: catText
@@ -397,11 +415,14 @@ ClippingRectangle {
                     readonly property bool isSelected: index === rootWindow.selectedIndex
 
                     color: isSelected
-                        ? Theme.alpha(Theme.accent, 0.15)
-                        : (itemMouse.containsMouse ? Theme.alpha(Theme.foreground, 0.06) : "transparent")
+                        ? Theme.mix(Theme.glassElevated, Theme.accent, 0.16)
+                        : (itemMouse.containsMouse ? Theme.glassCard : "transparent")
                     border.width: 1
-                    border.color: isSelected ? Theme.alpha(Theme.accent, 0.40) : "transparent"
-                    Behavior on color { ColorAnimation { duration: 80 } }
+                    border.color: isSelected
+                        ? Theme.alpha(Theme.accent, 0.45)
+                        : (itemMouse.containsMouse ? Theme.alpha(Theme.foreground, 0.10) : "transparent")
+                    Behavior on color { ColorAnimation { duration: 100 } }
+                    Behavior on border.color { ColorAnimation { duration: 100 } }
 
                     // Accent left indicator bar
                     Rectangle {

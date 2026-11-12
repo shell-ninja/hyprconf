@@ -23,9 +23,9 @@ Rectangle {
     anchors.fill: isIsland ? parent : undefined
     anchors.centerIn: (isIsland || isBottomAttached) ? undefined : parent
     radius: (isIsland || isBottomAttached) ? 0 : 16
-    color: (isIsland || isBottomAttached) ? "transparent" : Theme.alpha(Theme.surface, 0.85)
-    border.width: (isIsland || isBottomAttached) ? 0 : 1.2
-    border.color: Theme.alpha(Theme.accent, 0.35)
+    color: (isIsland || isBottomAttached) ? "transparent" : Theme.glassBase
+    border.width: (isIsland || isBottomAttached) ? 0 : 1
+    border.color: Theme.alpha(Theme.foreground, 0.14)
     clip: false
 
     readonly property string homeDir: {
@@ -46,8 +46,8 @@ Rectangle {
 
         readonly property color surfaceFill: (rootWindow && rootWindow.barOpacity !== undefined)
                                              ? Theme.alpha(Theme.surface, rootWindow.barOpacity)
-                                             : Theme.alpha(Theme.surface, 0.85)
-        readonly property color strokeColor: Theme.alpha(Theme.accent, 0.35)
+                                             : Theme.glassBase
+        readonly property color strokeColor: Theme.alpha(Theme.foreground, 0.16)
         readonly property int fL: 14
         readonly property int fR: 14
         readonly property int tr: 16
@@ -757,10 +757,17 @@ Rectangle {
             Layout.fillWidth: true
             height: 48
             radius: 10
-            color: Theme.alpha(Theme.background, 0.85)
-            border.width: 1
-            border.color: searchInput.activeFocus ? Theme.accent : Theme.alpha(Theme.foreground, 0.12)
+            clip: true
+            color: Theme.glassWell
+            border.width: 1.5
+            border.color: searchInput.activeFocus ? Theme.accent : Theme.alpha(Theme.foreground, 0.14)
             Behavior on border.color { ColorAnimation { duration: 150 } }
+
+            Rectangle {
+                anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right
+                anchors.leftMargin: 12; anchors.rightMargin: 12; height: 1
+                color: searchInput.activeFocus ? Theme.alpha(Theme.accent, 0.45) : Theme.glassRimTop
+            }
 
             RowLayout {
                 anchors.fill: parent
@@ -871,10 +878,17 @@ Rectangle {
             visible: card.currencyResult !== null
             Layout.fillWidth: true
             height: 58
-            radius: 8
-            color: Theme.alpha(Theme.accent, 0.15)
+            radius: 10
+            clip: true
+            color: Theme.mix(Theme.glassElevated, Theme.accent, 0.16)
             border.width: 1
-            border.color: Theme.accent
+            border.color: Theme.alpha(Theme.accent, 0.55)
+
+            Rectangle {
+                anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right
+                anchors.leftMargin: 12; anchors.rightMargin: 12; height: 1
+                color: Theme.alpha(Theme.accent, 0.45)
+            }
 
             RowLayout {
                 anchors.fill: parent
@@ -927,10 +941,17 @@ Rectangle {
             visible: card.unitResult !== null && card.currencyResult === null
             Layout.fillWidth: true
             height: 58
-            radius: 8
-            color: Theme.alpha(Theme.accent, 0.15)
+            radius: 10
+            clip: true
+            color: Theme.mix(Theme.glassElevated, Theme.accent, 0.16)
             border.width: 1
-            border.color: Theme.accent
+            border.color: Theme.alpha(Theme.accent, 0.55)
+
+            Rectangle {
+                anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right
+                anchors.leftMargin: 12; anchors.rightMargin: 12; height: 1
+                color: Theme.alpha(Theme.accent, 0.45)
+            }
 
             RowLayout {
                 anchors.fill: parent
@@ -983,10 +1004,17 @@ Rectangle {
             visible: card.mathResult !== null && card.currencyResult === null && card.unitResult === null
             Layout.fillWidth: true
             height: 54
-            radius: 8
-            color: Theme.alpha(Theme.accent, 0.15)
+            radius: 10
+            clip: true
+            color: Theme.mix(Theme.glassElevated, Theme.accent, 0.16)
             border.width: 1
-            border.color: Theme.accent
+            border.color: Theme.alpha(Theme.accent, 0.55)
+
+            Rectangle {
+                anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right
+                anchors.leftMargin: 12; anchors.rightMargin: 12; height: 1
+                color: Theme.alpha(Theme.accent, 0.45)
+            }
 
             RowLayout {
                 anchors.fill: parent
@@ -1164,11 +1192,16 @@ Rectangle {
 
                 readonly property bool isSelected: rootWindow && (rootWindow.selectedIndex === index)
 
-                color: isSelected ? Theme.alpha(Theme.accent, 0.22) : (rowMouse.containsMouse ? Theme.alpha(Theme.foreground, 0.06) : "transparent")
-                border.width: isSelected ? 1 : 0
-                border.color: Theme.alpha(Theme.accent, 0.50)
+                color: isSelected
+                    ? Theme.mix(Theme.glassElevated, Theme.accent, 0.18)
+                    : (rowMouse.containsMouse ? Theme.glassCard : "transparent")
+                border.width: 1
+                border.color: isSelected
+                    ? Theme.alpha(Theme.accent, 0.52)
+                    : (rowMouse.containsMouse ? Theme.alpha(Theme.foreground, 0.09) : "transparent")
 
-                Behavior on color { ColorAnimation { duration: 100 } }
+                Behavior on color { ColorAnimation { duration: 110 } }
+                Behavior on border.color { ColorAnimation { duration: 110 } }
 
                 RowLayout {
                     anchors.fill: parent

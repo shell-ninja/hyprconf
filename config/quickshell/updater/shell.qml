@@ -430,20 +430,29 @@ FloatingWindow {
     Rectangle {
         id: rootSurface
         anchors.fill: parent
-        color: Theme.alpha(Theme.background, 0.85)
-        border.color: Theme.alpha(Theme.accent, 0.22)
+        color: Theme.glassBase
+        border.color: Theme.alpha(Theme.foreground, 0.14)
         border.width: 1
         radius: 16
         clip: true
 
-        // Inner shadow / ambient accent glow
+        // Top specular edge highlight across modal
         Rectangle {
-            anchors.fill: parent
-            radius: 16
-            color: "transparent"
-            border.color: Theme.alpha(Theme.accent, 0.08)
-            border.width: 2
-            z: 1
+            z: 2
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.leftMargin: 20
+            anchors.rightMargin: 20
+            height: 1
+            gradient: Gradient {
+                orientation: Gradient.Horizontal
+                GradientStop { position: 0.0; color: "transparent" }
+                GradientStop { position: 0.2; color: Theme.glassRimTop }
+                GradientStop { position: 0.5; color: Theme.alpha("#ffffff", 0.32) }
+                GradientStop { position: 0.8; color: Theme.glassRimTop }
+                GradientStop { position: 1.0; color: "transparent" }
+            }
         }
 
         ColumnLayout {
@@ -462,9 +471,13 @@ FloatingWindow {
                     width: 36
                     height: 36
                     radius: 10
-                    color: refreshArea.containsMouse ? Theme.alpha(Theme.accent, 0.16) : Theme.alpha(Theme.surface, 0.65)
-                    border.color: refreshArea.containsMouse ? Theme.alpha(Theme.accent, 0.40) : Theme.alpha(Theme.foreground, 0.08)
+                    color: refreshArea.containsMouse ? Theme.alpha(Theme.accent, 0.18) : Theme.glassElevated
+                    border.color: refreshArea.containsMouse ? Theme.alpha(Theme.accent, 0.45) : Theme.alpha(Theme.foreground, 0.12)
                     border.width: 1
+                    scale: refreshArea.pressed ? 0.94 : (refreshArea.containsMouse ? 1.03 : 1.0)
+                    Behavior on color { ColorAnimation { duration: 140 } }
+                    Behavior on border.color { ColorAnimation { duration: 140 } }
+                    Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
 
                     Image {
                         id: refreshIcon
@@ -562,9 +575,13 @@ FloatingWindow {
                     width: 32
                     height: 32
                     radius: 8
-                    color: closeArea.containsMouse ? Theme.alpha("#ef4444", 0.20) : Theme.alpha(Theme.surface, 0.65)
-                    border.color: closeArea.containsMouse ? Theme.alpha("#ef4444", 0.50) : Theme.alpha(Theme.foreground, 0.08)
+                    color: closeArea.containsMouse ? Theme.alpha("#ef4444", 0.20) : Theme.glassElevated
+                    border.color: closeArea.containsMouse ? Theme.alpha("#ef4444", 0.50) : Theme.alpha(Theme.foreground, 0.12)
                     border.width: 1
+                    scale: closeArea.pressed ? 0.94 : (closeArea.containsMouse ? 1.03 : 1.0)
+                    Behavior on color { ColorAnimation { duration: 140 } }
+                    Behavior on border.color { ColorAnimation { duration: 140 } }
+                    Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
 
                     Image {
                         anchors.centerIn: parent
@@ -621,9 +638,20 @@ FloatingWindow {
                         width: 90
                         height: 64
                         radius: 12
-                        color: Theme.alpha(Theme.surface, 0.70)
-                        border.color: Theme.alpha(Theme.accent, 0.25)
+                        clip: true
+                        color: window.totalUpdates > 0 ? Theme.mix(Theme.glassCard, Theme.accent, 0.08) : Theme.glassCard
+                        border.color: window.totalUpdates > 0 ? Theme.alpha(Theme.accent, 0.34) : Theme.alpha(Theme.foreground, 0.10)
                         border.width: 1
+
+                        Rectangle {
+                            anchors.top: parent.top
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.leftMargin: 12
+                            anchors.rightMargin: 12
+                            height: 1
+                            color: window.totalUpdates > 0 ? Theme.alpha(Theme.accent, 0.35) : Theme.glassRimTop
+                        }
 
                         ColumnLayout {
                             anchors.centerIn: parent
@@ -652,9 +680,20 @@ FloatingWindow {
                         width: 90
                         height: 64
                         radius: 12
-                        color: Theme.alpha(Theme.surface, 0.70)
-                        border.color: Theme.alpha(Theme.foreground, 0.08)
+                        clip: true
+                        color: Theme.glassCard
+                        border.color: window.nativeCount > 0 ? Theme.alpha(Theme.accent, 0.26) : Theme.alpha(Theme.foreground, 0.10)
                         border.width: 1
+
+                        Rectangle {
+                            anchors.top: parent.top
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.leftMargin: 12
+                            anchors.rightMargin: 12
+                            height: 1
+                            color: Theme.glassRimTop
+                        }
 
                         ColumnLayout {
                             anchors.centerIn: parent
@@ -684,9 +723,20 @@ FloatingWindow {
                         width: 90
                         height: 64
                         radius: 12
-                        color: Theme.alpha(Theme.surface, 0.70)
-                        border.color: Theme.alpha(Theme.foreground, 0.08)
+                        clip: true
+                        color: Theme.glassCard
+                        border.color: window.aurCount > 0 ? Theme.alpha(Theme.accent, 0.26) : Theme.alpha(Theme.foreground, 0.10)
                         border.width: 1
+
+                        Rectangle {
+                            anchors.top: parent.top
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.leftMargin: 12
+                            anchors.rightMargin: 12
+                            height: 1
+                            color: Theme.glassRimTop
+                        }
 
                         ColumnLayout {
                             anchors.centerIn: parent
@@ -716,9 +766,20 @@ FloatingWindow {
                         width: 90
                         height: 64
                         radius: 12
-                        color: Theme.alpha(Theme.surface, 0.70)
-                        border.color: Theme.alpha(Theme.foreground, 0.08)
+                        clip: true
+                        color: Theme.glassCard
+                        border.color: window.flatpakCount > 0 ? Theme.alpha(Theme.accent, 0.26) : Theme.alpha(Theme.foreground, 0.10)
                         border.width: 1
+
+                        Rectangle {
+                            anchors.top: parent.top
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.leftMargin: 12
+                            anchors.rightMargin: 12
+                            height: 1
+                            color: Theme.glassRimTop
+                        }
 
                         ColumnLayout {
                             anchors.centerIn: parent
@@ -766,13 +827,28 @@ FloatingWindow {
                         Layout.fillWidth: true
                         height: 62
                         radius: 12
+                        clip: true
                         color: nativeArea.containsMouse
-                               ? Theme.alpha(Theme.surface, 0.90)
-                               : (window.nativeChecked ? Theme.alpha(Theme.accent, 0.06) : Theme.alpha(Theme.surface, 0.50))
+                               ? Theme.glassElevated
+                               : (window.nativeChecked ? Theme.mix(Theme.glassCard, Theme.accent, 0.08) : Theme.glassCard)
                         border.color: window.nativeChecked
-                                      ? Theme.alpha(Theme.accent, 0.40)
-                                      : Theme.alpha(Theme.foreground, 0.08)
+                                      ? Theme.alpha(Theme.accent, 0.42)
+                                      : (nativeArea.containsMouse ? Theme.alpha(Theme.foreground, 0.22) : Theme.alpha(Theme.foreground, 0.10))
                         border.width: 1
+                        scale: nativeArea.pressed ? 0.985 : 1.0
+                        Behavior on color { ColorAnimation { duration: 140 } }
+                        Behavior on border.color { ColorAnimation { duration: 140 } }
+                        Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+
+                        Rectangle {
+                            anchors.top: parent.top
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.leftMargin: 14
+                            anchors.rightMargin: 14
+                            height: 1
+                            color: window.nativeChecked ? Theme.alpha(Theme.accent, 0.35) : Theme.glassRimTop
+                        }
 
                         RowLayout {
                             anchors.fill: parent
@@ -868,13 +944,28 @@ FloatingWindow {
                         Layout.fillWidth: true
                         height: 62
                         radius: 12
+                        clip: true
                         color: aurArea.containsMouse
-                               ? Theme.alpha(Theme.surface, 0.90)
-                               : (window.aurChecked ? Theme.alpha(Theme.accent, 0.06) : Theme.alpha(Theme.surface, 0.50))
+                               ? Theme.glassElevated
+                               : (window.aurChecked ? Theme.mix(Theme.glassCard, Theme.accent, 0.08) : Theme.glassCard)
                         border.color: window.aurChecked
-                                      ? Theme.alpha(Theme.accent, 0.40)
-                                      : Theme.alpha(Theme.foreground, 0.08)
+                                      ? Theme.alpha(Theme.accent, 0.42)
+                                      : (aurArea.containsMouse ? Theme.alpha(Theme.foreground, 0.22) : Theme.alpha(Theme.foreground, 0.10))
                         border.width: 1
+                        scale: aurArea.pressed ? 0.985 : 1.0
+                        Behavior on color { ColorAnimation { duration: 140 } }
+                        Behavior on border.color { ColorAnimation { duration: 140 } }
+                        Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+
+                        Rectangle {
+                            anchors.top: parent.top
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.leftMargin: 14
+                            anchors.rightMargin: 14
+                            height: 1
+                            color: window.aurChecked ? Theme.alpha(Theme.accent, 0.35) : Theme.glassRimTop
+                        }
 
                         RowLayout {
                             anchors.fill: parent
@@ -970,13 +1061,28 @@ FloatingWindow {
                         Layout.fillWidth: true
                         height: 62
                         radius: 12
+                        clip: true
                         color: flatpakArea.containsMouse
-                               ? Theme.alpha(Theme.surface, 0.90)
-                               : (window.flatpakChecked ? Theme.alpha(Theme.accent, 0.06) : Theme.alpha(Theme.surface, 0.50))
+                               ? Theme.glassElevated
+                               : (window.flatpakChecked ? Theme.mix(Theme.glassCard, Theme.accent, 0.08) : Theme.glassCard)
                         border.color: window.flatpakChecked
-                                      ? Theme.alpha(Theme.accent, 0.40)
-                                      : Theme.alpha(Theme.foreground, 0.08)
+                                      ? Theme.alpha(Theme.accent, 0.42)
+                                      : (flatpakArea.containsMouse ? Theme.alpha(Theme.foreground, 0.22) : Theme.alpha(Theme.foreground, 0.10))
                         border.width: 1
+                        scale: flatpakArea.pressed ? 0.985 : 1.0
+                        Behavior on color { ColorAnimation { duration: 140 } }
+                        Behavior on border.color { ColorAnimation { duration: 140 } }
+                        Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+
+                        Rectangle {
+                            anchors.top: parent.top
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.leftMargin: 14
+                            anchors.rightMargin: 14
+                            height: 1
+                            color: window.flatpakChecked ? Theme.alpha(Theme.accent, 0.35) : Theme.glassRimTop
+                        }
 
                         RowLayout {
                             anchors.fill: parent
@@ -1076,9 +1182,23 @@ FloatingWindow {
                     Layout.preferredWidth: 200
                     height: 38
                     radius: 10
+                    clip: true
                     enabled: !window.isUpdating && window.selectedCount > 0
                     opacity: enabled ? 1.0 : 0.40
-                    color: updateBtnArea.containsMouse ? Qt.lighter(Theme.accent, 1.15) : Theme.accent
+                    color: updateBtnArea.containsMouse ? Qt.lighter(Theme.accent, 1.12) : Theme.accent
+                    scale: updateBtnArea.pressed && enabled ? 0.97 : (updateBtnArea.containsMouse && enabled ? 1.02 : 1.0)
+                    Behavior on color { ColorAnimation { duration: 140 } }
+                    Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+
+                    Rectangle {
+                        anchors.top: parent.top
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.leftMargin: 14
+                        anchors.rightMargin: 14
+                        height: 1
+                        color: Theme.alpha("#ffffff", 0.35)
+                    }
 
                     RowLayout {
                         anchors.centerIn: parent
@@ -1112,9 +1232,13 @@ FloatingWindow {
                     Layout.preferredWidth: 120
                     height: 38
                     radius: 10
-                    color: skipArea.containsMouse ? Theme.alpha(Theme.surface, 0.85) : Theme.alpha(Theme.surface, 0.45)
-                    border.color: Theme.alpha(Theme.foreground, 0.12)
+                    color: skipArea.containsMouse ? Theme.glassElevated : Theme.glassCard
+                    border.color: skipArea.containsMouse ? Theme.alpha(Theme.foreground, 0.24) : Theme.alpha(Theme.foreground, 0.12)
                     border.width: 1
+                    scale: skipArea.pressed ? 0.97 : 1.0
+                    Behavior on color { ColorAnimation { duration: 140 } }
+                    Behavior on border.color { ColorAnimation { duration: 140 } }
+                    Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
 
                     Text {
                         anchors.centerIn: parent
@@ -1160,8 +1284,8 @@ FloatingWindow {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 radius: 12
-                color: "#08080c"
-                border.color: Theme.alpha(Theme.foreground, 0.10)
+                color: Theme.glassWell
+                border.color: Theme.alpha(Theme.foreground, 0.11)
                 border.width: 1
                 clip: true
 
@@ -1173,9 +1297,17 @@ FloatingWindow {
                     Rectangle {
                         Layout.fillWidth: true
                         height: 36
-                        color: Theme.alpha(Theme.surface, 0.50)
+                        color: Theme.glassCard
                         border.color: Theme.alpha(Theme.foreground, 0.08)
                         border.width: 1
+
+                        Rectangle {
+                            anchors.top: parent.top
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            height: 1
+                            color: Theme.glassRimTop
+                        }
 
                         RowLayout {
                             anchors.fill: parent
