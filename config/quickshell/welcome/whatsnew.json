@@ -6,6 +6,7 @@
       "badge": "LATEST RELEASE",
       "title": "What's New in qs-v1.0.2",
       "subtitle": "Cursor Quick Paste, tri-state desktop modes, obsidian glass blur controls, and tuned physics.",
+      "keybindsNotice": "Existing users: your ~/.local/share/hyprconf/keybinds.lua is preserved across updates. Manually copy new qs-v1.0.2 binds (Super+V Quick Paste, Super+Shift+V Float, Super+Alt+M Mode Cycle, Super+Ctrl+B Bar Toggle) from ~/.hyprconf/hypr/configs/keybinds-updated.lua into your keybinds.lua to use them.",
       "features": [
         {
           "title": "Cursor Quick Paste (SUPER + V)",
@@ -38,6 +39,7 @@
       "badge": "PREVIOUS RELEASE",
       "title": "What's New in qs-v1.0.1",
       "subtitle": "Pure Quickshell migration milestones, new desktop modules, and native Polkit authentication.",
+      "keybindsNotice": "Upgrading from v1.0.0: copy the qs-v1.0.1 binds (Super+End / Super+Shift+S Screenshot, Super+Alt+C Clipboard, Super+Alt+Space Dock Toggle, Ctrl+U Updater) from ~/.hyprconf/hypr/configs/keybinds-updated.lua into ~/.local/share/hyprconf/keybinds.lua manually.",
       "features": [
         {
           "title": "Island Weather System",

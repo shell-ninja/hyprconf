@@ -96,6 +96,98 @@ FloatingWindow {
         }
     }
 
+    // Shared reminder banner directing upgrading users to merge keybinds-updated.lua manually.
+    component KeybindUpdateBanner : Rectangle {
+        id: kbBanner
+        property string headline: "Manual Keybind Update Required"
+        property string bodyText: "Your ~/.local/share/hyprconf/keybinds.lua is preserved across updates. Copy new version binds from ~/.hyprconf/hypr/configs/keybinds-updated.lua into your keybinds.lua manually to enable new features."
+
+        Layout.fillWidth: true
+        implicitHeight: bannerRow.implicitHeight + 16
+        radius: 10
+        color: Theme.mix(Theme.glassCard, Theme.accent, 0.08)
+        border.color: Theme.alpha(Theme.accent, 0.34)
+        border.width: 1
+
+        RowLayout {
+            id: bannerRow
+            anchors {
+                left: parent.left
+                right: parent.right
+                verticalCenter: parent.verticalCenter
+                leftMargin: 12
+                rightMargin: 12
+            }
+            spacing: 10
+
+            Rectangle {
+                width: 28
+                height: 28
+                radius: 7
+                color: Theme.alpha(Theme.accent, 0.16)
+                Image {
+                    anchors.centerIn: parent
+                    width: 15
+                    height: 15
+                    source: window.keyboardSvg
+                }
+            }
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 2
+
+                Text {
+                    text: kbBanner.headline
+                    font.pixelSize: 11
+                    font.bold: true
+                    font.family: "Inter"
+                    color: Theme.foreground
+                }
+
+                Text {
+                    Layout.fillWidth: true
+                    text: kbBanner.bodyText
+                    font.pixelSize: 10
+                    font.family: "Inter"
+                    color: Theme.alpha(Theme.foreground, 0.72)
+                    wrapMode: Text.WordWrap
+                }
+            }
+
+            Rectangle {
+                implicitWidth: openBtnText.implicitWidth + 16
+                height: 26
+                radius: 7
+                color: openBtnMa.containsMouse ? Theme.alpha(Theme.accent, 0.28) : Theme.alpha(Theme.accent, 0.16)
+                border.color: Theme.alpha(Theme.accent, 0.42)
+                border.width: 1
+                Behavior on color { ColorAnimation { duration: 120 } }
+
+                Text {
+                    id: openBtnText
+                    anchors.centerIn: parent
+                    text: "Open keybinds-updated.lua"
+                    font.pixelSize: 10
+                    font.bold: true
+                    font.family: "JetBrains Mono, monospace"
+                    color: Theme.accent
+                }
+
+                MouseArea {
+                    id: openBtnMa
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: Quickshell.execDetached([
+                        "xdg-open",
+                        window.homeDir + "/.hyprconf/hypr/configs/keybinds-updated.lua"
+                    ])
+                }
+            }
+        }
+    }
+
     // Logo & Avatar paths
     readonly property string brandLogoPath: "file://" + homeDir + "/.hyprconf/hypr/.cache/shell-ninja.png"
     readonly property string faceAvatarPath: "file://" + homeDir + "/.hyprconf/hypr/.cache/.face"
@@ -1162,6 +1254,12 @@ FloatingWindow {
                             }
                         }
                     }
+
+                    KeybindUpdateBanner {
+                        headline: "Keybinds Updated in " + (whatsNewPage.activeRelease.version || window.versionTag)
+                        bodyText: whatsNewPage.activeRelease.keybindsNotice
+                            || "Manually copy newly added shortcuts from ~/.hyprconf/hypr/configs/keybinds-updated.lua into ~/.local/share/hyprconf/keybinds.lua to enable them."
+                    }
                 }
 
                 // ═════════════════════════════════════════════════════════════
@@ -1240,6 +1338,11 @@ FloatingWindow {
                                 }
                             }
                         }
+                    }
+
+                    KeybindUpdateBanner {
+                        headline: "Manual Keybind Update Required"
+                        bodyText: "Upgraded configs keep ~/.local/share/hyprconf/keybinds.lua untouched. Copy the latest " + window.versionTag + " shortcuts from ~/.hyprconf/hypr/configs/keybinds-updated.lua into your keybinds.lua manually to activate new features."
                     }
 
                     // Keybinds Model Helper
