@@ -1,0 +1,22 @@
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background-color: var(--bg, #11171f);
+  color: var(--fg, #e9ecf1);
+  overflow: hidden;
+  user-select: none;
+  color-scheme: dark;
+}
+
+html.ready,
+html.ready body {
+  transition: background-color 220ms ease;
+}
+
+::selection {
+  background-color: var(--primary, #6c86ac);
+  color: var(--bg, #11171f);
+}

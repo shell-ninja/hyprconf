@@ -1,0 +1,18 @@
+@import url("colors.css");
+
+/* Hyprconf GTK/Hyprland-matched background for Firefox & Firefox forks */
+@-moz-document url("about:newtab"), url("about:home"), url("about:blank"), url("about:privatebrowsing") {
+  :root,
+  html,
+  body {
+    background-color: var(--bg, #11171f) !important;
+    background-image: none !important;
+    --newtab-background-color: var(--bg, #11171f) !important;
+    --newtab-background-color-secondary: var(--surface, #19212c) !important;
+    --newtab-text-primary-color: var(--fg, #e9ecf1) !important;
+    --newtab-element-hover-color: var(--surface, #19212c) !important;
+    --newtab-element-active-color: var(--primary, #6c86ac) !important;
+    --in-content-page-background: var(--bg, #11171f) !important;
+    color-scheme: dark !important;
+  }
+}

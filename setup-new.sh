@@ -994,6 +994,17 @@ if [[ -n "$local_src" ]]; then
                 fi
             done
         fi
+        if [[ -d "$local_src/share/hyprconf/browser-ntp" ]]; then
+            while IFS= read -r -d '' src_file; do
+                rel_path="${src_file#"$local_src/share/hyprconf/"}"
+                dest_file="$HOME/.local/share/hyprconf/$rel_path"
+                mkdir -p "$(dirname "$dest_file")"
+                [[ -L "$dest_file" && ! -e "$dest_file" ]] && rm -f "$dest_file"
+                if [[ ! -e "$dest_file" && ! -L "$dest_file" ]]; then
+                    cp -a "$src_file" "$dest_file"
+                fi
+            done < <(find "$local_src/share/hyprconf/browser-ntp" -type f -print0)
+        fi
     fi
 fi
 
