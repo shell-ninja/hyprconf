@@ -10,10 +10,9 @@ Item {
     id: root
 
     readonly property real requiredWidth: {
-        if (root.islandStyle === "split_wings") return (splitWingsItem && splitWingsItem.width > 0) ? Math.ceil(splitWingsItem.width + 16) : 412
         if (root.islandStyle === "orbital") return (orbitalItem && orbitalItem.width > 0) ? Math.ceil(orbitalItem.width + 16) : 340
         if (root.islandStyle === "minimal_rail") return (minimalRailItem && minimalRailItem.width > 0) ? Math.ceil(minimalRailItem.width + 16) : 586
-        return (capsuleRow && capsuleRow.width > 0) ? Math.ceil(capsuleRow.width + 56) : 316
+        return (prismBladeItem && prismBladeItem.width > 0) ? Math.ceil(prismBladeItem.width + 16) : 384
     }
     implicitWidth: requiredWidth
     implicitHeight: 36
@@ -38,10 +37,9 @@ Item {
     }
 
     readonly property var wsLabels: {
-        if (root.islandStyle === "split_wings") return ["一", "二", "三", "四", "五"]
         if (root.islandStyle === "orbital") return ["1", "2", "3", "4", "5"]
         if (root.islandStyle === "minimal_rail") return ["✦", "◈", "◆", "❖", "⬡"]
-        return ["一", "二", "三", "四", "五"]
+        return ["01", "02", "03", "04", "05"]
     }
 
     readonly property string effectiveVizStyle: {
@@ -77,7 +75,7 @@ Item {
     property var cavaBars: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
     property bool visualizerEnabled: true
     property string visualizerStyle: "wave"
-    property string islandStyle: "capsule"
+    property string islandStyle: "prism_blade"
     property int visualizerBarCount: 8
     property real animProgress: 0.0
     property bool matrixStreamEnabled: false
@@ -103,9 +101,8 @@ Item {
 
     function updateWsHoverState() {
         var h = false
-        if (typeof wsCapsuleHover !== "undefined" && wsCapsuleHover && wsCapsuleHover.hovered) h = true
+        if (typeof wsPrismHover !== "undefined" && wsPrismHover && wsPrismHover.hovered) h = true
         if (typeof wsOrbitalHover !== "undefined" && wsOrbitalHover && wsOrbitalHover.hovered) h = true
-        if (typeof wsSplitHover !== "undefined" && wsSplitHover && wsSplitHover.hovered) h = true
         if (typeof wsMinimalHover !== "undefined" && wsMinimalHover && wsMinimalHover.hovered) h = true
         root.isWorkspaceAreaHovered = h
     }
@@ -456,251 +453,514 @@ Item {
         Behavior on scale { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
 
         // ═════════════════════════════════════════════════════════════════════
-        // STYLE 1: CAPSULE (ORGANIC MONOLITHIC FLOATING PILL)
+        // STYLE 1: PRISM BLADE (ARCHITECTURAL SQUIRCLE HUD & TELEMETRY CORE)
         // ═════════════════════════════════════════════════════════════════════
-        Row {
-            id: capsuleRow
+        Item {
+            id: prismBladeItem
             anchors.centerIn: parent
-            spacing: 10
+            width: Math.max(352, prismContentRow.implicitWidth + 24)
+            height: 36
             clip: false
-            visible: root.islandStyle === "capsule"
+            visible: root.islandStyle !== "orbital" && root.islandStyle !== "minimal_rail"
 
-            AudioVisualizer {
-                id: leftVisualizer
-                anchors.verticalCenter: parent.verticalCenter
-                active: root.isAudioPlaying && root.visualizerEnabled && !root.expanded && root.visible && (root.islandStyle === "capsule")
-                wingMode: "left"
-                barCount: Math.max(2, Math.floor(root.visualizerBarCount / 2))
-                style: root.effectiveVizStyle
-                cavaValues: root.cavaBars
-                visible: width > 0
-                width: (root.isAudioPlaying && root.visualizerEnabled) ? implicitWidth : 0
-                opacity: (root.isAudioPlaying && root.visualizerEnabled) ? Math.max(0.0, 1.0 - root.animProgress * 2.5) : 0.0
-                clip: true
-                transform: Translate {
-                    x: -root.animProgress * 25
-                    y: root.animProgress * 18
-                }
-                Behavior on width { NumberAnimation { duration: 260; easing.type: Easing.OutCubic } }
-                Behavior on opacity { NumberAnimation { duration: 260; easing.type: Easing.OutCubic } }
+            // Ambient accent underglow
+            Rectangle {
+                anchors.centerIn: parent
+                width: parent.width + 4
+                height: parent.height + 4
+                radius: 13
+                color: Theme.alpha(Theme.accent, 0.10)
+                z: -2
             }
 
-            Item {
-                id: wsClusterCapsule
-                width: 154
+            // Precision squircle obsidian shell
+            Rectangle {
+                anchors.fill: parent
+                radius: 11
+                color: Theme.alpha(Theme.background, 0.88)
+                border.color: Theme.alpha(Theme.accent, 0.44)
+                border.width: 1.1
+            }
+
+            // Specular optical catchlight along top bezel
+            Rectangle {
+                anchors.top: parent.top
+                anchors.topMargin: 1
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: Math.max(48, parent.width - 36)
+                height: 1
+                radius: 0.5
+                gradient: Gradient {
+                    orientation: Gradient.Horizontal
+                    GradientStop { position: 0.0; color: "transparent" }
+                    GradientStop { position: 0.25; color: Theme.alpha(Theme.foreground, 0.16) }
+                    GradientStop { position: 0.50; color: Theme.alpha(Theme.accent, 0.48) }
+                    GradientStop { position: 0.75; color: Theme.alpha(Theme.foreground, 0.16) }
+                    GradientStop { position: 1.0; color: "transparent" }
+                }
+            }
+
+            // Subtle bottom accent razor accent bar under center telemetry core
+            Rectangle {
+                anchors.bottom: parent.bottom
+                anchors.bottomMargin: 1
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: 44
+                height: 1.5
+                radius: 0.75
+                color: Theme.alpha(Theme.accent, 0.45)
+            }
+
+            Row {
+                id: prismContentRow
+                anchors.centerIn: parent
+                spacing: 8
                 height: parent.height
-                anchors.verticalCenter: parent.verticalCenter
                 clip: false
 
-                HoverHandler {
-                    id: wsCapsuleHover
-                    onHoveredChanged: root.updateWsHoverState()
-                }
+                // ── ZONE 1: RECESSED TABULAR WORKSPACE MATRIX ────────────────
+                Rectangle {
+                    id: wsClusterPrism
+                    width: 124
+                    height: 26
+                    radius: 7
+                    anchors.verticalCenter: parent.verticalCenter
+                    color: Theme.alpha(Theme.surface, 0.62)
+                    border.color: Theme.alpha(Theme.foreground, 0.08)
+                    border.width: 1
+                    clip: false
 
-                WheelHandler {
-                    onWheel: function(event) {
-                        var delta = (event.angleDelta.y > 0) ? -1 : 1
-                        var nextWs = Math.max(1, Math.min(5, root.activeWorkspace + delta))
-                        root.switchWorkspace(nextWs)
+                    HoverHandler {
+                        id: wsPrismHover
+                        onHoveredChanged: root.updateWsHoverState()
+                    }
+
+                    WheelHandler {
+                        onWheel: function(event) {
+                            var delta = (event.angleDelta.y > 0) ? -1 : 1
+                            var nextWs = Math.max(1, Math.min(5, root.activeWorkspace + delta))
+                            root.switchWorkspace(nextWs)
+                        }
+                    }
+
+                    Row {
+                        spacing: 2
+                        height: parent.height
+                        anchors.centerIn: parent
+
+                        Repeater {
+                            model: 5
+                            Item {
+                                readonly property int wsId: index + 1
+                                readonly property bool isActive: (root.activeWorkspace === wsId)
+                                readonly property bool isOccupied: (root.occupiedWorkspaces && root.occupiedWorkspaces.indexOf(wsId) !== -1)
+                                readonly property int winCount: (root.wsWindowCounts && root.wsWindowCounts[wsId]) ? root.wsWindowCounts[wsId] : 0
+                                readonly property string labelText: (index >= 0 && index < root.wsLabels.length) ? root.wsLabels[index] : ("0" + wsId)
+
+                                width: 22
+                                height: parent.height
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: parent.labelText
+                                    font.family: "JetBrainsMono Nerd Font, Outfit"
+                                    font.pixelSize: 10
+                                    font.weight: Font.Bold
+                                    color: parent.isOccupied ? Theme.secondary : Theme.foreground
+                                    opacity: parent.isActive ? 0.0 : (slotMousePrism.containsMouse ? 1.0 : (parent.isOccupied ? 0.92 : 0.40))
+                                    scale: slotMousePrism.containsMouse ? 1.12 : 1.0
+                                    Behavior on opacity { NumberAnimation { duration: 160 } }
+                                    Behavior on scale { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
+                                }
+
+                                // Window occupancy micro-pip on top-right corner of occupied inactive slots
+                                Rectangle {
+                                    anchors.top: parent.top
+                                    anchors.topMargin: 4
+                                    anchors.right: parent.right
+                                    anchors.rightMargin: 2.5
+                                    width: parent.winCount > 1 ? 6 : 3.5
+                                    height: 3.5
+                                    radius: 1.75
+                                    color: parent.winCount > 1 ? Theme.primary : Theme.accent
+                                    visible: parent.isOccupied && !parent.isActive
+                                    Behavior on width { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+                                }
+
+                                MouseArea {
+                                    id: slotMousePrism
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: function(mouse) {
+                                        mouse.accepted = true
+                                        root.switchWorkspace(parent.wsId)
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Active Workspace Squircle Tile
+                    Rectangle {
+                        id: prismMedallion
+                        readonly property int targetIndex: Math.max(0, Math.min(4, root.activeWorkspace - 1))
+                        width: 22
+                        height: 20
+                        radius: 5.5
+                        color: Theme.accent
+                        z: 20
+                        y: (parent.height - height) / 2
+                        x: Math.round(3 + targetIndex * 24)
+
+                        Behavior on x {
+                            NumberAnimation {
+                                duration: 260
+                                easing.type: Easing.OutBack
+                                easing.overshoot: 1.12
+                            }
+                        }
+
+                        Rectangle {
+                            anchors.centerIn: parent
+                            width: parent.width + 4
+                            height: parent.height + 4
+                            radius: 7.5
+                            color: Theme.alpha(Theme.accent, 0.22)
+                            z: -1
+                        }
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: (prismMedallion.targetIndex >= 0 && prismMedallion.targetIndex < root.wsLabels.length) ? root.wsLabels[prismMedallion.targetIndex] : ("0" + root.activeWorkspace)
+                            font.family: "JetBrainsMono Nerd Font, Outfit"
+                            font.pixelSize: 10
+                            font.weight: Font.Black
+                            color: Theme.background
+                        }
+                    }
+
+                    // Gliding bottom laser rail tracking active workspace tile
+                    Rectangle {
+                        width: 16
+                        height: 2
+                        radius: 1
+                        color: Theme.accent
+                        z: 25
+                        anchors.bottom: parent.bottom
+                        anchors.bottomMargin: -1
+                        x: prismMedallion.x + 3
                     }
                 }
 
+                // Hairline Separator 1
+                Rectangle {
+                    width: 1
+                    height: 16
+                    color: Theme.alpha(Theme.accent, 0.25)
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+
+                // ── ZONE 2: CENTER TELEMETRY CORE (SPECTRUM WINGS + TIME/DAY) ─
                 Row {
-                    spacing: 6
-                    height: parent.height
-                    anchors.centerIn: parent
+                    spacing: 7
+                    anchors.verticalCenter: parent.verticalCenter
                     clip: false
 
-                    Repeater {
-                        model: 5
-                        Item {
-                            readonly property int wsId: index + 1
-                            readonly property bool isActive: (root.activeWorkspace === wsId)
-                            readonly property bool isOccupied: (root.occupiedWorkspaces && root.occupiedWorkspaces.indexOf(wsId) !== -1)
-                            readonly property int winCount: (root.wsWindowCounts && root.wsWindowCounts[wsId]) ? root.wsWindowCounts[wsId] : 0
-                            readonly property string labelText: (index >= 0 && index < root.wsLabels.length) ? root.wsLabels[index] : wsId.toString()
+                    AudioVisualizer {
+                        id: prismLeftViz
+                        anchors.verticalCenter: parent.verticalCenter
+                        active: root.isAudioPlaying && root.visualizerEnabled && !root.expanded && root.visible && (root.islandStyle !== "orbital" && root.islandStyle !== "minimal_rail")
+                        wingMode: "left"
+                        barCount: Math.max(2, Math.floor(root.visualizerBarCount / 2))
+                        style: root.effectiveVizStyle
+                        cavaValues: root.cavaBars
+                        height: 16
+                        barW: 2.4
+                        gap: 1.8
+                        visible: width > 0
+                        width: (root.isAudioPlaying && root.visualizerEnabled) ? implicitWidth : 0
+                        opacity: (root.isAudioPlaying && root.visualizerEnabled) ? Math.max(0.0, 1.0 - root.animProgress * 2.5) : 0.0
+                        clip: true
+                        Behavior on width { NumberAnimation { duration: 240; easing.type: Easing.OutCubic } }
+                        Behavior on opacity { NumberAnimation { duration: 240; easing.type: Easing.OutCubic } }
+                    }
 
-                            width: 22
-                            height: parent.height
+                    Item {
+                        width: prismClockRow.implicitWidth
+                        height: 26
+                        anchors.verticalCenter: parent.verticalCenter
+
+                        Row {
+                            id: prismClockRow
+                            spacing: 6
+                            anchors.centerIn: parent
+
+                            // Signature 45° angular diamond core beacon
+                            Rectangle {
+                                width: 5
+                                height: 5
+                                radius: 1
+                                rotation: 45
+                                color: Theme.accent
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
 
                             Text {
-                                anchors.centerIn: parent
-                                text: parent.labelText
+                                text: root.timeString
+                                color: Theme.foreground
                                 font.family: "Outfit"
                                 font.pixelSize: 13
                                 font.weight: Font.Bold
-                                color: parent.isOccupied ? Theme.secondary : Theme.foreground
-                                opacity: parent.isActive ? 0.0 : (slotMouseCapsule.containsMouse ? 1.0 : (parent.isOccupied ? 0.95 : 0.55))
-                                scale: slotMouseCapsule.containsMouse ? 1.2 : 1.0
-                                Behavior on opacity { NumberAnimation { duration: 180 } }
-                                Behavior on scale { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
-                                Behavior on color { ColorAnimation { duration: 180 } }
+                                font.letterSpacing: 0.3
+                                anchors.verticalCenter: parent.verticalCenter
                             }
 
+                            // Compact accented weekday chip
                             Rectangle {
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                anchors.bottom: parent.bottom
-                                anchors.bottomMargin: 2
-                                width: parent.winCount > 1 ? Math.min(11, 3 + parent.winCount * 2.5) : 3
-                                height: 3
-                                radius: 1.5
-                                color: parent.winCount > 1 ? Theme.primary : Theme.secondary
-                                visible: parent.isOccupied && !parent.isActive
-                                opacity: visible ? 1.0 : 0.0
-                                Behavior on width { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
-                                Behavior on opacity { NumberAnimation { duration: 180 } }
+                                width: prismDayText.implicitWidth + 8
+                                height: 15
+                                radius: 4
+                                color: Theme.alpha(Theme.accent, 0.14)
+                                border.color: Theme.alpha(Theme.accent, 0.32)
+                                border.width: 0.8
+                                anchors.verticalCenter: parent.verticalCenter
+
+                                Text {
+                                    id: prismDayText
+                                    anchors.centerIn: parent
+                                    text: root.dayOfWeek
+                                    font.family: "Outfit"
+                                    font.pixelSize: 9
+                                    font.weight: Font.Black
+                                    font.letterSpacing: 0.6
+                                    color: Theme.accent
+                                }
+                            }
+
+                            IslandMediaIndicators {
+                                isScreenRecording: root.isScreenRecording
+                                isMicActive: root.isMicActive
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.clockClicked()
+                        }
+                    }
+
+                    AudioVisualizer {
+                        id: prismRightViz
+                        anchors.verticalCenter: parent.verticalCenter
+                        active: root.isAudioPlaying && root.visualizerEnabled && !root.expanded && root.visible && (root.islandStyle !== "orbital" && root.islandStyle !== "minimal_rail")
+                        wingMode: "right"
+                        barCount: Math.max(2, Math.floor(root.visualizerBarCount / 2))
+                        style: root.effectiveVizStyle
+                        cavaValues: root.cavaBars
+                        height: 16
+                        barW: 2.4
+                        gap: 1.8
+                        visible: width > 0
+                        width: (root.isAudioPlaying && root.visualizerEnabled) ? implicitWidth : 0
+                        opacity: (root.isAudioPlaying && root.visualizerEnabled) ? Math.max(0.0, 1.0 - root.animProgress * 2.5) : 0.0
+                        clip: true
+                        Behavior on width { NumberAnimation { duration: 240; easing.type: Easing.OutCubic } }
+                        Behavior on opacity { NumberAnimation { duration: 240; easing.type: Easing.OutCubic } }
+                    }
+                }
+
+                // Hairline Separator 2
+                Rectangle {
+                    width: 1
+                    height: 16
+                    color: Theme.alpha(Theme.accent, 0.25)
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+
+                // ── ZONE 3: RIGHT RECESSED UTILITY MICRO-BAY ─────────────────
+                Rectangle {
+                    height: 26
+                    width: prismRightRow.implicitWidth + 14
+                    radius: 7
+                    anchors.verticalCenter: parent.verticalCenter
+                    color: Theme.alpha(Theme.surface, 0.62)
+                    border.color: Theme.alpha(Theme.foreground, 0.08)
+                    border.width: 1
+                    clip: false
+
+                    Row {
+                        id: prismRightRow
+                        anchors.centerIn: parent
+                        spacing: 7
+
+                        // A. Interactive Volume Trigger + Inline Micro-Gauge
+                        Item {
+                            width: 36
+                            height: 20
+                            anchors.verticalCenter: parent.verticalCenter
+
+                            Row {
+                                anchors.centerIn: parent
+                                spacing: 4
+
+                                Image {
+                                    width: 13
+                                    height: 13
+                                    source: root.isMuted ? root.speakerMuteSvg : root.speakerSvg
+                                    opacity: root.isMuted ? 0.50 : 1.0
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
+
+                                Rectangle {
+                                    width: 16
+                                    height: 3.5
+                                    radius: 1.75
+                                    color: Theme.alpha(Theme.foreground, 0.20)
+                                    anchors.verticalCenter: parent.verticalCenter
+
+                                    Rectangle {
+                                        width: Math.max(root.isMuted ? 0 : 2, parent.width * (root.isMuted ? 0 : root.currentVolume))
+                                        height: parent.height
+                                        radius: parent.radius
+                                        color: Theme.accent
+                                        Behavior on width { NumberAnimation { duration: 120 } }
+                                    }
+                                }
+                            }
+
+                            WheelHandler {
+                                onWheel: function(event) {
+                                    var delta = (event.angleDelta.y > 0) ? 0.05 : -0.05
+                                    root.setVolume(root.currentVolume + delta)
+                                }
                             }
 
                             MouseArea {
-                                id: slotMouseCapsule
                                 anchors.fill: parent
-                                hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: function(mouse) {
                                     mouse.accepted = true
-                                    root.switchWorkspace(parent.wsId)
+                                    root.toggleMute()
+                                }
+                            }
+                        }
+
+                        // Subtle divider
+                        Rectangle {
+                            width: 1
+                            height: 10
+                            color: Theme.alpha(Theme.foreground, 0.14)
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+
+                        // B. Adaptive Hardware Status: Net icon on Desktop OR Battery Pill on Laptop
+                        Item {
+                            width: 15
+                            height: 15
+                            anchors.verticalCenter: parent.verticalCenter
+                            visible: !root.hasBattery || root.batteryPct < 0
+
+                            Image {
+                                anchors.centerIn: parent
+                                width: 13
+                                height: 13
+                                source: root.barNetType === "ethernet" ? root.ethernetSvg : root.getWifiSvg(root.barNetSignal, true)
+                            }
+                        }
+
+                        IslandBatteryIndicator {
+                            hasBattery: root.hasBattery
+                            batteryPct: root.batteryPct
+                            batteryStatus: root.batteryStatus
+                            isCharging: root.isCharging
+                            anchors.verticalCenter: parent.verticalCenter
+                            onClicked: root.clockClicked()
+                        }
+
+                        // C. Notification Bell with Unread Badge
+                        Item {
+                            width: (root.notificationCount > 0) ? 20 : 15
+                            height: 18
+                            anchors.verticalCenter: parent.verticalCenter
+                            clip: false
+                            Behavior on width { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+
+                            Image {
+                                id: prismBellImg
+                                width: 13
+                                height: 13
+                                source: root.bellSvg
+                                anchors.centerIn: parent
+                                opacity: (root.notificationCount > 0) ? 1.0 : 0.72
+                            }
+
+                            Rectangle {
+                                id: prismBellBadge
+                                visible: root.notificationCount > 0
+                                opacity: visible ? 1.0 : 0.0
+                                scale: visible ? 1.0 : 0.0
+                                anchors.top: prismBellImg.top
+                                anchors.topMargin: -4
+                                anchors.right: prismBellImg.right
+                                anchors.rightMargin: -6
+                                width: Math.max(12, prismNotifCountText.implicitWidth + 4)
+                                height: 12
+                                radius: 6
+                                color: Theme.error
+                                border.color: Theme.background
+                                border.width: 1.1
+                                z: 10
+
+                                Behavior on opacity { NumberAnimation { duration: 200 } }
+                                Behavior on scale { NumberAnimation { duration: 220; easing.type: Easing.OutBack } }
+
+                                SequentialAnimation {
+                                    id: prismNotifPulseAnim
+                                    loops: 3
+                                    NumberAnimation { target: prismBellBadge; property: "scale"; to: 1.15; duration: 450; easing.type: Easing.InOutQuad }
+                                    NumberAnimation { target: prismBellBadge; property: "scale"; to: 1.0; duration: 450; easing.type: Easing.InOutQuad }
+                                }
+
+                                Connections {
+                                    target: root
+                                    function onNotificationCountChanged() {
+                                        if (root.notificationCount > 0) prismNotifPulseAnim.restart()
+                                    }
+                                }
+
+                                Text {
+                                    id: prismNotifCountText
+                                    anchors.centerIn: parent
+                                    text: root.notificationCount > 99 ? "99+" : root.notificationCount.toString()
+                                    font.family: "Outfit"
+                                    font.pixelSize: 8
+                                    font.weight: Font.Black
+                                    color: "#ffffff"
+                                }
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                anchors.margins: -3
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: function(mouse) {
+                                    mouse.accepted = true
+                                    root.notificationClicked()
                                 }
                             }
                         }
                     }
                 }
-
-                Rectangle {
-                    id: capsuleMedallion
-                    readonly property int targetIndex: Math.max(0, Math.min(4, root.activeWorkspace - 1))
-                    width: 38
-                    height: 38
-                    radius: 19
-                    color: Theme.accent
-                    z: 20
-                    y: (parent.height - height) / 2
-                    x: {
-                        var sw = 22
-                        var sp = 6
-                        var totalW = 5 * sw + 4 * sp
-                        var rowStart = (parent.width - totalW) / 2
-                        var centerX = rowStart + targetIndex * (sw + sp) + sw / 2
-                        return Math.round(centerX - width / 2)
-                    }
-
-                    Behavior on x {
-                        NumberAnimation {
-                            duration: 280
-                            easing.type: Easing.OutBack
-                            easing.overshoot: 1.15
-                        }
-                    }
-
-                    Rectangle {
-                        anchors.centerIn: parent
-                        width: parent.width + 3
-                        height: parent.height + 3
-                        radius: width / 2
-                        color: Theme.alpha(Theme.accent, 0.22)
-                        z: -1
-                    }
-
-                    border.color: Theme.alpha(Theme.background, 0.20)
-                    border.width: 1.0
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: (capsuleMedallion.targetIndex >= 0 && capsuleMedallion.targetIndex < root.wsLabels.length) ? root.wsLabels[capsuleMedallion.targetIndex] : root.activeWorkspace.toString()
-                        font.family: "Outfit"
-                        font.pixelSize: 14
-                        font.weight: Font.Bold
-                        color: Theme.background
-                    }
-                }
-            }
-
-            Rectangle {
-                width: 1
-                height: 14
-                color: Theme.alpha(Theme.accent, 0.40)
-                anchors.verticalCenter: parent.verticalCenter
-            }
-
-            Item {
-                id: capsuleClockArea
-                width: capsuleClockRow.width
-                height: capsuleClockRow.height
-                anchors.verticalCenter: parent.verticalCenter
-
-                Row {
-                    id: capsuleClockRow
-                    spacing: 6
-                    anchors.verticalCenter: parent.verticalCenter
-
-                    Rectangle {
-                        width: 6
-                        height: 6
-                        radius: 3
-                        color: Theme.accent
-                        anchors.verticalCenter: parent.verticalCenter
-                        opacity: 0.85
-                    }
-
-                    Text {
-                        text: root.timeString
-                        color: Theme.accent
-                        font.family: "Outfit"
-                        font.pixelSize: 13
-                        font.weight: Font.Bold
-                        font.letterSpacing: 0.5
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-
-                    // Live Screen Recording & Microphone Indicators beside the clock
-                    IslandMediaIndicators {
-                        isScreenRecording: root.isScreenRecording
-                        isMicActive: root.isMicActive
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-
-                    // Laptop Battery Indicator beside the clock
-                    IslandBatteryIndicator {
-                        hasBattery: root.hasBattery
-                        batteryPct: root.batteryPct
-                        batteryStatus: root.batteryStatus
-                        isCharging: root.isCharging
-                        anchors.verticalCenter: parent.verticalCenter
-                        onClicked: root.clockClicked()
-                    }
-                }
-
-                MouseArea {
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.clockClicked()
-                }
-            }
-
-            AudioVisualizer {
-                id: rightVisualizer
-                anchors.verticalCenter: parent.verticalCenter
-                active: root.isAudioPlaying && root.visualizerEnabled && !root.expanded && root.visible && (root.islandStyle === "capsule")
-                wingMode: "right"
-                barCount: Math.max(2, Math.floor(root.visualizerBarCount / 2))
-                style: root.effectiveVizStyle
-                cavaValues: root.cavaBars
-                visible: width > 0
-                width: (root.isAudioPlaying && root.visualizerEnabled) ? implicitWidth : 0
-                opacity: (root.isAudioPlaying && root.visualizerEnabled) ? Math.max(0.0, 1.0 - root.animProgress * 2.5) : 0.0
-                clip: true
-                transform: Translate {
-                    x: root.animProgress * 25
-                    y: root.animProgress * 18
-                }
-                Behavior on width { NumberAnimation { duration: 260; easing.type: Easing.OutCubic } }
-                Behavior on opacity { NumberAnimation { duration: 260; easing.type: Easing.OutCubic } }
             }
         }
 
 
 
         // ═════════════════════════════════════════════════════════════════════
-        // STYLE 3: ORBITAL SATELLITE (ACTION BUTTON & TOP-BORDER PEARL — IMAGE 2)
+        // STYLE 2: ORBITAL SATELLITE (ACTION BUTTON & TOP-BORDER PEARL — IMAGE 2)
         // ═════════════════════════════════════════════════════════════════════
         Item {
             id: orbitalItem
@@ -1031,465 +1291,7 @@ Item {
         }
 
         // ═════════════════════════════════════════════════════════════════════
-        // STYLE 4: SPLIT WINGS (ADAPTIVE DESKTOP & LAPTOP TRIPARTITE — IMAGE 3)
-        // ═════════════════════════════════════════════════════════════════════
-        Item {
-            id: splitWingsItem
-            anchors.centerIn: parent
-            width: 396
-            height: 42
-            clip: false
-            visible: root.islandStyle === "split_wings"
-
-            readonly property real wingW: 174
-            readonly property real wingH: 34
-            readonly property real orbDiameter: 42
-
-            // ── 1. LEFT WING: VOLUME CONTROLLER & LEVEL BARS ─────────────────
-            Item {
-                id: splitLeftWing
-                x: 0
-                y: (parent.height - parent.wingH) / 2
-                width: parent.wingW
-                height: parent.wingH
-
-                // Concave Hugging Silhouette with GPU-native CurveRenderer (zero MSAA offscreen FBO)
-                Shape {
-                    anchors.fill: parent
-                    antialiasing: true
-                    preferredRendererType: Shape.CurveRenderer
-
-                    ShapePath {
-                        strokeColor: Theme.alpha(Theme.accent, 0.55)
-                        strokeWidth: 1.2
-                        fillColor: Theme.alpha(Theme.background, 0.84)
-                        capStyle: ShapePath.RoundCap
-                        joinStyle: ShapePath.RoundJoin
-
-                        // 1. Start at top-left after outer pill cap
-                        startX: 16
-                        startY: 1
-
-                        // 2. Top edge with subtle streamline flare
-                        PathLine {
-                            x: splitLeftWing.width - 14
-                            y: 0.5
-                        }
-
-                        // 3. Top-right rounded shoulder (convex fillet, r=10)
-                        PathCubic {
-                            x: splitLeftWing.width - 1.5
-                            y: 9
-                            control1X: splitLeftWing.width - 4
-                            control1Y: 0.5
-                            control2X: splitLeftWing.width - 0.5
-                            control2Y: 4.5
-                        }
-
-                        // 4. Concave arc hugging center circle (curving inward towards the volume bars)
-                        PathCubic {
-                            x: splitLeftWing.width - 1.5
-                            y: splitLeftWing.height - 9
-                            control1X: splitLeftWing.width - 3.2
-                            control1Y: 13.5
-                            control2X: splitLeftWing.width - 3.2
-                            control2Y: splitLeftWing.height - 13.5
-                        }
-
-                        // 5. Bottom-right rounded shoulder (convex fillet, r=10)
-                        PathCubic {
-                            x: splitLeftWing.width - 14
-                            y: splitLeftWing.height - 0.5
-                            control1X: splitLeftWing.width - 0.5
-                            control1Y: splitLeftWing.height - 4.5
-                            control2X: splitLeftWing.width - 4
-                            control2Y: splitLeftWing.height - 0.5
-                        }
-
-                        // 6. Bottom edge running back to left cap
-                        PathLine {
-                            x: 16
-                            y: splitLeftWing.height - 1
-                        }
-
-                        // 7. Left semi-circular pill cap
-                        PathArc {
-                            x: 16
-                            y: 1
-                            radiusX: 16
-                            radiusY: 16
-                            direction: PathArc.Clockwise
-                        }
-                    }
-                }
-
-                // Left Wing Content Row
-                Row {
-                    anchors.centerIn: parent
-                    anchors.horizontalCenterOffset: -4
-                    spacing: 7
-                    height: parent.height
-
-                    // A. Speaker Icon (Toggle Mute)
-                    Item {
-                        width: 18
-                        height: 18
-                        anchors.verticalCenter: parent.verticalCenter
-
-                        Image {
-                            anchors.centerIn: parent
-                            width: 15
-                            height: 15
-                            source: root.isMuted ? root.speakerMuteSvg : root.speakerSvg
-                            opacity: root.isMuted ? 0.45 : 1.0
-                        }
-
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: root.toggleMute()
-                        }
-                    }
-
-                    // B. Interactive Volume Slider
-                    Item {
-                        id: volumeSliderArea
-                        width: 78
-                        height: 18
-                        anchors.verticalCenter: parent.verticalCenter
-
-                        // Track Background
-                        Rectangle {
-                            anchors.verticalCenter: parent.verticalCenter
-                            width: parent.width
-                            height: 3.5
-                            radius: 1.75
-                            color: Theme.alpha(Theme.foreground, 0.20)
-                        }
-
-                        // Active Volume Fill
-                        Rectangle {
-                            anchors.verticalCenter: parent.verticalCenter
-                            width: Math.max(0, Math.min(parent.width, parent.width * (root.isMuted ? 0 : root.currentVolume)))
-                            height: 3.5
-                            radius: 1.75
-                            color: Theme.accent
-                        }
-
-                        // Circular Slider Thumb
-                        Rectangle {
-                            width: 10
-                            height: 10
-                            radius: 5
-                            color: Theme.accent
-                            anchors.verticalCenter: parent.verticalCenter
-                            x: Math.max(0, Math.min(volumeSliderArea.width - width, volumeSliderArea.width * (root.isMuted ? 0 : root.currentVolume) - width / 2))
-
-                            border.color: Theme.background
-                            border.width: 1.2
-
-                            Behavior on x {
-                                enabled: !root.isDraggingVolume
-                                NumberAnimation { duration: 120 }
-                            }
-                        }
-
-                        MouseArea {
-                            id: volMouseArea
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            preventStealing: true
-
-                            function updateFromPos(mouseX) {
-                                var ratio = Math.max(0.0, Math.min(1.0, mouseX / volumeSliderArea.width))
-                                root.setVolume(ratio)
-                            }
-
-                            onPressed: function(mouse) {
-                                root.isDraggingVolume = true
-                                updateFromPos(mouse.x)
-                            }
-
-                            onReleased: function(mouse) {
-                                root.isDraggingVolume = false
-                            }
-
-                            onCanceled: {
-                                root.isDraggingVolume = false
-                            }
-
-                            onPositionChanged: function(mouse) {
-                                if (pressed) {
-                                    updateFromPos(mouse.x)
-                                }
-                            }
-
-                            WheelHandler {
-                                onWheel: function(event) {
-                                    var delta = (event.angleDelta.y > 0) ? 0.05 : -0.05
-                                    root.setVolume(root.currentVolume + delta)
-                                }
-                            }
-                        }
-                    }
-
-                    // C. 3 Stepped Level Bars (  ▂ ▅ )
-                    Row {
-                        spacing: 2.2
-                        anchors.verticalCenter: parent.verticalCenter
-
-                        Rectangle {
-                            width: 2.5
-                            height: 4
-                            radius: 1
-                            color: Theme.accent
-                            opacity: (!root.isMuted && root.currentVolume > 0.05) ? 1.0 : 0.25
-                            anchors.bottom: parent.bottom
-                            Behavior on opacity { NumberAnimation { duration: 150 } }
-                        }
-                        Rectangle {
-                            width: 2.5
-                            height: 8
-                            radius: 1
-                            color: Theme.accent
-                            opacity: (!root.isMuted && root.currentVolume > 0.35) ? 1.0 : 0.25
-                            anchors.bottom: parent.bottom
-                            Behavior on opacity { NumberAnimation { duration: 150 } }
-                        }
-                        Rectangle {
-                            width: 2.5
-                            height: 12
-                            radius: 1
-                            color: Theme.accent
-                            opacity: (!root.isMuted && root.currentVolume > 0.70) ? 1.0 : 0.25
-                            anchors.bottom: parent.bottom
-                            Behavior on opacity { NumberAnimation { duration: 150 } }
-                        }
-                    }
-                }
-            }
-
-            // ── 2. CENTER ORB: ACTIVE WORKSPACE MEDALLION ────────────────────
-            Item {
-                id: splitCenterOrb
-                anchors.centerIn: parent
-                width: parent.orbDiameter
-                height: parent.orbDiameter
-                z: 20
-
-                // Ambient glow halo
-                Rectangle {
-                    anchors.centerIn: parent
-                    width: parent.width + 4
-                    height: parent.height + 4
-                    radius: width / 2
-                    color: Theme.alpha(Theme.accent, 0.22)
-                    z: -1
-                }
-
-                // Solid Accent Disc
-                Rectangle {
-                    anchors.fill: parent
-                    radius: width / 2
-                    color: Theme.accent
-                    border.color: Theme.alpha(Theme.background, 0.30)
-                    border.width: 1.2
-
-                    Text {
-                        anchors.centerIn: parent
-                        readonly property var labels: ["一", "二", "三", "四", "五"]
-                        readonly property int idx: Math.max(0, Math.min(4, root.activeWorkspace - 1))
-                        text: (idx >= 0 && idx < labels.length) ? labels[idx] : root.activeWorkspace.toString()
-                        font.family: "Outfit"
-                        font.pixelSize: 18
-                        font.weight: Font.Bold
-                        color: Theme.background
-                    }
-                }
-
-                HoverHandler {
-                    id: wsSplitHover
-                    onHoveredChanged: root.updateWsHoverState()
-                }
-
-                WheelHandler {
-                    onWheel: function(event) {
-                        var delta = (event.angleDelta.y > 0) ? -1 : 1
-                        var nextWs = Math.max(1, Math.min(5, root.activeWorkspace + delta))
-                        root.switchWorkspace(nextWs)
-                    }
-                }
-
-                MouseArea {
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: {
-                        var nextWs = (root.activeWorkspace % 5) + 1
-                        root.switchWorkspace(nextWs)
-                    }
-                }
-            }
-
-            // ── 3. RIGHT WING: CLOCK & ADAPTIVE DESKTOP (WIFI) / LAPTOP (BATTERY) ─
-            Item {
-                id: splitRightWing
-                x: parent.width - parent.wingW
-                y: (parent.height - parent.wingH) / 2
-                width: parent.wingW
-                height: parent.wingH
-
-                // Concave Hugging Silhouette with GPU-native CurveRenderer (zero MSAA offscreen FBO)
-                Shape {
-                    anchors.fill: parent
-                    antialiasing: true
-                    preferredRendererType: Shape.CurveRenderer
-
-                    ShapePath {
-                        strokeColor: Theme.alpha(Theme.accent, 0.55)
-                        strokeWidth: 1.2
-                        fillColor: Theme.alpha(Theme.background, 0.84)
-                        capStyle: ShapePath.RoundCap
-                        joinStyle: ShapePath.RoundJoin
-
-                        // 1. Start on top edge after top-left rounded shoulder
-                        startX: 14
-                        startY: 0.5
-
-                        // 2. Top edge running right to outer pill cap
-                        PathLine {
-                            x: splitRightWing.width - 16
-                            y: 1
-                        }
-
-                        // 3. Right semi-circular pill cap
-                        PathArc {
-                            x: splitRightWing.width - 16
-                            y: splitRightWing.height - 1
-                            radiusX: 16
-                            radiusY: 16
-                            direction: PathArc.Clockwise
-                        }
-
-                        // 4. Bottom edge running left to bottom-left corner
-                        PathLine {
-                            x: 14
-                            y: splitRightWing.height - 0.5
-                        }
-
-                        // 5. Bottom-left rounded shoulder (convex fillet, r=10)
-                        PathCubic {
-                            x: 1.5
-                            y: splitRightWing.height - 9
-                            control1X: 4
-                            control1Y: splitRightWing.height - 0.5
-                            control2X: 0.5
-                            control2Y: splitRightWing.height - 4.5
-                        }
-
-                        // 6. Concave arc hugging center circle (curving inward towards the clock)
-                        PathCubic {
-                            x: 1.5
-                            y: 9
-                            control1X: 3.2
-                            control1Y: splitRightWing.height - 13.5
-                            control2X: 3.2
-                            control2Y: 13.5
-                        }
-
-                        // 7. Top-left rounded shoulder (convex fillet, r=10)
-                        PathCubic {
-                            x: 14
-                            y: 0.5
-                            control1X: 0.5
-                            control1Y: 4.5
-                            control2X: 4
-                            control2Y: 0.5
-                        }
-                    }
-                }
-
-                // Right Wing Content Row
-                Row {
-                    anchors.centerIn: parent
-                    anchors.horizontalCenterOffset: 4
-                    spacing: 7
-                    height: parent.height
-
-                    // A. Breathing Status Dot
-                    Rectangle {
-                        width: 5
-                        height: 5
-                        radius: 2.5
-                        color: Theme.accent
-                        anchors.verticalCenter: parent.verticalCenter
-                        opacity: 0.85
-                    }
-
-                    // B. Time Text (11:21 PM)
-                    Text {
-                        text: root.timeString
-                        color: Theme.accent
-                        font.family: "Outfit"
-                        font.pixelSize: 13
-                        font.weight: Font.Bold
-                        font.letterSpacing: 0.5
-                        anchors.verticalCenter: parent.verticalCenter
-
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: root.clockClicked()
-                        }
-                    }
-
-                    // Live Screen Recording & Microphone Indicators beside the clock
-                    IslandMediaIndicators {
-                        isScreenRecording: root.isScreenRecording
-                        isMicActive: root.isMicActive
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-
-                    // C. Vertical Hairline Divider |
-                    Rectangle {
-                        width: 1
-                        height: 14
-                        color: Theme.alpha(Theme.foreground, 0.22)
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-
-                    // D. Adaptive Right Module:
-                    // If Desktop / No Battery: Ethernet or Wi-Fi Icon
-                    Item {
-                        width: 18
-                        height: 18
-                        anchors.verticalCenter: parent.verticalCenter
-                        visible: !root.hasBattery || root.batteryPct < 0
-
-                        Image {
-                            anchors.centerIn: parent
-                            width: 15
-                            height: 15
-                            source: root.barNetType === "ethernet" ? root.ethernetSvg : root.getWifiSvg(root.barNetSignal, true)
-                        }
-                    }
-
-                    // If Laptop / Battery Exists: Dynamic Animated Battery Module
-                    IslandBatteryIndicator {
-                        hasBattery: root.hasBattery
-                        batteryPct: root.batteryPct
-                        batteryStatus: root.batteryStatus
-                        isCharging: root.isCharging
-                        anchors.verticalCenter: parent.verticalCenter
-                        onClicked: root.clockClicked()
-                    }
-                }
-            }
-        }
-
-
-
-        // ═════════════════════════════════════════════════════════════════════
-        // STYLE 4: MINIMAL DUAL-RAIL (ANIMATED RYOKU MATRIX CONVEYOR STREAM)
+        // STYLE 3: MINIMAL DUAL-RAIL (ANIMATED RYOKU MATRIX CONVEYOR STREAM)
         // ═════════════════════════════════════════════════════════════════════
         Item {
             id: minimalRailItem

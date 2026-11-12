@@ -191,7 +191,6 @@ PanelWindow {
     readonly property real normalCollapsedHeight: {
         if (root.islandStyle === "minimal_rail") return 32
         if (root.islandStyle === "orbital") return 34
-        if (root.islandStyle === "split_wings") return 42
         return 36
     }
     // Dynamic notification height: driven by actual content in CollapsedBar, min 56px
@@ -240,7 +239,7 @@ PanelWindow {
     property string islandPosition: "top"
     readonly property bool isBottom: (root.islandPosition === "bottom")
     property bool islandAutoHide: false
-    property string islandStyle: "capsule"
+    property string islandStyle: "prism_blade"
     property bool visualizerEnabled: true
     property int visualizerBarCount: 8
     property string visualizerStyle: "wave"
@@ -259,7 +258,11 @@ PanelWindow {
                     var cfg = JSON.parse(text.trim())
                     if (cfg.position) root.islandPosition = cfg.position
                     if (cfg.auto_hide !== undefined) root.islandAutoHide = cfg.auto_hide
-                    if (cfg.style) root.islandStyle = cfg.style
+                    if (cfg.style) {
+                        var s = cfg.style
+                        if (s !== "orbital" && s !== "minimal_rail" && s !== "prism_blade") s = "prism_blade"
+                        root.islandStyle = s
+                    }
                     if (cfg.matrix_stream !== undefined) root.matrixStreamEnabled = cfg.matrix_stream
                     if (cfg.visualizer) {
                         if (cfg.visualizer.enabled !== undefined) root.visualizerEnabled = cfg.visualizer.enabled
@@ -340,7 +343,7 @@ PanelWindow {
     Process {
         id: cavaProc
         command: ["cava", "-p", root.homeDir + "/.hyprconf/hypr/.cache/cava-island.conf"]
-        running: root.isAudioPlaying && root.visualizerEnabled && (root.expanded || root.islandStyle === "capsule") && !root.hasFullscreenWindow
+        running: root.isAudioPlaying && root.visualizerEnabled && (root.expanded || (root.islandStyle !== "orbital" && root.islandStyle !== "minimal_rail")) && !root.hasFullscreenWindow
         stdout: SplitParser {
             splitMarker: "\n"
             onRead: data => {
@@ -1623,15 +1626,18 @@ PanelWindow {
             totalWidth: parent.width
             animatedHeight: parent.height
             cornerRadius: {
-                if (root.animProgress > 0.001) return 18 + (28 - 18) * root.animProgress
+                if (root.animProgress > 0.001) {
+                    var collapsedR = (root.islandStyle === "orbital" || root.islandStyle === "minimal_rail") ? 17 : 11
+                    return collapsedR + (28 - collapsedR) * root.animProgress
+                }
                 if (root.hasNotificationPopup || root.hasOsdPopup) return 22
                 if (root.islandStyle === "minimal_rail") return 16
-                return 18
+                if (root.islandStyle === "orbital") return 17
+                return 11
             }
             visible: {
                 if (!expandedContent || (expandedContent.currentView < 2)) {
                     if (root.expanded || root.animProgress > 0.001 || root.hasNotificationPopup || root.isScreenshotTimerActive || root.hasOsdPopup) return true
-                    return (root.islandStyle === "capsule")
                 }
                 return false
             }

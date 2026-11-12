@@ -950,36 +950,33 @@ select_island_style() {
     fi
 
     local island_cfg="$HOME/.hyprconf/quickshell/island/config.json"
-    local chosen_style="capsule"
+    local chosen_style="prism_blade"
 
     if command -v gum &> /dev/null; then
         local choice
-        choice=$(gum choose --selected="Capsule: Floating Organic Pill (Default)" \
+        choice=$(gum choose --selected="Prism Blade: Flagship Tactical HUD (Default)" \
             --header="Select your preferred Dynamic Island style:" \
-            "Capsule: Floating Organic Pill (Default)" \
+            "Prism Blade: Flagship Tactical HUD (Default)" \
             "Orbital: Curved Dynamic Notch" \
-            "Split Wings: Twin Segmented Bar" \
             "Minimal Rail: Compact Sleek Track")
         case "$choice" in
             *"Orbital"*) chosen_style="orbital" ;;
-            *"Split Wings"*) chosen_style="split_wings" ;;
             *"Minimal Rail"*) chosen_style="minimal_rail" ;;
-            *) chosen_style="capsule" ;;
+            *) chosen_style="prism_blade" ;;
         esac
     elif [[ -t 0 ]]; then
         msg ask "Select your preferred Dynamic Island style:"
         PS3="$(echo -e '\e[1;32mEnter Dynamic Island style number: \e[0m')"
-        select opt in "Capsule (Default)" "Orbital" "Split Wings" "Minimal Rail"; do
+        select opt in "Prism Blade (Default)" "Orbital" "Minimal Rail"; do
             case $REPLY in
                 2) chosen_style="orbital"; break ;;
-                3) chosen_style="split_wings"; break ;;
-                4) chosen_style="minimal_rail"; break ;;
-                *) chosen_style="capsule"; break ;;
+                3) chosen_style="minimal_rail"; break ;;
+                *) chosen_style="prism_blade"; break ;;
             esac
         done
     fi
 
-    [[ -z "$chosen_style" ]] && chosen_style="capsule"
+    [[ -z "$chosen_style" ]] && chosen_style="prism_blade"
     msg act "Applying Dynamic Island style: $chosen_style"
     mkdir -p "$(dirname "$island_cfg")"
     if [[ -f "$island_cfg" ]]; then

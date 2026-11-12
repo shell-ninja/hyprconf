@@ -1,7 +1,7 @@
 {
   "position": "top",
   "auto_hide": false,
-  "style": "minimal_rail",
+  "style": "prism_blade",
   "matrix_stream": false,
   "visualizer": {
     "enabled": true,

@@ -4,7 +4,7 @@ import "."
 Item {
     id: root
 
-    property string islandStyle: "capsule" // "capsule", "orbital", "split_wings", "minimal_rail"
+    property string islandStyle: "prism_blade" // "prism_blade", "orbital", "minimal_rail"
     property bool isBottom: false
     property real animProgress: 0.0
     readonly property bool isExpanded: animProgress > 0.001
@@ -33,13 +33,13 @@ Item {
                 if (root.isExpanded) return root.strokeColor
                 if (root.islandStyle === "minimal_rail") return Theme.alpha(Theme.foreground, 0.16)
                 if (root.islandStyle === "orbital") return Theme.alpha(Theme.accent, 0.55)
-                return root.strokeColor
+                return Theme.alpha(Theme.accent, 0.44)
             }
             border.width: {
                 if (root.isExpanded) return root.strokeWidth
                 if (root.islandStyle === "minimal_rail") return 1.0
                 if (root.islandStyle === "orbital") return 1.2
-                return root.strokeWidth
+                return 1.1
             }
 
             anchors.fill: parent
@@ -48,7 +48,7 @@ Item {
                 if (root.isExpanded) return root.cornerRadius
                 if (root.islandStyle === "minimal_rail") return 16
                 if (root.islandStyle === "orbital") return 17
-                return root.cornerRadius
+                return 11
             }
 
             Behavior on border.color { ColorAnimation { duration: 180 } }

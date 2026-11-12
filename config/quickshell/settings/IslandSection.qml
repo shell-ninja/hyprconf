@@ -24,7 +24,7 @@ Item {
     // ── Local Configuration State ───────────────────────────────────────────
     property string islandPosition: "top"
     property bool islandAutoHide: false
-    property string islandStyle: "capsule" // "capsule", "orbital", "split_wings", "minimal_rail"
+    property string islandStyle: "prism_blade" // "prism_blade", "orbital", "minimal_rail"
     property bool matrixStreamEnabled: false
     property bool visualizerEnabled: true
     property int visualizerBarCount: 8
@@ -70,7 +70,11 @@ Item {
                     var data = JSON.parse(text.trim())
                     if (data.position) root.islandPosition = data.position
                     if (data.auto_hide !== undefined) root.islandAutoHide = data.auto_hide
-                    if (data.style) root.islandStyle = data.style
+                    if (data.style) {
+                        var s = data.style
+                        if (s !== "orbital" && s !== "minimal_rail" && s !== "prism_blade") s = "prism_blade"
+                        root.islandStyle = s
+                    }
                     if (data.matrix_stream !== undefined) root.matrixStreamEnabled = data.matrix_stream
                     if (data.visualizer) {
                         if (data.visualizer.enabled !== undefined) root.visualizerEnabled = data.visualizer.enabled
@@ -134,7 +138,7 @@ Item {
     function resetDefaults() {
         root.islandPosition = "top"
         root.islandAutoHide = true
-        root.islandStyle = "pill"
+        root.islandStyle = "prism_blade"
         root.matrixStreamEnabled = false
         root.visualizerEnabled = true
         root.visualizerBarCount = 8
@@ -234,7 +238,7 @@ Item {
             // ── Setting Card 1: Dynamic Island Architecture & Styles ────────
             SettingCard {
                 title: "Dynamic Island Architecture & Designs"
-                description: "Select from 6 unique, modern silhouettes with tailored workspace indicators, acoustics, and aesthetics."
+                description: "Select from 3 unique, modern silhouettes with tailored workspace indicators, acoustics, and aesthetics."
 
                 GridLayout {
                     width: parent.width
@@ -245,22 +249,16 @@ Item {
                     Repeater {
                         model: [
                             {
-                                id: "capsule",
-                                name: "Floating Capsule",
-                                tag: "Classic Unified",
-                                desc: "Unified obsidian floating capsule with Kanji numerals, sliding glowing medallion, breathing status LED, and audio wings."
+                                id: "prism_blade",
+                                name: "Prism Blade",
+                                tag: "Flagship Tactical HUD",
+                                desc: "Architectural squircle obsidian blade with tabular workspace matrix, gliding laser rail, inline spectrum wings, interactive volume bay, and adaptive telemetry."
                             },
                             {
                                 id: "orbital",
                                 name: "Orbital Satellite",
                                 tag: "Action Knob & Pearl",
                                 desc: "Sleek floating capsule with circular action knob button, Western digits, luminous top-border satellite pearl tracking active workspace, and bell."
-                            },
-                            {
-                                id: "split_wings",
-                                name: "Dual Wings Orb",
-                                tag: "Desktop & Laptop Adaptive",
-                                desc: "Concave split pods flanking an accent workspace orb: Left interactive volume controller & level bars; Right clock and auto-detecting Desktop (Wi-Fi) / Laptop (Battery) status."
                             },
                             {
                                 id: "minimal_rail",
@@ -271,7 +269,9 @@ Item {
                         ]
 
                         Rectangle {
+                            id: styleCard
                             Layout.fillWidth: true
+                            Layout.columnSpan: (index === 0) ? 2 : 1
                             Layout.preferredHeight: 196
                             radius: 14
                             readonly property bool isSelected: root.islandStyle === modelData.id
@@ -301,10 +301,170 @@ Item {
                                     Item {
                                         anchors.horizontalCenter: parent.horizontalCenter
                                         anchors.verticalCenter: parent.verticalCenter
-                                        width: Math.min(parent.width - 24, (modelData.id === "minimal_rail") ? 230 : 210)
-                                        height: (modelData.id === "minimal_rail") ? 24 : ((modelData.id === "orbital") ? 24 : 26)
+                                        width: Math.min(parent.width - 24, (modelData.id === "prism_blade") ? 292 : ((modelData.id === "minimal_rail") ? 230 : 210))
+                                        height: (modelData.id === "prism_blade") ? 28 : 24
 
-                                        // 1. Orbital Satellite Glow Halo
+                                        // 1. Prism Blade Squircle Miniature Preview
+                                        Item {
+                                            anchors.fill: parent
+                                            visible: modelData.id === "prism_blade"
+
+                                            Rectangle {
+                                                anchors.centerIn: parent
+                                                width: parent.width + 4
+                                                height: parent.height + 4
+                                                radius: 10
+                                                color: Theme.alpha(Theme.accent, 0.10)
+                                                z: -1
+                                            }
+
+                                            Rectangle {
+                                                anchors.fill: parent
+                                                radius: 8.5
+                                                color: Theme.alpha(Theme.surface, 0.95)
+                                                border.color: styleCard.isSelected ? Theme.accent : Theme.alpha(Theme.accent, 0.50)
+                                                border.width: 1
+                                            }
+
+                                            Rectangle {
+                                                anchors.top: parent.top
+                                                anchors.topMargin: 1
+                                                anchors.horizontalCenter: parent.horizontalCenter
+                                                width: parent.width - 28
+                                                height: 1
+                                                color: Theme.alpha(Theme.accent, 0.45)
+                                            }
+
+                                            Row {
+                                                anchors.centerIn: parent
+                                                spacing: 7
+
+                                                // Mini Left WS Matrix Bay
+                                                Rectangle {
+                                                    width: 82
+                                                    height: 20
+                                                    radius: 5.5
+                                                    color: Theme.alpha(Theme.background, 0.72)
+                                                    border.color: Theme.alpha(Theme.foreground, 0.10)
+                                                    border.width: 0.8
+                                                    anchors.verticalCenter: parent.verticalCenter
+
+                                                    Row {
+                                                        anchors.centerIn: parent
+                                                        spacing: 2
+                                                        Repeater {
+                                                            model: 4
+                                                            Item {
+                                                                width: 17; height: 15
+                                                                readonly property bool isFocus: (index === 1)
+                                                                Rectangle {
+                                                                    anchors.fill: parent
+                                                                    radius: 4
+                                                                    color: Theme.accent
+                                                                    visible: parent.isFocus
+                                                                }
+                                                                Rectangle {
+                                                                    anchors.bottom: parent.bottom
+                                                                    anchors.bottomMargin: -2.5
+                                                                    anchors.horizontalCenter: parent.horizontalCenter
+                                                                    width: 12; height: 1.5; radius: 0.75
+                                                                    color: Theme.accent
+                                                                    visible: parent.isFocus
+                                                                }
+                                                                Text {
+                                                                    anchors.centerIn: parent
+                                                                    text: ["01", "02", "03", "04"][index]
+                                                                    font.family: "JetBrainsMono Nerd Font, Outfit"
+                                                                    font.pixelSize: 8
+                                                                    font.weight: Font.Bold
+                                                                    color: parent.isFocus ? Theme.background : Theme.alpha(Theme.foreground, 0.55)
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+
+                                                Rectangle { width: 1; height: 12; color: Theme.alpha(Theme.accent, 0.25); anchors.verticalCenter: parent.verticalCenter }
+
+                                                // Mini Center Telemetry Core
+                                                Row {
+                                                    spacing: 4
+                                                    anchors.verticalCenter: parent.verticalCenter
+
+                                                    Rectangle {
+                                                        width: 4; height: 4; radius: 0.8; rotation: 45
+                                                        color: Theme.accent
+                                                        anchors.verticalCenter: parent.verticalCenter
+                                                    }
+                                                    Text {
+                                                        text: "10:27"
+                                                        font.family: "Outfit"; font.pixelSize: 9; font.weight: Font.Bold
+                                                        color: Theme.foreground
+                                                        anchors.verticalCenter: parent.verticalCenter
+                                                    }
+                                                    Rectangle {
+                                                        width: 22; height: 12; radius: 3
+                                                        color: Theme.alpha(Theme.accent, 0.16)
+                                                        border.color: Theme.alpha(Theme.accent, 0.35); border.width: 0.7
+                                                        anchors.verticalCenter: parent.verticalCenter
+                                                        Text {
+                                                            anchors.centerIn: parent
+                                                            text: "THU"
+                                                            font.family: "Outfit"; font.pixelSize: 7; font.weight: Font.Black
+                                                            color: Theme.accent
+                                                        }
+                                                    }
+                                                    Row {
+                                                        spacing: 1.5
+                                                        anchors.verticalCenter: parent.verticalCenter
+                                                        Repeater {
+                                                            model: 3
+                                                            Rectangle {
+                                                                width: 1.8; height: [4, 8, 5][index]; radius: 0.9
+                                                                color: Theme.accent
+                                                                anchors.verticalCenter: parent.verticalCenter
+                                                            }
+                                                        }
+                                                    }
+                                                }
+
+                                                Rectangle { width: 1; height: 12; color: Theme.alpha(Theme.accent, 0.25); anchors.verticalCenter: parent.verticalCenter }
+
+                                                // Mini Right Utility Bay
+                                                Rectangle {
+                                                    width: 66
+                                                    height: 20
+                                                    radius: 5.5
+                                                    color: Theme.alpha(Theme.background, 0.72)
+                                                    border.color: Theme.alpha(Theme.foreground, 0.10)
+                                                    border.width: 0.8
+                                                    anchors.verticalCenter: parent.verticalCenter
+
+                                                    Row {
+                                                        anchors.centerIn: parent
+                                                        spacing: 5
+                                                        Image {
+                                                            width: 9; height: 9
+                                                            source: root.svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.accent + '" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>')
+                                                            anchors.verticalCenter: parent.verticalCenter
+                                                        }
+                                                        Rectangle {
+                                                            width: 12; height: 2.5; radius: 1.25
+                                                            color: Theme.alpha(Theme.foreground, 0.20)
+                                                            anchors.verticalCenter: parent.verticalCenter
+                                                            Rectangle { width: 8; height: 2.5; radius: 1.25; color: Theme.accent }
+                                                        }
+                                                        Image {
+                                                            width: 9; height: 9
+                                                            source: root.svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.accent + '" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>')
+                                                            anchors.verticalCenter: parent.verticalCenter
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        // 2. Orbital Satellite Glow Halo
                                         Rectangle {
                                             anchors.centerIn: parent
                                             width: parent.width + 3
@@ -314,14 +474,13 @@ Item {
                                             visible: modelData.id === "orbital"
                                         }
 
-                                        // 2. Regular Rectangle Background for capsule/orbital styles only
-                                        //    minimal_rail uses individual capsule backgrounds; split_wings uses its own layout
+                                        // Background for orbital style
                                         Rectangle {
                                             anchors.fill: parent
-                                            visible: modelData.id !== "split_wings" && modelData.id !== "minimal_rail"
-                                            radius: (modelData.id === "orbital") ? 12 : 13
+                                            visible: modelData.id === "orbital"
+                                            radius: 12
                                             color: Theme.alpha(Theme.surface, 0.95)
-                                            border.color: (modelData.id === "orbital") ? Theme.alpha(Theme.accent, 0.6) : (parent.parent.parent.parent.parent.isSelected ? Theme.accent : Theme.alpha(Theme.foreground, 0.18))
+                                            border.color: Theme.alpha(Theme.accent, 0.6)
                                             border.width: 1
                                         }
 
@@ -352,11 +511,11 @@ Item {
                                             }
                                         }
 
-                                        // Miniature Content Elements (for Capsule and Orbital)
+                                        // Miniature Content Elements (for Orbital)
                                         Row {
                                             anchors.centerIn: parent
-                                            visible: modelData.id === "capsule" || modelData.id === "orbital"
-                                            spacing: (modelData.id === "orbital") ? 6 : 5
+                                            visible: modelData.id === "orbital"
+                                            spacing: 6
 
                                             // Left element: Orbital Action knob button (circle with minus)
                                             Rectangle {
@@ -365,7 +524,6 @@ Item {
                                                 radius: 7.5
                                                 color: Theme.accent
                                                 anchors.verticalCenter: parent.verticalCenter
-                                                visible: modelData.id === "orbital"
 
                                                 Rectangle {
                                                     anchors.centerIn: parent
@@ -374,26 +532,9 @@ Item {
                                                 }
                                             }
 
-                                            // Mini left visualizer (for capsule)
-                                            Row {
-                                                spacing: 1.5
-                                                anchors.verticalCenter: parent.verticalCenter
-                                                visible: modelData.id === "capsule"
-                                                Repeater {
-                                                    model: 3
-                                                    Rectangle {
-                                                        width: 2
-                                                        height: [4, 9, 6][index]
-                                                        radius: 1
-                                                        color: Theme.accent
-                                                        anchors.verticalCenter: parent.verticalCenter
-                                                    }
-                                                }
-                                            }
-
                                             // Mini Workspace cluster
                                             Item {
-                                                width: (modelData.id === "orbital") ? 48 : 46
+                                                width: 48
                                                 height: 18
                                                 anchors.verticalCenter: parent.verticalCenter
 
@@ -409,16 +550,16 @@ Item {
 
                                                             Rectangle {
                                                                 anchors.centerIn: parent
-                                                                width: (modelData.id === "capsule") ? 16 : 13
-                                                                height: (modelData.id === "capsule") ? 16 : 12
-                                                                radius: (modelData.id === "capsule") ? 8 : 3.5
+                                                                width: 13
+                                                                height: 12
+                                                                radius: 3.5
                                                                 color: Theme.accent
                                                                 visible: parent.isFocus
                                                             }
 
                                                             Text {
                                                                 anchors.centerIn: parent
-                                                                text: (modelData.id === "orbital") ? ["1", "2", "3"][index] : ["一", "二", "三"][index]
+                                                                text: ["1", "2", "3"][index]
                                                                 font.family: "Outfit"
                                                                 font.pixelSize: 8
                                                                 font.weight: Font.Bold
@@ -449,7 +590,6 @@ Item {
                                                 height: 10
                                                 anchors.verticalCenter: parent.verticalCenter
                                                 source: root.svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.accent + '" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>')
-                                                visible: modelData.id === "orbital"
                                             }
 
                                             // Clock & status
@@ -458,7 +598,7 @@ Item {
                                                 anchors.verticalCenter: parent.verticalCenter
 
                                                 Text {
-                                                    text: (modelData.id === "orbital") ? "11:08 PM" : "10:00"
+                                                    text: "11:08 PM"
                                                     font.family: "Outfit"
                                                     font.pixelSize: 8
                                                     font.weight: Font.Bold
@@ -640,139 +780,6 @@ Item {
                                                         spacing: 2; anchors.verticalCenter: parent.verticalCenter
                                                         Text { text: "↑"; font.family: "Outfit"; font.pixelSize: 7; font.weight: Font.Bold; color: Theme.alpha(Theme.accent, 0.60); anchors.verticalCenter: parent.verticalCenter }
                                                         Text { text: "672K"; font.family: "Outfit"; font.pixelSize: 7; font.weight: Font.Bold; color: Theme.alpha(Theme.accent, 0.60); anchors.verticalCenter: parent.verticalCenter }
-                                                    }
-                                                }
-                                            }
-                                        }
-
-
-                                        // 4. Split Wings Dedicated Tripartite Preview
-                                        Row {
-                                            anchors.centerIn: parent
-                                            spacing: 4
-                                            visible: modelData.id === "split_wings"
-
-                                            // Mini Left Wing
-                                            Rectangle {
-                                                width: 82
-                                                height: 22
-                                                radius: 11
-                                                color: Theme.alpha(Theme.surface, 0.95)
-                                                border.color: parent.parent.parent.parent.parent.parent.isSelected ? Theme.accent : Theme.alpha(Theme.accent, 0.55)
-                                                border.width: 1
-
-                                                Row {
-                                                    anchors.centerIn: parent
-                                                    spacing: 4
-
-                                                    // Mini speaker
-                                                    Image {
-                                                        width: 9
-                                                        height: 9
-                                                        source: root.svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.accent + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>')
-                                                        anchors.verticalCenter: parent.verticalCenter
-                                                    }
-
-                                                    // Mini volume slider track
-                                                    Rectangle {
-                                                        width: 36
-                                                        height: 2.5
-                                                        radius: 1.25
-                                                        color: Theme.alpha(Theme.foreground, 0.20)
-                                                        anchors.verticalCenter: parent.verticalCenter
-
-                                                        Rectangle {
-                                                            width: parent.width * 0.55
-                                                            height: parent.height
-                                                            radius: parent.radius
-                                                            color: Theme.accent
-                                                        }
-
-                                                        Rectangle {
-                                                            x: parent.width * 0.55 - 3
-                                                            width: 6
-                                                            height: 6
-                                                            radius: 3
-                                                            color: Theme.accent
-                                                            anchors.verticalCenter: parent.verticalCenter
-                                                        }
-                                                    }
-
-                                                    // Mini 3 level bars
-                                                    Row {
-                                                        spacing: 1.5
-                                                        anchors.verticalCenter: parent.verticalCenter
-                                                        Rectangle { width: 1.5; height: 3; color: Theme.accent; anchors.bottom: parent.bottom }
-                                                        Rectangle { width: 1.5; height: 6; color: Theme.accent; anchors.bottom: parent.bottom }
-                                                        Rectangle { width: 1.5; height: 9; color: Theme.accent; opacity: 0.35; anchors.bottom: parent.bottom }
-                                                    }
-                                                }
-                                            }
-
-                                            // Mini Center Orb
-                                            Rectangle {
-                                                width: 26
-                                                height: 26
-                                                radius: 13
-                                                color: Theme.accent
-                                                anchors.verticalCenter: parent.verticalCenter
-
-                                                Text {
-                                                    anchors.centerIn: parent
-                                                    text: "二"
-                                                    font.family: "Outfit"
-                                                    font.pixelSize: 12
-                                                    font.weight: Font.Bold
-                                                    color: Theme.background
-                                                }
-                                            }
-
-                                            // Mini Right Wing
-                                            Rectangle {
-                                                width: 82
-                                                height: 22
-                                                radius: 11
-                                                color: Theme.alpha(Theme.surface, 0.95)
-                                                border.color: parent.parent.parent.parent.parent.parent.isSelected ? Theme.accent : Theme.alpha(Theme.accent, 0.55)
-                                                border.width: 1
-
-                                                Row {
-                                                    anchors.centerIn: parent
-                                                    spacing: 4
-
-                                                    // Breathing dot
-                                                    Rectangle {
-                                                        width: 3.5
-                                                        height: 3.5
-                                                        radius: 1.75
-                                                        color: Theme.accent
-                                                        anchors.verticalCenter: parent.verticalCenter
-                                                    }
-
-                                                    // Time
-                                                    Text {
-                                                        text: "11:21"
-                                                        color: Theme.accent
-                                                        font.family: "Outfit"
-                                                        font.pixelSize: 8
-                                                        font.weight: Font.Bold
-                                                        anchors.verticalCenter: parent.verticalCenter
-                                                    }
-
-                                                    // Divider
-                                                    Rectangle {
-                                                        width: 1
-                                                        height: 8
-                                                        color: Theme.alpha(Theme.foreground, 0.25)
-                                                        anchors.verticalCenter: parent.verticalCenter
-                                                    }
-
-                                                    // Wi-Fi or Battery icon
-                                                    Image {
-                                                        width: 9
-                                                        height: 9
-                                                        source: root.svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.accent + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1.2" fill="' + Theme.accent + '"/></svg>')
-                                                        anchors.verticalCenter: parent.verticalCenter
                                                     }
                                                 }
                                             }
@@ -1393,16 +1400,27 @@ Item {
                         // Collapsed Pill Miniature Simulation (Reflects Active Island Style)
                         Rectangle {
                             anchors.horizontalCenter: parent.horizontalCenter
-                            height: (root.islandStyle === "minimal_rail") ? 32 : ((root.islandStyle === "orbital") ? 34 : ((root.islandStyle === "split_wings") ? 42 : 36))
+                            height: (root.islandStyle === "minimal_rail") ? 32 : ((root.islandStyle === "orbital") ? 34 : 36)
                             width: Math.max(260, root.visualizerBarCount * 12 + 180)
                             radius: {
                                 if (root.islandStyle === "minimal_rail") return 16
                                 if (root.islandStyle === "orbital") return 17
-                                return 18
+                                return 11
                             }
                             color: Theme.alpha(Theme.surface, 0.95)
-                            border.color: Theme.alpha(Theme.accent, 0.40)
+                            border.color: Theme.alpha(Theme.accent, 0.44)
                             border.width: 1
+
+                            // Prism Blade Top Catchlight
+                            Rectangle {
+                                anchors.top: parent.top
+                                anchors.topMargin: 1
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                width: Math.max(40, parent.width - 36)
+                                height: 1
+                                color: Theme.alpha(Theme.accent, 0.45)
+                                visible: root.islandStyle !== "orbital" && root.islandStyle !== "minimal_rail"
+                            }
 
                             // Orbital Ambient Halo
                             Rectangle {
