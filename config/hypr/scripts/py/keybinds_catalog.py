@@ -118,6 +118,13 @@ CATALOG = [
     },
     {
         "combo": "SUPER + V",
+        "action": "Quick Paste",
+        "category": "Utilities",
+        "icon": "clipboard",
+        "desc": "Cursor popup of recent copied texts & links with 1-click paste",
+    },
+    {
+        "combo": "SUPER + SHIFT + V",
         "action": "Toggle Floating Window",
         "category": "Windows",
         "icon": "layers",

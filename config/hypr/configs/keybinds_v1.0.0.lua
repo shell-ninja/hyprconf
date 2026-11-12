@@ -25,6 +25,7 @@ local qsLauncherTheme = sh_dir .. "/qs-launcher-theme.sh"
 local qsIsland        = sh_dir .. "/qs-island.sh"
 local qsScreenshot    = sh_dir .. "/qs-screenshot.sh"
 local qsClipboard     = sh_dir .. "/qs-clipboard.sh"
+local qsQuickPaste    = sh_dir .. "/qs-quickpaste.sh"
 local qsEmoji         = sh_dir .. "/qs-emoji.sh"
 local qsKeybinds      = sh_dir .. "/qs-keybinds.sh"
 local qsReload        = sh_dir .. "/qs-reload.sh"
@@ -46,7 +47,8 @@ hl.bind(mainMod .. " + Q", hl.dsp.window.close())
 hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(file_man))
 hl.bind(mainMod .. " + SHIFT + E", hl.dsp.exec_cmd(terminal .. " --title " .. term_file_man .. " -e " .. term_file_man))
 hl.bind(mainMod .. " + SHIFT + C", hl.dsp.exec_cmd(qsClipboard))
-hl.bind(mainMod .. " + V", hl.dsp.window.float({ action = "toggle" }))
+hl.bind(mainMod .. " + V", hl.dsp.exec_cmd(qsQuickPaste))
+hl.bind(mainMod .. " + SHIFT + V", hl.dsp.window.float({ action = "toggle" }))
 hl.bind(mainMod .. " + ALT + V", hl.dsp.exec_cmd("hyprctl dispatch workspaceopt allfloat"))
 hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen())
 hl.bind(mainMod .. " + D", hl.dsp.exec_cmd(qsLauncher))

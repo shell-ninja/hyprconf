@@ -21,7 +21,8 @@ SUPER + SHIFT + Return  󰶻  Open Floating Terminal (Kitty)
 SUPER + Q  󰶻  Close Active Window
 SUPER + E  󰶻  Open File Manager (Dolphin / Thunar)
 SUPER + SHIFT + E  󰶻  Open Terminal File Manager (Yazi)
-SUPER + V  󰶻  Toggle Floating Window
+SUPER + V  󰅌  Quick Paste Tooltip
+SUPER + SHIFT + V  󰶻  Toggle Floating Window
 SUPER + ALT + V  󰶻  Toggle All Windows to Float
 SUPER + F  󰶻  Toggle Fullscreen
 SUPER + Space  󰶻  Open App Launcher (Quickshell)
@@ -87,6 +88,7 @@ execute_action() {
         *"Close Active Window"*) hyprctl dispatch killactive ;;
         *"Open File Manager (Dolphin"*) (dolphin || thunar) & ;;
         *"Open Terminal File Manager (Yazi)"*) kitty --title yazi -e yazi & ;;
+        *"Quick Paste Tooltip"*) sleep 0.25 && "$HOME/.hyprconf/hypr/scripts/sh/qs-quickpaste.sh" ;;
         *"Toggle Floating Window"*) hyprctl dispatch togglefloating ;;
         *"Toggle All Windows to Float"*) hyprctl dispatch workspaceopt allfloat ;;
         *"Toggle Fullscreen"*) hyprctl dispatch fullscreen ;;

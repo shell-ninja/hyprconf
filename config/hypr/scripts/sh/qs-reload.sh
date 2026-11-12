@@ -55,6 +55,10 @@ elif [[ -f "$sh_dir/qs-island.sh" ]]; then
     nohup bash "$sh_dir/qs-island.sh" --start >/dev/null 2>&1 &
 fi
 
+if [[ -f "$sh_dir/qs-quickpaste.sh" ]]; then
+    nohup bash "$sh_dir/qs-quickpaste.sh" --daemon >/dev/null 2>&1 &
+fi
+
 
 # 5. Notify user of successful reload
 if [[ "${1:-}" != "--quiet" && "${1:-}" != "-q" ]]; then

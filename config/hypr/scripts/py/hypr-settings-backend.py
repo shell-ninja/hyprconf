@@ -1910,6 +1910,7 @@ def get_all_settings():
         "qsPower": "qs-power.sh",
         "qsScreenshot": "qs-screenshot.sh",
         "qsClipboard": "qs-clipboard.sh",
+        "qsQuickPaste": "qs-quickpaste.sh",
         "qsEmoji": "qs-emoji.sh",
         "qsKeybinds": "qs-keybinds.sh",
         "qsReload": "qs-reload.sh",

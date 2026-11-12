@@ -14,6 +14,7 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("blueman-applet &")
     hl.exec_cmd("hypridle &")
     hl.exec_cmd(sh_dir .. "/qs-island.sh --start &")
+    hl.exec_cmd(sh_dir .. "/qs-quickpaste.sh --daemon &")
 
     hl.exec_cmd("pypr &")
 end)

@@ -1287,6 +1287,8 @@ Spotlight 1.0 Spotlight.qml
 """,
             "emoji": """singleton Theme 1.0 Theme.qml
 """,
+            "quickpaste": """singleton Theme 1.0 Theme.qml
+""",
             "updater": """singleton Theme 1.0 Theme.qml
 """,
             "keybinds": """singleton Theme 1.0 Theme.qml
