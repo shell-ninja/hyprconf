@@ -11,6 +11,7 @@ Item {
 
     property bool active: false
     signal backClicked()
+    signal closeIslandRequested()
 
     // 0: Lock, 1: Logout, 2: Reboot, 3: Shutdown
     property int selectedIndex: 0
@@ -69,11 +70,25 @@ Item {
         NumberAnimation { target: root; property: "pulseGlow"; from: 1.0; to: 0.40; duration: 450; easing.type: Easing.InOutQuad }
     }
 
+    function executeDetachedAction(act) {
+        var pyScript = root.homeDir + "/.hyprconf/hypr/scripts/py/uptime-tracker.py"
+        if (act === "lock") {
+            Quickshell.execDetached([root.homeDir + "/.hyprconf/hypr/scripts/sh/qs-lock.sh"])
+        } else if (act === "shutdown") {
+            Quickshell.execDetached(["python3", pyScript, "--shutdown"])
+        } else if (act === "reboot") {
+            Quickshell.execDetached(["python3", pyScript, "--reboot"])
+        } else if (act === "logout") {
+            Quickshell.execDetached(["python3", pyScript, "--logout"])
+        }
+    }
+
     function triggerAction(actionName) {
         if (actionName === "lock") {
             cancelCountdown()
+            root.closeIslandRequested()
             root.backClicked()
-            root.executePowerAction(root.homeDir + "/.hyprconf/hypr/scripts/sh/qs-lock.sh")
+            root.executeDetachedAction("lock")
             return
         }
 
@@ -99,15 +114,9 @@ Item {
         root.countdownSeconds = 3
         root.countdownProgress = 1.0
 
+        root.closeIslandRequested()
         root.backClicked()
-
-        if (act === "shutdown") {
-            root.executePowerAction("python3 " + root.homeDir + "/.hyprconf/hypr/scripts/py/uptime-tracker.py --shutdown")
-        } else if (act === "reboot") {
-            root.executePowerAction("python3 " + root.homeDir + "/.hyprconf/hypr/scripts/py/uptime-tracker.py --reboot")
-        } else if (act === "logout") {
-            root.executePowerAction(root.homeDir + "/.hyprconf/hypr/scripts/sh/qs-logout.sh")
-        }
+        root.executeDetachedAction(act)
     }
 
     function cancelCountdown() {
@@ -264,14 +273,6 @@ Item {
     readonly property string homeDir: {
         var h = Quickshell.env("HOME")
         return (h && h.length > 0) ? h : ("/home/" + root.userName)
-    }
-
-    Process { id: powerProc }
-
-    function executePowerAction(cmd) {
-        powerProc.running = false
-        powerProc.command = ["bash", "-c", cmd]
-        powerProc.running = true
     }
 
     Column {

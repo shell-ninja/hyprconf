@@ -363,6 +363,9 @@ Item {
                 onBackClicked: {
                     root.currentView = 0
                 }
+                onCloseIslandRequested: {
+                    root.closeRequested()
+                }
             }
         }
     }

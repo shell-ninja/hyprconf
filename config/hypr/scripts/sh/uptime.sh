@@ -157,8 +157,10 @@ record_session() {
 send_notify() {
     get_session_metrics
     if command -v notify-send &>/dev/null; then
-        local msg="PC Uptime: ${USAGE_HOURS}h (${HOURS}h ${MINUTES}m ${SECONDS}s)\nLogged to ~/.config/hypr/.cache/.uptime"
-        notify-send -a "Uptime Tracker" -i preferences-system-time "Session Summary" "$msg" 2>/dev/null || true
+        local title="Pc Usage $(date +%d-%m-%Y)"
+        local usage_time
+        usage_time=$(printf "%dh %02dm %02ds" "$HOURS" "$MINUTES" "$SECONDS")
+        notify-send -a "Uptime Tracker" -i preferences-system-time "$title" "$usage_time" 2>/dev/null || true
     fi
 }
 
@@ -260,6 +262,7 @@ case "${1:-}" in
         send_notify
         show_report false
         echo -e "${YELLOW}Initiating system poweroff...${RESET}"
+        sleep 1
         systemctl poweroff
         exit 0
         ;;
@@ -268,6 +271,7 @@ case "${1:-}" in
         send_notify
         show_report false
         echo -e "${YELLOW}Initiating system reboot...${RESET}"
+        sleep 1
         systemctl reboot
         exit 0
         ;;

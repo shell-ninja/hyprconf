@@ -11,12 +11,20 @@ import os
 import sys
 import time
 import json
-import psutil
+import shutil
+try:
+    import psutil
+except ImportError:
+    psutil = None
 import datetime
 import subprocess
 
+POWER_ACTION_DELAY_SEC = 1.0
+
 def get_session_metrics():
     try:
+        if psutil is None:
+            raise ImportError("psutil not available")
         boot_ts = psutil.boot_time()
         boot_dt = datetime.datetime.fromtimestamp(boot_ts)
     except Exception:
@@ -131,7 +139,8 @@ def play_sound(sound_type="poweroff"):
     sounds = {
         "startup": os.path.join(home, ".hyprconf", "hypr", "sounds", "system-startup.wav"),
         "shutdown": os.path.join(home, ".hyprconf", "hypr", "sounds", "poweroff.mp3"),
-        "reboot": os.path.join(home, ".hyprconf", "hypr", "sounds", "poweroff.mp3")
+        "reboot": os.path.join(home, ".hyprconf", "hypr", "sounds", "poweroff.mp3"),
+        "logout": os.path.join(home, ".hyprconf", "hypr", "sounds", "poweroff.mp3")
     }
     sound_path = sounds.get(sound_type, sounds["shutdown"])
     if not os.path.exists(sound_path):
@@ -151,11 +160,14 @@ def play_sound(sound_type="poweroff"):
             continue
 
 def send_notification(metrics, action="Shutdown"):
-    title = f"System {action.capitalize()}"
-    icon = "system-reboot" if action.lower() == "reboot" else "system-shutdown"
-    box = format_box(metrics, action)
-    
-    # Send desktop notification with the complete obsidian session box
+    title = f"Pc Usage {metrics['now_dt'].strftime('%d-%m-%Y')}"
+    body = metrics["duration_str"]
+    action_key = action.lower()
+    icon = "system-reboot" if action_key == "reboot" else (
+        "system-log-out" if action_key == "logout" else "system-shutdown"
+    )
+
+    # Send concise desktop notification: "Pc Usage dd-mm-yyyy" / "USAGE_TIME"
     try:
         subprocess.run([
             "notify-send",
@@ -163,10 +175,64 @@ def send_notification(metrics, action="Shutdown"):
             "-i", icon,
             "-t", "6500",
             title,
-            box
+            body
         ], timeout=2, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     except Exception:
         pass
+
+def _dismiss_power_menus():
+    """Best-effort dismiss of open power overlays so usage notification shows cleanly."""
+    ipc_calls = [
+        ["qs", "ipc", "-c", "island", "call", "island", "collapse"],
+        ["qs", "ipc", "-c", "bar", "call", "bar", "closePower"],
+    ]
+    for cmd in ipc_calls:
+        if not shutil.which(cmd[0]):
+            continue
+        try:
+            subprocess.run(cmd, timeout=0.4, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except Exception:
+            pass
+
+def _run_first_success(commands):
+    """Run fallback commands sequentially until one exits with status 0."""
+    for cmd in commands:
+        exe = shutil.which(cmd[0])
+        if not exe:
+            continue
+        try:
+            res = subprocess.run([exe, *cmd[1:]], check=False)
+            if res.returncode == 0:
+                return True
+        except Exception:
+            continue
+    return False
+
+def _run_logout():
+    """Execute Hyprland session logout after notification delay."""
+    logout_script = os.path.expanduser("~/.hyprconf/hypr/scripts/sh/qs-logout.sh")
+    if os.path.isfile(logout_script):
+        res = subprocess.run(["bash", logout_script, "--now"], check=False)
+        if res.returncode == 0:
+            return True
+    user = os.environ.get("USER", "")
+    cmds = [
+        ["hyprctl", "eval", "hl.dispatch(hl.dsp.exit())"],
+        ["hyprctl", "dispatch", "exit"],
+    ]
+    if user:
+        cmds.append(["loginctl", "terminate-user", user])
+    return _run_first_success(cmds)
+
+def _execute_power_workflow(metrics, action_label, sound_key, post_delay_fn):
+    """Record session, display concise usage toast, wait 1s, then run power action."""
+    log_session(metrics, action_label)
+    _dismiss_power_menus()
+    send_notification(metrics, action_label)
+    play_sound(sound_key)
+    print(format_box(metrics, action_label))
+    time.sleep(POWER_ACTION_DELAY_SEC)
+    post_delay_fn()
 
 def main():
     action = "Shutdown"
@@ -174,6 +240,8 @@ def main():
         arg = sys.argv[1].lower().replace("--", "")
         if "reboot" in arg:
             action = "Reboot"
+        elif "logout" in arg:
+            action = "Logout"
         elif "start" in arg:
             action = "Startup"
 
@@ -189,31 +257,52 @@ def main():
         return
 
     if "--sound-only" in sys.argv:
-        play_sound("startup" if action == "Startup" else ("reboot" if action == "Reboot" else "shutdown"))
+        sound_key = "startup" if action == "Startup" else action.lower()
+        play_sound(sound_key)
         return
 
     if "--show" in sys.argv:
         print(format_box(metrics, action))
         return
 
+    if "--notify-only" in sys.argv:
+        log_session(metrics, action)
+        send_notification(metrics, action)
+        return
+
     # Full poweroff workflow
     if "--shutdown" in sys.argv or "--poweroff" in sys.argv:
-        log_session(metrics, "Shutdown")
-        send_notification(metrics, "Shutdown")
-        play_sound("shutdown")
-        print(format_box(metrics, "Shutdown"))
-        time.sleep(2.2)
-        subprocess.run(["systemctl", "poweroff"])
+        _execute_power_workflow(
+            metrics,
+            "Shutdown",
+            "shutdown",
+            lambda: _run_first_success([
+                ["systemctl", "poweroff"],
+                ["systemctl", "poweroff", "-i"],
+                ["loginctl", "poweroff"],
+                ["loginctl", "poweroff", "-i"],
+            ]),
+        )
         return
 
     # Full reboot workflow
     if "--reboot" in sys.argv:
-        log_session(metrics, "Reboot")
-        send_notification(metrics, "Reboot")
-        play_sound("reboot")
-        print(format_box(metrics, "Reboot"))
-        time.sleep(2.2)
-        subprocess.run(["systemctl", "reboot"])
+        _execute_power_workflow(
+            metrics,
+            "Reboot",
+            "reboot",
+            lambda: _run_first_success([
+                ["systemctl", "reboot"],
+                ["systemctl", "reboot", "-i"],
+                ["loginctl", "reboot"],
+                ["loginctl", "reboot", "-i"],
+            ]),
+        )
+        return
+
+    # Full logout workflow
+    if "--logout" in sys.argv:
+        _execute_power_workflow(metrics, "Logout", "logout", _run_logout)
         return
 
     # Default action: record and display box

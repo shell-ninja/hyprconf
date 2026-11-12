@@ -159,7 +159,7 @@ Item {
         } else if (act === "reboot") {
             Quickshell.execDetached(["python3", root.homeDir + "/.hyprconf/hypr/scripts/py/uptime-tracker.py", "--reboot"])
         } else if (act === "logout") {
-            Quickshell.execDetached([root.homeDir + "/.hyprconf/hypr/scripts/sh/qs-logout.sh"])
+            Quickshell.execDetached(["python3", root.homeDir + "/.hyprconf/hypr/scripts/py/uptime-tracker.py", "--logout"])
         }
     }
 

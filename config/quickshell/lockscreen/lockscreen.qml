@@ -673,16 +673,6 @@ Scope {
         }
     }
 
-    Process {
-        id: powerProc
-        command: ["python3", root.homeDir + "/.hyprconf/hypr/scripts/py/uptime-tracker.py", "--shutdown"]
-    }
-
-    Process {
-        id: rebootProc
-        command: ["python3", root.homeDir + "/.hyprconf/hypr/scripts/py/uptime-tracker.py", "--reboot"]
-    }
-
     WlSessionLock {
         id: sessionLock
         locked: true
@@ -867,7 +857,7 @@ Scope {
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: rebootProc.running = true
+                            onClicked: Quickshell.execDetached(["python3", root.homeDir + "/.hyprconf/hypr/scripts/py/uptime-tracker.py", "--reboot"])
                         }
                     }
 
@@ -902,7 +892,7 @@ Scope {
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: powerProc.running = true
+                            onClicked: Quickshell.execDetached(["python3", root.homeDir + "/.hyprconf/hypr/scripts/py/uptime-tracker.py", "--shutdown"])
                         }
                     }
                 }
