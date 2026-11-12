@@ -274,6 +274,7 @@ Item {
     property var wallpaperPaletteCache: ({})
     property var activePalettePreview: null
     property string palettePendingPath: ""
+    property string hoveredSwatchKey: ""
     property string hoveredSwatchHex: ""
     property string hoveredSwatchLabel: ""
     property string copiedSwatchHex: ""
@@ -371,13 +372,24 @@ Item {
     Connections {
         target: root
         function onSelectedIndexChanged() {
+            root.hoveredSwatchKey = ""
             root.hoveredSwatchHex = ""
             root.hoveredSwatchLabel = ""
             root.updateSelectedPalette()
         }
-        function onFilteredWallpapersChanged() { root.updateSelectedPalette() }
+        function onFilteredWallpapersChanged() {
+            root.hoveredSwatchKey = ""
+            root.hoveredSwatchHex = ""
+            root.hoveredSwatchLabel = ""
+            root.updateSelectedPalette()
+        }
         function onColorVariantChanged() { root.updateSelectedPalette() }
-        function onActiveModeChanged() { root.updateSelectedPalette() }
+        function onActiveModeChanged() {
+            root.hoveredSwatchKey = ""
+            root.hoveredSwatchHex = ""
+            root.hoveredSwatchLabel = ""
+            root.updateSelectedPalette()
+        }
     }
 
     Process {
@@ -1483,9 +1495,9 @@ Item {
                 anchors.top: titlePill.bottom
                 anchors.topMargin: 6
                 height: 28
-                width: Math.max(180, paletteRow.implicitWidth + 22)
+                width: Math.max(200, paletteRow.implicitWidth + 20)
                 radius: 14
-                clip: true
+                clip: false
                 color: Theme.glassElevated
                 border.color: (root.activePalettePreview && root.activePalettePreview.primary)
                               ? Theme.alpha(root.activePalettePreview.primary, 0.45)
@@ -1527,40 +1539,49 @@ Item {
                     }
 
                     // Theme Swatches (BG -> Surface -> Primary -> Secondary -> Accent -> FG)
+                    // Fixed item widths + scale transform prevent sibling jitter & pointer escape
                     Row {
                         anchors.verticalCenter: parent.verticalCenter
-                        spacing: 5
+                        spacing: 6
 
                         Repeater {
                             model: (root.activePalettePreview && root.activePalettePreview.swatches) ? root.activePalettePreview.swatches : []
                             Rectangle {
                                 id: themeSwatchDot
+                                required property var modelData
+                                required property int index
+                                property string dotKey: "s-" + index
                                 property string hexVal: modelData && modelData.color ? String(modelData.color) : "#161820"
                                 property string roleLabel: modelData && modelData.label ? String(modelData.label) : ""
-                                width: swatchMouse.containsMouse ? 17 : 15
-                                height: swatchMouse.containsMouse ? 17 : 15
+                                property bool isHovered: root.hoveredSwatchKey === dotKey
+                                width: 15
+                                height: 15
                                 radius: 5
                                 anchors.verticalCenter: parent.verticalCenter
                                 color: hexVal
-                                border.color: swatchMouse.containsMouse ? "#ffffff" : Theme.alpha("#ffffff", 0.24)
-                                border.width: swatchMouse.containsMouse ? 1.5 : 1
+                                border.color: isHovered ? "#ffffff" : Theme.alpha("#ffffff", 0.24)
+                                border.width: isHovered ? 1.5 : 1
+                                scale: isHovered ? 1.24 : 1.0
+                                z: isHovered ? 4 : 1
 
                                 Behavior on color { ColorAnimation { duration: 220 } }
-                                Behavior on width { NumberAnimation { duration: 120 } }
-                                Behavior on height { NumberAnimation { duration: 120 } }
+                                Behavior on border.color { ColorAnimation { duration: 140 } }
+                                Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutBack } }
 
                                 MouseArea {
                                     id: swatchMouse
                                     anchors.fill: parent
-                                    anchors.margins: -2
+                                    anchors.margins: -3
                                     hoverEnabled: true
                                     cursorShape: Qt.PointingHandCursor
                                     onEntered: {
+                                        root.hoveredSwatchKey = themeSwatchDot.dotKey
                                         root.hoveredSwatchHex = themeSwatchDot.hexVal
                                         root.hoveredSwatchLabel = themeSwatchDot.roleLabel
                                     }
                                     onExited: {
-                                        if (root.hoveredSwatchHex === themeSwatchDot.hexVal) {
+                                        if (root.hoveredSwatchKey === themeSwatchDot.dotKey) {
+                                            root.hoveredSwatchKey = ""
                                             root.hoveredSwatchHex = ""
                                             root.hoveredSwatchLabel = ""
                                         }
@@ -1587,7 +1608,7 @@ Item {
                     // Raw Extracted Wallpaper Pigments (up to 4)
                     Row {
                         anchors.verticalCenter: parent.verticalCenter
-                        spacing: 4
+                        spacing: 5
                         visible: rawPigmentRepeater.count > 0
 
                         Repeater {
@@ -1597,31 +1618,39 @@ Item {
                                    : []
                             Rectangle {
                                 id: pigmentDot
+                                required property var modelData
+                                required property int index
+                                property string dotKey: "p-" + index
                                 property string hexVal: String(modelData || "#58a6ff")
-                                width: pigmentMouse.containsMouse ? 13 : 11
-                                height: pigmentMouse.containsMouse ? 13 : 11
-                                radius: width / 2
+                                property bool isHovered: root.hoveredSwatchKey === dotKey
+                                width: 11
+                                height: 11
+                                radius: 5.5
                                 anchors.verticalCenter: parent.verticalCenter
                                 color: hexVal
-                                border.color: pigmentMouse.containsMouse ? "#ffffff" : Theme.alpha("#ffffff", 0.22)
-                                border.width: 1
+                                border.color: isHovered ? "#ffffff" : Theme.alpha("#ffffff", 0.22)
+                                border.width: isHovered ? 1.4 : 1
+                                scale: isHovered ? 1.28 : 1.0
+                                z: isHovered ? 4 : 1
 
                                 Behavior on color { ColorAnimation { duration: 220 } }
-                                Behavior on width { NumberAnimation { duration: 120 } }
-                                Behavior on height { NumberAnimation { duration: 120 } }
+                                Behavior on border.color { ColorAnimation { duration: 140 } }
+                                Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutBack } }
 
                                 MouseArea {
                                     id: pigmentMouse
                                     anchors.fill: parent
-                                    anchors.margins: -2
+                                    anchors.margins: -3
                                     hoverEnabled: true
                                     cursorShape: Qt.PointingHandCursor
                                     onEntered: {
+                                        root.hoveredSwatchKey = pigmentDot.dotKey
                                         root.hoveredSwatchHex = pigmentDot.hexVal
                                         root.hoveredSwatchLabel = "Tone"
                                     }
                                     onExited: {
-                                        if (root.hoveredSwatchHex === pigmentDot.hexVal) {
+                                        if (root.hoveredSwatchKey === pigmentDot.dotKey) {
+                                            root.hoveredSwatchKey = ""
                                             root.hoveredSwatchHex = ""
                                             root.hoveredSwatchLabel = ""
                                         }
@@ -1636,26 +1665,68 @@ Item {
                         }
                     }
 
-                    // Compact Hex / Variant Readout
-                    Text {
+                    // Fixed-width Hex / Variant Readout Capsule (never shifts palettePill on hover)
+                    Rectangle {
+                        id: readoutChip
                         anchors.verticalCenter: parent.verticalCenter
-                        font.family: "JetBrainsMono Nerd Font"
-                        font.pixelSize: 10
-                        font.weight: Font.Medium
-                        color: {
+                        width: 128
+                        height: 20
+                        radius: 10
+                        readonly property bool isHighlighted: root.copiedSwatchHex.length > 0 || root.hoveredSwatchHex.length > 0
+                        readonly property color activeTint: {
                             if (root.copiedSwatchHex.length > 0) return Theme.accent
-                            if (root.hoveredSwatchHex.length > 0) return Theme.foreground
+                            if (root.hoveredSwatchHex.length > 0) return root.hoveredSwatchHex
                             return (root.activePalettePreview && root.activePalettePreview.primary)
                                    ? root.activePalettePreview.primary
-                                   : Theme.alpha(Theme.foreground, 0.72)
+                                   : Theme.accent
                         }
-                        text: {
-                            if (root.copiedSwatchHex.length > 0) return "Copied " + root.copiedSwatchHex
-                            if (root.hoveredSwatchHex.length > 0) {
-                                return (root.hoveredSwatchLabel.length > 0 ? (root.hoveredSwatchLabel + " ") : "") + root.hoveredSwatchHex
+                        color: isHighlighted ? Theme.alpha(activeTint, 0.16) : Theme.alpha(Theme.foreground, 0.05)
+                        border.color: isHighlighted ? Theme.alpha(activeTint, 0.45) : Theme.alpha(Theme.foreground, 0.10)
+                        border.width: 1
+
+                        Behavior on color { ColorAnimation { duration: 150 } }
+                        Behavior on border.color { ColorAnimation { duration: 150 } }
+
+                        Row {
+                            anchors.centerIn: parent
+                            spacing: 5
+
+                            Rectangle {
+                                width: 6
+                                height: 6
+                                radius: 3
+                                anchors.verticalCenter: parent.verticalCenter
+                                color: readoutChip.activeTint
+                                border.color: Theme.alpha("#ffffff", 0.30)
+                                border.width: 0.8
+                                Behavior on color { ColorAnimation { duration: 150 } }
                             }
-                            var vName = (root.colorVariant || "vibrant")
-                            return vName.charAt(0).toUpperCase() + vName.slice(1)
+
+                            Text {
+                                id: readoutText
+                                anchors.verticalCenter: parent.verticalCenter
+                                property real maxW: readoutChip.width - 24
+                                width: Math.min(implicitWidth, maxW)
+                                elide: Text.ElideRight
+                                font.family: "JetBrainsMono Nerd Font"
+                                font.pixelSize: 10
+                                font.weight: Font.Medium
+                                color: {
+                                    if (root.copiedSwatchHex.length > 0) return Theme.accent
+                                    if (root.hoveredSwatchHex.length > 0) return Theme.foreground
+                                    return (root.activePalettePreview && root.activePalettePreview.primary)
+                                           ? root.activePalettePreview.primary
+                                           : Theme.alpha(Theme.foreground, 0.78)
+                                }
+                                text: {
+                                    if (root.copiedSwatchHex.length > 0) return "Copied " + root.copiedSwatchHex
+                                    if (root.hoveredSwatchHex.length > 0) {
+                                        return (root.hoveredSwatchLabel.length > 0 ? (root.hoveredSwatchLabel + " ") : "") + root.hoveredSwatchHex
+                                    }
+                                    var vName = (root.colorVariant || "vibrant")
+                                    return vName.charAt(0).toUpperCase() + vName.slice(1)
+                                }
+                            }
                         }
                     }
                 }

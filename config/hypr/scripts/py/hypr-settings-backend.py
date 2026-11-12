@@ -1477,10 +1477,36 @@ def _apply_appearance(pending, result):
             result.ok("GTK4 css alpha updated")
 
     if "shadow" in pending:
-        val = str(pending["shadow"])
+        try:
+            shadow_val = max(0, int(round(float(pending["shadow"]))))
+        except Exception:
+            shadow_val = 0
+        val = str(shadow_val)
+        shadow_enabled = shadow_val > 0
         if CONFIGS_LUA.is_file():
             lua_set(CONFIGS_LUA, "shadow_range", val)
-            result.ok(f"shadow-range     → {val}")
+            if DECORATION_LUA.is_file():
+                dtext = DECORATION_LUA.read_text()
+                dtext = re.sub(
+                    r"(shadow\s*=\s*\{\s*enabled\s*=\s*)(true|false)",
+                    rf"\g<1>{'true' if shadow_enabled else 'false'}",
+                    dtext,
+                    flags=re.DOTALL,
+                )
+                DECORATION_LUA.write_text(dtext)
+            try:
+                subprocess.run(
+                    [
+                        "hyprctl",
+                        "eval",
+                        f"hl.config({{ decoration = {{ shadow = {{ enabled = {'true' if shadow_enabled else 'false'}, range = {shadow_val} }} }} }})",
+                    ],
+                    capture_output=True,
+                    timeout=2,
+                )
+            except Exception:
+                pass
+            result.ok(f"shadow-range     → {val} (enabled={shadow_enabled})")
         else:
             result.err("configs.lua not found — shadow skipped")
 
