@@ -124,35 +124,95 @@ def check_screen_recording():
 
     return False
 
+MONITOR_IGNORE_APPS = {
+    "cava",
+    "pavucontrol",
+    "pulseaudio volume control",
+    "pwvucontrol",
+    "helvum",
+    "qpwgraph",
+}
+
+
+def get_monitor_source_ids():
+    """Return PipeWire/PulseAudio source IDs that are sink monitors rather than real mics."""
+    monitor_ids = set()
+    try:
+        out = subprocess.check_output(
+            ["pactl", "list", "short", "sources"],
+            text=True,
+            stderr=subprocess.DEVNULL,
+            env=get_env(),
+            timeout=0.8,
+        )
+        for line in out.splitlines():
+            parts = line.split()
+            if len(parts) >= 2 and parts[1].endswith(".monitor"):
+                monitor_ids.add(parts[0].strip())
+    except Exception:
+        pass
+    return monitor_ids
+
+
+def parse_source_outputs(pactl_text, monitor_ids):
+    """Extract active non-monitor application names capturing real microphone sources."""
+    apps = []
+    entry = None
+
+    def flush_entry(item):
+        if not item or item["corked"]:
+            return
+        if item["capture_sink"] == "true":
+            return
+        if item["source_id"] and item["source_id"] in monitor_ids:
+            return
+        name = item["app"] or item["binary"] or "unknown"
+        if name.lower() in MONITOR_IGNORE_APPS or item["binary"].lower() in MONITOR_IGNORE_APPS:
+            return
+        apps.append(name)
+
+    for line in pactl_text.splitlines():
+        line_str = line.strip()
+        if line_str.startswith("Source Output #"):
+            flush_entry(entry)
+            entry = {
+                "app": "",
+                "binary": "",
+                "corked": False,
+                "capture_sink": "",
+                "source_id": "",
+            }
+            continue
+        if entry is None:
+            continue
+        if line_str.startswith("Corked:"):
+            entry["corked"] = "yes" in line_str.lower()
+        elif line_str.startswith("Source:"):
+            entry["source_id"] = line_str.split(":", 1)[1].strip()
+        elif "stream.capture.sink =" in line_str:
+            entry["capture_sink"] = line_str.split("=", 1)[1].strip().strip('"').lower()
+        elif "application.name =" in line_str:
+            entry["app"] = line_str.split("=", 1)[1].strip().strip('"')
+        elif "application.process.binary =" in line_str:
+            entry["binary"] = line_str.split("=", 1)[1].strip().strip('"')
+
+    flush_entry(entry)
+    return apps
+
+
 def get_active_mic_apps():
     try:
-        out = subprocess.check_output(["pactl", "list", "source-outputs"], text=True, stderr=subprocess.DEVNULL, env=get_env(), timeout=0.8)
+        out = subprocess.check_output(
+            ["pactl", "list", "source-outputs"],
+            text=True,
+            stderr=subprocess.DEVNULL,
+            env=get_env(),
+            timeout=0.8,
+        )
     except Exception:
         return []
 
-    apps = []
-    current_app = None
-    is_corked = False
-    for line in out.splitlines():
-        line_str = line.strip()
-        if line_str.startswith("Source Output #"):
-            if current_app and not is_corked:
-                apps.append(current_app)
-            current_app = "unknown"
-            is_corked = False
-        elif line_str.startswith("Corked:"):
-            is_corked = "yes" in line_str.lower()
-        elif "application.name =" in line_str:
-            current_app = line_str.split("=", 1)[1].strip().strip('"')
-        elif "application.process.binary =" in line_str:
-            bin_name = line_str.split("=", 1)[1].strip().strip('"')
-            if current_app == "unknown" or not current_app:
-                current_app = bin_name
-
-    if current_app and not is_corked:
-        apps.append(current_app)
-
-    return apps
+    return parse_source_outputs(out, get_monitor_source_ids())
 
 def check_mic_captured():
     for fpath in MOCK_MIC_FILES:
