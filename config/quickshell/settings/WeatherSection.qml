@@ -54,6 +54,7 @@ Item {
     })
 
     property bool isFetching: false
+    property bool pendingSaveToast: false
     property string simulatedCategoryOverride: ""
     property string activeAnimCategory: {
         if (simulatedCategoryOverride.length > 0) return simulatedCategoryOverride
@@ -65,7 +66,7 @@ Item {
         id: weatherProc
         command: ["python3", window.homeDir + "/.hyprconf/hypr/scripts/py/weather.py", "--json"]
         stdout: StdioCollector {
-            onTextChanged: {
+            onStreamFinished: {
                 if (text && text.trim().length > 0) {
                     try {
                         var parsed = JSON.parse(text.trim())
@@ -77,11 +78,19 @@ Item {
                         if (parsed.country !== undefined && parsed.country.length > 0) {
                             window.liveWeatherCountry = parsed.country
                             if (window.config.modules) window.config.modules.weather_country = parsed.country
+                            if (countryInput.text.trim().length === 0) countryInput.text = parsed.country
+                        }
+                        if (weatherRoot.pendingSaveToast) {
+                            weatherRoot.pendingSaveToast = false
+                            window.toastMessage = "Weather location saved: " + (parsed.location || parsed.city || "Updated")
+                            window.showSaveToast = true
+                            toastTimer.restart()
                         }
                     } catch(e) {
                         console.log("[WeatherSection] Parse error:", e)
                     }
                 }
+                weatherRoot.pendingSaveToast = false
             }
         }
         onRunningChanged: {
@@ -96,20 +105,29 @@ Item {
     }
 
     function refreshWeather(force) {
+        var c = cityInput.text.trim()
+        var co = countryInput.text.trim()
+        if (force && (c.length > 0 || co.length > 0)) {
+            weatherRoot.applyLocation(c, co)
+            return
+        }
+
+        if (weatherProc.running) weatherProc.running = false
+        weatherRoot.pendingSaveToast = false
         weatherRoot.isFetching = true
         var args = ["python3", window.homeDir + "/.hyprconf/hypr/scripts/py/weather.py", "--json"]
         if (force) args.push("--force")
-        if (cityInput.text.trim().length > 0) {
-            args.push("--city", cityInput.text.trim())
-        }
-        if (countryInput.text.trim().length > 0) {
-            args.push("--country", countryInput.text.trim())
-        }
+        if (c.length > 0) args.push("--city", c)
+        if (co.length > 0) args.push("--country", co)
         weatherProc.command = args
         weatherProc.running = true
     }
 
     function applyLocation(c, co) {
+        c = (c || "").trim()
+        co = (co || "").trim()
+        if (c.length === 0 && co.length === 0) return
+
         cityInput.text = c
         countryInput.text = co
         window.liveWeatherCity = c
@@ -117,8 +135,9 @@ Item {
         if (!window.config.modules) window.config.modules = {}
         window.config.modules.weather_city = c
         window.config.modules.weather_country = co
-        window.markDirty()
 
+        if (weatherProc.running) weatherProc.running = false
+        weatherRoot.pendingSaveToast = true
         weatherRoot.isFetching = true
         weatherProc.command = [
             "python3",
@@ -882,7 +901,7 @@ Item {
 
                                 Text {
                                     anchors.verticalCenter: parent.verticalCenter
-                                    text: weatherRoot.isFetching ? "Fetching..." : "Fetch Weather"
+                                    text: weatherRoot.isFetching ? "Saving..." : "Apply & Fetch"
                                     color: Theme.on_primary
                                     font.family: "Outfit"
                                     font.pixelSize: 11
@@ -941,6 +960,7 @@ Item {
                                     TextField {
                                         id: cityInput
                                         anchors.fill: parent
+                                        rightPadding: 28
                                         verticalAlignment: TextInput.AlignVCenter
                                         color: Theme.foreground
                                         font.family: "Outfit"
@@ -950,7 +970,7 @@ Item {
                                         placeholderTextColor: Theme.alpha(Theme.foreground, 0.38)
                                         background: null
                                         selectByMouse: true
-                                        onAccepted: weatherRoot.refreshWeather(true)
+                                        onAccepted: weatherRoot.applyLocation(cityInput.text.trim(), countryInput.text.trim())
                                     }
 
                                     Rectangle {
@@ -1008,6 +1028,7 @@ Item {
                                     TextField {
                                         id: countryInput
                                         anchors.fill: parent
+                                        rightPadding: 28
                                         verticalAlignment: TextInput.AlignVCenter
                                         color: Theme.foreground
                                         font.family: "Outfit"
@@ -1017,7 +1038,7 @@ Item {
                                         placeholderTextColor: Theme.alpha(Theme.foreground, 0.38)
                                         background: null
                                         selectByMouse: true
-                                        onAccepted: weatherRoot.refreshWeather(true)
+                                        onAccepted: weatherRoot.applyLocation(cityInput.text.trim(), countryInput.text.trim())
                                     }
 
                                     Rectangle {

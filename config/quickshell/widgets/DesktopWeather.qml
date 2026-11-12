@@ -77,7 +77,7 @@ Item {
         command: ["python3", "-c", "import json, os; p=os.path.expanduser('~/.hyprconf/hypr/.cache/weather_cache.json'); print(open(p, encoding='utf-8').read() if os.path.exists(p) else '{}')"]
         running: true
         stdout: StdioCollector {
-            onTextChanged: {
+            onStreamFinished: {
                 if (!text || text.trim().length === 0) return
                 try {
                     var d = JSON.parse(text.trim())

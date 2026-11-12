@@ -64,6 +64,14 @@ if [ "$1" = "--bar" ] || [ "$1" = "-b" ]; then
     shift
 fi
 
+if [ "$1" = "--weather" ]; then
+    export QS_SETTINGS_SECTION="weather"
+    if pgrep -f "qs -c settings" >/dev/null 2>&1; then
+        qs ipc -c settings call settings openWeather 2>/dev/null && exit 0
+    fi
+    shift
+fi
+
 pkill -f "qs -c settings" 2>/dev/null
 sleep 0.1
 exec qs -c settings "$@"

@@ -34,6 +34,7 @@ Item {
     readonly property string arrowRightSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.foreground + '" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>')
     readonly property string refreshSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.foreground + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>')
     readonly property string pinSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.accent + '" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>')
+    readonly property string editSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.alpha(Theme.foreground, 0.72) + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>')
     readonly property string calendarSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.accent + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>')
     readonly property string dropletSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>')
     readonly property string windSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/></svg>')
@@ -88,6 +89,7 @@ Item {
     property string sunset: "--"
     property var forecast7Days: []
     property bool isRefreshing: false
+    property bool editingLocation: false
 
     readonly property string displayCurrentTemp: root.useFahrenheit ? (root.currentTempF + "°") : (root.currentTempC + "°")
     readonly property string displayFeelsLike: root.useFahrenheit ? (root.feelsLikeF + "°") : (root.feelsLikeC + "°")
@@ -149,7 +151,7 @@ Item {
         command: ["python3", "-c", "import json, os; p=os.path.expanduser('~/.hyprconf/hypr/.cache/weather_cache.json'); print(open(p, encoding='utf-8').read() if os.path.exists(p) else '{}')"]
         running: true
         stdout: StdioCollector {
-            onTextChanged: {
+            onStreamFinished: {
                 if (!text || text.trim().length === 0) return
                 try {
                     var parsed = JSON.parse(text.trim())
@@ -159,12 +161,12 @@ Item {
         }
     }
 
-    // Live Fetcher Process
+    // Live Fetcher / Location Saver Process
     Process {
         id: liveFetcher
         command: ["python3", root.homeDir + "/.hyprconf/hypr/scripts/py/weather.py", "--force", "--json"]
         stdout: StdioCollector {
-            onTextChanged: {
+            onStreamFinished: {
                 root.isRefreshing = false
                 if (!text || text.trim().length === 0) return
                 try {
@@ -181,6 +183,27 @@ Item {
     function refreshWeather() {
         if (liveFetcher.running) return
         root.isRefreshing = true
+        liveFetcher.command = ["python3", root.homeDir + "/.hyprconf/hypr/scripts/py/weather.py", "--force", "--json"]
+        liveFetcher.running = true
+    }
+
+    function saveLocation(rawText) {
+        var raw = (rawText || "").trim()
+        if (raw.length === 0) return
+        var parts = raw.split(",")
+        var city = parts[0].trim()
+        var country = parts.length > 1 ? parts.slice(1).join(",").trim() : ""
+        if (city.length === 0 && country.length === 0) return
+
+        if (liveFetcher.running) liveFetcher.running = false
+        root.isRefreshing = true
+        root.editingLocation = false
+        liveFetcher.command = [
+            "python3",
+            root.homeDir + "/.hyprconf/hypr/scripts/py/weather.py",
+            "--set-location", city, country,
+            "--json"
+        ]
         liveFetcher.running = true
     }
 
@@ -201,6 +224,7 @@ Item {
                 root.refreshWeather()
             }
         } else {
+            root.editingLocation = false
             cascadeEnterAnim.stop()
         }
     }
@@ -295,23 +319,56 @@ Item {
                     color: Theme.foreground
                 }
 
-                Row {
-                    spacing: 4
-                    Image {
-                        width: 9
-                        height: 9
-                        source: root.pinSvg
-                        anchors.verticalCenter: parent.verticalCenter
+                Rectangle {
+                    id: locEditPill
+                    height: 18
+                    width: locRow.implicitWidth + 8
+                    radius: 9
+                    color: locEditMouse.containsMouse ? Theme.alpha(Theme.accent, 0.14) : "transparent"
+                    Behavior on color { ColorAnimation { duration: 120 } }
+
+                    Row {
+                        id: locRow
+                        anchors.centerIn: parent
+                        spacing: 4
+                        Image {
+                            width: 9
+                            height: 9
+                            source: root.pinSvg
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                        Text {
+                            text: root.location
+                            font.family: "Outfit"
+                            font.pixelSize: 11
+                            font.weight: Font.Medium
+                            color: locEditMouse.containsMouse ? Theme.accent : Theme.alpha(Theme.foreground, 0.70)
+                            elide: Text.ElideRight
+                            width: Math.min(implicitWidth, 195)
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                        Image {
+                            width: 9
+                            height: 9
+                            source: root.editSvg
+                            opacity: locEditMouse.containsMouse ? 0.95 : 0.45
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
                     }
-                    Text {
-                        text: root.location
-                        font.family: "Outfit"
-                        font.pixelSize: 11
-                        font.weight: Font.Medium
-                        color: Theme.alpha(Theme.foreground, 0.70)
-                        elide: Text.ElideRight
-                        width: Math.min(implicitWidth, 210)
-                        anchors.verticalCenter: parent.verticalCenter
+
+                    MouseArea {
+                        id: locEditMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            root.editingLocation = !root.editingLocation
+                            if (root.editingLocation) {
+                                locInput.text = (root.location !== "Loading..." && root.location !== "Offline") ? root.location : ""
+                                locInput.forceActiveFocus()
+                                locInput.selectAll()
+                            }
+                        }
                     }
                 }
             }
@@ -937,6 +994,134 @@ Item {
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
                     onClicked: root.navigateToControl()
+                }
+            }
+        }
+    }
+
+    // ── INLINE LOCATION EDITOR OVERLAY ────────────────────────────────────────
+    Rectangle {
+        id: locationEditorCard
+        anchors.left: parent.left
+        anchors.right: parent.right
+        y: 42
+        height: 46
+        z: 30
+        radius: 14
+        visible: opacity > 0.01
+        opacity: root.editingLocation ? 1.0 : 0.0
+        color: Theme.alpha(Theme.surface, 0.96)
+        border.width: 1
+        border.color: Theme.alpha(Theme.accent, 0.45)
+
+        Behavior on opacity { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+
+        RowLayout {
+            anchors.fill: parent
+            anchors.leftMargin: 10
+            anchors.rightMargin: 8
+            spacing: 6
+
+            Image {
+                width: 12
+                height: 12
+                source: root.pinSvg
+                Layout.alignment: Qt.AlignVCenter
+            }
+
+            Item {
+                Layout.fillWidth: true
+                height: 30
+                Layout.alignment: Qt.AlignVCenter
+
+                Rectangle {
+                    anchors.fill: parent
+                    radius: 9
+                    color: Theme.alpha(Theme.background, 0.72)
+                    border.width: 1
+                    border.color: locInput.activeFocus ? Theme.accent : Theme.alpha(Theme.foreground, 0.14)
+                }
+
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.left: parent.left
+                    anchors.leftMargin: 9
+                    anchors.right: parent.right
+                    anchors.rightMargin: 9
+                    text: "City, Country (e.g. Dhaka, Bangladesh)"
+                    font.family: "Outfit"
+                    font.pixelSize: 11
+                    color: Theme.alpha(Theme.foreground, 0.38)
+                    elide: Text.ElideRight
+                    visible: locInput.text.length === 0
+                }
+
+                TextInput {
+                    id: locInput
+                    anchors.fill: parent
+                    anchors.leftMargin: 9
+                    anchors.rightMargin: 9
+                    verticalAlignment: TextInput.AlignVCenter
+                    font.family: "Outfit"
+                    font.pixelSize: 11
+                    color: Theme.foreground
+                    selectionColor: Theme.alpha(Theme.accent, 0.45)
+                    selectedTextColor: Theme.foreground
+                    clip: true
+                    onAccepted: root.saveLocation(locInput.text)
+                    Keys.onEscapePressed: root.editingLocation = false
+                }
+            }
+
+            Rectangle {
+                width: 48
+                height: 28
+                radius: 9
+                Layout.alignment: Qt.AlignVCenter
+                color: saveLocMouse.containsMouse ? Theme.alpha(Theme.accent, 0.9) : Theme.accent
+
+                Text {
+                    anchors.centerIn: parent
+                    text: "Save"
+                    font.family: "Outfit"
+                    font.pixelSize: 10
+                    font.weight: Font.Bold
+                    color: Theme.on_primary
+                }
+
+                MouseArea {
+                    id: saveLocMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: root.saveLocation(locInput.text)
+                }
+            }
+
+            Rectangle {
+                width: 26
+                height: 28
+                radius: 9
+                Layout.alignment: Qt.AlignVCenter
+                color: cancelLocMouse.containsMouse ? Theme.alpha(Theme.error, 0.22) : Theme.alpha(Theme.background, 0.55)
+                border.width: 1
+                border.color: cancelLocMouse.containsMouse ? Theme.alpha(Theme.error, 0.55) : Theme.alpha(Theme.foreground, 0.12)
+
+                Text {
+                    anchors.centerIn: parent
+                    text: "×"
+                    font.family: "Outfit"
+                    font.pixelSize: 14
+                    font.weight: Font.Medium
+                    color: Theme.alpha(Theme.foreground, 0.85)
+                }
+
+                MouseArea {
+                    id: cancelLocMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: root.editingLocation = false
                 }
             }
         }

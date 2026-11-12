@@ -172,31 +172,72 @@ def calculate_day_progress(sunrise_str: str, sunset_str: str) -> float:
         return 0.5
 
 
+def _normalize_country(value: str) -> str:
+    """Normalize common country names and ISO abbreviations for matching."""
+    v = (value or "").strip().lower()
+    aliases = {
+        "us": "united states",
+        "usa": "united states",
+        "u.s.": "united states",
+        "u.s.a.": "united states",
+        "uk": "united kingdom",
+        "u.k.": "united kingdom",
+        "gb": "united kingdom",
+        "great britain": "united kingdom",
+        "uae": "united arab emirates",
+        "bd": "bangladesh",
+    }
+    return aliases.get(v, v)
+
+
+def _match_geo_result(results, country: str):
+    """Select the geocoding result matching country (or country_code) when provided."""
+    if not results:
+        return None
+    if not country:
+        return results[0]
+
+    target = _normalize_country(country)
+    for item in results:
+        item_country = _normalize_country(item.get("country", ""))
+        item_code = (item.get("country_code", "") or "").strip().lower()
+        if item_country == target or item_code == target or target in item_country or item_country in target:
+            return item
+    return None
+
+
 def fetch_open_meteo(city: str, country: str):
     """Fetch structured live weather + 7-day forecast from Open-Meteo."""
+    city = (city or "").strip()
+    country = (country or "").strip()
     query = f"{city}, {country}" if (city and country) else (city or country)
-    geo_url = f"https://geocoding-api.open-meteo.com/v1/search?name={urllib.parse.quote(query)}&count=1"
-    req_geo = urllib.request.Request(geo_url, headers={"User-Agent": "Hyprland-Quickshell/1.0"})
 
-    with urllib.request.urlopen(req_geo, timeout=3.5) as resp:
-        geo_data = json.loads(resp.read().decode("utf-8"))
-        results = geo_data.get("results")
-        if not results:
-            # Try just city name if compound search yielded no result
-            if city and country:
-                fallback_geo = f"https://geocoding-api.open-meteo.com/v1/search?name={urllib.parse.quote(city)}&count=1"
-                req_fb = urllib.request.Request(fallback_geo, headers={"User-Agent": "Hyprland-Quickshell/1.0"})
-                with urllib.request.urlopen(req_fb, timeout=3.0) as resp_fb:
-                    results = json.loads(resp_fb.read().decode("utf-8")).get("results")
+    results = None
+    loc = None
+    if city:
+        geo_url = f"https://geocoding-api.open-meteo.com/v1/search?name={urllib.parse.quote(city)}&count=10"
+        req_geo = urllib.request.Request(geo_url, headers={"User-Agent": "Hyprland-Quickshell/1.0"})
+        with urllib.request.urlopen(req_geo, timeout=3.5) as resp:
+            results = json.loads(resp.read().decode("utf-8")).get("results")
+        loc = _match_geo_result(results, country)
 
-        if not results:
-            raise ValueError(f"Location '{query}' could not be resolved.")
+    if not loc and query:
+        geo_url = f"https://geocoding-api.open-meteo.com/v1/search?name={urllib.parse.quote(query)}&count=5"
+        req_geo = urllib.request.Request(geo_url, headers={"User-Agent": "Hyprland-Quickshell/1.0"})
+        with urllib.request.urlopen(req_geo, timeout=3.5) as resp:
+            q_results = json.loads(resp.read().decode("utf-8")).get("results")
+        loc = _match_geo_result(q_results, country) or (q_results[0] if q_results else None)
 
+    if not loc and results:
         loc = results[0]
-        lat = loc["latitude"]
-        lon = loc["longitude"]
-        res_city = loc.get("name", city)
-        res_country = loc.get("country", country)
+
+    if not loc:
+        raise ValueError(f"Location '{query}' could not be resolved.")
+
+    lat = loc["latitude"]
+    lon = loc["longitude"]
+    res_city = loc.get("name", city)
+    res_country = loc.get("country", country)
 
     fc_url = (
         f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}"
@@ -484,25 +525,45 @@ def make_offline_data(city: str, country: str):
     }
 
 
-def fetch_weather(city: str, country: str):
-    """Fetch live weather data from Open-Meteo with wttr.in and cache fallback."""
+def fetch_weather(city: str, country: str, persist_offline: bool = False):
+    """Fetch live weather data from Open-Meteo with wttr.in and same-city cache fallback."""
     if not city and not country:
-        return make_offline_data("", "")
+        data = make_offline_data("", "")
+        if persist_offline:
+            save_weather_cache(data)
+        return data
 
     try:
         data = fetch_open_meteo(city, country)
         save_weather_cache(data)
         return data
-    except Exception as e_om:
+    except Exception:
         try:
             data = fetch_wttr(city, country)
             save_weather_cache(data)
             return data
         except Exception:
             cached = get_cached_weather(max_age=86400 * 7)
-            if cached:
+            if cached and (cached.get("city", "").strip().lower() == city.strip().lower()):
                 return cached
-            return make_offline_data(city, country)
+            data = make_offline_data(city, country)
+            if persist_offline:
+                save_weather_cache(data)
+            return data
+
+
+def _parse_location_args(args, idx: int):
+    """Safely extract city and optional country after --set-location without swallowing flags."""
+    c = ""
+    co = ""
+    if idx + 1 < len(args) and not args[idx + 1].startswith("--"):
+        c = args[idx + 1].strip()
+        if idx + 2 < len(args) and not args[idx + 2].startswith("--"):
+            co = args[idx + 2].strip()
+    if "," in c and not co:
+        parts = [p.strip() for p in c.split(",", 1)]
+        c, co = parts[0], parts[1]
+    return c, co
 
 
 def main():
@@ -512,10 +573,13 @@ def main():
     # Check for set-location command
     if "--set-location" in sys.argv:
         idx = sys.argv.index("--set-location")
-        c = sys.argv[idx + 1] if idx + 1 < len(sys.argv) else ""
-        co = sys.argv[idx + 2] if idx + 2 < len(sys.argv) else ""
+        c, co = _parse_location_args(sys.argv, idx)
         save_location_config(c, co)
-        data = fetch_weather(c, co)
+        data = fetch_weather(c, co, persist_offline=True)
+        resolved_city = (data.get("city") or c).strip()
+        resolved_country = (data.get("country") or co).strip()
+        if resolved_city and (resolved_city != c or (not co and resolved_country)):
+            save_location_config(resolved_city if not c else c, co or resolved_country)
         print(json.dumps(data) if as_json else data.get("text", ""))
         return
 
