@@ -450,15 +450,15 @@ FloatingWindow {
         blur_water_speed: 0.76,
         blur_water_strength: 32.0,
         motion_blur_enabled: true,
-        motion_blur_samples: 6,
+        motion_blur_samples: 10,
         wobble_enabled: true,
-        wobble_mesh: 8,
-        wobble_stiffness: 310,
-        wobble_damping: 11.5,
-        wobble_mass: 1.2,
-        wobble_intensity: 0.14,
-        wobble_value_epsilon: 0.25,
-        wobble_velocity_epsilon: 3.2
+        wobble_mesh: 14,
+        wobble_stiffness: 225,
+        wobble_damping: 14,
+        wobble_mass: 1.0,
+        wobble_intensity: 0.15,
+        wobble_value_epsilon: 0.15,
+        wobble_velocity_epsilon: 1.2
     })
     property var liveInput: ({
         sensitivity: 0.0,

@@ -32,13 +32,13 @@ hl.config({
         dim_special      = 0.25,
         wobble           = {
             enabled          = true,
-            mesh             = 8,
-            stiffness        = 310.0,
-            damping          = 11.5,
-            mass             = 1.2,
-            intensity        = 0.14,
-            value_epsilon    = 0.25,
-            velocity_epsilon = 3.2,
+            mesh             = 14,
+            stiffness        = 225.0,
+            damping          = 14.0,
+            mass             = 1.0,
+            intensity        = 0.15,
+            value_epsilon    = 0.15,
+            velocity_epsilon = 1.2,
         },
 
         shadow           = {
@@ -138,7 +138,7 @@ hl.config({
 
         motion_blur      = {
             enabled = true,
-            samples = 6,
+            samples = 10,
         },
     },
 })

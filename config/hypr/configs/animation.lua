@@ -66,22 +66,41 @@ hl.curve("smooth_pop", {
     },
 })
 
--- Slide curves sculpted specifically for wobble + directional motion blur:
--- Smooth 2-frame velocity ramp prevents frame-1 smudge/snap, peaking mid-flight
--- and settling softly so spring wobble rebounds cleanly without jiggling.
+-- Slide & exit curves sculpted specifically for wobble + directional motion blur:
+-- slide_glide: Controlled frame-1 launch (no 4.6x snap/ghost-banding) into a silky
+-- cushion tail so spring wobble completes one smooth wave on arrival.
 hl.curve("slide_glide", {
     type = "bezier",
     points = {
-        { 0.20, 0.92 },
-        { 0.26, 1.0  },
+        { 0.22, 0.52 },
+        { 0.18, 1.0  },
     },
 })
 
+-- slide_move: Balanced glide for scrolling/tiled window reflow (windowsMove).
+hl.curve("slide_move", {
+    type = "bezier",
+    points = {
+        { 0.24, 0.48 },
+        { 0.18, 1.0  },
+    },
+})
+
+-- slide_exit: Immediate frame-1 pull-away (no dead pause) ramping smoothly offscreen.
 hl.curve("slide_exit", {
     type = "bezier",
     points = {
-        { 0.34, 0.0  },
-        { 0.82, 0.30 },
+        { 0.30, 0.28 },
+        { 0.46, 1.0  },
+    },
+})
+
+-- fade_exit: Holds opacity through initial slide pull, dissolving softly near the tail.
+hl.curve("fade_exit", {
+    type = "bezier",
+    points = {
+        { 0.35, 0.0  },
+        { 0.72, 0.65 },
     },
 })
 
@@ -105,28 +124,28 @@ hl.curve("test", {
 -- Animations
 ----------------------------------------------------------------------
 
--- Windows (slide + wobble + motion blur tuned in lockstep)
+-- Windows (adaptive slide + wobble + motion blur tuned in lockstep)
 hl.animation({
     leaf = "windowsIn",
     enabled = 1,
     speed = 3.4,
     bezier = "slide_glide",
-    style = "slide down",
+    style = "slide",
 })
 
 hl.animation({
     leaf = "windowsOut",
     enabled = 1,
-    speed = 2.6,
+    speed = 2.5,
     bezier = "slide_exit",
-    style = "slide down",
+    style = "slide",
 })
 
 hl.animation({
     leaf = "windowsMove",
     enabled = 1,
-    speed = 3.8,
-    bezier = "slide_glide",
+    speed = 3.4,
+    bezier = "slide_move",
     style = "slide",
 })
 
@@ -146,26 +165,26 @@ hl.animation({
     style = "loop",
 })
 
--- Fading (fast opaque arrival on open, synchronized exit fade so closing wobble + blur remain visible)
+-- Fading (rapid opaque arrival on open so sliding wobble stays crisp; smooth tail dissolve on close)
 hl.animation({
     leaf = "fade",
     enabled = 1,
-    speed = 3.2,
+    speed = 2.8,
     bezier = "expo_out",
 })
 
 hl.animation({
     leaf = "fadeIn",
     enabled = 1,
-    speed = 2.4,
+    speed = 1.4,
     bezier = "expo_out",
 })
 
 hl.animation({
     leaf = "fadeOut",
     enabled = 1,
-    speed = 2.6,
-    bezier = "slide_exit",
+    speed = 2.5,
+    bezier = "fade_exit",
 })
 
 -- Workspaces
