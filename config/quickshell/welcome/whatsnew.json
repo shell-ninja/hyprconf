@@ -1,0 +1,69 @@
+{
+  "latest": "qs-v1.0.2",
+  "versions": [
+    {
+      "version": "qs-v1.0.2",
+      "badge": "LATEST RELEASE",
+      "title": "What's New in qs-v1.0.2",
+      "subtitle": "Cursor Quick Paste, tri-state desktop modes, obsidian glass blur controls, and tuned physics.",
+      "features": [
+        {
+          "title": "Cursor Quick Paste (SUPER + V)",
+          "tag": "Smart Clipboard Tooltip",
+          "icon": "clipboard",
+          "description": "Open an obsidian-glass Quick Paste popup directly at your cursor showing your 12 most recent copied texts and links with instant 1-click auto-paste."
+        },
+        {
+          "title": "Desktop Modes & Blur Engine",
+          "tag": "Normal / Game / Class",
+          "icon": "sliders",
+          "description": "Switch cleanly between full obsidian glass, direct-scanout Game Mode, and distraction-free Class Mode. Added dual-tone borders, wobble physics, and top bar support."
+        },
+        {
+          "title": "Spotlight Omnibar & Calculators",
+          "tag": "SUPER + Space",
+          "icon": "spark",
+          "description": "Embedded command center featuring live daily exchange rates across 26 currencies, multi-category unit conversion across 11 systems, emoji search, and inline math."
+        },
+        {
+          "title": "Obsidian Glass & Spring Tuning",
+          "tag": "GPU-Friendly Physics",
+          "icon": "speed",
+          "description": "Unified translucent glass tokens across Dock, Dynamic Island, and Lockscreen with lockstep slide-and-wobble window curves and edge-clamped hover tooltips."
+        }
+      ]
+    },
+    {
+      "version": "qs-v1.0.1",
+      "badge": "PREVIOUS RELEASE",
+      "title": "What's New in qs-v1.0.1",
+      "subtitle": "Pure Quickshell migration milestones, new desktop modules, and native Polkit authentication.",
+      "features": [
+        {
+          "title": "Island Weather System",
+          "tag": "Open-Meteo 7-Day Forecast",
+          "icon": "weather",
+          "description": "Embedded Page 1 of notch carousel. Provides live temperature, 7-day outlook, wind, humidity, and hourly metrics with zero external API key requirements."
+        },
+        {
+          "title": "Native Package Updater",
+          "tag": "Quickshell Desktop App",
+          "icon": "package",
+          "description": "Rebuilt from GTK4 into native Quickshell. Scans official Pacman, AUR (paru/yay), and Flatpak in parallel with real-time terminal streaming and package delta inspection."
+        },
+        {
+          "title": "Dynamic Island Polkit",
+          "tag": "Seamless Notch Authentication",
+          "icon": "shield",
+          "description": "All privileged actions (pkexec, updates, disk managers) invoke Quickshell Island's native PolkitAgent. The notch expands smoothly for password input with physical shake-on-fail."
+        },
+        {
+          "title": "Single-Event Escape Logic",
+          "tag": "Reliable View Dismissal",
+          "icon": "keyboard",
+          "description": "Eliminated ambiguous shortcut collisions across nested views. Pressing Esc at any time instantly collapses expanded search inputs, launchers, and full-screen modals."
+        }
+      ]
+    }
+  ]
+}

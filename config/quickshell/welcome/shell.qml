@@ -2,6 +2,7 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
+import QtQuick.Effects
 import Quickshell
 import Quickshell.Io
 import "."
@@ -19,7 +20,81 @@ FloatingWindow {
         return (h && h.length > 0) ? h : (Quickshell.env("USER") ? ("/home/" + Quickshell.env("USER")) : "/home")
     }
 
-    readonly property string versionTag: "v1.0.1"
+    property string versionTag: "qs-v1.0.2"
+    property var whatsNewVersions: []
+    property int selectedWhatsNewIdx: 0
+    readonly property string whatsNewPath: {
+        var u = Qt.resolvedUrl("whatsnew.json").toString()
+        if (u.indexOf("file://") === 0) return decodeURIComponent(u.slice(7))
+        return homeDir + "/.hyprconf/quickshell/welcome/whatsnew.json"
+    }
+
+    // Circular-masked Shell Ninja badge shared by navbar and overview hero.
+    component BrandLogoBadge : Item {
+        id: badgeRoot
+        property int badgeSize: 32
+        property int imageMargin: 2
+        property color ringColor: Theme.alpha(Theme.accent, 0.40)
+
+        readonly property int maskSize: Math.max(16, badgeSize - 2)
+
+        implicitWidth: badgeSize
+        implicitHeight: badgeSize
+        width: badgeSize
+        height: badgeSize
+
+        Rectangle {
+            id: logoMask
+            anchors.centerIn: parent
+            width: badgeRoot.maskSize
+            height: badgeRoot.maskSize
+            radius: badgeRoot.maskSize / 2
+            color: "#ffffff"
+            layer.enabled: true
+            visible: false
+        }
+
+        Rectangle {
+            id: logoSource
+            anchors.centerIn: parent
+            width: badgeRoot.maskSize
+            height: badgeRoot.maskSize
+            color: "#090516"
+            layer.enabled: true
+            visible: false
+
+            Image {
+                anchors.fill: parent
+                anchors.margins: badgeRoot.imageMargin
+                source: window.brandLogoPath
+                fillMode: Image.PreserveAspectFit
+                smooth: true
+                mipmap: true
+                sourceSize: Qt.size(badgeRoot.maskSize * 2, badgeRoot.maskSize * 2)
+            }
+        }
+
+        MultiEffect {
+            anchors.centerIn: parent
+            width: badgeRoot.maskSize
+            height: badgeRoot.maskSize
+            source: logoSource
+            autoPaddingEnabled: false
+            maskEnabled: true
+            maskSource: logoMask
+            maskThresholdMin: 0.5
+            maskSpreadAtMin: 1.0
+        }
+
+        Rectangle {
+            z: 2
+            anchors.fill: parent
+            radius: badgeRoot.badgeSize / 2
+            color: "transparent"
+            border.color: badgeRoot.ringColor
+            border.width: 1
+        }
+    }
 
     // Logo & Avatar paths
     readonly property string brandLogoPath: "file://" + homeDir + "/.hyprconf/hypr/.cache/shell-ninja.png"
@@ -104,6 +179,43 @@ FloatingWindow {
     readonly property string bookSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.foreground + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>')
     readonly property string gitSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.foreground + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><line x1="6" y1="9" x2="6" y2="21"/></svg>')
     readonly property string playSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.accent + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>')
+    readonly property string clipboardSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.accent + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>')
+
+    function whatsNewIcon(name) {
+        if (name === "clipboard") return clipboardSvg
+        if (name === "sliders") return slidersSvg
+        if (name === "spark") return sparkSvg
+        if (name === "speed") return speedSvg
+        if (name === "weather") return weatherSvg
+        if (name === "package") return packageSvg
+        if (name === "shield") return shieldSvg
+        if (name === "keyboard") return keyboardSvg
+        return sparkSvg
+    }
+
+    function applyWhatsNewJson(raw) {
+        if (!raw || raw.trim().length === 0) return
+        try {
+            var parsed = JSON.parse(raw.trim())
+            if (!parsed || typeof parsed !== "object") return
+            if (parsed.latest) window.versionTag = String(parsed.latest)
+            if (Array.isArray(parsed.versions) && parsed.versions.length > 0) {
+                window.whatsNewVersions = parsed.versions
+                if (window.selectedWhatsNewIdx >= parsed.versions.length) {
+                    window.selectedWhatsNewIdx = 0
+                }
+            }
+        } catch (e) {}
+    }
+
+    FileView {
+        id: whatsNewReader
+        path: window.whatsNewPath
+        preload: true
+        watchChanges: true
+        onLoaded: window.applyWhatsNewJson(text())
+        onFileChanged: reload()
+    }
 
     // ── IPC HANDLER ──────────────────────────────────────────────────────────
     IpcHandler {
@@ -317,21 +429,10 @@ FloatingWindow {
                 RowLayout {
                     spacing: 10
 
-                    Rectangle {
-                        width: 32
-                        height: 32
-                        radius: 16
-                        color: Theme.alpha(Theme.surface, 0.80)
-                        border.color: Theme.alpha(Theme.accent, 0.35)
-                        border.width: 1
-
-                        Image {
-                            anchors.fill: parent
-                            anchors.margins: 2
-                            source: window.brandLogoPath
-                            fillMode: Image.PreserveAspectFit
-                            mipmap: true
-                        }
+                    BrandLogoBadge {
+                        badgeSize: 32
+                        imageMargin: 2
+                        ringColor: Theme.alpha(Theme.accent, 0.40)
                     }
 
                     ColumnLayout {
@@ -501,22 +602,11 @@ FloatingWindow {
                             border.color: Theme.alpha(Theme.accent, 0.40)
                             border.width: 1.5
 
-                            Rectangle {
+                            BrandLogoBadge {
                                 anchors.centerIn: parent
-                                width: 76
-                                height: 76
-                                radius: 38
-                                color: Theme.alpha(Theme.background, 0.80)
-                                border.color: Theme.alpha(Theme.accent, 0.20)
-                                border.width: 1
-
-                                Image {
-                                    anchors.fill: parent
-                                    anchors.margins: 10
-                                    source: window.brandLogoPath
-                                    fillMode: Image.PreserveAspectFit
-                                    mipmap: true
-                                }
+                                badgeSize: 76
+                                imageMargin: 6
+                                ringColor: Theme.alpha(Theme.accent, 0.28)
                             }
                         }
 
@@ -873,24 +963,40 @@ FloatingWindow {
                 }
 
                 // ═════════════════════════════════════════════════════════════
-                // PAGE 1: WHAT'S NEW IN v1.0.1 (USER HIGHLIGHT PAGE)
+                // PAGE 1: WHAT'S NEW (LOADED FROM whatsnew.json)
                 // ═════════════════════════════════════════════════════════════
                 ColumnLayout {
+                    id: whatsNewPage
                     anchors.fill: parent
                     visible: window.activePage === 1
                     spacing: 14
 
-                    // Header
+                    readonly property var activeRelease: {
+                        if (window.whatsNewVersions && window.whatsNewVersions.length > 0) {
+                            var idx = Math.max(0, Math.min(window.selectedWhatsNewIdx, window.whatsNewVersions.length - 1))
+                            return window.whatsNewVersions[idx]
+                        }
+                        return {
+                            version: window.versionTag,
+                            badge: "LATEST RELEASE",
+                            title: "What's New in " + window.versionTag,
+                            subtitle: "Pure Quickshell desktop enhancements, Quick Paste tooltip, and tuned physics.",
+                            features: []
+                        }
+                    }
+
+                    // Header + Version Selector Pills
                     RowLayout {
                         Layout.fillWidth: true
                         spacing: 12
 
                         ColumnLayout {
+                            Layout.fillWidth: true
                             spacing: 2
                             RowLayout {
                                 spacing: 8
                                 Text {
-                                    text: "What's New in v1.0.1"
+                                    text: whatsNewPage.activeRelease.title || ("What's New in " + window.versionTag)
                                     font.pixelSize: 20
                                     font.bold: true
                                     font.family: "Inter"
@@ -907,7 +1013,7 @@ FloatingWindow {
                                     Text {
                                         id: relPill
                                         anchors.centerIn: parent
-                                        text: "RELEASE HIGHLIGHTS"
+                                        text: whatsNewPage.activeRelease.badge || "RELEASE HIGHLIGHTS"
                                         font.pixelSize: 9
                                         font.bold: true
                                         font.letterSpacing: 0.5
@@ -916,14 +1022,72 @@ FloatingWindow {
                                 }
                             }
                             Text {
-                                text: "Pure Quickshell migration milestones, new desktop modules, and native Polkit authentication."
+                                Layout.fillWidth: true
+                                text: whatsNewPage.activeRelease.subtitle || ""
                                 font.pixelSize: 12
                                 color: Theme.muted
+                                elide: Text.ElideRight
+                            }
+                        }
+
+                        // Version switcher
+                        Rectangle {
+                            visible: window.whatsNewVersions && window.whatsNewVersions.length > 1
+                            height: 30
+                            implicitWidth: verSwitchRow.implicitWidth + 8
+                            radius: 9
+                            color: Theme.glassCard
+                            border.color: Theme.alpha(Theme.foreground, 0.10)
+                            border.width: 1
+
+                            RowLayout {
+                                id: verSwitchRow
+                                anchors.centerIn: parent
+                                spacing: 3
+
+                                Repeater {
+                                    model: window.whatsNewVersions
+
+                                    Rectangle {
+                                        required property var modelData
+                                        required property int index
+                                        readonly property bool isActive: window.selectedWhatsNewIdx === index
+
+                                        height: 22
+                                        implicitWidth: verBtnLabel.implicitWidth + 14
+                                        radius: 6
+                                        color: isActive
+                                            ? Theme.alpha(Theme.accent, 0.22)
+                                            : (verBtnMa.containsMouse ? Theme.alpha(Theme.foreground, 0.08) : "transparent")
+                                        border.color: isActive ? Theme.alpha(Theme.accent, 0.45) : "transparent"
+                                        border.width: 1
+
+                                        Behavior on color { ColorAnimation { duration: 120 } }
+
+                                        Text {
+                                            id: verBtnLabel
+                                            anchors.centerIn: parent
+                                            text: modelData.version || ""
+                                            font.pixelSize: 10
+                                            font.bold: isActive
+                                            font.family: "JetBrains Mono, monospace"
+                                            color: isActive ? Theme.accent : Theme.muted
+                                        }
+
+                                        MouseArea {
+                                            id: verBtnMa
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: window.selectedWhatsNewIdx = index
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
 
-                    // 4 Feature Highlight Cards (2x2 Grid)
+                    // Feature Highlight Cards (2x2 Grid driven by whatsnew.json)
                     GridLayout {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
@@ -931,194 +1095,69 @@ FloatingWindow {
                         columnSpacing: 12
                         rowSpacing: 12
 
-                        // Feature 1: Dynamic Island Weather Page
-                        Rectangle {
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
-                            radius: 12
-                            clip: true
-                            color: Theme.mix(Theme.glassCard, Theme.accent, 0.05)
-                            border.color: Theme.alpha(Theme.accent, 0.28)
-                            border.width: 1
+                        Repeater {
+                            model: whatsNewPage.activeRelease.features || []
 
                             Rectangle {
-                                z: 2
-                                anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right
-                                anchors.leftMargin: 14; anchors.rightMargin: 14; height: 1
-                                color: Theme.alpha(Theme.accent, 0.35)
-                            }
+                                required property var modelData
 
-                            ColumnLayout {
-                                anchors.fill: parent
-                                anchors.margins: 14
-                                spacing: 6
+                                Layout.fillWidth: true
+                                Layout.fillHeight: true
+                                radius: 12
+                                clip: true
+                                color: Theme.mix(Theme.glassCard, Theme.accent, 0.05)
+                                border.color: Theme.alpha(Theme.accent, 0.28)
+                                border.width: 1
 
-                                RowLayout {
-                                    spacing: 8
-                                    Rectangle {
-                                        width: 30
-                                        height: 30
-                                        radius: 8
-                                        color: Theme.alpha(Theme.accent, 0.14)
-                                        Image { anchors.centerIn: parent; width: 16; height: 16; source: window.weatherSvg }
-                                    }
-                                    ColumnLayout {
-                                        spacing: 1
-                                        Text { text: "Island Weather System"; font.pixelSize: 13; font.bold: true; color: Theme.foreground }
-                                        Text { text: "Open-Meteo 7-Day Forecast"; font.pixelSize: 10; color: Theme.accent }
-                                    }
+                                Rectangle {
+                                    z: 2
+                                    anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right
+                                    anchors.leftMargin: 14; anchors.rightMargin: 14; height: 1
+                                    color: Theme.alpha(Theme.accent, 0.35)
                                 }
 
-                                Text {
-                                    text: "Embedded Page 1 of notch carousel. Provides live temperature, 7-day outlook, wind, humidity, and hourly metrics with zero external API key requirements."
-                                    font.pixelSize: 11
-                                    color: Theme.muted
-                                    wrapMode: Text.WordWrap
-                                    Layout.fillWidth: true
-                                }
-                            }
-                        }
+                                ColumnLayout {
+                                    anchors.fill: parent
+                                    anchors.margins: 14
+                                    spacing: 6
 
-                        // Feature 2: Native Package Updater
-                        Rectangle {
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
-                            radius: 12
-                            clip: true
-                            color: Theme.mix(Theme.glassCard, Theme.accent, 0.05)
-                            border.color: Theme.alpha(Theme.accent, 0.28)
-                            border.width: 1
-
-                            Rectangle {
-                                z: 2
-                                anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right
-                                anchors.leftMargin: 14; anchors.rightMargin: 14; height: 1
-                                color: Theme.alpha(Theme.accent, 0.35)
-                            }
-
-                            ColumnLayout {
-                                anchors.fill: parent
-                                anchors.margins: 14
-                                spacing: 6
-
-                                RowLayout {
-                                    spacing: 8
-                                    Rectangle {
-                                        width: 30
-                                        height: 30
-                                        radius: 8
-                                        color: Theme.alpha(Theme.accent, 0.14)
-                                        Image { anchors.centerIn: parent; width: 16; height: 16; source: window.packageSvg }
+                                    RowLayout {
+                                        spacing: 8
+                                        Rectangle {
+                                            width: 30
+                                            height: 30
+                                            radius: 8
+                                            color: Theme.alpha(Theme.accent, 0.14)
+                                            Image {
+                                                anchors.centerIn: parent
+                                                width: 16
+                                                height: 16
+                                                source: window.whatsNewIcon(modelData.icon || "")
+                                            }
+                                        }
+                                        ColumnLayout {
+                                            spacing: 1
+                                            Text {
+                                                text: modelData.title || ""
+                                                font.pixelSize: 13
+                                                font.bold: true
+                                                color: Theme.foreground
+                                            }
+                                            Text {
+                                                text: modelData.tag || ""
+                                                font.pixelSize: 10
+                                                color: Theme.accent
+                                            }
+                                        }
                                     }
-                                    ColumnLayout {
-                                        spacing: 1
-                                        Text { text: "Native Package Updater"; font.pixelSize: 13; font.bold: true; color: Theme.foreground }
-                                        Text { text: "Quickshell Desktop App"; font.pixelSize: 10; color: Theme.accent }
+
+                                    Text {
+                                        text: modelData.description || ""
+                                        font.pixelSize: 11
+                                        color: Theme.muted
+                                        wrapMode: Text.WordWrap
+                                        Layout.fillWidth: true
                                     }
-                                }
-
-                                Text {
-                                    text: "Rebuilt from GTK4 into native Quickshell. Scans official Pacman, AUR (paru/yay), and Flatpak in parallel with real-time terminal streaming and package delta inspection."
-                                    font.pixelSize: 11
-                                    color: Theme.muted
-                                    wrapMode: Text.WordWrap
-                                    Layout.fillWidth: true
-                                }
-                            }
-                        }
-
-                        // Feature 3: Polkit in Dynamic Island
-                        Rectangle {
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
-                            radius: 12
-                            clip: true
-                            color: Theme.mix(Theme.glassCard, Theme.accent, 0.05)
-                            border.color: Theme.alpha(Theme.accent, 0.28)
-                            border.width: 1
-
-                            Rectangle {
-                                z: 2
-                                anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right
-                                anchors.leftMargin: 14; anchors.rightMargin: 14; height: 1
-                                color: Theme.alpha(Theme.accent, 0.35)
-                            }
-
-                            ColumnLayout {
-                                anchors.fill: parent
-                                anchors.margins: 14
-                                spacing: 6
-
-                                RowLayout {
-                                    spacing: 8
-                                    Rectangle {
-                                        width: 30
-                                        height: 30
-                                        radius: 8
-                                        color: Theme.alpha(Theme.accent, 0.14)
-                                        Image { anchors.centerIn: parent; width: 16; height: 16; source: window.shieldSvg }
-                                    }
-                                    ColumnLayout {
-                                        spacing: 1
-                                        Text { text: "Dynamic Island Polkit"; font.pixelSize: 13; font.bold: true; color: Theme.foreground }
-                                        Text { text: "Seamless Notch Authentication"; font.pixelSize: 10; color: Theme.accent }
-                                    }
-                                }
-
-                                Text {
-                                    text: "All privileged actions (pkexec, updates, disk managers) invoke Quickshell Island's native PolkitAgent. The notch expands smoothly for password input with physical shake-on-fail."
-                                    font.pixelSize: 11
-                                    color: Theme.muted
-                                    wrapMode: Text.WordWrap
-                                    Layout.fillWidth: true
-                                }
-                            }
-                        }
-
-                        // Feature 4: Unified Shortcuts & Physics
-                        Rectangle {
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
-                            radius: 12
-                            clip: true
-                            color: Theme.mix(Theme.glassCard, Theme.accent, 0.05)
-                            border.color: Theme.alpha(Theme.accent, 0.28)
-                            border.width: 1
-
-                            Rectangle {
-                                z: 2
-                                anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right
-                                anchors.leftMargin: 14; anchors.rightMargin: 14; height: 1
-                                color: Theme.alpha(Theme.accent, 0.35)
-                            }
-
-                            ColumnLayout {
-                                anchors.fill: parent
-                                anchors.margins: 14
-                                spacing: 6
-
-                                RowLayout {
-                                    spacing: 8
-                                    Rectangle {
-                                        width: 30
-                                        height: 30
-                                        radius: 8
-                                        color: Theme.alpha(Theme.accent, 0.14)
-                                        Image { anchors.centerIn: parent; width: 16; height: 16; source: window.speedSvg }
-                                    }
-                                    ColumnLayout {
-                                        spacing: 1
-                                        Text { text: "Single-Event Escape Logic"; font.pixelSize: 13; font.bold: true; color: Theme.foreground }
-                                        Text { text: "Reliable View Dismissal"; font.pixelSize: 10; color: Theme.accent }
-                                    }
-                                }
-
-                                Text {
-                                    text: "Eliminated ambiguous shortcut collisions across nested views. Pressing Esc at any time instantly collapses expanded search inputs, launchers, and full-screen modals."
-                                    font.pixelSize: 11
-                                    color: Theme.muted
-                                    wrapMode: Text.WordWrap
-                                    Layout.fillWidth: true
                                 }
                             }
                         }
@@ -1205,11 +1244,12 @@ FloatingWindow {
 
                     // Keybinds Model Helper
                     readonly property var rawBinds: [
+                        { title: "Quick Paste Tooltip", desc: "Cursor popup of recent copied texts & links", keys: ["Super", "V"], cmd: "bash ~/.hyprconf/hypr/scripts/sh/qs-quickpaste.sh &" },
                         { title: "Terminal", desc: "Open Kitty terminal emulator", keys: ["Super", "Enter"], cmd: "kitty &" },
                         { title: "Floating Terminal", desc: "Open Kitty in a floating window", keys: ["Super", "Shift", "Enter"], cmd: "hyprctl dispatch exec [float] kitty" },
                         { title: "File Manager", desc: "Launch Dolphin file explorer", keys: ["Super", "E"], cmd: "dolphin &" },
                         { title: "Application Launcher", desc: "Toggle Dynamic Island panoramic launcher", keys: ["Super", "D"], cmd: "qs ipc -c island call island toggleLauncher" },
-                        { title: "Wallpaper Studio", desc: "Browse and apply wallpapers with live palette generation", keys: ["Super", "Shift", "W"], cmd: "qs ipc -c island call island openWallpaper" },
+                        { title: "Wallpaper Studio", desc: "Browse and apply wallpapers with live palette generation", keys: ["Super", "W"], cmd: "bash ~/.hyprconf/hypr/scripts/sh/qs-wallpaper.sh &" },
                         { title: "Settings Studio", desc: "Open Quickshell unified Settings Studio", keys: ["Super", "S"], cmd: "bash ~/.hyprconf/hypr/scripts/sh/qs-settings.sh &" },
                         { title: "Package Updater", desc: "Open native Quickshell package updater", keys: ["Ctrl", "U"], cmd: "bash ~/.hyprconf/hypr/scripts/sh/qs-updater.sh &" },
                         { title: "Keybinds Cheatsheet", desc: "Display full interactive cheatsheet overlay", keys: ["Super", "Shift", "H"], cmd: "qs ipc -c island call island openKeybinds" },

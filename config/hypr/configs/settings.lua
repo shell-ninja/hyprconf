@@ -5,28 +5,28 @@
 -- Input
 hl.config({
     input = {
-        kb_layout  = "us",
-        kb_variant = "",
-        kb_model   = "",
-        kb_options = "",
-        kb_rules   = "",
+        kb_layout                   = "us",
+        kb_variant                  = "",
+        kb_model                    = "",
+        kb_options                  = "",
+        kb_rules                    = "",
 
-        repeat_rate         = 40,
-        repeat_delay        = 200,
-        numlock_by_default  = true,
-        left_handed         = false,
-        follow_mouse        = 1,
+        repeat_rate                 = 40,
+        repeat_delay                = 200,
+        numlock_by_default          = true,
+        left_handed                 = false,
+        follow_mouse                = 1,
         float_switch_override_focus = false,
 
-        sensitivity = 0.0, -- -1.0 – 1.0, 0 = no modification
+        sensitivity                 = 0, -- -1.0 – 1.0, 0 = no modification
 
-        touchpad = {
-            disable_while_typing  = true,
-            natural_scroll        = true,
-            clickfinger_behavior  = false,
+        touchpad                    = {
+            disable_while_typing    = true,
+            natural_scroll          = true,
+            clickfinger_behavior    = false,
             middle_button_emulation = true,
-            tap_to_click          = true,
-            drag_lock             = false,
+            tap_to_click            = true,
+            drag_lock               = false,
         },
     },
 })
@@ -41,16 +41,16 @@ hl.gesture({
 -- Misc
 hl.config({
     misc = {
-        force_default_wallpaper = -1,   -- -1 keeps default, 0 or 1 disables anime mascot
-        disable_hyprland_logo   = true,
-        disable_splash_rendering = true,
-        vrr                     = 2,
-        mouse_move_enables_dpms = true,
-        enable_swallow          = true,
-        swallow_regex           = "^(kitty)$",
-        focus_on_activate       = false,
+        force_default_wallpaper    = -1, -- -1 keeps default, 0 or 1 disables anime mascot
+        disable_hyprland_logo      = true,
+        disable_splash_rendering   = true,
+        vrr                        = 2,
+        mouse_move_enables_dpms    = true,
+        enable_swallow             = true,
+        swallow_regex              = "^(kitty)$",
+        focus_on_activate          = false,
         initial_workspace_tracking = 0,
-        middle_click_paste      = false,
+        middle_click_paste         = false,
     },
 })
 
@@ -66,7 +66,7 @@ hl.config({
 -- XWayland
 hl.config({
     xwayland = {
-        enabled           = true,
+        enabled            = true,
         force_zero_scaling = true,
     },
 })
@@ -74,11 +74,11 @@ hl.config({
 -- Cursor
 hl.config({
     cursor = {
-        inactive_timeout        = 20,
-        sync_gsettings_theme    = true,
-        no_hardware_cursors     = false,
-        enable_hyprcursor       = true,
+        inactive_timeout         = 20,
+        sync_gsettings_theme     = true,
+        no_hardware_cursors      = true,
+        enable_hyprcursor        = true,
         warp_on_change_workspace = 2,
-        no_warps                = true,
+        no_warps                 = true,
     },
 })

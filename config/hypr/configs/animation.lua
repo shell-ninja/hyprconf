@@ -37,8 +37,8 @@ hl.curve("md3_accel", {
 hl.curve("elegant_bounce", {
     type = "bezier",
     points = {
-        { 0.03, 1.53 },
-        { 0.25, 0.91 },
+        { 0.55, 1.38 },
+        { 0.24, 1.02 },
     },
 })
 
@@ -128,9 +128,9 @@ hl.curve("test", {
 hl.animation({
     leaf = "windowsIn",
     enabled = 1,
-    speed = 3.4,
-    bezier = "slide_glide",
-    style = "slide",
+    speed = 6,
+    bezier = "elegant_bounce",
+    style = "slide down",
 })
 
 hl.animation({
@@ -144,7 +144,7 @@ hl.animation({
 hl.animation({
     leaf = "windowsMove",
     enabled = 1,
-    speed = 3.4,
+    speed = 1,
     bezier = "slide_move",
     style = "slide",
 })
@@ -191,8 +191,8 @@ hl.animation({
 hl.animation({
     leaf = "workspaces",
     enabled = 1,
-    speed = 4.8,
-    bezier = "expo_out",
+    speed = 8,
+    bezier = "fluent_decel",
     style = "slidevert",
 })
 
