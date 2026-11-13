@@ -391,6 +391,7 @@ FloatingWindow {
     property var liveAppearance: ({
         border: 2,
         dual_tone_border: true,
+        sketch_transition: true,
         rounding: 16,
         inner_gap: 4,
         outer_gap: 10,
@@ -3756,7 +3757,46 @@ FloatingWindow {
                             }
                         }
 
-                        // ── 2. Interactive Cubic Bezier Graph & Live Runner ─────
+                        // ── 2. Wallpaper Sketch & Contour Transition Switch ────
+                        SettingCard {
+                            title: "Wallpaper Sketch & Drawing Transition"
+                            description: "Dynamic dual-pass line-art contour drawing sweep across the screen before blooming into full color wallpaper."
+
+                            RowLayout {
+                                width: parent.width
+
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 3
+
+                                    Text {
+                                        text: "Enable 2-Stage Sketch Transition"
+                                        color: Theme.foreground
+                                        font.family: "Outfit"
+                                        font.pixelSize: 13
+                                    }
+
+                                    Text {
+                                        text: "Sweeps an obsidian sketch of characters/art across the display (~0.6s), then smoothly blooms into full color"
+                                        color: Theme.alpha(Theme.foreground, 0.55)
+                                        font.family: "Outfit"
+                                        font.pixelSize: 11
+                                        wrapMode: Text.WordWrap
+                                        Layout.fillWidth: true
+                                    }
+                                }
+
+                                CapsuleSwitch {
+                                    checked: window.liveAppearance.sketch_transition !== false
+                                    onToggled: function(c) {
+                                        window.liveAppearance.sketch_transition = c
+                                        window.markHypr("sketch_transition", c)
+                                    }
+                                }
+                            }
+                        }
+
+                        // ── 3. Interactive Cubic Bezier Graph & Live Runner ─────
                         SettingCard {
                             title: "Cubic Bezier Velocity Curve & Easing Simulator"
                             description: "Interactive visual cubic bezier curve editor with active control points (P₀, P₁, P₂, P₃) and real-time physical easing runner."

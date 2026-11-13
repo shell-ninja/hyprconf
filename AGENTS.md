@@ -203,6 +203,8 @@ All helper scripts reside under `config/hypr/scripts/`:
 | `py/hypr-settings-backend.py` | Settings Studio IPC backend for blur, wobble, motion blur, and glow |
 | `py/paste-emoji.py` | Background clipboard copy, window refocus, and auto-paste dispatcher |
 | `py/weather.py` | Open-Meteo weather background worker and JSON cache updater |
+| `py/wallpaper-sketch.py` | Dual-pass line-art sketch generator and cache for 2-stage wallpaper transitions |
+| `py/wallfx.py` | Native Quickshell wallpaper shader transition maps generator (perfil outline & contagio colonies) |
 | `sh/caffeine-manager.sh` | Toggles Hypridle inhibition for uninterrupted display |
 | `sh/hyprsunset-manager.sh`| 3-stage blue light night filter manager (Off / Always On / Scheduled) |
 

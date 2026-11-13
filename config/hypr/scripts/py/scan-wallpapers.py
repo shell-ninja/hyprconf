@@ -92,6 +92,32 @@ def get_video_thumb(video_path: str, mtime: float) -> str:
     return ""
 
 
+def get_image_thumb(img_path: str, mtime: float) -> str:
+    """Generate or retrieve fast cached 400x230 thumbnail for static image wallpapers."""
+    digest = hashlib.sha1(f"{img_path}_{mtime}".encode()).hexdigest()[:14]
+    thumb_path = str(THUMB_CACHE_DIR / f"img_{digest}.jpg")
+    if os.path.exists(thumb_path) and os.path.getsize(thumb_path) > 500:
+        return thumb_path
+
+    try:
+        from PIL import Image
+        with Image.open(img_path) as im:
+            w, h = im.size
+            scale = max(400.0 / w, 230.0 / h)
+            nw, nh = int(w * scale + 0.5), int(h * scale + 0.5)
+            im_resized = im.resize((nw, nh), Image.BILINEAR)
+            left = max(0, (nw - 400) // 2)
+            top = max(0, (nh - 230) // 2)
+            cropped = im_resized.crop((left, top, left + 400, top + 230)).convert("RGB")
+            tmp_path = f"{thumb_path}.{os.getpid()}.tmp.jpg"
+            cropped.save(tmp_path, "JPEG", quality=82, optimize=False)
+            os.replace(tmp_path, thumb_path)
+            return thumb_path
+    except Exception:
+        pass
+    return ""
+
+
 def process_entry(entry_tuple):
     filename, fullpath, ext, mtime, size = entry_tuple
     base_name = os.path.splitext(filename)[0]
@@ -99,12 +125,12 @@ def process_entry(entry_tuple):
     size_mb = round(size / (1024 * 1024), 1)
 
     thumb_uri = "file://" + fullpath
-    if ext in VIDEO_EXTS:
+    if ext in VIDEO_EXTS or ext in GIF_EXT:
         t_path = get_video_thumb(fullpath, mtime)
         if t_path:
             thumb_uri = "file://" + t_path
-    elif ext in GIF_EXT:
-        t_path = get_video_thumb(fullpath, mtime)
+    elif ext in IMAGE_EXTS:
+        t_path = get_image_thumb(fullpath, mtime)
         if t_path:
             thumb_uri = "file://" + t_path
 
@@ -168,7 +194,7 @@ def scan_directory(target_dir: str, max_depth: int = 1, file_type: str = "all") 
     collected.sort(key=lambda x: x[0].lower())
 
     results = []
-    with ThreadPoolExecutor(max_workers=4) as executor:
+    with ThreadPoolExecutor(max_workers=8) as executor:
         for res in executor.map(process_entry, collected):
             results.append(res)
 
@@ -192,6 +218,22 @@ def main():
 
     items = scan_directory(target, max_depth=args.depth, file_type=args.type)
     print(json.dumps(items))
+
+    # Detached background pre-warmer for wallfx transition maps (low CPU priority)
+    if args.type in ("wallpaper", "static", "image", "all") and os.path.isdir(target):
+        try:
+            wallfx_py = HOME / ".hyprconf" / "hypr" / "scripts" / "py" / "wallfx.py"
+            venv_py = HOME / ".local" / "share" / "hyprconf" / "venv" / "bin" / "python3"
+            py_bin = str(venv_py) if venv_py.exists() else sys.executable
+            if wallfx_py.exists():
+                subprocess.Popen(
+                    ["nice", "-n", "19", py_bin, str(wallfx_py), "warm", str(target)],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    start_new_session=True
+                )
+        except Exception:
+            pass
 
 
 if __name__ == "__main__":

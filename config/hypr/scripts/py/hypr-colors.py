@@ -1369,6 +1369,7 @@ WeatherPage 1.0 WeatherPage.qml
 IslandBatteryIndicator 1.0 IslandBatteryIndicator.qml
 IslandMediaIndicators 1.0 IslandMediaIndicators.qml
 GlassRim 1.0 GlassRim.qml
+WallpaperFx 1.0 WallpaperFx.qml
 """,
             "lockscreen": """singleton Theme 1.0 Theme.qml
 LockscreenSystemGraph 1.0 LockscreenSystemGraph.qml
@@ -1572,7 +1573,7 @@ def sync_hypr_border_only(dual_tone=None):
         colors = get_fallback_colors()
 
     generate_hypr_lua(colors, dual_tone=dual_tone)
-    subprocess.run(["hyprctl", "reload", "config-only"], capture_output=True)
+    subprocess.run(["hyprctl", "eval", "local _s, _m = pcall(dofile, os.getenv('HOME') .. '/.hyprconf/hypr/theme.lua'); if _s and _m and _m.apply_theme then _m.apply_theme() end"], capture_output=True)
 
 
 def sync_theme(wallpaper_path=None, variant=None):
@@ -1615,8 +1616,8 @@ def sync_theme(wallpaper_path=None, variant=None):
     # Sync minimal New Tab themes for Chromium-based & Firefox-based browsers
     generate_browser_ntp_theme(colors)
 
-    # Reload Hyprland configuration to update border colors
-    subprocess.run(["hyprctl", "reload", "config-only"], capture_output=True)
+    # Update Hyprland border colors in-memory via theme.lua (instant, zero compositor shake)
+    subprocess.run(["hyprctl", "eval", "local _s, _m = pcall(dofile, os.getenv('HOME') .. '/.hyprconf/hypr/theme.lua'); if _s and _m and _m.apply_theme then _m.apply_theme() end"], capture_output=True)
 
     # Send SIGUSR1 to reload running Kitty and Neovim instances
     subprocess.run("killall -SIGUSR1 kitty 2>/dev/null || true", shell=True)

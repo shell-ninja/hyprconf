@@ -17,6 +17,7 @@ ShellRoot {
 
     DockMod.DockLayer {}
     WidgetsMod.DesktopWidgetsLayer {}
+    WallpaperFx {}
 
     // Lightweight one-shot package update notification check (avoids 19 MB idle Python daemon)
     Process {

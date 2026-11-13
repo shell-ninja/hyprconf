@@ -8,10 +8,10 @@ welcome_app="$sh_dir/qs-welcome.sh"
 
 # Transition config
 FPS=120
-TYPE="any"
-DURATION=1
+TYPE="none"
+DURATION=0
 BEZIER=".28,.58,.99,.37"
-AWWW_PARAMS="--transition-fps $FPS --transition-type $TYPE --transition-duration $DURATION --transition-bezier $BEZIER"
+AWWW_PARAMS="--transition-fps $FPS --transition-type none --transition-duration 0"
 
 if command -v awww &> /dev/null; then
     ENGINE=awww

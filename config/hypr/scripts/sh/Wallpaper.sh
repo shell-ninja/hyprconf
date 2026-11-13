@@ -31,10 +31,10 @@ fi
 
 # Transition config
 FPS=120
-TYPE="any"
-DURATION=1
+TYPE="none"
+DURATION=0
 BEZIER=".28,.58,.99,.37"
-AWWW_PARAMS="--transition-fps $FPS --transition-type $TYPE --transition-duration $DURATION --transition-bezier $BEZIER"
+AWWW_PARAMS="--transition-fps $FPS --transition-type none --transition-duration 0"
 
 # Parse arguments
 target_wallpaper=""
@@ -89,6 +89,11 @@ done
 
 # Expand tilde if present
 target_wallpaper="${target_wallpaper/#\~/$HOME}"
+
+# If target is a relative path or filename in wallpaper_dir, resolve it
+if [[ -n "$target_wallpaper" && ! -f "$target_wallpaper" && -f "$wallpaper_dir/$target_wallpaper" ]]; then
+    target_wallpaper="$wallpaper_dir/$target_wallpaper"
+fi
 
 # If no valid target specified, pick a random wallpaper
 if [[ -z "$target_wallpaper" || ! -f "$target_wallpaper" ]]; then
@@ -201,7 +206,6 @@ with open(p, 'w') as f:
     fi
 
     qs ipc -c island call island reloadWallpaper 2>/dev/null || true
-    notify-send -a "Wallpaper" -i "video-x-generic" "Live Wallpaper Applied" "$filename" 2>/dev/null || true
 
 else
     # ── STATIC WALLPAPER VIA AWWW / SWWW ─────────────────────────────────────
@@ -225,7 +229,64 @@ with open(p, 'w') as f:
 " 2>/dev/null || true
 
     start_daemon
-    ${ENGINE} img "$target_wallpaper" $AWWW_PARAMS
+
+    # Check if native Quickshell shader transition (wallfx) is enabled (default: true)
+    old_wallpaper=""
+    if command -v awww >/dev/null 2>&1; then
+        old_wallpaper="$(awww query 2>/dev/null | sed -n 's/.*currently displaying: image: //p' | head -n1)"
+    fi
+    if [[ -z "$old_wallpaper" || ! -f "$old_wallpaper" ]]; then
+        old_wallpaper="$(realpath -e "$cache_dir/current_wallpaper.png" 2>/dev/null || true)"
+    fi
+
+    wallfx_enabled=1
+    if [[ -f "$config_file" ]]; then
+        sketch_val=$(grep -oP '"sketch_transition"\s*:\s*\K(true|false)' "$config_file" 2>/dev/null || true)
+        [[ "$sketch_val" == "false" ]] && wallfx_enabled=0
+    fi
+
+    wallfx_played=0
+    if [[ $wallfx_enabled -eq 1 && -n "$old_wallpaper" && -f "$old_wallpaper" && "$old_wallpaper" != "$target_wallpaper" ]]; then
+        fx_kind=""
+        fx_field=""
+        fx_line=""
+
+        # Ultra-fast bash cache check (<25ms, zero python overhead)
+        realp=$(realpath "$target_wallpaper" 2>/dev/null || true)
+        if [[ -n "$realp" && -f "$realp" ]]; then
+            st=$(stat -c "%s|%Y" "$realp" 2>/dev/null || true)
+            key=$(echo -n "${realp}|${st}" | sha1sum 2>/dev/null | cut -c1-16 || true)
+            base="$HOME/.cache/wallfx/perfil/$key"
+            if [[ -f "${base}.json" ]]; then
+                if grep -q '"ok":\s*true' "${base}.json" 2>/dev/null && [[ -f "${base}-campo.png" && -f "${base}-linea.png" ]]; then
+                    fx_kind="perfil"
+                    fx_field="${base}-campo.png"
+                    fx_line="${base}-linea.png"
+                elif grep -q '"ok":\s*false' "${base}.json" 2>/dev/null; then
+                    fx_kind="contagio"
+                    spread_k=$((RANDOM % 12))
+                    fx_field="$HOME/.cache/wallfx/spread/spread-${spread_k}.png"
+                    fx_line="$HOME/.cache/wallfx/spread/spread-${spread_k}-liso.png"
+                fi
+            fi
+        fi
+
+        # Fallback to python3 wallfx.py if uncached
+        if [[ -z "$fx_kind" && -f "$py_dir/wallfx.py" ]]; then
+            read -r fx_kind fx_field fx_line < <(python3 "$py_dir/wallfx.py" elige "$target_wallpaper" 2>/dev/null || true)
+        fi
+
+        if [[ -n "$fx_kind" && -n "$fx_field" && -f "$fx_field" ]]; then
+            res=$(qs ipc -c island call wallfx play "$old_wallpaper" "$target_wallpaper" "$fx_kind" "$fx_field" "${fx_line:-$fx_field}" 2>/dev/null || true)
+            if [[ "$res" == "ok" ]]; then
+                wallfx_played=1
+            fi
+        fi
+    fi
+
+    if [[ $wallfx_played -eq 0 ]]; then
+        ${ENGINE} img "$target_wallpaper" $AWWW_PARAMS
+    fi
 
     # Update cache and symlink
     ln -sf "$target_wallpaper" "$cache_dir/current_wallpaper.png"
@@ -234,6 +295,7 @@ with open(p, 'w') as f:
 
     # Generate thumbnail and quad cache in background
     "$sh_dir/wallcache.sh" &>/dev/null &
+    nohup nice -n 19 python3 "$py_dir/wallfx.py" warm "$wallpaper_dir" &>/dev/null &
 
     # Synchronize theme colors across Quickshell projects, Hyprland, Kitty & Qt (SYNCHRONOUS)
     if [[ -n "$color_variant" ]]; then
@@ -244,5 +306,4 @@ with open(p, 'w') as f:
 
     # Trigger instant wallpaper reload in running Quickshell Island
     qs ipc -c island call island reloadWallpaper 2>/dev/null || true
-    notify-send -a "Wallpaper" -i "$cache_dir/current_wallpaper.png" "Wallpaper Applied" "$filename" 2>/dev/null || true
 fi

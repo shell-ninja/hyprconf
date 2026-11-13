@@ -3,5 +3,6 @@
   "wallpaper_dir": "",
   "current_wallpaper": "",
   "color_variant": "original",
-  "live_wallpaper": ""
+  "live_wallpaper": "",
+  "sketch_transition": true
 }

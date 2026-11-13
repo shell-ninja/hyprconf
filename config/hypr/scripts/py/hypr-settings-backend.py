@@ -256,6 +256,19 @@ def _read_dual_tone_border() -> bool:
     return True
 
 
+def _read_sketch_transition() -> bool:
+    """Return sketch_transition preference from wallpaper_config.json (default True)."""
+    cfg_file = Path.home() / ".local" / "share" / "hyprconf" / "wallpaper_config.json"
+    if cfg_file.exists():
+        try:
+            data = json.loads(cfg_file.read_text())
+            if isinstance(data, dict) and isinstance(data.get("sketch_transition"), bool):
+                return data["sketch_transition"]
+        except Exception:
+            pass
+    return True
+
+
 def read_appearance():
     layout = "scrolling"
     col_width = 1.0
@@ -555,6 +568,7 @@ def read_appearance():
     return {
         "border": float(lua_get(CONFIGS_LUA, "border") or 2),
         "dual_tone_border": _read_dual_tone_border(),
+        "sketch_transition": _read_sketch_transition(),
         "rounding": float(lua_get(CONFIGS_LUA, "rounding") or 8),
         "inner_gap": float(lua_get(CONFIGS_LUA, "inner_gap") or 4),
         "outer_gap": float(lua_get(CONFIGS_LUA, "outer_gap") or 8),
@@ -1073,6 +1087,20 @@ def _apply_appearance(pending, result):
                 result.err(f"dual-tone-border failed: {r.stderr.strip() or r.returncode}")
         else:
             result.err("hypr-colors.py not found — dual-tone border skipped")
+
+    if "sketch_transition" in pending:
+        enabled = bool(pending["sketch_transition"])
+        cfg_file = Path.home() / ".local" / "share" / "hyprconf" / "wallpaper_config.json"
+        try:
+            d = {}
+            if cfg_file.exists():
+                d = json.loads(cfg_file.read_text())
+            d["sketch_transition"] = enabled
+            cfg_file.parent.mkdir(parents=True, exist_ok=True)
+            cfg_file.write_text(json.dumps(d, indent=2))
+            result.ok(f"sketch-transition → {'on' if enabled else 'off'}")
+        except Exception as e:
+            result.err(f"sketch-transition write failed: {e}")
 
     if "roundness" in pending:
         val = str(pending["roundness"])
