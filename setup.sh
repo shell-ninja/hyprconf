@@ -597,6 +597,22 @@ if [[ -f "$island_dir/qmldir" ]]; then
     if ! grep -q "IslandMediaIndicators" "$island_dir/qmldir"; then
         echo "IslandMediaIndicators 1.0 IslandMediaIndicators.qml" >> "$island_dir/qmldir"
     fi
+    if ! grep -q "WallpaperFx" "$island_dir/qmldir"; then
+        echo "WallpaperFx 1.0 WallpaperFx.qml" >> "$island_dir/qmldir"
+    fi
+fi
+
+# Ensure Qt6 RHI shader binaries for wallpaper transitions exist and are compiled
+shaders_dir="$HOME/.hyprconf/quickshell/island/shaders"
+if [[ -d "$shaders_dir" ]]; then
+    qsb_bin="$(command -v qsb 2>/dev/null || echo "/usr/lib/qt6/bin/qsb")"
+    if [[ -x "$qsb_bin" ]]; then
+        for s in wallfx.frag wallfx.vert; do
+            if [[ -f "$shaders_dir/$s" && ( ! -f "$shaders_dir/${s}.qsb" || "$shaders_dir/$s" -nt "$shaders_dir/${s}.qsb" ) ]]; then
+                "$qsb_bin" --qt6 -o "$shaders_dir/${s}.qsb" "$shaders_dir/$s" 2>/dev/null || true
+            fi
+        done
+    fi
 fi
 
 # 4. Bootstrap user settings and sync symlinks into ~/.hyprconf
@@ -715,13 +731,38 @@ for dotfile in "$HOME/.hyprconf"/*; do
     ln -sfn "$dotfile" "$configPath"
 done
 
-# Set permissions for scripts and fish functions
+# Set permissions for scripts, models, and fish functions
 if [[ -d "$scripts_dir" ]]; then
     chmod +x "$scripts_dir"/* "$scripts_dir/sh"/* "$scripts_dir/py"/* 2>/dev/null || true
+    [[ -d "$scripts_dir/models" ]] && chmod 644 "$scripts_dir/models"/* 2>/dev/null || true
     [[ -d "$HOME/.hyprconf/fish/functions" ]] && chmod +x "$HOME/.hyprconf/fish/functions"/* 2>/dev/null
     msg dn "Made all helper scripts executable."
 else
     msg err "Scripts directory not found in $scripts_dir"
+fi
+
+# Setup Python virtualenv for wallpaper transitions (wallfx) if missing or incomplete
+venv_dir="$HOME/.local/share/hyprconf/venv"
+if command -v python3 &>/dev/null; then
+    need_venv=false
+    if [[ ! -x "$venv_dir/bin/python3" ]]; then
+        need_venv=true
+    else
+        if ! "$venv_dir/bin/python3" -c "import PIL, cv2, numpy, onnxruntime" &>/dev/null; then
+            need_venv=true
+        fi
+    fi
+
+    if [[ "$need_venv" == "true" ]]; then
+        msg act "Setting up Python environment for wallpaper transitions (Pillow, OpenCV, ONNX Runtime)..."
+        mkdir -p "$(dirname "$venv_dir")"
+        python3 -m venv --system-site-packages "$venv_dir" 2>/dev/null || python3 -m venv "$venv_dir" 2>/dev/null || true
+        if [[ -x "$venv_dir/bin/pip" ]]; then
+            "$venv_dir/bin/pip" install --quiet --upgrade pip 2>/dev/null || true
+            "$venv_dir/bin/pip" install --quiet pillow numpy opencv-python onnxruntime 2>/dev/null || true
+        fi
+        msg dn "Python environment for wallpaper transitions ready."
+    fi
 fi
 
 # Install Fonts
@@ -1241,6 +1282,11 @@ else
     else
         "$colors_bin" "$wallpaper" &> /dev/null
     fi
+fi
+
+# Pre-warm wallpaper thumbnails and transition maps in background
+if [[ -f "$HOME/.hyprconf/hypr/scripts/py/wallfx.py" && -d "$HOME/.hyprconf/hypr/Wallpaper" ]]; then
+    nohup nice -n 19 python3 "$HOME/.hyprconf/hypr/scripts/py/wallfx.py" warm "$HOME/.hyprconf/hypr/Wallpaper" &>/dev/null &
 fi
 
 # Enable pkgupdate-notifier service if systemd user daemon is active

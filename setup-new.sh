@@ -805,6 +805,20 @@ if [[ -f "$island_dir/qmldir" ]]; then
     grep -q "WifiNetworkDialog" "$island_dir/qmldir" || echo "WifiNetworkDialog 1.0 WifiNetworkDialog.qml" >> "$island_dir/qmldir"
     grep -q "IslandBatteryIndicator" "$island_dir/qmldir" || echo "IslandBatteryIndicator 1.0 IslandBatteryIndicator.qml" >> "$island_dir/qmldir"
     grep -q "IslandMediaIndicators" "$island_dir/qmldir" || echo "IslandMediaIndicators 1.0 IslandMediaIndicators.qml" >> "$island_dir/qmldir"
+    grep -q "WallpaperFx" "$island_dir/qmldir" || echo "WallpaperFx 1.0 WallpaperFx.qml" >> "$island_dir/qmldir"
+fi
+
+# Ensure Qt6 RHI shader binaries for wallpaper transitions exist and are compiled
+shaders_dir="$HOME/.hyprconf/quickshell/island/shaders"
+if [[ -d "$shaders_dir" ]]; then
+    qsb_bin="$(command -v qsb 2>/dev/null || echo "/usr/lib/qt6/bin/qsb")"
+    if [[ -x "$qsb_bin" ]]; then
+        for s in wallfx.frag wallfx.vert; do
+            if [[ -f "$shaders_dir/$s" && ( ! -f "$shaders_dir/${s}.qsb" || "$shaders_dir/$s" -nt "$shaders_dir/${s}.qsb" ) ]]; then
+                "$qsb_bin" --qt6 -o "$shaders_dir/${s}.qsb" "$shaders_dir/$s" >> "$log" 2>&1 || true
+            fi
+        done
+    fi
 fi
 
 local_hyprconf=""
@@ -918,14 +932,39 @@ if command -v lspci &> /dev/null && lspci -k | grep -A 2 -E "(VGA|3D)" | grep -i
     step_done
 fi
 
-# Set permissions for scripts and fish functions
+# Set permissions for scripts, models, and fish functions
 if [[ -d "$scripts_dir" ]]; then
     step_start "Setting executable permissions on scripts"
     chmod +x "$scripts_dir"/* "$scripts_dir/sh"/* "$scripts_dir/py"/* 2>/dev/null || true
+    [[ -d "$scripts_dir/models" ]] && chmod 644 "$scripts_dir/models"/* 2>/dev/null || true
     [[ -d "$HOME/.hyprconf/fish/functions" ]] && chmod +x "$HOME/.hyprconf/fish/functions"/* 2>/dev/null || true
     step_done
 else
     msg err "Scripts directory not found in $scripts_dir"
+fi
+
+# Setup Python virtualenv for wallpaper transitions (wallfx) if missing or incomplete
+venv_dir="$HOME/.local/share/hyprconf/venv"
+if command -v python3 &>/dev/null; then
+    need_venv=false
+    if [[ ! -x "$venv_dir/bin/python3" ]]; then
+        need_venv=true
+    else
+        if ! "$venv_dir/bin/python3" -c "import PIL, cv2, numpy, onnxruntime" &>/dev/null; then
+            need_venv=true
+        fi
+    fi
+
+    if [[ "$need_venv" == "true" ]]; then
+        step_start "Setting up Python environment for wallpaper transitions"
+        mkdir -p "$(dirname "$venv_dir")"
+        python3 -m venv --system-site-packages "$venv_dir" >> "$log" 2>&1 || python3 -m venv "$venv_dir" >> "$log" 2>&1 || true
+        if [[ -x "$venv_dir/bin/pip" ]]; then
+            "$venv_dir/bin/pip" install --quiet --upgrade pip >> "$log" 2>&1 || true
+            "$venv_dir/bin/pip" install --quiet pillow numpy opencv-python onnxruntime >> "$log" 2>&1 || true
+        fi
+        step_done
+    fi
 fi
 
 # Install Fonts
@@ -1313,6 +1352,11 @@ if [[ "$had_hypr_cache" != "true" && "$had_existing_wallpaper" != "true" ]]; the
     step_start "Generating dynamic color palette"
     generate_color_scheme
     step_done
+fi
+
+# Pre-warm wallpaper thumbnails and transition maps in background
+if [[ -f "$HOME/.hyprconf/hypr/scripts/py/wallfx.py" && -d "$HOME/.hyprconf/hypr/Wallpaper" ]]; then
+    nohup nice -n 19 python3 "$HOME/.hyprconf/hypr/scripts/py/wallfx.py" warm "$HOME/.hyprconf/hypr/Wallpaper" >> "$log" 2>&1 &
 fi
 
 # Final system & theme defaults
