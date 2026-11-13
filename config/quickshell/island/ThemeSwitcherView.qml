@@ -26,7 +26,7 @@ Item {
     readonly property string configPath: homeDir + "/.local/share/hyprconf/launcher.json"
     property real wallpaperTimestamp: Date.now()
     readonly property string quadWallPath: "file://" + homeDir + "/.hyprconf/hypr/.cache/wall.quad"
-    readonly property string wallpaperPath: "file://" + homeDir + "/.hyprconf/hypr/.cache/current_wallpaper.png"
+    readonly property string wallpaperPath: "file://" + homeDir + "/.hyprconf/hypr/.cache/current_wallpaper.png?t=" + root.wallpaperTimestamp
 
     property string currentTheme: "style-1"
     property string toastText: ""

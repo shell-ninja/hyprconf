@@ -149,6 +149,14 @@ Rectangle {
     Process { id: actionProc }
 
     // ── WALLPAPER BACKGROUND WITH TRUE ALPHA MASK (RADIUS: 18) ───────────────
+    readonly property FileView _wallWatcher: FileView {
+        path: root.homeDir + "/.hyprconf/hypr/.cache/.wallpaper"
+        watchChanges: true
+        onFileChanged: {
+            root.wallpaperTimestamp = Date.now()
+        }
+    }
+
     Item {
         id: bannerMask
         anchors.fill: parent
@@ -167,11 +175,11 @@ Rectangle {
     Image {
         id: rawWallBg
         anchors.fill: parent
-        source: "file://" + root.homeDir + "/.hyprconf/hypr/.cache/current_wallpaper.png"
+        source: "file://" + root.homeDir + "/.hyprconf/hypr/.cache/current_wallpaper.png?t=" + root.wallpaperTimestamp
         fillMode: Image.PreserveAspectCrop
         sourceSize: Qt.size(444, 120)
-        cache: true
-        asynchronous: true
+        cache: false
+        asynchronous: false
         smooth: true
         visible: false
     }
