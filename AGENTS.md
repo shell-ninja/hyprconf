@@ -183,12 +183,35 @@ Each subproject under `config/quickshell/` runs as an independent Quickshell app
 
 ---
 
+### 9. Dynamic Wallpaper Transition Engine (`WallpaperFx.qml` & `shaders/wallfx.*`)
+- **Main Layer Surface**: [`config/quickshell/island/WallpaperFx.qml`](config/quickshell/island/WallpaperFx.qml) mapped to `WlrLayer.Bottom` on `exclusiveZone = -1` (beneath all docks, bars, and floating islands).
+- **Shader Pipeline (`wallfx.frag` & `wallfx.vert`)**:
+  - Precompiled Qt6 RHI shader binaries: `wallfx.frag.qsb` and `wallfx.vert.qsb` (compiled with `/usr/lib/qt6/bin/qsb --qt6`).
+  - **Outline / Ink-Sketch Mode (`perfil`)**: Subject silhouette ink-trace with signed distance field fill and organic bloom colonies.
+  - **Contagion / Colony Mode (`contagio`)**: Ragged 2D value-noise ember spread for abstract/landscape wallpapers.
+- **Zero Post-Completion Distortion / Shockwave Rule**:
+  - Camera UV coordinates are strictly locked to `1.0` throughout the entire animation timeline (`t = 0.0 -> 1.0`).
+  - Never introduce traveling waves (`exp(-abs(s - T) / ...)`), radial ripple pulses, or UV displacements at `t >= 0.8` or during completion.
+  - `msFade: 0` in `WallpaperFx.qml` with immediate `root.finish()` on completion ensures seamless pixel-identical hand-off to `awww` (`--transition-type none`) without layer cross-fade dipping or unmap shaking.
+- **Subpixel Anti-Aliasing**: Hard ternary threshold cutoffs (`<= Ti ? ... : ...`) are prohibited; all fills and blooms must use `smoothstep(Ti - feather, Ti + feather, val)` to prevent 4px pixel staircase artifacts.
+
+---
+
+### 10. Reactive Asset Caching & View Synchronization
+- **Qt Quick Static Image Cache**: Qt Quick aggressively caches local image file paths by URL string. When an image file (like `current_wallpaper.png`) is updated on disk in-place, components using `source: "file://..."` will not re-render.
+- **Dynamic Cache Buster**: Always append a dynamic timestamp query parameter to in-place mutating files:
+  `source: "file://" + path + "?t=" + root.wallpaperTimestamp` with `cache: false; asynchronous: false`.
+- **File System Watchers**: Use `FileView` watching sentinel indicator files (e.g. `~/.hyprconf/hypr/.cache/.wallpaper`) and bump the timestamp property on `onFileChanged` (applied across `ProfileBanner.qml`, `LauncherView.qml`, and `ThemeSwitcherView.qml`).
+
+---
+
 ## 5. Scripts and Daemons
 
 All helper scripts reside under `config/hypr/scripts/`:
 
 | Script | Purpose |
 |---|---|
+| `sh/Wallpaper.sh` | Core wallpaper switcher, Quickshell IPC transition trigger, and awww orchestrator |
 | `sh/qs-dock.sh` | Dock supervisor (`--start`, `--stop`, `--restart`, `--toggle`) |
 | `sh/qs-island.sh` | Island supervisor and dynamic user resolver |
 | `sh/qs-reload.sh` | Clean reload supervisor: restarts Island, Dock, and Widgets in sequence |
@@ -204,7 +227,8 @@ All helper scripts reside under `config/hypr/scripts/`:
 | `py/paste-emoji.py` | Background clipboard copy, window refocus, and auto-paste dispatcher |
 | `py/weather.py` | Open-Meteo weather background worker and JSON cache updater |
 | `py/wallpaper-sketch.py` | Dual-pass line-art sketch generator and cache for 2-stage wallpaper transitions |
-| `py/wallfx.py` | Native Quickshell wallpaper shader transition maps generator (perfil outline & contagio colonies) |
+| `py/wallfx.py` | Native Quickshell wallpaper shader transition maps generator (fast stdlib cache path & venv runner) |
+| `py/scan-wallpapers.py` | Fast wallpaper metadata scanner and thumbnail generator |
 | `sh/caffeine-manager.sh` | Toggles Hypridle inhibition for uninterrupted display |
 | `sh/hyprsunset-manager.sh`| 3-stage blue light night filter manager (Off / Always On / Scheduled) |
 
@@ -220,6 +244,7 @@ When tasked with implementing features, fixing bugs, or refactoring in this repo
 3. **Prevent Binding Loops**: Always supply `implicitWidth` and `implicitHeight` on custom components. Never bind a parent's size directly to a child that anchors to the parent.
 4. **Clean Input Masks**: On floating panels and layer shells with auto-hide, ensure non-visible parts do not steal pointer clicks. Use dynamic input masks (`MaskRegion`) or collapse dimensions to 3px.
 5. **Use Detached Processes on View Dismissal**: When a QML action dismisses or closes the view (e.g., clicking an emoji or omnibar result), invoke processes using `Quickshell.execDetached([...])`. Binding a process to a local `Process { id: ... }` will kill child subprocesses immediately upon component unmapping.
+6. **Dynamic In-Place File Watchers & Cache-Busting**: When loading local assets that mutate in-place (such as `current_wallpaper.png`), Qt Quick aggressively caches the image by file URL. You must append a dynamic query parameter (`"file://" + path + "?t=" + root.timestamp`) with `cache: false; asynchronous: false`, and use `FileView` watching sentinel indicator files (`~/.hyprconf/hypr/.cache/.wallpaper`) to refresh views instantly.
 
 ### B. Modifying `setup.sh` and Installation Scripts
 1. **Never Clobber Existing User Files**: Use non-clobbering copies or presence checks:
@@ -232,6 +257,11 @@ When tasked with implementing features, fixing bugs, or refactoring in this repo
    - When copying directories, ensure target exists and use `/.`:
      `mkdir -p "$dest" && cp -a "$src/." "$dest/"`
    - Never run `cp -a dir dest/` if `dest/dir` might already exist, as it will nest `dest/dir/dir`.
+4. **Qt6 RHI Shader Verification**: Verify compiled binaries (`wallfx.frag.qsb`, `wallfx.vert.qsb`) exist and are newer than source `.frag`/`.vert` files; compile via `/usr/lib/qt6/bin/qsb --qt6`.
+5. **Python Virtual Environment (`~/.local/share/hyprconf/venv`)**: Heavy scientific dependencies (`Pillow`, `NumPy`, `OpenCV`, `onnxruntime`) must reside in the user isolated venv initialized with `--system-site-packages`. Never install pip packages into the global system python.
+6. **State & Cache Unification**: Keep `wallpaper_config.json` unified by symlinking `~/.local/share/hyprconf/.cache/wallpaper_config.json` to `~/.local/share/hyprconf/wallpaper_config.json` after merging existing keys.
+7. **Model Asset Permissions**: Enforce `chmod 644` on ONNX model files in `config/hypr/scripts/models/*` so they remain readable by unprivileged user processes.
+8. **Background Pre-Warming**: Invoke `nice -n 19 python3 wallfx.py warm ... &` at the end of setup to precompute thumbnail caches in the background.
 
 ### C. Workspace Synchronization
 1. The development repository is the root of the Hyprconf codebase.
@@ -248,3 +278,7 @@ When tasked with implementing features, fixing bugs, or refactoring in this repo
    - Send shortcut: `hyprctl dispatch 'hl.dsp.send_shortcut({ mods = "CTRL", key = "v" })'`
    - Batch evaluation: `hyprctl eval "pcall(dofile, ...) hl.config({ ... })"`
 3. **Compositor Rehydration**: When restoring configuration dynamically (e.g., Normal Mode), re-run `pcall(dofile, configs.lua)`, `pcall(dofile, decoration.lua)`, and `pcall(dofile, animation.lua)` in compositor memory to cleanly re-apply all saved options.
+4. **In-Memory Theme & Border Updates (Prevent Layout Jitter)**: When updating Hyprland active border colors after a wallpaper change, NEVER execute `hyprctl reload config-only`. Compositor reloads trigger window recalculation and visible screen jitter. Always evaluate the active theme module directly in compositor memory:
+   ```bash
+   hyprctl eval "local _s, _m = pcall(dofile, os.getenv('HOME') .. '/.hyprconf/hypr/theme.lua'); if _s and _m and _m.apply_theme then _m.apply_theme() end"
+   ```
