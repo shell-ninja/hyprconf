@@ -677,6 +677,25 @@ ln -sfn "$user_state_dir/welcome-app.json" "$HOME/.hyprconf/hypr/welcome-app.jso
 mkdir -p "$user_state_dir/.cache"
 rm -rf "$HOME/.hyprconf/hypr/.cache" 2>/dev/null || true
 ln -sfn "$user_state_dir/.cache" "$HOME/.hyprconf/hypr/.cache"
+
+# Unify wallpaper_config.json between user state and .cache
+if [[ -f "$user_state_dir/.cache/wallpaper_config.json" && ! -L "$user_state_dir/.cache/wallpaper_config.json" ]]; then
+    python3 -c "
+import json, os
+p1 = '$user_state_dir/wallpaper_config.json'
+p2 = '$user_state_dir/.cache/wallpaper_config.json'
+try:
+    d1 = json.load(open(p1)) if os.path.exists(p1) else {}
+    d2 = json.load(open(p2)) if os.path.exists(p2) else {}
+    d2.update(d1)
+    with open(p1, 'w') as f:
+        json.dump(d2, f, indent=2)
+except Exception:
+    pass
+" 2>/dev/null || true
+    rm -f "$user_state_dir/.cache/wallpaper_config.json"
+fi
+ln -sfn "$user_state_dir/wallpaper_config.json" "$user_state_dir/.cache/wallpaper_config.json"
 msg dn "Synchronized user settings and .cache with ~/.local/share/hyprconf"
 
 # Environment file paths
