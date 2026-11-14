@@ -742,6 +742,13 @@ if [[ -d "$settings_dir" && -d "$lockscreen_dir" ]]; then
     done
 fi
 
+if [[ -d "$bar_dir" && -d "$island_dir" ]]; then
+    target="$bar_dir/island_mod"
+    if [[ ! -e "$target" || ( -L "$target" && "$(readlink "$target")" =~ /home/ ) ]]; then
+        ln -sfn "../island" "$target"
+    fi
+fi
+
 for sub in "$island_dir" "$launcher_dir" "$launcher_theme_dir" "$settings_dir" "$widgets_dir" "$lockscreen_dir" "$dock_dir" "$bar_dir" "$sidebar_dir" "$updater_dir" "$welcome_dir"; do
     [[ -d "$sub" ]] || continue
     [[ ! -e "$sub/Theme.qml" || ( -L "$sub/Theme.qml" && "$(readlink "$sub/Theme.qml")" =~ /home/ ) ]] && ln -sfn "../Theme.qml" "$sub/Theme.qml"

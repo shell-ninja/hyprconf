@@ -4,10 +4,12 @@ import Quickshell.Io
 import QtQuick
 import "./dock_mod" as DockMod
 import "./widgets_mod" as WidgetsMod
+import "./island_mod" as IslandMod
 
 ShellRoot {
     DockMod.DockLayer {}
     WidgetsMod.DesktopWidgetsLayer {}
+    IslandMod.WallpaperFx {}
 
     Process {
         id: pkgNotifyOnceProc

@@ -277,9 +277,16 @@ with open(p, 'w') as f:
         fi
 
         if [[ -n "$fx_kind" && -n "$fx_field" && -f "$fx_field" ]]; then
-            res=$(qs ipc -c island call wallfx play "$old_wallpaper" "$target_wallpaper" "$fx_kind" "$fx_field" "${fx_line:-$fx_field}" 2>/dev/null || true)
+            qs_target="island"
+            if pgrep -f "qs -c bar" >/dev/null 2>&1; then
+                qs_target="bar"
+            fi
+            res=$(qs ipc -c "$qs_target" call wallfx play "$old_wallpaper" "$target_wallpaper" "$fx_kind" "$fx_field" "${fx_line:-$fx_field}" 2>/dev/null || true)
             if [[ "$res" == "ok" ]]; then
                 wallfx_played=1
+            elif [[ "$qs_target" == "island" ]]; then
+                res=$(qs ipc -c bar call wallfx play "$old_wallpaper" "$target_wallpaper" "$fx_kind" "$fx_field" "${fx_line:-$fx_field}" 2>/dev/null || true)
+                [[ "$res" == "ok" ]] && wallfx_played=1
             fi
         fi
     fi
@@ -304,6 +311,8 @@ with open(p, 'w') as f:
         "$py_dir/hypr-colors.py" "$target_wallpaper"
     fi
 
-    # Trigger instant wallpaper reload in running Quickshell Island
-    qs ipc -c island call island reloadWallpaper 2>/dev/null || true
+    # Trigger instant wallpaper reload in running Quickshell Island or Bar
+    if pgrep -f "qs -c island" >/dev/null 2>&1; then
+        qs ipc -c island call island reloadWallpaper >/dev/null 2>&1 || true
+    fi
 fi

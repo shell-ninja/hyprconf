@@ -23,10 +23,13 @@ if [[ ! -e "$HOME/.config/quickshell" && -d "$HOME/.hyprconf/quickshell" ]]; the
     ln -sfn "$HOME/.hyprconf/quickshell" "$HOME/.config/quickshell"
 fi
 
-# Ensure bar has valid symlinks to Theme.qml, colors.json and config.json
+# Ensure bar has valid symlinks to Theme.qml, colors.json, config.json and island_mod
 if [[ -d "$bar_dir" ]]; then
     [[ ! -e "$bar_dir/Theme.qml" ]] && ln -sfn "../Theme.qml" "$bar_dir/Theme.qml"
     [[ ! -e "$bar_dir/colors.json" ]] && ln -sfn "../colors.json" "$bar_dir/colors.json"
+    [[ ! -e "$bar_dir/island_mod" ]] && ln -sfn "../island" "$bar_dir/island_mod"
+    [[ ! -e "$bar_dir/dock_mod" ]] && ln -sfn "../dock" "$bar_dir/dock_mod"
+    [[ ! -e "$bar_dir/widgets_mod" ]] && ln -sfn "../widgets" "$bar_dir/widgets_mod"
     if [[ -f "$user_state" ]]; then
         [[ ! -e "$bar_dir/config.json" ]] && ln -sfn "$user_state" "$bar_dir/config.json"
     fi
@@ -63,7 +66,7 @@ case "$cmd" in
         pkill -9 -f '(^|/)(qs|quickshell)\s+(-c\s+bar|-p\s+.*quickshell/bar)' 2>/dev/null || true
         pkill -f '(^|/)(qs|quickshell)\s+(-c\s+bar|-p\s+.*quickshell/bar)' 2>/dev/null || true
         sleep 0.25
-        nohup qs -c bar -d >/dev/null 2>&1 &
+        qs -c bar -d
         ;;
 
     --toggle)

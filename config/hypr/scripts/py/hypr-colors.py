@@ -1450,11 +1450,14 @@ BarDnd 1.0 widgets/BarDnd.qml
                     except Exception:
                         pass
 
-        # Ensure island and bar have valid relative symlinks to dock and widgets modules
+        # Ensure island and bar have valid relative symlinks to dock, widgets, and island modules
         for shell_name in ("island", "bar"):
             shell_dir = QS_DIR / shell_name
             if shell_dir.exists():
-                for mod_name, folder in (("dock_mod", "dock"), ("widgets_mod", "widgets")):
+                mods = [("dock_mod", "dock"), ("widgets_mod", "widgets")]
+                if shell_name == "bar":
+                    mods.append(("island_mod", "island"))
+                for mod_name, folder in mods:
                     m_link = shell_dir / mod_name
                     target_rel = Path("..") / folder
                     if (QS_DIR / folder).exists():
