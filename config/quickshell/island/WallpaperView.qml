@@ -803,11 +803,7 @@ Item {
             var it = src[i]
             var t = (it.title || it.filename || "").toLowerCase()
             var matchSearch = (!q) || (t.indexOf(q) !== -1)
-            var matchCat = true
-            if (root.catAnime) {
-                matchCat = t.indexOf("anime") !== -1 || t.indexOf("girl") !== -1 || t.indexOf("landscape") !== -1
-            }
-            if (matchSearch && matchCat) {
+            if (matchSearch) {
                 res.push(it)
             }
         }
