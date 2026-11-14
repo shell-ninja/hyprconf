@@ -157,7 +157,7 @@ output = {
     "status": "ok" if remote_ver else "no_remote"
 }
 print(json.dumps(output))
-sys.exit(1 if has_update else 0)
+sys.exit(0)
 ' "$cur_ver" "$BRANCH"
 }
 
@@ -396,8 +396,10 @@ do_update() {
     fi
 
     # Record the new version tag in the update tree before running setup
-    if [[ -n "$target_ver" ]]; then
+    if [[ "$has_upd" == "true" && -n "$target_ver" ]]; then
         echo "$target_ver" > "$src_extracted/.version"
+    elif [[ -f "$src_extracted/.version" ]]; then
+        target_ver="$(cat "$src_extracted/.version" | tr -d '[:space:]')"
     fi
 
     echo -e ":: Running setup and applying updates..."
