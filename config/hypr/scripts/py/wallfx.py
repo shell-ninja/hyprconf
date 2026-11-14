@@ -348,8 +348,15 @@ def _get_ort_session():
     global _ort_session
     if _ort_session is not None:
         return _ort_session
-    silueta_path = os.path.join(HOME, ".local", "share", "rembg", "models", "silueta", "silueta.onnx")
-    if not os.path.exists(silueta_path):
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    candidates = [
+        os.path.join(script_dir, "..", "models", "silueta.onnx"),
+        os.path.join(HOME, ".hyprconf", "hypr", "scripts", "models", "silueta.onnx"),
+        os.path.join(HOME, ".local", "share", "rembg", "models", "silueta", "silueta.onnx"),
+        os.path.join(HOME, ".local", "share", "hyprconf", "models", "silueta.onnx"),
+    ]
+    silueta_path = next((p for p in candidates if os.path.exists(p)), None)
+    if not silueta_path:
         return None
     try:
         ort = importlib.import_module("onnxruntime")
