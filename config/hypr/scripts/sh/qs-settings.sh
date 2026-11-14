@@ -8,7 +8,7 @@ if [[ ! -e "$HOME/.config/quickshell" && -d "$HOME/.hyprconf/quickshell" ]]; the
     ln -sfn "$HOME/.hyprconf/quickshell" "$HOME/.config/quickshell"
 fi
 
-# Ensure settings qmldir includes DockSection and KeybindsSection
+# Ensure settings qmldir includes DockSection, KeybindsSection, BarSection, and UpdateSection
 settings_dir="$HOME/.hyprconf/quickshell/settings"
 if [[ -f "$settings_dir/qmldir" ]]; then
     if ! grep -q "DockSection" "$settings_dir/qmldir"; then
@@ -17,6 +17,21 @@ if [[ -f "$settings_dir/qmldir" ]]; then
     if ! grep -q "KeybindsSection" "$settings_dir/qmldir"; then
         echo "KeybindsSection 1.0 KeybindsSection.qml" >> "$settings_dir/qmldir"
     fi
+    if ! grep -q "BarSection" "$settings_dir/qmldir"; then
+        echo "BarSection 1.0 BarSection.qml" >> "$settings_dir/qmldir"
+    fi
+    if ! grep -q "UpdateSection" "$settings_dir/qmldir"; then
+        echo "UpdateSection 1.0 UpdateSection.qml" >> "$settings_dir/qmldir"
+    fi
+fi
+
+if [ "$1" = "--updates" ] || [ "$1" = "-u" ] || [ "$1" = "--update" ]; then
+    export QS_SETTINGS_SECTION="updates"
+    # Try IPC if settings app is already running
+    if pgrep -f "qs -c settings" >/dev/null 2>&1; then
+        qs ipc -c settings call settings openUpdates 2>/dev/null && exit 0
+    fi
+    shift
 fi
 
 if [ "$1" = "--keybinds" ] || [ "$1" = "-k" ]; then

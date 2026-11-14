@@ -761,6 +761,9 @@ if [[ -f "$settings_dir/qmldir" ]]; then
     if ! grep -q "BarSection" "$settings_dir/qmldir" && [[ -f "$settings_dir/BarSection.qml" ]]; then
         echo "BarSection 1.0 BarSection.qml" >> "$settings_dir/qmldir"
     fi
+    if ! grep -q "UpdateSection" "$settings_dir/qmldir" && [[ -f "$settings_dir/UpdateSection.qml" ]]; then
+        echo "UpdateSection 1.0 UpdateSection.qml" >> "$settings_dir/qmldir"
+    fi
 fi
 if [[ -f "$island_dir/qmldir" ]]; then
     grep -q "KeybindsView" "$island_dir/qmldir" || echo "KeybindsView 1.0 KeybindsView.qml" >> "$island_dir/qmldir"

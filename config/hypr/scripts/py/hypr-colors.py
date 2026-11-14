@@ -1301,6 +1301,7 @@ LockscreenSystemGraph 1.0 LockscreenSystemGraph.qml
 LockscreenAudioVisualizer 1.0 LockscreenAudioVisualizer.qml
 BarSection 1.0 BarSection.qml
 KeybindsSection 1.0 KeybindsSection.qml
+UpdateSection 1.0 UpdateSection.qml
 """,
             "dock": """singleton Theme 1.0 Theme.qml
 DockLayer 1.0 DockLayer.qml

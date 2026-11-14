@@ -64,6 +64,10 @@ hl.bind(mainMod .. " + X", hl.dsp.exec_cmd(qsPower))
 -- Top Bar / Dynamic Island Layout Mode Toggle
 hl.bind(mainMod .. " + CTRL + B", hl.dsp.exec_cmd(qsBar .. " --toggle"))
 
+-- Dotfile Updates & Releases Studio (Settings Studio)
+hl.bind(mainMod .. " + SHIFT + U", hl.dsp.exec_cmd(sh_dir .. "/qs-settings.sh --updates"))
+hl.bind(mainMod .. " + U", hl.dsp.exec_cmd(sh_dir .. "/qs-settings.sh --updates"))
+
 -- System Mode & Game Mode Controls
 hl.bind(mainMod .. " + ALT + G", hl.dsp.exec_cmd(sh_dir .. "/gamemode.sh --toggle"))
 hl.bind(mainMod .. " + ALT + M", hl.dsp.exec_cmd(sh_dir .. "/system-mode.sh --cycle"))

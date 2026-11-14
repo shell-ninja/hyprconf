@@ -2045,6 +2045,7 @@ FloatingWindow {
                         { title: "Application Launcher", desc: "Toggle Dynamic Island panoramic launcher", keys: ["Super", "D"], cmd: "qs ipc -c island call island toggleLauncher" },
                         { title: "Wallpaper Studio", desc: "Browse and apply wallpapers with live palette generation", keys: ["Super", "W"], cmd: "bash ~/.hyprconf/hypr/scripts/sh/qs-wallpaper.sh &" },
                         { title: "Settings Studio", desc: "Open Quickshell unified Settings Studio", keys: ["Super", "S"], cmd: "bash ~/.hyprconf/hypr/scripts/sh/qs-settings.sh &" },
+                        { title: "Dotfile Updates Studio", desc: "Check releases, view changelogs, and update Hyprconf", keys: ["Super", "Shift", "U"], cmd: "bash ~/.hyprconf/hypr/scripts/sh/qs-settings.sh --updates &" },
                         { title: "Package Updater", desc: "Open native Quickshell package updater", keys: ["Ctrl", "U"], cmd: "bash ~/.hyprconf/hypr/scripts/sh/qs-updater.sh &" },
                         { title: "Keybinds Cheatsheet", desc: "Display full interactive cheatsheet overlay", keys: ["Super", "Shift", "H"], cmd: "qs ipc -c island call island openKeybinds" },
                         { title: "Toggle Top Bar / Island", desc: "Switch seamlessly between Dynamic Island and Full Top Bar", keys: ["Super", "Ctrl", "B"], cmd: "bash ~/.hyprconf/hypr/scripts/sh/qs-bar.sh --toggle &" },
