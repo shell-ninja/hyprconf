@@ -42,7 +42,7 @@ Item {
     // Filter controls
     property string activeSort: "toplist"
     property bool catGeneral: true
-    property bool catAnime: false
+    property bool catAnime: true
     property bool catPeople: false
     property string activeRes: "All Res"
     property string activeMode: "wallpaper" // "wallpaper", "live", "wallhaven"
@@ -634,6 +634,9 @@ Item {
         }
         var q = root.searchQuery.trim()
         var sort = root.activeSort
+        if (q.length > 0 && (sort === "toplist" || sort === "relevance" || !sort)) {
+            sort = "relevance"
+        }
         var cat = (root.catGeneral ? "1" : "0") + (root.catAnime ? "1" : "0") + (root.catPeople ? "1" : "0")
         var res = root.activeRes
         onlineScanner.running = false
@@ -751,6 +754,14 @@ Item {
         }
     }
 
+    function focusSearch() {
+        if (root.isBrowsingDirs) {
+            root.closeDirBrowser()
+        }
+        searchEntry.forceActiveFocus()
+        searchEntry.selectAll()
+    }
+
     onAnimProgressChanged: {
         if (animProgress >= 0.85 && active && !isClosing && !searchEntry.activeFocus) {
             root.focusWallpaper()
@@ -759,6 +770,18 @@ Item {
 
     Component.onCompleted: {
         refreshWallpapers()
+    }
+
+    Shortcut {
+        sequence: "Ctrl+L"
+        enabled: root.active
+        onActivated: root.focusSearch()
+    }
+
+    Shortcut {
+        sequence: "Ctrl+F"
+        enabled: root.active
+        onActivated: root.focusSearch()
     }
 
     function applyFilter() {
@@ -821,6 +844,13 @@ Item {
 
     // ── VIM & ARROW KEYBOARD INTERCEPTOR ─────────────────────────────────────
     function handleKey(event) {
+        // Ctrl+L or Ctrl+F: Focus search input field globally
+        if ((event.key === Qt.Key_L || event.key === Qt.Key_F) && (event.modifiers & Qt.ControlModifier)) {
+            event.accepted = true
+            root.focusSearch()
+            return true
+        }
+
         // Handle Directory Browser navigation when active
         if (root.isBrowsingDirs) {
             if (event.key === Qt.Key_Escape) {
@@ -1752,12 +1782,18 @@ Item {
 
                 // 1. Sorting Group (Wallhaven Mode)
                 Repeater {
-                    model: (root.activeMode === "wallhaven") ? [
+                    model: (root.activeMode === "wallhaven") ? (root.searchQuery.trim().length > 0 ? [
+                        { id: "relevance", name: "Relevance" },
                         { id: "toplist", name: "Toplist" },
                         { id: "hot", name: "Hot" },
                         { id: "latest", name: "Latest" },
                         { id: "random", name: "Random" }
-                    ] : []
+                    ] : [
+                        { id: "toplist", name: "Toplist" },
+                        { id: "hot", name: "Hot" },
+                        { id: "latest", name: "Latest" },
+                        { id: "random", name: "Random" }
+                    ]) : []
                     Rectangle {
                         property bool isSelected: root.activeSort === modelData.id
                         width: sortText.implicitWidth + 18
@@ -2346,6 +2382,11 @@ Item {
                         onTextChanged: {
                             root.searchQuery = text
                             if (root.activeMode === "wallhaven") {
+                                if (text.trim().length > 0 && root.activeSort === "toplist") {
+                                    root.activeSort = "relevance"
+                                } else if (text.trim().length === 0 && root.activeSort === "relevance") {
+                                    root.activeSort = "toplist"
+                                }
                                 searchDebounce.restart()
                             } else {
                                 root.applyFilter()
@@ -2353,6 +2394,11 @@ Item {
                         }
 
                         Keys.onPressed: function(event) {
+                            if ((event.key === Qt.Key_L || event.key === Qt.Key_F) && (event.modifiers & Qt.ControlModifier)) {
+                                event.accepted = true
+                                searchEntry.selectAll()
+                                return
+                            }
                             if (root.handleKey(event)) {
                                 event.accepted = true
                             }
@@ -2398,6 +2444,9 @@ Item {
                         cursorShape: Qt.PointingHandCursor
                         onClicked: {
                             searchEntry.text = ""
+                            if (root.activeSort === "relevance") {
+                                root.activeSort = "toplist"
+                            }
                             if (root.activeMode === "wallhaven") {
                                 root.fetchOnlineWallpapers(1)
                             } else {

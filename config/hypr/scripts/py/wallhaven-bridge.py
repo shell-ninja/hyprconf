@@ -47,6 +47,8 @@ def download_thumb(url, item_id):
 
 def search_wallhaven(query="", sorting="toplist", categories="110", resolution="all", page=1):
     """Query Wallhaven API, download thumbnails in parallel, and return item list."""
+    query_clean = str(query or "").strip()
+
     # Categories: fallback to 110 if all toggles off or empty
     cat_str = str(categories).strip() if categories else "110"
     if cat_str in ("000", ""):
@@ -54,25 +56,35 @@ def search_wallhaven(query="", sorting="toplist", categories="110", resolution="
 
     # Sorting normalization
     sort_raw = str(sorting or "").strip().lower()
-    if sort_raw in ("latest", "new"):
-        sort_mode = "date_added"
-    elif sort_raw in ("hot", "views", "favorites", "random", "toplist"):
-        sort_mode = sort_raw
+    if query_clean:
+        # Text searches default to relevance unless user explicitly picked another mode
+        if sort_raw in ("toplist", "relevance", ""):
+            sort_mode = "relevance"
+        elif sort_raw in ("latest", "new"):
+            sort_mode = "date_added"
+        elif sort_raw in ("hot", "views", "favorites", "random"):
+            sort_mode = sort_raw
+        else:
+            sort_mode = "relevance"
     else:
-        sort_mode = "toplist"
-
-    if query and not sorting:
-        sort_mode = "relevance"
+        # Browse mode without search query
+        if sort_raw in ("latest", "new"):
+            sort_mode = "date_added"
+        elif sort_raw in ("hot", "views", "favorites", "random", "toplist"):
+            sort_mode = sort_raw
+        else:
+            sort_mode = "toplist"
 
     params = {
-        "q": query or "",
+        "q": query_clean,
         "sorting": sort_mode,
         "categories": cat_str,
         "purity": "100",  # Strict SFW
         "page": page or 1
     }
 
-    if sort_mode == "toplist":
+    # Only limit to monthly top range when browsing Toplist with NO text query
+    if sort_mode == "toplist" and not query_clean:
         params["topRange"] = "1M"
 
     # Resolution handling
@@ -97,6 +109,16 @@ def search_wallhaven(query="", sorting="toplist", categories="110", resolution="
             sys.stderr.write(f"Wallhaven API returned status code {r.status_code}\n")
             return []
         data = r.json().get("data", [])
+
+        # Smart fallback: if a text search returned 0 results with restrictive categories (e.g. 100),
+        # retry across all categories (111) so user query doesn't produce an empty result due to toggles.
+        if not data and query_clean and cat_str != "111":
+            retry_params = dict(params)
+            retry_params["categories"] = "111"
+            r2 = requests.get(f"{WALLHAVEN_API_BASE}/search", headers=headers, params=retry_params, timeout=12)
+            if r2.status_code == 200:
+                data = r2.json().get("data", [])
+
         if not data:
             return []
 
@@ -190,8 +212,9 @@ def main():
 
     # Search
     p_search = sub.add_parser("search")
+    p_search.add_argument("query_pos", nargs="?", default="", help="Optional positional query")
     p_search.add_argument("--query", default="")
-    p_search.add_argument("--sorting", default="toplist")
+    p_search.add_argument("--sorting", default="")
     p_search.add_argument("--categories", default="110")
     p_search.add_argument("--resolution", default="all")
     p_search.add_argument("--page", type=int, default=1)
@@ -204,8 +227,9 @@ def main():
     args = parser.parse_args()
 
     if args.action == "search":
+        q = (args.query or args.query_pos or "").strip()
         results = search_wallhaven(
-            query=args.query,
+            query=q,
             sorting=args.sorting,
             categories=args.categories,
             resolution=args.resolution,

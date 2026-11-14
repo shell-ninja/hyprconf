@@ -122,6 +122,24 @@ PanelWindow {
         onActivated: root.closeWindow()
     }
 
+    Shortcut {
+        sequence: "Ctrl+L"
+        onActivated: {
+            if (wallpaperView && typeof wallpaperView.focusSearch === "function") {
+                wallpaperView.focusSearch()
+            }
+        }
+    }
+
+    Shortcut {
+        sequence: "Ctrl+F"
+        onActivated: {
+            if (wallpaperView && typeof wallpaperView.focusSearch === "function") {
+                wallpaperView.focusSearch()
+            }
+        }
+    }
+
     IpcHandler {
         target: "wallpaper"
         function close() {
