@@ -430,7 +430,7 @@ CATALOG = [
         "action": "Regenerate Colorscheme",
         "category": "System",
         "icon": "palette",
-        "desc": "Regenerate dynamic Noctalia colors from wallpaper",
+        "desc": "Regenerate dynamic theme colors from wallpaper",
     },
     {
         "combo": "CTRL + U",

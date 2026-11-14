@@ -60,12 +60,6 @@ if string match -qr '^[0-9]+$' "$stl"; and test $stl -ge 1 -a $stl -le (count $s
     # Copy selected preset to active starship.toml
     cp "$prompt_file" "$HOME/.config/starship.toml"
 
-    # Re-apply Noctalia palette if available
-    set -l noctalia_apply "/usr/share/noctalia/assets/templates/starship/apply.sh"
-    if test -x "$noctalia_apply"
-        "$noctalia_apply" 2>/dev/null
-    end
-
     # Set in current environment immediately
     set -gx STARSHIP_CONFIG "$HOME/.config/starship.toml"
 

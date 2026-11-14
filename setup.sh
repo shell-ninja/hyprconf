@@ -402,7 +402,7 @@ existing_theme_lua=$(find_first_existing_file "$HOME/.hyprconf/hypr/theme.lua" "
 existing_colors_sh=$(find_first_existing_file "$HOME/.hyprconf/hypr/scripts/sh/colors.sh" "$HOME/.config/hypr/scripts/sh/colors.sh" || true)
 existing_kitty_colors=$(find_first_existing_file "$HOME/.config/kitty/colors-kitty.conf" "$HOME/.hyprconf/kitty/colors-kitty.conf" || true)
 existing_qt6ct_colors=$(find_first_existing_file "$HOME/.config/qt6ct/colors/theme.conf" || true)
-existing_btop_theme=$(find_first_existing_file "$HOME/.config/btop/themes/noctalia.theme" || true)
+existing_btop_theme=$(find_first_existing_file "$HOME/.config/btop/themes/theme.theme" "$HOME/.hyprconf/btop/themes/theme.theme" || true)
 
 # Detect existing fastfetch configuration
 existing_fastfetch_config=""
@@ -481,7 +481,7 @@ if [[ "$has_config_backup_work" == "true" ]]; then
     [[ -n "$existing_colors_sh" ]] && cp "$existing_colors_sh" "$colors_backup/colors.sh" 2>> "$log"
     [[ -n "$existing_kitty_colors" ]] && cp "$existing_kitty_colors" "$colors_backup/colors-kitty.conf" 2>> "$log"
     [[ -n "$existing_qt6ct_colors" ]] && cp "$existing_qt6ct_colors" "$colors_backup/theme.conf" 2>> "$log"
-    [[ -n "$existing_btop_theme" ]] && cp "$existing_btop_theme" "$colors_backup/noctalia.theme" 2>> "$log"
+    [[ -n "$existing_btop_theme" ]] && cp "$existing_btop_theme" "$colors_backup/theme.theme" 2>> "$log"
 
     [[ -f "$ff_cache_file" ]] && cp -f "$ff_cache_file" "$backup_dir/ffconfig.fish" 2>> "$log"
     [[ -f "$ff_raw_file" ]] && cp -f "$ff_raw_file" "$backup_dir/ffconfig" 2>> "$log"
@@ -675,7 +675,7 @@ fi
 
 # Restore user color palette and themes if user already had them
 if [[ "$had_hypr_cache" == "true" || "$had_existing_wallpaper" == "true" ]]; then
-    if [[ -f "$colors_backup/colors.json" || -f "$colors_backup/theme.lua" || -f "$colors_backup/colors.sh" || -f "$colors_backup/colors-kitty.conf" || -f "$colors_backup/theme.conf" || -f "$colors_backup/noctalia.theme" ]]; then
+    if [[ -f "$colors_backup/colors.json" || -f "$colors_backup/theme.lua" || -f "$colors_backup/colors.sh" || -f "$colors_backup/colors-kitty.conf" || -f "$colors_backup/theme.conf" || -f "$colors_backup/theme.theme" ]]; then
         step_start "Restoring preserved color palette"
         if [[ -f "$colors_backup/colors.json" ]]; then
             cp -f "$colors_backup/colors.json" "$HOME/.hyprconf/quickshell/colors.json"
@@ -693,9 +693,9 @@ if [[ "$had_hypr_cache" == "true" || "$had_existing_wallpaper" == "true" ]]; the
             cp -f "$colors_backup/theme.conf" "$HOME/.config/qt6ct/colors/theme.conf"
             cp -f "$colors_backup/theme.conf" "$HOME/.config/qt5ct/colors/theme.conf"
         fi
-        if [[ -f "$colors_backup/noctalia.theme" ]]; then
+        if [[ -f "$colors_backup/theme.theme" ]]; then
             mkdir -p "$HOME/.config/btop/themes"
-            cp -f "$colors_backup/noctalia.theme" "$HOME/.config/btop/themes/noctalia.theme"
+            cp -f "$colors_backup/theme.theme" "$HOME/.config/btop/themes/theme.theme"
         fi
         step_done
     fi
@@ -1324,7 +1324,7 @@ step_start "Setting up widgets, avatar & cleanup"
 configure_desktop_widgets
 setup_user_avatar
 
-rm -f "$HOME/.hyprconf/hypr/noctalia.lua" "$HOME/.config/hypr/noctalia.lua" 2>/dev/null || true
+rm -f "$HOME/.hyprconf/hypr/noctalia.lua" "$HOME/.config/hypr/noctalia.lua" "$HOME/.hyprconf/btop/themes/noctalia.theme" "$HOME/.config/btop/themes/noctalia.theme" "$HOME/.hyprconf/kitty/themes/noctalia.conf" "$HOME/.config/kitty/themes/noctalia.conf" 2>/dev/null || true
 for d in "$HOME/.hyprconf/gtk-3.0" "$HOME/.hyprconf/gtk-4.0" "$HOME/.config/gtk-3.0" "$HOME/.config/gtk-4.0"; do
     if [[ -d "$d" ]]; then
         rm -f "$d/noctalia.css" "$d/colors.css" 2>/dev/null || true

@@ -83,7 +83,6 @@ others=(
     hyprcursor
     hypridle
     hyprlock
-    noctalia
     waybar
     swaync
 )

@@ -1691,7 +1691,7 @@ FloatingWindow {
                                         }
                                     }
                                     Text {
-                                        text: "Dynamic wallpaper color quantization with 7 Noctalia harmony modes and zero generic emojis."
+                                        text: "Dynamic wallpaper color quantization with 7 color harmony modes and zero generic emojis."
                                         font.pixelSize: 10
                                         color: Theme.muted
                                         wrapMode: Text.WordWrap
@@ -2232,7 +2232,7 @@ FloatingWindow {
                                 }
 
                                 Text {
-                                    text: "Configure notch physics, top bar modules & styling, dock pinning & auto-hide, draggable lockscreen widgets, and Noctalia wallpaper palettes."
+                                    text: "Configure notch physics, top bar modules & styling, dock pinning & auto-hide, draggable lockscreen widgets, and dynamic wallpaper palettes."
                                     font.pixelSize: 11
                                     color: Theme.muted
                                     wrapMode: Text.WordWrap

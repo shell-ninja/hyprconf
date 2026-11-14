@@ -76,7 +76,7 @@ Repository Root
    - `quickshell/colors.json` & `quickshell/Theme.qml`
    - `hypr/theme.lua` (Hyprland active border colors)
    - `kitty/colors-kitty.conf`
-   - `btop/themes/theme.theme` & `noctalia.theme`
+   - `btop/themes/theme.theme`
    - `nvim/lua/matugen.lua` (dispatches `SIGUSR1` to running Neovim instances)
    - GTK3 & GTK4 stylesheets (`gtk-3.0/theme.css`, `gtk-4.0/theme.css`) and signals `xsettingsd` via `SIGHUP`.
 
@@ -140,7 +140,7 @@ Each subproject under `config/quickshell/` runs as an independent Quickshell app
   - `DockSection.qml`: Dock positioning, visibility mode, physics sliders, pinned apps manager.
   - `IslandSection.qml`: Dynamic Island options and notch layout.
   - `LockscreenSection.qml`: Interactive drag & drop canvas positioning.
-  - `ThemeSection.qml`: Wallpaper selector and Noctalia palette switcher.
+  - `ThemeSection.qml`: Wallpaper selector and dynamic palette switcher.
   - `Decoration`: Window Wobble physics, Motion Blur sampling, Window Glow, and Kawase blur variants (`acrylic`, `aurora`, `drops`, `fluid_jar`, `glass`, `haze`, `heat_shimmer`, `ripple`, `water`).
 - **Components**: Reusable UI widgets exported in `quickshell/settings/qmldir` (`ModernSlider.qml`, `CapsuleSwitch.qml`, `IconCard.qml`).
 

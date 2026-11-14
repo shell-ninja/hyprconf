@@ -563,7 +563,7 @@ return {{
 
 
 def generate_kitty_conf(colors):
-    """Write kitty/themes/theme.conf and kitty/themes/noctalia.conf so Kitty stays synchronized."""
+    """Write kitty/themes/theme.conf so Kitty stays synchronized."""
     theme_file = Path(HOME) / ".hyprconf/kitty/themes/theme.conf"
     noctalia_file = Path(HOME) / ".hyprconf/kitty/themes/noctalia.conf"
     lines = []
@@ -593,7 +593,7 @@ def generate_kitty_conf(colors):
     try:
         theme_file.parent.mkdir(parents=True, exist_ok=True)
         theme_file.write_text(content)
-        noctalia_file.write_text(content)
+        noctalia_file.unlink(missing_ok=True)
         print(f"Kitty theme updated: {theme_file}")
     except Exception as e:
         print(f"Warning: Failed writing kitty theme.conf: {e}", file=sys.stderr)
@@ -623,10 +623,10 @@ inactive_colors={row}
     try:
         src.parent.mkdir(parents=True, exist_ok=True)
         src.write_text(content)
-        src_legacy.write_text(content)
+        src_legacy.unlink(missing_ok=True)
         dst_dir.mkdir(parents=True, exist_ok=True)
         dst.write_text(content)
-        dst_legacy.write_text(content)
+        dst_legacy.unlink(missing_ok=True)
     except Exception as e:
         print(f"Warning: Failed writing qt6ct colors: {e}", file=sys.stderr)
 
@@ -915,7 +915,7 @@ def generate_browser_ntp_theme(colors):
 
 
 def generate_btop_theme(colors):
-    """Write btop/themes/theme.theme and btop/themes/noctalia.theme so btop stays synchronized."""
+    """Write btop/themes/theme.theme so btop stays synchronized."""
     theme_file = Path(HOME) / ".hyprconf/btop/themes/theme.theme"
     noctalia_file = Path(HOME) / ".hyprconf/btop/themes/noctalia.theme"
 
@@ -970,11 +970,11 @@ theme[upload_end]="{sec}"
     try:
         theme_file.parent.mkdir(parents=True, exist_ok=True)
         theme_file.write_text(content)
-        noctalia_file.write_text(content)
+        noctalia_file.unlink(missing_ok=True)
         config_themes = Path(HOME) / ".config/btop/themes"
         if config_themes.exists() and not config_themes.is_symlink():
             (config_themes / "theme.theme").write_text(content)
-            (config_themes / "noctalia.theme").write_text(content)
+            (config_themes / "noctalia.theme").unlink(missing_ok=True)
         print(f"Btop theme updated: {theme_file}")
     except Exception as e:
         print(f"Warning: Failed writing btop theme: {e}", file=sys.stderr)

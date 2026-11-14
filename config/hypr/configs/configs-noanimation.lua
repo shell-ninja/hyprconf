@@ -15,11 +15,9 @@ border              = 0
 inner_gap           = 5
 outer_gap           = 10
 
--- Border and theme colors from Noctalia
+-- Border and theme colors
 act_border          = colors.primary
 inact_border        = colors.surface
 
--- Noctalia palette table & backward compatibility globals
-noctalia_colors     = colors
 active              = act_border
 inactive            = inact_border

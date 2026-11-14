@@ -2453,7 +2453,7 @@ Item {
                 }
             }
 
-            // Color Format Variant Selector (Noctalia Shell style Dropdown List)
+            // Color Format Variant Selector (Dropdown List)
             Item {
                 id: variantSelector
                 anchors.right: hubBtn.left

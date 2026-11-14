@@ -998,12 +998,6 @@ function change_style
         # Copy selected preset to active ~/.config/starship.toml
         cp "$prompt_file" "$HOME/.config/starship.toml"
 
-        # Re-apply Noctalia palette if available
-        set -l noctalia_apply "/usr/share/noctalia/assets/templates/starship/apply.sh"
-        if test -x "$noctalia_apply"
-            "$noctalia_apply" 2>/dev/null
-        end
-
         # Set in current environment immediately
         set -gx STARSHIP_CONFIG "$HOME/.config/starship.toml"
 

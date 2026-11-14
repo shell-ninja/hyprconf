@@ -4,7 +4,7 @@
 #
 #  Theming: this app hardcodes no colors. Everything uses libadwaita's named
 #  colors (@accent_color, @window_fg_color, @headerbar_bg_color, ...), so it
-#  picks up whatever Noctalia writes to your GTK4 theme. The CSS provider is
+#  picks up dynamic wallpaper-generated GTK4 tokens. The CSS provider is
 #  loaded exactly as in the original script.
 #
 #  Icons: inline SVG, drawn through a mask so they take the current text color.
@@ -169,7 +169,7 @@ class SvgIcon(Gtk.Widget):
 
 
 # =============================================================================
-#  Theme (named colors only, so Noctalia's GTK colors apply)
+#  Theme (named colors only, so GTK dynamic colors apply)
 # =============================================================================
 
 CSS = """

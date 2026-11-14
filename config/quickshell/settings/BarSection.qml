@@ -2164,7 +2164,7 @@ Item {
             }
             SettingCard {
                 title: "Capsule Aesthetics"
-                description: "Choose between solid accent color fill (Noctalia aesthetic) or translucent obsidian glass"
+                description: "Choose between solid accent color fill or translucent obsidian glass"
 
                 RowLayout {
                     width: parent.width

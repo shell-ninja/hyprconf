@@ -1,6 +1,6 @@
 # 🐱 Kitty Terminal Configuration
 
-A productivity-focused, keyboard-driven Kitty terminal configuration crafted for **Hyprland / Arch Linux**. Featuring smart window splits in current directories, tmux-like instant window zooming, styled powerline tabs, deep mouse-less screen hints, and smooth visual animations synced with Noctalia theming.
+A productivity-focused, keyboard-driven Kitty terminal configuration crafted for **Hyprland / Arch Linux**. Featuring smart window splits in current directories, tmux-like instant window zooming, styled powerline tabs, deep mouse-less screen hints, and smooth visual animations synced with dynamic theming.
 
 ---
 
@@ -28,7 +28,7 @@ A productivity-focused, keyboard-driven Kitty terminal configuration crafted for
 
 - **Modifier Key**: `kitty_mod` is configured to `Ctrl + Shift`.
 - **Typography**: Uses `Caskaydia Cove Nerd Font` at `14.0pt` with automatic bold/italic pairing.
-- **Visuals**: Modern cursor trail (`cursor_trail 1`), 90% opacity (`background_opacity 0.9`) with dynamic opacity support, and 2px borders styled to match the Noctalia theme palette.
+- **Visuals**: Modern cursor trail (`cursor_trail 1`), 90% opacity (`background_opacity 0.9`) with dynamic opacity support, and 2px borders styled to match the active theme palette.
 - **Directory Persistence**: All newly spawned windows, splits, and tabs inherit the current working directory (`--cwd=current`) of the active window.
 
 ---
@@ -38,10 +38,10 @@ A productivity-focused, keyboard-driven Kitty terminal configuration crafted for
 ```text
 ~/.hyprconf/kitty/
 ├── kitty.conf            # Main terminal configuration & bindings
-├── colors-kitty.conf     # Auto-generated color palette (noctalia-colors.sh)
+├── colors-kitty.conf     # Auto-generated color palette (hypr-colors.py)
 ├── colors-matugen.conf   # Matugen-synced palette
 ├── themes/
-│   └── noctalia.conf     # Active Noctalia theme (included at bottom of kitty.conf)
+│   └── theme.conf        # Active theme palette (included at bottom of kitty.conf)
 └── README.md             # This documentation
 ```
 
@@ -51,7 +51,7 @@ The config is symlinked to the standard XDG path:
 ```
 
 ### Live Reloading
-Whenever you modify `kitty.conf` or switch wallpapers via Noctalia, the config can be reloaded instantly without closing your terminal:
+Whenever you modify `kitty.conf` or switch wallpapers, the config can be reloaded instantly without closing your terminal:
 - Press <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>F5</kbd> inside Kitty.
 - Or run: `killall -SIGUSR1 kitty`
 

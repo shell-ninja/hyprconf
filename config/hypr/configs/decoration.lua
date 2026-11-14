@@ -17,7 +17,7 @@ hl.config({
 
         resize_on_border = false,
         allow_tearing    = false,
-        layout           = "dwindle",
+        layout           = "scrolling",
     },
 
     decoration = {
@@ -32,12 +32,12 @@ hl.config({
         dim_special      = 0.25,
         wobble           = {
             enabled          = true,
-            mesh             = 14,
-            stiffness        = 225.0,
-            damping          = 14.0,
-            mass             = 1.0,
-            intensity        = 0.15,
-            value_epsilon    = 0.15,
+            mesh             = 10,
+            stiffness        = 200.0,
+            damping          = 8.0,
+            mass             = 1.81,
+            intensity        = 0.1,
+            value_epsilon    = 0.01,
             velocity_epsilon = 1.2,
         },
 
@@ -59,8 +59,8 @@ hl.config({
 
         blur             = {
             enabled                   = true,
-            size                      = 4,
-            passes                    = 2,
+            size                      = 5,
+            passes                    = 3,
             ignore_opacity            = true,
             new_optimizations         = true,
             xray                      = false,

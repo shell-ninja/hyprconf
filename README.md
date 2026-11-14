@@ -14,7 +14,7 @@
 
 <br>
 
-A streamlined, obsidian-styled **Hyprland** desktop environment powered natively by **Quickshell**. Featuring an interactive morphing **Dynamic Island** notch, zero-latency Wayland layer shell integration, **Material You (M3) / Noctalia** wallpaper-derived color harmonizer, live video wallpapers (`mpvpaper`), and a unified system settings suite.
+A streamlined, obsidian-styled **Hyprland** desktop environment powered natively by **Quickshell**. Featuring an interactive morphing **Dynamic Island** notch, zero-latency Wayland layer shell integration, **Material You (M3)** wallpaper-derived color harmonizer, live video wallpapers (`mpvpaper`), and a unified system settings suite.
 
 > [!NOTE]
 > This repository contains the core dotfiles and configurations. For initial system deployment and automatic dependency installation across Arch/CachyOS/Fedora, visit the **[hyprconf-install](https://github.com/shell-ninja/hyprconf-install)** repository.
@@ -64,7 +64,7 @@ A streamlined, obsidian-styled **Hyprland** desktop environment powered natively
 
 ### Dynamic Theming & System Widgets
 <div align="center">
-  <img src="ss/wallpaper-selector.png" width="49%" alt="Dynamic Island Wallpaper & Noctalia Palette Harmonizer" />
+  <img src="ss/wallpaper-selector.png" width="49%" alt="Dynamic Island Wallpaper & Color Palette Harmonizer" />
   <img src="ss/pkg-updater.png" width="49%" alt="Quickshell System Package Updater" />
 </div>
 
@@ -104,7 +104,7 @@ A streamlined, obsidian-styled **Hyprland** desktop environment powered natively
 - **Obsidian Glass Context Menu**: Right-click any app to toggle "Pin to Dock", launch a new instance, or close active windows.
 - **Settings Studio Customization**: Configure dock position (Bottom, Top, Left, Right), opacity, icon sizes (32px - 64px), pill radius, hide delays, and hover physics (Parabolic Zoom, Float & Lift, Accent Glow, Flat) via the Quickshell Settings App (`DockSection.qml`).
 
-### Noctalia M3 Dynamic Colorscheme (`hypr-colors.py`)
+### Material You (M3) Dynamic Colorscheme (`hypr-colors.py`)
 - **Wallpaper Hue Clustering**: Groups wallpaper pixels into 24 discrete hue bins (15° separation) to discover contrasting color harmonies present in the image.
 - **7 Authentic Variants**:
   - **Vibrant**: Highest chroma saturation boost.
@@ -118,7 +118,7 @@ A streamlined, obsidian-styled **Hyprland** desktop environment powered natively
 
 ### Wallpaper & Live Media Selector (`quickshell/island/WallpaperView.qml`)
 - **Integrated Browser**: Preview and select wallpapers directly within the expanded island.
-- **Color Variant Dropdown**: Choose between the 7 Noctalia variants on the fly with live palette regeneration.
+- **Color Variant Dropdown**: Choose between the 7 color harmony variants on the fly with live palette regeneration.
 - **Live / Video Wallpapers**: Full support for `.mp4`, `.webm`, `.mkv`, and `.gif` using hardware-accelerated `mpvpaper`.
 - **Wallhaven Integration**: Search and sync toplist/hot community wallpapers directly into your local library.
 
@@ -176,7 +176,7 @@ All dotfiles reside under `~/.hyprconf/`:
 │   │   ├── windowrules.lua    # Window & layer rules
 │   │   └── animations.lua     # Bezier curves and animation curves
 │   ├── scripts/
-│   │   ├── py/hypr-colors.py  # Noctalia M3 color harmony extraction engine
+│   │   ├── py/hypr-colors.py  # M3 color harmony extraction engine
 │   │   ├── py/weather.py      # Open-Meteo weather fetcher & daemon
 │   │   ├── sh/qs-dock.sh      # Quickshell Dock lifecycle daemon
 │   │   ├── sh/qs-island.sh    # Dynamic Island controller
