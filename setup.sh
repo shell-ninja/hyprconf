@@ -298,88 +298,6 @@ prompt_backup_wallpapers() {
     fi
 }
 
-prompt_weather_location() {
-    [[ "$non_interactive" == "true" ]] && return 0
-    [[ "$had_existing_lockscreen_json" == "true" ]] && return 0
-    local city=""
-    local country=""
-    if command -v gum &> /dev/null; then
-        city=$(gum input --placeholder "Enter your City (e.g. London, Tokyo, New York)" --header "Weather City / Town (press Enter to skip):" --prompt "  > ")
-        if [[ "$city" =~ , ]]; then
-            country="$(echo "$city" | cut -d',' -f2- | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
-            city="$(echo "$city" | cut -d',' -f1 | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
-        fi
-        if [[ -n "$city" && -z "$country" ]]; then
-            country=$(gum input --placeholder "Enter your Country (e.g. United Kingdom, Japan, USA)" --header "Weather Country:" --prompt "  > ")
-        fi
-    elif [[ -t 0 ]]; then
-        read -r -p "$(echo -e "\e[38;2;0;229;255mEnter your City for weather (leave blank to skip): \e[0m")" city
-        if [[ "$city" =~ , ]]; then
-            country="$(echo "$city" | cut -d',' -f2- | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
-            city="$(echo "$city" | cut -d',' -f1 | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
-        fi
-        if [[ -n "$city" && -z "$country" ]]; then
-            read -r -p "$(echo -e "\e[38;2;0;229;255mEnter your Country: \e[0m")" country
-        fi
-    fi
-    prompted_weather_city="$(echo "$city" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
-    prompted_weather_country="$(echo "$country" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
-}
-
-prompt_island_style() {
-    [[ "$non_interactive" == "true" ]] && return 0
-    [[ "$had_existing_island_json" == "true" ]] && return 0
-    if command -v gum &> /dev/null; then
-        local choice
-        choice=$(gum choose --selected="Prism Blade: Flagship Tactical HUD (Default)" \
-            --header="Select your preferred Dynamic Island style:" \
-            "Prism Blade: Flagship Tactical HUD (Default)" \
-            "Orbital: Curved Dynamic Notch" \
-            "Minimal Rail: Compact Sleek Track")
-        case "$choice" in
-            *"Orbital"*) prompted_island_style="orbital" ;;
-            *"Minimal Rail"*) prompted_island_style="minimal_rail" ;;
-            *) prompted_island_style="prism_blade" ;;
-        esac
-    elif [[ -t 0 ]]; then
-        msg ask "Select your preferred Dynamic Island style:"
-        PS3="$(echo -e '\e[38;2;0;229;255mEnter Dynamic Island style number: \e[0m')"
-        select _ in "Prism Blade (Default)" "Orbital" "Minimal Rail"; do
-            case $REPLY in
-                2) prompted_island_style="orbital"; break ;;
-                3) prompted_island_style="minimal_rail"; break ;;
-                *) prompted_island_style="prism_blade"; break ;;
-            esac
-        done
-    fi
-}
-
-prompt_launcher_style() {
-    [[ "$non_interactive" == "true" ]] && return 0
-    [[ "$had_existing_launcher_json" == "true" ]] && return 0
-    if command -v gum &> /dev/null; then
-        local choice
-        choice=$(gum choose --selected="Style 2: Panoramic Grid (Default)" \
-            --header="Select your preferred App Launcher style:" \
-            "Style 2: Panoramic Grid (Default)" \
-            "Style 1: Slanted Split Quad")
-        if [[ "$choice" =~ "Style 1" ]]; then
-            prompted_launcher_style="style-1"
-        else
-            prompted_launcher_style="style-2"
-        fi
-    elif [[ -t 0 ]]; then
-        msg ask "Select your preferred App Launcher style:"
-        PS3="$(echo -e '\e[38;2;0;229;255mEnter selection number (default Style 2): \e[0m')"
-        select _ in "Style 2: Panoramic Grid" "Style 1: Slanted Split Quad"; do
-            case $REPLY in
-                2) prompted_launcher_style="style-1"; break ;;
-                *) prompted_launcher_style="style-2"; break ;;
-            esac
-        done
-    fi
-}
-
 # Detect root-requiring tasks before starting progress output
 env_updates=""
 if [[ -d "/usr/share/openbangla-keyboard" ]]; then
@@ -432,9 +350,6 @@ if is_interactive_tty; then
 fi
 
 prompt_backup_wallpapers
-prompt_weather_location
-prompt_island_style
-prompt_launcher_style
 
 if [[ "$needs_sudo" == "true" ]]; then
     ensure_sudo_session || log_msg "Sudo authentication unavailable or skipped upfront."

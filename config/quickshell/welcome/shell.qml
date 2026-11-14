@@ -272,6 +272,8 @@ FloatingWindow {
     readonly property string gitSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.foreground + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><line x1="6" y1="9" x2="6" y2="21"/></svg>')
     readonly property string playSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.accent + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>')
     readonly property string clipboardSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.accent + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>')
+    readonly property string panelSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.accent + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="2" y1="7" x2="22" y2="7"/><line x1="12" y1="21" x2="12" y2="17"/></svg>')
+    readonly property string gridSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + Theme.accent + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>')
 
     function whatsNewIcon(name) {
         if (name === "clipboard") return clipboardSvg
@@ -477,6 +479,182 @@ FloatingWindow {
         execDispatcher.running = true
     }
 
+    // ── PERSONALIZATION & SETUP STATE ────────────────────────────────────────
+    property string currentTopPanel: "island" // "island" or "bar"
+    property string currentIslandStyle: "prism_blade" // "prism_blade", "orbital", "minimal_rail"
+    property bool topPanelSavedNotification: false
+
+    property string currentLauncherTheme: "style-2" // "style-2" or "style-1"
+    property bool launcherSavedNotification: false
+
+    property string weatherCity: ""
+    property string weatherCountry: ""
+    property bool weatherSavedNotification: false
+
+    Timer {
+        id: topPanelSavedTimer
+        interval: 3200
+        onTriggered: window.topPanelSavedNotification = false
+    }
+
+    Timer {
+        id: launcherSavedTimer
+        interval: 3200
+        onTriggered: window.launcherSavedNotification = false
+    }
+
+    Timer {
+        id: weatherSavedTimer
+        interval: 3500
+        onTriggered: window.weatherSavedNotification = false
+    }
+
+    // ── CONFIG READERS ───────────────────────────────────────────────────────
+    Process {
+        id: topPanelReader
+        command: ["python3", "-c", "import json, os\n" +
+            "bp = os.path.expanduser('~/.local/share/hyprconf/bar.json')\n" +
+            "ip = os.path.expanduser('~/.local/share/hyprconf/island.json')\n" +
+            "top_panel = 'island'\n" +
+            "style = 'prism_blade'\n" +
+            "if os.path.exists(bp):\n" +
+            "    try: top_panel = json.load(open(bp)).get('top_panel', 'island')\n" +
+            "    except: pass\n" +
+            "if os.path.exists(ip):\n" +
+            "    try: style = json.load(open(ip)).get('style', 'prism_blade')\n" +
+            "    except: pass\n" +
+            "print(json.dumps({'top_panel': top_panel, 'style': style}))"
+        ]
+        running: true
+        stdout: StdioCollector {
+            onTextChanged: {
+                if (!text || text.trim().length === 0) return
+                try {
+                    var d = JSON.parse(text.trim())
+                    if (d.top_panel) window.currentTopPanel = d.top_panel
+                    if (d.style) window.currentIslandStyle = d.style
+                } catch(e) {}
+            }
+        }
+    }
+
+    Process {
+        id: launcherReader
+        command: ["python3", "-c", "import json, os\n" +
+            "lp = os.path.expanduser('~/.local/share/hyprconf/launcher.json')\n" +
+            "theme = 'style-2'\n" +
+            "if os.path.exists(lp):\n" +
+            "    try: theme = json.load(open(lp)).get('theme', 'style-2')\n" +
+            "    except: pass\n" +
+            "print(json.dumps({'theme': theme}))"
+        ]
+        running: true
+        stdout: StdioCollector {
+            onTextChanged: {
+                if (!text || text.trim().length === 0) return
+                try {
+                    var d = JSON.parse(text.trim())
+                    if (d.theme) window.currentLauncherTheme = d.theme
+                } catch(e) {}
+            }
+        }
+    }
+
+    Process {
+        id: weatherReader
+        command: ["python3", "-c", "import json, os\n" +
+            "wp = os.path.expanduser('~/.local/share/hyprconf/lockscreen.json')\n" +
+            "city = ''\n" +
+            "country = ''\n" +
+            "if os.path.exists(wp):\n" +
+            "    try:\n" +
+            "        d = json.load(open(wp)).get('modules', {})\n" +
+            "        city = d.get('weather_city', '') or ''\n" +
+            "        country = d.get('weather_country', '') or ''\n" +
+            "    except: pass\n" +
+            "print(json.dumps({'city': city, 'country': country}))"
+        ]
+        running: true
+        stdout: StdioCollector {
+            onTextChanged: {
+                if (!text || text.trim().length === 0) return
+                try {
+                    var d = JSON.parse(text.trim())
+                    window.weatherCity = d.city || ""
+                    window.weatherCountry = d.country || ""
+                } catch(e) {}
+            }
+        }
+    }
+
+    // ── MUTATION / SWITCH FUNCTIONS ──────────────────────────────────────────
+    function setTopInterface(mode, style) {
+        window.currentTopPanel = mode
+        if (style) window.currentIslandStyle = style
+        var py = "import json, os, subprocess, time\n" +
+            "bp = os.path.expanduser('~/.local/share/hyprconf/bar.json')\n" +
+            "ip = os.path.expanduser('~/.local/share/hyprconf/island.json')\n" +
+            "mode = " + JSON.stringify(mode) + "\n" +
+            "style = " + JSON.stringify(style || "") + "\n" +
+            "try:\n" +
+            "    d = json.load(open(bp)) if os.path.exists(bp) else {}\n" +
+            "    d['top_panel'] = mode\n" +
+            "    with open(bp, 'w') as f: json.dump(d, f, indent=2)\n" +
+            "except Exception as e: pass\n" +
+            "if mode == 'island' and style:\n" +
+            "    try:\n" +
+            "        d = json.load(open(ip)) if os.path.exists(ip) else {}\n" +
+            "        d['style'] = style\n" +
+            "        with open(ip, 'w') as f: json.dump(d, f, indent=2)\n" +
+            "    except Exception as e: pass\n" +
+            "if mode == 'bar':\n" +
+            "    subprocess.run(['pkill', '-9', '-f', 'qs -c island'], stderr=subprocess.DEVNULL)\n" +
+            "    subprocess.run(['pkill', '-9', '-f', 'quickshell.*island'], stderr=subprocess.DEVNULL)\n" +
+            "    subprocess.run(['bash', os.path.expanduser('~/.hyprconf/hypr/scripts/sh/qs-bar.sh'), '--restart'], stderr=subprocess.DEVNULL)\n" +
+            "else:\n" +
+            "    subprocess.run(['qs', 'ipc', '-c', 'bar', 'call', 'bar', 'quit'], stderr=subprocess.DEVNULL)\n" +
+            "    subprocess.run(['bash', os.path.expanduser('~/.hyprconf/hypr/scripts/sh/qs-bar.sh'), '--stop'], stderr=subprocess.DEVNULL)\n" +
+            "    subprocess.run(['pkill', '-9', '-f', '^qs -c bar'], stderr=subprocess.DEVNULL)\n" +
+            "    time.sleep(0.1)\n" +
+            "    res = subprocess.run(['qs', 'ipc', '-c', 'island', 'call', 'island', 'reloadConfig'], stderr=subprocess.DEVNULL)\n" +
+            "    if res.returncode != 0:\n" +
+            "        subprocess.run(['bash', os.path.expanduser('~/.hyprconf/hypr/scripts/sh/qs-island.sh'), '--restart'], stderr=subprocess.DEVNULL)\n"
+        Quickshell.execDetached(["python3", "-c", py])
+        window.topPanelSavedNotification = true
+        topPanelSavedTimer.restart()
+    }
+
+    function setLauncherTheme(themeId) {
+        window.currentLauncherTheme = themeId
+        var jsonStr = JSON.stringify({ "theme": themeId }, null, 2)
+        var py = "import json, os\n" +
+            "for p in [os.path.expanduser('~/.local/share/hyprconf/launcher.json'), os.path.expanduser('~/.hyprconf/quickshell/launcher/config.json')]:\n" +
+            "    try:\n" +
+            "        os.makedirs(os.path.dirname(p), exist_ok=True)\n" +
+            "        with open(p, 'w') as f: f.write('''" + jsonStr + "''')\n" +
+            "    except Exception as e: pass\n"
+        Quickshell.execDetached(["python3", "-c", py])
+        window.launcherSavedNotification = true
+        launcherSavedTimer.restart()
+    }
+
+    function saveWeatherLocation(city, country) {
+        window.weatherCity = (city || "").trim()
+        window.weatherCountry = (country || "").trim()
+        var py = "import json, os, subprocess\n" +
+            "p = os.path.expanduser('~/.local/share/hyprconf/lockscreen.json')\n" +
+            "try:\n" +
+            "    d = json.load(open(p)) if os.path.exists(p) else {}\n" +
+            "    d.setdefault('modules', {})['weather_city'] = " + JSON.stringify(window.weatherCity) + "\n" +
+            "    d['modules']['weather_country'] = " + JSON.stringify(window.weatherCountry) + "\n" +
+            "    with open(p, 'w') as f: json.dump(d, f, indent=4)\n" +
+            "except Exception as e: pass\n" +
+            "subprocess.run(['python3', os.path.expanduser('~/.hyprconf/hypr/scripts/py/weather.py'), '--force'], stderr=subprocess.DEVNULL)\n"
+        Quickshell.execDetached(["python3", "-c", py])
+        window.weatherSavedNotification = true
+        weatherSavedTimer.restart()
+    }
+
     // ── MAIN OBSIDIAN GLASS SURFACE ──────────────────────────────────────────
     Rectangle {
         id: rootSurface
@@ -670,388 +848,891 @@ FloatingWindow {
                 clip: true
 
                 // ═════════════════════════════════════════════════════════════
-                // PAGE 0: OVERVIEW
+                // PAGE 0: OVERVIEW (HOME & PERSONALIZATION)
                 // ═════════════════════════════════════════════════════════════
-                ColumnLayout {
+                Flickable {
+                    id: overviewFlickable
                     anchors.fill: parent
                     visible: window.activePage === 0
-                    spacing: 14
+                    contentWidth: width
+                    contentHeight: overviewLayout.implicitHeight + 20
+                    clip: true
+                    boundsBehavior: Flickable.StopAtBounds
 
-                    Item { Layout.fillHeight: true }
+                    ScrollBar.vertical: ScrollBar {
+                        policy: ScrollBar.AsNeeded
+                    }
 
-                    // Hero Cluster
                     ColumnLayout {
-                        Layout.alignment: Qt.AlignHCenter
+                        id: overviewLayout
+                        width: parent.width - (parent.contentHeight > parent.height ? 10 : 0)
                         spacing: 12
 
-                        // Obsidian glowing avatar halo
-                        Rectangle {
+                        // Hero Cluster
+                        ColumnLayout {
                             Layout.alignment: Qt.AlignHCenter
-                            width: 88
-                            height: 88
-                            radius: 44
-                            color: Theme.alpha(Theme.surface, 0.90)
-                            border.color: Theme.alpha(Theme.accent, 0.40)
-                            border.width: 1.5
-
-                            BrandLogoBadge {
-                                anchors.centerIn: parent
-                                badgeSize: 76
-                                imageMargin: 6
-                                ringColor: Theme.alpha(Theme.accent, 0.28)
-                            }
-                        }
-
-                        Text {
-                            text: "Welcome to Hyprconf"
-                            font.pixelSize: 26
-                            font.bold: true
-                            font.family: "Inter"
-                            font.letterSpacing: -0.5
-                            color: Theme.foreground
-                            Layout.alignment: Qt.AlignHCenter
-                        }
-
-                        Text {
-                            text: "A minimalist, obsidian-themed Hyprland desktop environment built natively with Quickshell."
-                            font.pixelSize: 13
-                            font.family: "Inter"
-                            color: Theme.muted
-                            horizontalAlignment: Text.AlignHCenter
-                            wrapMode: Text.WordWrap
-                            Layout.maximumWidth: 540
-                            Layout.alignment: Qt.AlignHCenter
-                        }
-                    }
-
-                    // 3 Core Pillars Cards
-                    RowLayout {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 120
-                        spacing: 14
-
-                        // Pillar 1: Pure Quickshell
-                        Rectangle {
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
-                            radius: 12
-                            clip: true
-                            color: Theme.glassCard
-                            border.color: Theme.alpha(Theme.foreground, 0.11)
-                            border.width: 1
+                            spacing: 8
 
                             Rectangle {
-                                z: 2
-                                anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right
-                                anchors.leftMargin: 14; anchors.rightMargin: 14; height: 1
-                                color: Theme.glassRimTop
-                            }
+                                Layout.alignment: Qt.AlignHCenter
+                                width: 68
+                                height: 68
+                                radius: 34
+                                color: Theme.alpha(Theme.surface, 0.90)
+                                border.color: Theme.alpha(Theme.accent, 0.40)
+                                border.width: 1.5
 
-                            ColumnLayout {
-                                anchors.fill: parent
-                                anchors.margins: 16
-                                spacing: 8
-
-                                RowLayout {
-                                    spacing: 8
-                                    Image { width: 16; height: 16; source: window.speedSvg }
-                                    Text {
-                                        text: "Pure Quickshell"
-                                        font.pixelSize: 13
-                                        font.bold: true
-                                        color: Theme.foreground
-                                    }
-                                }
-                                Text {
-                                    text: "100% native Qt6/QML Wayland layer surfaces for Dynamic Island, Dock, Launcher, and Lockscreen."
-                                    font.pixelSize: 11
-                                    color: Theme.muted
-                                    wrapMode: Text.WordWrap
-                                    Layout.fillWidth: true
-                                }
-                            }
-                        }
-
-                        // Pillar 2: Obsidian Palette
-                        Rectangle {
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
-                            radius: 12
-                            clip: true
-                            color: Theme.glassCard
-                            border.color: Theme.alpha(Theme.foreground, 0.11)
-                            border.width: 1
-
-                            Rectangle {
-                                z: 2
-                                anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right
-                                anchors.leftMargin: 14; anchors.rightMargin: 14; height: 1
-                                color: Theme.glassRimTop
-                            }
-
-                            ColumnLayout {
-                                anchors.fill: parent
-                                anchors.margins: 16
-                                spacing: 8
-
-                                RowLayout {
-                                    spacing: 8
-                                    Image { width: 16; height: 16; source: window.sparkSvg }
-                                    Text {
-                                        text: "Obsidian Harmony"
-                                        font.pixelSize: 13
-                                        font.bold: true
-                                        color: Theme.foreground
-                                    }
-                                }
-                                Text {
-                                    text: "Dynamic wallpaper color quantization with 7 Noctalia harmony modes and zero generic emojis."
-                                    font.pixelSize: 11
-                                    color: Theme.muted
-                                    wrapMode: Text.WordWrap
-                                    Layout.fillWidth: true
-                                }
-                            }
-                        }
-
-                        // Pillar 3: Physical Springs
-                        Rectangle {
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
-                            radius: 12
-                            clip: true
-                            color: Theme.glassCard
-                            border.color: Theme.alpha(Theme.foreground, 0.11)
-                            border.width: 1
-
-                            Rectangle {
-                                z: 2
-                                anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right
-                                anchors.leftMargin: 14; anchors.rightMargin: 14; height: 1
-                                color: Theme.glassRimTop
-                            }
-
-                            ColumnLayout {
-                                anchors.fill: parent
-                                anchors.margins: 16
-                                spacing: 8
-
-                                RowLayout {
-                                    spacing: 8
-                                    Image { width: 16; height: 16; source: window.slidersSvg }
-                                    Text {
-                                        text: "Spring Physics"
-                                        font.pixelSize: 13
-                                        font.bold: true
-                                        color: Theme.foreground
-                                    }
-                                }
-                                Text {
-                                    text: "Natural physical spring damping on notch expansions, dock slide-outs, and window gestures."
-                                    font.pixelSize: 11
-                                    color: Theme.muted
-                                    wrapMode: Text.WordWrap
-                                    Layout.fillWidth: true
-                                }
-                            }
-                        }
-                    }
-
-                    // Keyboard Layout Configuration Card
-                    Rectangle {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 72
-                        radius: 12
-                        clip: true
-                        color: Theme.glassCard
-                        border.color: Theme.alpha(Theme.foreground, 0.11)
-                        border.width: 1
-
-                        Rectangle {
-                            z: 2
-                            anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right
-                            anchors.leftMargin: 16; anchors.rightMargin: 16; height: 1
-                            color: Theme.glassRimTop
-                        }
-
-                        RowLayout {
-                            anchors.fill: parent
-                            anchors.leftMargin: 16
-                            anchors.rightMargin: 16
-                            spacing: 14
-
-                            // Left Icon
-                            Rectangle {
-                                width: 38
-                                height: 38
-                                radius: 10
-                                color: Theme.alpha(Theme.accent, 0.14)
-                                border.color: Theme.alpha(Theme.accent, 0.30)
-                                border.width: 1
-
-                                Image {
+                                BrandLogoBadge {
                                     anchors.centerIn: parent
-                                    width: 18
-                                    height: 18
-                                    source: window.keyboardSvg
+                                    badgeSize: 58
+                                    imageMargin: 4
+                                    ringColor: Theme.alpha(Theme.accent, 0.28)
                                 }
                             }
 
-                            // Info Cluster
-                            ColumnLayout {
-                                Layout.fillWidth: true
-                                spacing: 3
+                            Text {
+                                text: "Welcome to Hyprconf"
+                                font.pixelSize: 22
+                                font.bold: true
+                                font.family: "Inter"
+                                font.letterSpacing: -0.4
+                                color: Theme.foreground
+                                Layout.alignment: Qt.AlignHCenter
+                            }
 
-                                RowLayout {
-                                    spacing: 8
-                                    Text {
-                                        text: "Keyboard Layout"
-                                        font.pixelSize: 13
-                                        font.bold: true
-                                        color: Theme.foreground
+                            Text {
+                                text: "Configure your primary desktop components below. Selections apply immediately."
+                                font.pixelSize: 12
+                                font.family: "Inter"
+                                color: Theme.muted
+                                horizontalAlignment: Text.AlignHCenter
+                                wrapMode: Text.WordWrap
+                                Layout.maximumWidth: 540
+                                Layout.alignment: Qt.AlignHCenter
+                            }
+                        }
+
+                        // ── 1. Top Interface Configuration Card ─────────────
+                        Rectangle {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 68
+                            radius: 12
+                            clip: true
+                            color: Theme.glassCard
+                            border.color: Theme.alpha(Theme.foreground, 0.11)
+                            border.width: 1
+
+                            Rectangle {
+                                z: 2
+                                anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right
+                                anchors.leftMargin: 16; anchors.rightMargin: 16; height: 1
+                                color: Theme.glassRimTop
+                            }
+
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.leftMargin: 16
+                                anchors.rightMargin: 16
+                                spacing: 14
+
+                                Rectangle {
+                                    width: 36
+                                    height: 36
+                                    radius: 10
+                                    color: Theme.alpha(Theme.accent, 0.14)
+                                    border.color: Theme.alpha(Theme.accent, 0.30)
+                                    border.width: 1
+
+                                    Image {
+                                        anchors.centerIn: parent
+                                        width: 18
+                                        height: 18
+                                        source: window.panelSvg
+                                    }
+                                }
+
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 3
+
+                                    RowLayout {
+                                        spacing: 8
+                                        Text {
+                                            text: "Top Interface"
+                                            font.pixelSize: 13
+                                            font.bold: true
+                                            color: Theme.foreground
+                                        }
+
+                                        Rectangle {
+                                            height: 20
+                                            implicitWidth: activeTopPanelRow.implicitWidth + 12
+                                            radius: 10
+                                            color: Theme.alpha(Theme.accent, 0.15)
+                                            border.color: Theme.alpha(Theme.accent, 0.35)
+                                            border.width: 1
+
+                                            RowLayout {
+                                                id: activeTopPanelRow
+                                                anchors.centerIn: parent
+                                                spacing: 5
+
+                                                Rectangle { width: 6; height: 6; radius: 3; color: "#22c55e" }
+                                                Text {
+                                                    text: window.currentTopPanel === "bar"
+                                                        ? "Top Bar Active"
+                                                        : ("Island • " + (window.currentIslandStyle === "orbital" ? "Orbital" : (window.currentIslandStyle === "minimal_rail" ? "Minimal Rail" : "Prism Blade")))
+                                                    font.pixelSize: 10
+                                                    font.bold: true
+                                                    color: Theme.accent
+                                                }
+                                            }
+                                        }
+
+                                        RowLayout {
+                                            visible: window.topPanelSavedNotification
+                                            spacing: 4
+                                            Image { width: 12; height: 12; source: window.checkSvg }
+                                            Text {
+                                                text: "Applied & Switched"
+                                                font.pixelSize: 10
+                                                font.bold: true
+                                                color: "#22c55e"
+                                            }
+                                        }
                                     }
 
-                                    // Active Layout Badge
+                                    Text {
+                                        text: "Switch seamlessly between Dynamic Island notch styles and Full Top Bar."
+                                        font.pixelSize: 11
+                                        color: Theme.muted
+                                        elide: Text.ElideRight
+                                        Layout.fillWidth: true
+                                    }
+                                }
+
+                                RowLayout {
+                                    spacing: 6
+                                    Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
+
+                                    Repeater {
+                                        model: [
+                                            { id: "prism_blade", mode: "island", label: "Prism Blade" },
+                                            { id: "orbital", mode: "island", label: "Orbital" },
+                                            { id: "minimal_rail", mode: "island", label: "Minimal Rail" },
+                                            { id: "bar", mode: "bar", label: "Top Bar" }
+                                        ]
+
+                                        Rectangle {
+                                            height: 30
+                                            implicitWidth: pillText.implicitWidth + 18
+                                            radius: 8
+                                            readonly property bool isSelected: modelData.mode === "bar"
+                                                ? (window.currentTopPanel === "bar")
+                                                : (window.currentTopPanel === "island" && window.currentIslandStyle === modelData.id)
+                                            color: isSelected ? Theme.accent : (pMa.containsMouse ? Theme.alpha(Theme.foreground, 0.10) : Theme.alpha(Theme.surface, 0.85))
+                                            border.color: isSelected ? Theme.accent : (pMa.containsMouse ? Theme.alpha(Theme.accent, 0.45) : Theme.alpha(Theme.foreground, 0.12))
+                                            border.width: 1
+
+                                            Text {
+                                                id: pillText
+                                                anchors.centerIn: parent
+                                                text: modelData.label
+                                                font.pixelSize: 11
+                                                font.bold: true
+                                                color: parent.isSelected ? Theme.background : Theme.foreground
+                                            }
+
+                                            MouseArea {
+                                                id: pMa
+                                                anchors.fill: parent
+                                                hoverEnabled: true
+                                                cursorShape: Qt.PointingHandCursor
+                                                onClicked: window.setTopInterface(modelData.mode, modelData.id)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // ── 2. App Launcher Configuration Card ──────────────
+                        Rectangle {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 68
+                            radius: 12
+                            clip: true
+                            color: Theme.glassCard
+                            border.color: Theme.alpha(Theme.foreground, 0.11)
+                            border.width: 1
+
+                            Rectangle {
+                                z: 2
+                                anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right
+                                anchors.leftMargin: 16; anchors.rightMargin: 16; height: 1
+                                color: Theme.glassRimTop
+                            }
+
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.leftMargin: 16
+                                anchors.rightMargin: 16
+                                spacing: 14
+
+                                Rectangle {
+                                    width: 36
+                                    height: 36
+                                    radius: 10
+                                    color: Theme.alpha(Theme.accent, 0.14)
+                                    border.color: Theme.alpha(Theme.accent, 0.30)
+                                    border.width: 1
+
+                                    Image {
+                                        anchors.centerIn: parent
+                                        width: 18
+                                        height: 18
+                                        source: window.gridSvg
+                                    }
+                                }
+
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 3
+
+                                    RowLayout {
+                                        spacing: 8
+                                        Text {
+                                            text: "App Launcher"
+                                            font.pixelSize: 13
+                                            font.bold: true
+                                            color: Theme.foreground
+                                        }
+
+                                        Rectangle {
+                                            height: 20
+                                            implicitWidth: activeLauncherRow.implicitWidth + 12
+                                            radius: 10
+                                            color: Theme.alpha(Theme.accent, 0.15)
+                                            border.color: Theme.alpha(Theme.accent, 0.35)
+                                            border.width: 1
+
+                                            RowLayout {
+                                                id: activeLauncherRow
+                                                anchors.centerIn: parent
+                                                spacing: 5
+
+                                                Rectangle { width: 6; height: 6; radius: 3; color: "#22c55e" }
+                                                Text {
+                                                    text: window.currentLauncherTheme === "style-1"
+                                                        ? "Style 1 • Slanted Split"
+                                                        : "Style 2 • Panoramic Grid"
+                                                    font.pixelSize: 10
+                                                    font.bold: true
+                                                    color: Theme.accent
+                                                }
+                                            }
+                                        }
+
+                                        RowLayout {
+                                            visible: window.launcherSavedNotification
+                                            spacing: 4
+                                            Image { width: 12; height: 12; source: window.checkSvg }
+                                            Text {
+                                                text: "Theme Saved"
+                                                font.pixelSize: 10
+                                                font.bold: true
+                                                color: "#22c55e"
+                                            }
+                                        }
+                                    }
+
+                                    Text {
+                                        text: "Choose your preferred application launcher layout."
+                                        font.pixelSize: 11
+                                        color: Theme.muted
+                                        elide: Text.ElideRight
+                                        Layout.fillWidth: true
+                                    }
+                                }
+
+                                RowLayout {
+                                    spacing: 6
+                                    Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
+
+                                    Repeater {
+                                        model: [
+                                            { id: "style-2", label: "Style 2: Panoramic" },
+                                            { id: "style-1", label: "Style 1: Slanted Split" }
+                                        ]
+
+                                        Rectangle {
+                                            height: 30
+                                            implicitWidth: lText.implicitWidth + 18
+                                            radius: 8
+                                            readonly property bool isSelected: window.currentLauncherTheme === modelData.id
+                                            color: isSelected ? Theme.accent : (lMa.containsMouse ? Theme.alpha(Theme.foreground, 0.10) : Theme.alpha(Theme.surface, 0.85))
+                                            border.color: isSelected ? Theme.accent : (lMa.containsMouse ? Theme.alpha(Theme.accent, 0.45) : Theme.alpha(Theme.foreground, 0.12))
+                                            border.width: 1
+
+                                            Text {
+                                                id: lText
+                                                anchors.centerIn: parent
+                                                text: modelData.label
+                                                font.pixelSize: 11
+                                                font.bold: true
+                                                color: parent.isSelected ? Theme.background : Theme.foreground
+                                            }
+
+                                            MouseArea {
+                                                id: lMa
+                                                anchors.fill: parent
+                                                hoverEnabled: true
+                                                cursorShape: Qt.PointingHandCursor
+                                                onClicked: window.setLauncherTheme(modelData.id)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // ── 3. Weather Location Configuration Card ──────────
+                        Rectangle {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 70
+                            radius: 12
+                            clip: true
+                            color: Theme.glassCard
+                            border.color: Theme.alpha(Theme.foreground, 0.11)
+                            border.width: 1
+
+                            Rectangle {
+                                z: 2
+                                anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right
+                                anchors.leftMargin: 16; anchors.rightMargin: 16; height: 1
+                                color: Theme.glassRimTop
+                            }
+
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.leftMargin: 16
+                                anchors.rightMargin: 16
+                                spacing: 14
+
+                                Rectangle {
+                                    width: 36
+                                    height: 36
+                                    radius: 10
+                                    color: Theme.alpha(Theme.accent, 0.14)
+                                    border.color: Theme.alpha(Theme.accent, 0.30)
+                                    border.width: 1
+
+                                    Image {
+                                        anchors.centerIn: parent
+                                        width: 18
+                                        height: 18
+                                        source: window.weatherSvg
+                                    }
+                                }
+
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 3
+
+                                    RowLayout {
+                                        spacing: 8
+                                        Text {
+                                            text: "Weather Location"
+                                            font.pixelSize: 13
+                                            font.bold: true
+                                            color: Theme.foreground
+                                        }
+
+                                        Rectangle {
+                                            height: 20
+                                            implicitWidth: activeWeatherRow.implicitWidth + 12
+                                            radius: 10
+                                            color: Theme.alpha(Theme.accent, 0.15)
+                                            border.color: Theme.alpha(Theme.accent, 0.35)
+                                            border.width: 1
+
+                                            RowLayout {
+                                                id: activeWeatherRow
+                                                anchors.centerIn: parent
+                                                spacing: 5
+
+                                                Rectangle { width: 6; height: 6; radius: 3; color: "#22c55e" }
+                                                Text {
+                                                    text: window.weatherCity.length > 0
+                                                        ? (window.weatherCity + (window.weatherCountry.length > 0 ? (" • " + window.weatherCountry) : ""))
+                                                        : "Not Configured"
+                                                    font.pixelSize: 10
+                                                    font.bold: true
+                                                    color: Theme.accent
+                                                }
+                                            }
+                                        }
+
+                                        RowLayout {
+                                            visible: window.weatherSavedNotification
+                                            spacing: 4
+                                            Image { width: 12; height: 12; source: window.checkSvg }
+                                            Text {
+                                                text: "Saved & Fetched"
+                                                font.pixelSize: 10
+                                                font.bold: true
+                                                color: "#22c55e"
+                                            }
+                                        }
+                                    }
+
+                                    Text {
+                                        text: "Set city & country for desktop forecasts, island metrics & lockscreen."
+                                        font.pixelSize: 11
+                                        color: Theme.muted
+                                        elide: Text.ElideRight
+                                        Layout.fillWidth: true
+                                    }
+                                }
+
+                                RowLayout {
+                                    spacing: 6
+                                    Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
+
+                                    // City Input
                                     Rectangle {
-                                        height: 20
-                                        implicitWidth: activeBadgeRow.implicitWidth + 12
-                                        radius: 10
-                                        color: Theme.alpha(Theme.accent, 0.15)
-                                        border.color: Theme.alpha(Theme.accent, 0.35)
+                                        width: 120
+                                        height: 30
+                                        radius: 8
+                                        color: Theme.alpha(Theme.surface, 0.85)
+                                        border.color: cityInput.activeFocus ? Theme.accent : Theme.alpha(Theme.foreground, 0.12)
+                                        border.width: 1
+
+                                        TextInput {
+                                            id: cityInput
+                                            anchors.fill: parent
+                                            anchors.leftMargin: 8
+                                            anchors.rightMargin: 8
+                                            verticalAlignment: TextInput.AlignVCenter
+                                            font.pixelSize: 11
+                                            font.family: "Inter"
+                                            color: Theme.foreground
+                                            clip: true
+                                            text: window.weatherCity
+                                            Binding on text {
+                                                when: !cityInput.activeFocus
+                                                value: window.weatherCity
+                                            }
+                                            onAccepted: window.saveWeatherLocation(cityInput.text, countryInput.text)
+                                        }
+
+                                        Text {
+                                            anchors.fill: parent
+                                            anchors.leftMargin: 8
+                                            verticalAlignment: Text.AlignVCenter
+                                            text: "City…"
+                                            font.pixelSize: 11
+                                            color: Theme.muted
+                                            visible: cityInput.text.length === 0 && !cityInput.activeFocus
+                                        }
+                                    }
+
+                                    // Country Input
+                                    Rectangle {
+                                        width: 90
+                                        height: 30
+                                        radius: 8
+                                        color: Theme.alpha(Theme.surface, 0.85)
+                                        border.color: countryInput.activeFocus ? Theme.accent : Theme.alpha(Theme.foreground, 0.12)
+                                        border.width: 1
+
+                                        TextInput {
+                                            id: countryInput
+                                            anchors.fill: parent
+                                            anchors.leftMargin: 8
+                                            anchors.rightMargin: 8
+                                            verticalAlignment: TextInput.AlignVCenter
+                                            font.pixelSize: 11
+                                            font.family: "Inter"
+                                            color: Theme.foreground
+                                            clip: true
+                                            text: window.weatherCountry
+                                            Binding on text {
+                                                when: !countryInput.activeFocus
+                                                value: window.weatherCountry
+                                            }
+                                            onAccepted: window.saveWeatherLocation(cityInput.text, countryInput.text)
+                                        }
+
+                                        Text {
+                                            anchors.fill: parent
+                                            anchors.leftMargin: 8
+                                            verticalAlignment: Text.AlignVCenter
+                                            text: "Country…"
+                                            font.pixelSize: 11
+                                            color: Theme.muted
+                                            visible: countryInput.text.length === 0 && !countryInput.activeFocus
+                                        }
+                                    }
+
+                                    // Save Button
+                                    Rectangle {
+                                        height: 30
+                                        implicitWidth: saveRow.implicitWidth + 18
+                                        radius: 8
+                                        color: saveMa.containsMouse ? Theme.accent : Theme.alpha(Theme.accent, 0.18)
+                                        border.color: Theme.accent
                                         border.width: 1
 
                                         RowLayout {
-                                            id: activeBadgeRow
+                                            id: saveRow
                                             anchors.centerIn: parent
                                             spacing: 5
-
-                                            Rectangle {
-                                                width: 6
-                                                height: 6
-                                                radius: 3
-                                                color: "#22c55e"
+                                            Image {
+                                                width: 11
+                                                height: 11
+                                                source: window.checkSvg
                                             }
-
                                             Text {
-                                                text: window.currentKbLayout.toUpperCase() + " • " + window.currentKbName
-                                                font.pixelSize: 10
+                                                text: "Save"
+                                                font.pixelSize: 11
                                                 font.bold: true
-                                                color: Theme.accent
+                                                color: saveMa.containsMouse ? Theme.background : Theme.foreground
                                             }
-                                        }
-                                    }
-
-                                    // Saved toast notification
-                                    RowLayout {
-                                        visible: window.kbSavedNotification
-                                        spacing: 4
-                                        Image {
-                                            width: 12
-                                            height: 12
-                                            source: window.checkSvg
-                                        }
-                                        Text {
-                                            text: "Applied & Saved"
-                                            font.pixelSize: 10
-                                            font.bold: true
-                                            color: "#22c55e"
-                                        }
-                                    }
-                                }
-
-                                Text {
-                                    text: "Choose your preferred layout. Automatically saved to settings.lua and applied live."
-                                    font.pixelSize: 11
-                                    color: Theme.muted
-                                    elide: Text.ElideRight
-                                    Layout.fillWidth: true
-                                }
-                            }
-
-                            // Layout Selectors (Quick Pills + Modal Trigger)
-                            RowLayout {
-                                spacing: 6
-                                Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
-
-                                // Quick chips: US, UK, DE, FR, ES
-                                Repeater {
-                                    model: [
-                                        { code: "us", label: "US" },
-                                        { code: "gb", label: "UK" },
-                                        { code: "de", label: "DE" },
-                                        { code: "fr", label: "FR" },
-                                        { code: "es", label: "ES" }
-                                    ]
-
-                                    Rectangle {
-                                        width: 38
-                                        height: 30
-                                        radius: 8
-                                        readonly property bool isSelected: window.currentKbLayout === modelData.code
-                                        color: isSelected ? Theme.accent : (chipMa.containsMouse ? Theme.alpha(Theme.foreground, 0.10) : Theme.alpha(Theme.surface, 0.85))
-                                        border.color: isSelected ? Theme.accent : (chipMa.containsMouse ? Theme.alpha(Theme.accent, 0.45) : Theme.alpha(Theme.foreground, 0.12))
-                                        border.width: 1
-
-                                        Text {
-                                            anchors.centerIn: parent
-                                            text: modelData.label
-                                            font.pixelSize: 11
-                                            font.bold: true
-                                            color: parent.isSelected ? Theme.background : Theme.foreground
                                         }
 
                                         MouseArea {
-                                            id: chipMa
+                                            id: saveMa
                                             anchors.fill: parent
                                             hoverEnabled: true
                                             cursorShape: Qt.PointingHandCursor
-                                            onClicked: window.setKeyboardLayout(modelData.code)
-                                        }
-                                    }
-                                }
-
-                                // "All Layouts... ▾" button
-                                Rectangle {
-                                    height: 30
-                                    implicitWidth: allLayoutsRow.implicitWidth + 20
-                                    radius: 8
-                                    readonly property bool isCustomActive: !["us", "gb", "de", "fr", "es"].includes(window.currentKbLayout)
-                                    color: isCustomActive
-                                        ? Theme.alpha(Theme.accent, 0.25)
-                                        : (allMa.containsMouse ? Theme.alpha(Theme.foreground, 0.10) : Theme.alpha(Theme.surface, 0.85))
-                                    border.color: isCustomActive ? Theme.accent : (allMa.containsMouse ? Theme.alpha(Theme.accent, 0.45) : Theme.alpha(Theme.foreground, 0.12))
-                                    border.width: 1
-
-                                    RowLayout {
-                                        id: allLayoutsRow
-                                        anchors.centerIn: parent
-                                        spacing: 6
-
-                                        Text {
-                                            text: parent.parent.isCustomActive ? (window.currentKbLayout.toUpperCase() + " ▾") : "All Layouts... ▾"
-                                            font.pixelSize: 11
-                                            font.bold: true
-                                            color: parent.parent.isCustomActive ? Theme.accent : Theme.foreground
-                                        }
-                                    }
-
-                                    MouseArea {
-                                        id: allMa
-                                        anchors.fill: parent
-                                        hoverEnabled: true
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: {
-                                            window.kbSearchQuery = ""
-                                            window.updateFilteredLayouts()
-                                            window.kbModalOpen = true
+                                            onClicked: window.saveWeatherLocation(cityInput.text, countryInput.text)
                                         }
                                     }
                                 }
                             }
                         }
-                    }
 
-                    Item { Layout.fillHeight: true }
+                        // ── 4. Keyboard Layout Configuration Card ───────────
+                        Rectangle {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 68
+                            radius: 12
+                            clip: true
+                            color: Theme.glassCard
+                            border.color: Theme.alpha(Theme.foreground, 0.11)
+                            border.width: 1
+
+                            Rectangle {
+                                z: 2
+                                anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right
+                                anchors.leftMargin: 16; anchors.rightMargin: 16; height: 1
+                                color: Theme.glassRimTop
+                            }
+
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.leftMargin: 16
+                                anchors.rightMargin: 16
+                                spacing: 14
+
+                                Rectangle {
+                                    width: 36
+                                    height: 36
+                                    radius: 10
+                                    color: Theme.alpha(Theme.accent, 0.14)
+                                    border.color: Theme.alpha(Theme.accent, 0.30)
+                                    border.width: 1
+
+                                    Image {
+                                        anchors.centerIn: parent
+                                        width: 18
+                                        height: 18
+                                        source: window.keyboardSvg
+                                    }
+                                }
+
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 3
+
+                                    RowLayout {
+                                        spacing: 8
+                                        Text {
+                                            text: "Keyboard Layout"
+                                            font.pixelSize: 13
+                                            font.bold: true
+                                            color: Theme.foreground
+                                        }
+
+                                        Rectangle {
+                                            height: 20
+                                            implicitWidth: activeBadgeRow.implicitWidth + 12
+                                            radius: 10
+                                            color: Theme.alpha(Theme.accent, 0.15)
+                                            border.color: Theme.alpha(Theme.accent, 0.35)
+                                            border.width: 1
+
+                                            RowLayout {
+                                                id: activeBadgeRow
+                                                anchors.centerIn: parent
+                                                spacing: 5
+
+                                                Rectangle {
+                                                    width: 6
+                                                    height: 6
+                                                    radius: 3
+                                                    color: "#22c55e"
+                                                }
+
+                                                Text {
+                                                    text: window.currentKbLayout.toUpperCase() + " • " + window.currentKbName
+                                                    font.pixelSize: 10
+                                                    font.bold: true
+                                                    color: Theme.accent
+                                                }
+                                            }
+                                        }
+
+                                        RowLayout {
+                                            visible: window.kbSavedNotification
+                                            spacing: 4
+                                            Image {
+                                                width: 12
+                                                height: 12
+                                                source: window.checkSvg
+                                            }
+                                            Text {
+                                                text: "Applied & Saved"
+                                                font.pixelSize: 10
+                                                font.bold: true
+                                                color: "#22c55e"
+                                            }
+                                        }
+                                    }
+
+                                    Text {
+                                        text: "Choose your preferred layout. Automatically saved to settings.lua and applied live."
+                                        font.pixelSize: 11
+                                        color: Theme.muted
+                                        elide: Text.ElideRight
+                                        Layout.fillWidth: true
+                                    }
+                                }
+
+                                RowLayout {
+                                    spacing: 6
+                                    Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
+
+                                    Repeater {
+                                        model: [
+                                            { code: "us", label: "US" },
+                                            { code: "gb", label: "UK" },
+                                            { code: "de", label: "DE" },
+                                            { code: "fr", label: "FR" },
+                                            { code: "es", label: "ES" }
+                                        ]
+
+                                        Rectangle {
+                                            width: 38
+                                            height: 30
+                                            radius: 8
+                                            readonly property bool isSelected: window.currentKbLayout === modelData.code
+                                            color: isSelected ? Theme.accent : (chipMa.containsMouse ? Theme.alpha(Theme.foreground, 0.10) : Theme.alpha(Theme.surface, 0.85))
+                                            border.color: isSelected ? Theme.accent : (chipMa.containsMouse ? Theme.alpha(Theme.accent, 0.45) : Theme.alpha(Theme.foreground, 0.12))
+                                            border.width: 1
+
+                                            Text {
+                                                anchors.centerIn: parent
+                                                text: modelData.label
+                                                font.pixelSize: 11
+                                                font.bold: true
+                                                color: parent.isSelected ? Theme.background : Theme.foreground
+                                            }
+
+                                            MouseArea {
+                                                id: chipMa
+                                                anchors.fill: parent
+                                                hoverEnabled: true
+                                                cursorShape: Qt.PointingHandCursor
+                                                onClicked: window.setKeyboardLayout(modelData.code)
+                                            }
+                                        }
+                                    }
+
+                                    Rectangle {
+                                        height: 30
+                                        implicitWidth: allLayoutsRow.implicitWidth + 20
+                                        radius: 8
+                                        readonly property bool isCustomActive: !["us", "gb", "de", "fr", "es"].includes(window.currentKbLayout)
+                                        color: isCustomActive
+                                            ? Theme.alpha(Theme.accent, 0.25)
+                                            : (allMa.containsMouse ? Theme.alpha(Theme.foreground, 0.10) : Theme.alpha(Theme.surface, 0.85))
+                                        border.color: isCustomActive ? Theme.accent : (allMa.containsMouse ? Theme.alpha(Theme.accent, 0.45) : Theme.alpha(Theme.foreground, 0.12))
+                                        border.width: 1
+
+                                        RowLayout {
+                                            id: allLayoutsRow
+                                            anchors.centerIn: parent
+                                            spacing: 6
+
+                                            Text {
+                                                text: parent.parent.isCustomActive ? (window.currentKbLayout.toUpperCase() + " ▾") : "All Layouts... ▾"
+                                                font.pixelSize: 11
+                                                font.bold: true
+                                                color: parent.parent.isCustomActive ? Theme.accent : Theme.foreground
+                                            }
+                                        }
+
+                                        MouseArea {
+                                            id: allMa
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: {
+                                                window.kbSearchQuery = ""
+                                                window.updateFilteredLayouts()
+                                                window.kbModalOpen = true
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // ── 5. 3 Core Pillars Cards ─────────────────────────
+                        RowLayout {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 100
+                            spacing: 12
+
+                            // Pillar 1: Pure Quickshell
+                            Rectangle {
+                                Layout.fillWidth: true
+                                Layout.fillHeight: true
+                                radius: 12
+                                clip: true
+                                color: Theme.glassCard
+                                border.color: Theme.alpha(Theme.foreground, 0.11)
+                                border.width: 1
+
+                                Rectangle {
+                                    z: 2
+                                    anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right
+                                    anchors.leftMargin: 14; anchors.rightMargin: 14; height: 1
+                                    color: Theme.glassRimTop
+                                }
+
+                                ColumnLayout {
+                                    anchors.fill: parent
+                                    anchors.margins: 14
+                                    spacing: 6
+
+                                    RowLayout {
+                                        spacing: 8
+                                        Image { width: 14; height: 14; source: window.speedSvg }
+                                        Text {
+                                            text: "Pure Quickshell"
+                                            font.pixelSize: 12
+                                            font.bold: true
+                                            color: Theme.foreground
+                                        }
+                                    }
+                                    Text {
+                                        text: "100% native Qt6/QML Wayland layer surfaces for Dynamic Island, Dock, Launcher, and Lockscreen."
+                                        font.pixelSize: 10
+                                        color: Theme.muted
+                                        wrapMode: Text.WordWrap
+                                        Layout.fillWidth: true
+                                    }
+                                }
+                            }
+
+                            // Pillar 2: Obsidian Palette
+                            Rectangle {
+                                Layout.fillWidth: true
+                                Layout.fillHeight: true
+                                radius: 12
+                                clip: true
+                                color: Theme.glassCard
+                                border.color: Theme.alpha(Theme.foreground, 0.11)
+                                border.width: 1
+
+                                Rectangle {
+                                    z: 2
+                                    anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right
+                                    anchors.leftMargin: 14; anchors.rightMargin: 14; height: 1
+                                    color: Theme.glassRimTop
+                                }
+
+                                ColumnLayout {
+                                    anchors.fill: parent
+                                    anchors.margins: 14
+                                    spacing: 6
+
+                                    RowLayout {
+                                        spacing: 8
+                                        Image { width: 14; height: 14; source: window.sparkSvg }
+                                        Text {
+                                            text: "Obsidian Harmony"
+                                            font.pixelSize: 12
+                                            font.bold: true
+                                            color: Theme.foreground
+                                        }
+                                    }
+                                    Text {
+                                        text: "Dynamic wallpaper color quantization with 7 Noctalia harmony modes and zero generic emojis."
+                                        font.pixelSize: 10
+                                        color: Theme.muted
+                                        wrapMode: Text.WordWrap
+                                        Layout.fillWidth: true
+                                    }
+                                }
+                            }
+
+                            // Pillar 3: Physical Springs
+                            Rectangle {
+                                Layout.fillWidth: true
+                                Layout.fillHeight: true
+                                radius: 12
+                                clip: true
+                                color: Theme.glassCard
+                                border.color: Theme.alpha(Theme.foreground, 0.11)
+                                border.width: 1
+
+                                Rectangle {
+                                    z: 2
+                                    anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right
+                                    anchors.leftMargin: 14; anchors.rightMargin: 14; height: 1
+                                    color: Theme.glassRimTop
+                                }
+
+                                ColumnLayout {
+                                    anchors.fill: parent
+                                    anchors.margins: 14
+                                    spacing: 6
+
+                                    RowLayout {
+                                        spacing: 8
+                                        Image { width: 14; height: 14; source: window.slidersSvg }
+                                        Text {
+                                            text: "Spring Physics"
+                                            font.pixelSize: 12
+                                            font.bold: true
+                                            color: Theme.foreground
+                                        }
+                                    }
+                                    Text {
+                                        text: "Natural physical spring damping on notch expansions, dock slide-outs, and window gestures."
+                                        font.pixelSize: 10
+                                        color: Theme.muted
+                                        wrapMode: Text.WordWrap
+                                        Layout.fillWidth: true
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
 
                 // ═════════════════════════════════════════════════════════════
