@@ -63,7 +63,7 @@ case "$cmd" in
         pkill -9 -f '(^|/)(qs|quickshell)\s+(-c\s+bar|-p\s+.*quickshell/bar)' 2>/dev/null || true
         pkill -f '(^|/)(qs|quickshell)\s+(-c\s+bar|-p\s+.*quickshell/bar)' 2>/dev/null || true
         sleep 0.25
-        exec qs -c bar -d
+        nohup qs -c bar -d >/dev/null 2>&1 &
         ;;
 
     --toggle)

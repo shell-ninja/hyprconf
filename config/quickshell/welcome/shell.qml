@@ -590,35 +590,45 @@ FloatingWindow {
     // ── MUTATION / SWITCH FUNCTIONS ──────────────────────────────────────────
     function setTopInterface(mode, style) {
         window.currentTopPanel = mode
-        if (style) window.currentIslandStyle = style
+        if (style && mode === "island") window.currentIslandStyle = style
         var py = "import json, os, subprocess, time\n" +
             "bp = os.path.expanduser('~/.local/share/hyprconf/bar.json')\n" +
             "ip = os.path.expanduser('~/.local/share/hyprconf/island.json')\n" +
             "mode = " + JSON.stringify(mode) + "\n" +
             "style = " + JSON.stringify(style || "") + "\n" +
+            "# 1. Atomically persist bar.json\n" +
             "try:\n" +
             "    d = json.load(open(bp)) if os.path.exists(bp) else {}\n" +
             "    d['top_panel'] = mode\n" +
-            "    with open(bp, 'w') as f: json.dump(d, f, indent=2)\n" +
+            "    with open(bp, 'w', encoding='utf-8') as f:\n" +
+            "        json.dump(d, f, indent=2)\n" +
+            "        f.flush()\n" +
+            "        os.fsync(f.fileno())\n" +
             "except Exception as e: pass\n" +
+            "# 2. Atomically persist island.json if style given\n" +
             "if mode == 'island' and style:\n" +
             "    try:\n" +
             "        d = json.load(open(ip)) if os.path.exists(ip) else {}\n" +
             "        d['style'] = style\n" +
-            "        with open(ip, 'w') as f: json.dump(d, f, indent=2)\n" +
+            "        with open(ip, 'w', encoding='utf-8') as f:\n" +
+            "            json.dump(d, f, indent=2)\n" +
+            "            f.flush()\n" +
+            "            os.fsync(f.fileno())\n" +
             "    except Exception as e: pass\n" +
+            "# 3. Execute daemon swap cleanly\n" +
             "if mode == 'bar':\n" +
-            "    subprocess.run(['pkill', '-9', '-f', 'qs -c island'], stderr=subprocess.DEVNULL)\n" +
-            "    subprocess.run(['pkill', '-9', '-f', 'quickshell.*island'], stderr=subprocess.DEVNULL)\n" +
-            "    subprocess.run(['bash', os.path.expanduser('~/.hyprconf/hypr/scripts/sh/qs-bar.sh'), '--restart'], stderr=subprocess.DEVNULL)\n" +
+            "    subprocess.run(['bash', os.path.expanduser('~/.hyprconf/hypr/scripts/sh/qs-island.sh'), '--stop'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)\n" +
+            "    subprocess.run(['pkill', '-9', '-f', '^qs -c island'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)\n" +
+            "    time.sleep(0.2)\n" +
+            "    subprocess.run(['bash', os.path.expanduser('~/.hyprconf/hypr/scripts/sh/qs-bar.sh'), '--restart'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)\n" +
+            "    subprocess.run(['notify-send', '-a', 'Hyprconf', '-t', '2000', 'Interface Switched', 'Active top panel: Full Top Bar'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)\n" +
             "else:\n" +
-            "    subprocess.run(['qs', 'ipc', '-c', 'bar', 'call', 'bar', 'quit'], stderr=subprocess.DEVNULL)\n" +
-            "    subprocess.run(['bash', os.path.expanduser('~/.hyprconf/hypr/scripts/sh/qs-bar.sh'), '--stop'], stderr=subprocess.DEVNULL)\n" +
-            "    subprocess.run(['pkill', '-9', '-f', '^qs -c bar'], stderr=subprocess.DEVNULL)\n" +
-            "    time.sleep(0.1)\n" +
-            "    res = subprocess.run(['qs', 'ipc', '-c', 'island', 'call', 'island', 'reloadConfig'], stderr=subprocess.DEVNULL)\n" +
-            "    if res.returncode != 0:\n" +
-            "        subprocess.run(['bash', os.path.expanduser('~/.hyprconf/hypr/scripts/sh/qs-island.sh'), '--restart'], stderr=subprocess.DEVNULL)\n"
+            "    subprocess.run(['bash', os.path.expanduser('~/.hyprconf/hypr/scripts/sh/qs-bar.sh'), '--stop'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)\n" +
+            "    subprocess.run(['pkill', '-9', '-f', '^qs -c bar'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)\n" +
+            "    time.sleep(0.2)\n" +
+            "    subprocess.run(['bash', os.path.expanduser('~/.hyprconf/hypr/scripts/sh/qs-island.sh'), '--restart'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)\n" +
+            "    style_label = 'Prism Blade' if style == 'prism_blade' else ('Orbital' if style == 'orbital' else ('Minimal Rail' if style == 'minimal_rail' else 'Dynamic Island'))\n" +
+            "    subprocess.run(['notify-send', '-a', 'Hyprconf', '-t', '2000', 'Interface Switched', f'Active top panel: {style_label}'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)\n"
         Quickshell.execDetached(["python3", "-c", py])
         window.topPanelSavedNotification = true
         topPanelSavedTimer.restart()
