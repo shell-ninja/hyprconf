@@ -270,7 +270,7 @@ When tasked with implementing features, fixing bugs, or refactoring in this repo
 3. When testing or finalizing changes:
    - Verify code within the repository (`config/`).
    - Copy modified files into `~/.hyprconf/` so live desktop updates reflect the work immediately.
-   - Stage changes in git on the active branch (e.g., `v1.0.2`).
+   - Stage changes in git on the active branch (e.g., `qs-v1.0.3`).
 
 ### D. Hyprland Lua API & Dispatcher Rules
 1. **Use Modern Lua Dispatcher Syntax**: Modern Hyprland uses Lua-based dispatch evaluation. Do not pass raw unquoted string commands to `hyprctl dispatch` (such as `hyprctl dispatch focuswindow address:...`), as it will fail with Lua syntax errors (`')' expected`).
