@@ -228,6 +228,7 @@ All helper scripts reside under `config/hypr/scripts/`:
 | `py/weather.py` | Open-Meteo weather background worker and JSON cache updater |
 | `py/wallpaper-sketch.py` | Dual-pass line-art sketch generator and cache for 2-stage wallpaper transitions |
 | `py/wallfx.py` | Native Quickshell wallpaper shader transition maps generator (fast stdlib cache path & venv runner) |
+| `py/wallhaven-bridge.py` | High-performance Wallhaven API search, parallel caching, and wallpaper fetcher |
 | `py/scan-wallpapers.py` | Fast wallpaper metadata scanner and thumbnail generator |
 | `sh/caffeine-manager.sh` | Toggles Hypridle inhibition for uninterrupted display |
 | `sh/hyprsunset-manager.sh`| 3-stage blue light night filter manager (Off / Always On / Scheduled) |
