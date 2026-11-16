@@ -8,6 +8,7 @@ local shift           = "SHIFT"
 
 local scripts_dir     = os.getenv("HOME") .. "/.hyprconf/hypr/scripts"
 local sh_dir          = scripts_dir .. "/sh"
+local py_dir          = scripts_dir .. "/py"
 
 -- Paths to scripts
 local terminal        = "kitty"
@@ -38,8 +39,8 @@ hl.bind(mainMod .. " + end", hl.dsp.exec_cmd(qsScreenshot))
 hl.bind(mainMod .. " + SHIFT + S", hl.dsp.exec_cmd(qsScreenshot))
 
 -- ── Help / Keybinds Cheatsheet ────────────────────────────────────────────────
-hl.bind(mainMod .. " + slash", hl.dsp.exec_cmd(sh_dir .. "/qs-keybinds.sh"))
-hl.bind(mainMod .. " + SHIFT + H", hl.dsp.exec_cmd(sh_dir .. "/qs-keybinds.sh"))
+hl.bind(mainMod .. " + slash", hl.dsp.exec_cmd(qsKeybinds))
+hl.bind(mainMod .. " + SHIFT + H", hl.dsp.exec_cmd(qsKeybinds))
 
 -- ── Terminal & core apps ──────────────────────────────────────────────────────
 hl.bind(mainMod .. " + Return", hl.dsp.exec_cmd(terminal .. " --title main"))
