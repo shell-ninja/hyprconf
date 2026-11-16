@@ -1848,6 +1848,73 @@ def _apply_environment(pending, result):
     ENVIRONMENT_LUA.write_text(text)
 
 
+def normalize_lua_exec_cmd(statement: str) -> str:
+    """Normalize any exec_cmd(...) in a keybind statement to preserve Lua variables."""
+    var_map_inv = {
+        "qs-wallpaper.sh": "qsWallpaper",
+        "qs-screenshot.sh": "qsScreenshot",
+        "qs-launcher.sh": "qsLauncher",
+        "qs-launcher-theme.sh": "qsLauncherTheme",
+        "qs-island.sh": "qsIsland",
+        "qs-power.sh": "qsPower",
+        "qs-clipboard.sh": "qsClipboard",
+        "qs-quickpaste.sh": "qsQuickPaste",
+        "qs-emoji.sh": "qsEmoji",
+        "qs-keybinds.sh": "qsKeybinds",
+        "qs-reload.sh": "qsReload",
+        "qs-bar.sh": "qsBar",
+        "volumecontrol.sh": "volumeCTRL",
+        "brightness.sh": "brightnessCTRL",
+        "input-method.sh": "inputMethodCTRL",
+        "kitty": "terminal",
+        "dolphin || thunar": "file_man",
+        "yazi": "term_file_man",
+    }
+    known_vars = set(var_map_inv.values()) | {"terminal", "file_man", "term_file_man"}
+
+    m = re.search(r"exec_cmd\(\s*([^\)]+)\s*\)", statement)
+    if not m:
+        return statement
+
+    inner = m.group(1).strip()
+    if (inner.startswith('"') and inner.endswith('"')) or (inner.startswith("'") and inner.endswith("'")):
+        raw_val = inner[1:-1].strip()
+        stripped = re.sub(r"^~?/?\.?hyprconf/hypr/scripts/(sh|py)/", "", raw_val)
+        stripped = re.sub(r"^\$HOME/\.hyprconf/hypr/scripts/(sh|py)/", "", stripped)
+        stripped = re.sub(r"^/home/[^/]+/\.hyprconf/hypr/scripts/(sh|py)/", "", stripped).strip()
+
+        if stripped in known_vars:
+            replacement = f"exec_cmd({stripped})"
+            return statement[:m.start()] + replacement + statement[m.end():]
+
+        if stripped in var_map_inv:
+            replacement = f"exec_cmd({var_map_inv[stripped]})"
+            return statement[:m.start()] + replacement + statement[m.end():]
+
+        first_space = stripped.find(" ")
+        base = stripped[:first_space].strip() if first_space != -1 else stripped
+        args = stripped[first_space:].strip() if first_space != -1 else ""
+
+        if base in known_vars:
+            replacement = f'exec_cmd({base} .. " {args}")' if args else f"exec_cmd({base})"
+            return statement[:m.start()] + replacement + statement[m.end():]
+
+        if base in var_map_inv:
+            var_name = var_map_inv[base]
+            replacement = f'exec_cmd({var_name} .. " {args}")' if args else f"exec_cmd({var_name})"
+            return statement[:m.start()] + replacement + statement[m.end():]
+
+        if base.endswith(".sh"):
+            replacement = f'exec_cmd(sh_dir .. "/{stripped}")'
+            return statement[:m.start()] + replacement + statement[m.end():]
+
+        if base.endswith(".py"):
+            replacement = f'exec_cmd(py_dir .. "/{stripped}")'
+            return statement[:m.start()] + replacement + statement[m.end():]
+
+    return statement
+
+
 def _apply_keybinds(pending, result):
     edits = pending.get("keybind_edit", {})
     removes = pending.get("keybind_remove", [])
@@ -1861,6 +1928,7 @@ def _apply_keybinds(pending, result):
     text = KEYBINDS_LUA.read_text()
 
     for original, new_raw in edits.items():
+        new_raw = normalize_lua_exec_cmd(new_raw)
         idx = text.find(original)
         if idx == -1:
             result.err("a keybind edit could not be located — skipped")
@@ -1886,6 +1954,7 @@ def _apply_keybinds(pending, result):
         for raw in adds:
             clean_raw = str(raw).strip()
             if clean_raw:
+                clean_raw = normalize_lua_exec_cmd(clean_raw)
                 text += clean_raw + "\n"
                 result.ok(f"keybind added → {clean_raw.splitlines()[0][:60]}")
 
@@ -1976,16 +2045,16 @@ def get_all_settings():
 
         action_type = "custom"
         command = ""
+        raw_exec = ""
         m_exec = re.search(r"exec_cmd\((.+)\)", raw_action)
         if m_exec:
             action_type = "exec"
             inner = m_exec.group(1).strip()
-            cmd_resolved = inner
-            for var_k, var_v in var_map.items():
-                cmd_resolved = re.sub(r"\b" + var_k + r"\b", var_v, cmd_resolved)
-            cmd_resolved = cmd_resolved.replace("..", "").replace('"', '').replace("'", '').strip()
-            cmd_resolved = re.sub(r"\s+", " ", cmd_resolved)
-            command = cmd_resolved
+            raw_exec = inner
+            if (inner.startswith('"') and inner.endswith('"')) or (inner.startswith("'") and inner.endswith("'")):
+                command = inner[1:-1]
+            else:
+                command = inner
         elif "window.close" in raw_action:
             action_type = "window_close"
         elif "window.float" in raw_action:
@@ -2051,6 +2120,7 @@ def get_all_settings():
             "mods": mods,
             "action": display_action,
             "raw_action": raw_action,
+            "raw_exec": raw_exec,
             "raw": kb.get("raw", ""),
             "action_type": action_type,
             "command": command,

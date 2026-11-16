@@ -48,6 +48,8 @@ Item {
     property string formKey: ""
     property string formActionType: "exec" // "exec", "window", "workspace", "custom"
     property string formCommand: ""
+    property string targetOriginalRawExec: ""
+    property string targetOriginalCommand: ""
     property string formWindowSubAction: "close" // "close", "float", "fullscreen", "pseudo", "cycle"
     property int formWorkspaceNum: 1
     property string formWorkspaceSubAction: "switch" // "switch", "move"
@@ -107,10 +109,100 @@ Item {
         }
     }
 
+    function formatExecCommandToLua(cmd) {
+        if (!cmd) return '""'
+        cmd = cmd.trim()
+
+        // Already a Lua expression with concatenation or starts with a known directory/variable
+        if (cmd.indexOf("..") !== -1 || /^(sh_dir|py_dir|scripts_dir|mainMod|ctrl|alt|shift)\b/.test(cmd)) {
+            return cmd
+        }
+
+        // Strip leading path prefixes if user pasted full path
+        var stripped = cmd.replace(/^~?\/?\.?hyprconf\/hypr\/scripts\/(sh|py)\//, "")
+        stripped = stripped.replace(/^\$HOME\/\.hyprconf\/hypr\/scripts\/(sh|py)\//, "")
+        stripped = stripped.replace(/^\/home\/[^\/]+\/\.hyprconf\/hypr\/scripts\/(sh|py)\//, "")
+        stripped = stripped.trim()
+
+        var knownVars = [
+            "terminal", "file_man", "term_file_man", "volumeCTRL", "brightnessCTRL",
+            "qsLauncher", "qsLauncherTheme", "qsIsland", "qsWallpaper", "qsPower",
+            "qsScreenshot", "qsClipboard", "qsQuickPaste", "qsEmoji", "qsKeybinds",
+            "qsReload", "qsBar", "inputMethodCTRL"
+        ]
+
+        var scriptToVar = {
+            "qs-wallpaper.sh": "qsWallpaper",
+            "qs-screenshot.sh": "qsScreenshot",
+            "qs-launcher.sh": "qsLauncher",
+            "qs-launcher-theme.sh": "qsLauncherTheme",
+            "qs-island.sh": "qsIsland",
+            "qs-power.sh": "qsPower",
+            "qs-clipboard.sh": "qsClipboard",
+            "qs-quickpaste.sh": "qsQuickPaste",
+            "qs-emoji.sh": "qsEmoji",
+            "qs-keybinds.sh": "qsKeybinds",
+            "qs-reload.sh": "qsReload",
+            "qs-bar.sh": "qsBar",
+            "volumecontrol.sh": "volumeCTRL",
+            "brightness.sh": "brightnessCTRL",
+            "input-method.sh": "inputMethodCTRL",
+            "kitty": "terminal",
+            "dolphin || thunar": "file_man",
+            "yazi": "term_file_man"
+        }
+
+        // Check if stripped matches an exact variable name
+        if (knownVars.indexOf(stripped) !== -1) {
+            return stripped
+        }
+
+        // Split first token and rest
+        var firstSpace = stripped.indexOf(" ")
+        var base = firstSpace !== -1 ? stripped.substring(0, firstSpace).trim() : stripped
+        var args = firstSpace !== -1 ? stripped.substring(firstSpace).trim() : ""
+
+        // If first token is a known variable name and has args
+        if (knownVars.indexOf(base) !== -1) {
+            return args ? (base + ' .. " ' + args.replace(/"/g, '\\"') + '"') : base
+        }
+
+        // If base maps to a known variable
+        if (scriptToVar[base]) {
+            var v = scriptToVar[base]
+            return args ? (v + ' .. " ' + args.replace(/"/g, '\\"') + '"') : v
+        }
+
+        // If whole command maps to a known variable (e.g. "dolphin || thunar")
+        if (scriptToVar[stripped]) {
+            return scriptToVar[stripped]
+        }
+
+        // If it is any shell script in sh_dir
+        if (base.indexOf(".sh") === base.length - 3) {
+            return 'sh_dir .. "/' + stripped.replace(/"/g, '\\"') + '"'
+        }
+
+        // If it is any python script in py_dir
+        if (base.indexOf(".py") === base.length - 3) {
+            return 'py_dir .. "/' + stripped.replace(/"/g, '\\"') + '"'
+        }
+
+        // Default: regular command string literal
+        return '"' + cmd.replace(/"/g, '\\"') + '"'
+    }
+
     function generateLuaAction() {
         if (formActionType === "exec") {
             var cmd = formCommand.trim()
-            return 'hl.dsp.exec_cmd("' + cmd.replace(/"/g, '\\"') + '")'
+            if (!cmd) return 'hl.dsp.exec_cmd("")'
+
+            // If editing and command was untouched, preserve the exact original raw_exec expression
+            if (isEditing && targetOriginalRawExec && cmd === targetOriginalCommand) {
+                return 'hl.dsp.exec_cmd(' + targetOriginalRawExec + ')'
+            }
+
+            return 'hl.dsp.exec_cmd(' + formatExecCommandToLua(cmd) + ')'
         } else if (formActionType === "window") {
             if (formWindowSubAction === "close") return "hl.dsp.window.close()"
             if (formWindowSubAction === "float") return 'hl.dsp.window.float({ action = "toggle" })'
@@ -161,6 +253,8 @@ Item {
         isEditing = false
         targetOriginalRaw = ""
         targetOriginalCombo = ""
+        targetOriginalRawExec = ""
+        targetOriginalCommand = ""
         formModSuper = true
         formModCtrl = false
         formModAlt = false
@@ -178,8 +272,10 @@ Item {
 
     function openEditModal(item) {
         isEditing = true
-        targetOriginalRaw = item.raw
-        targetOriginalCombo = item.combo
+        targetOriginalRaw = item.raw || ""
+        targetOriginalCombo = item.combo || ""
+        targetOriginalRawExec = item.raw_exec || ""
+        targetOriginalCommand = item.command || ""
         var mods = item.mods || []
         formModSuper = mods.indexOf("SUPER") !== -1
         formModCtrl = mods.indexOf("CTRL") !== -1
@@ -256,11 +352,56 @@ Item {
         }
     }
 
+    function resolveExecutablePath(cmd) {
+        if (!cmd) return ""
+        var c = cmd.trim()
+
+        var varToPath = {
+            "qsWallpaper": root.homeDir + "/.hyprconf/hypr/scripts/sh/qs-wallpaper.sh",
+            "qsScreenshot": root.homeDir + "/.hyprconf/hypr/scripts/sh/qs-screenshot.sh",
+            "qsLauncher": root.homeDir + "/.hyprconf/hypr/scripts/sh/qs-launcher.sh",
+            "qsLauncherTheme": root.homeDir + "/.hyprconf/hypr/scripts/sh/qs-launcher-theme.sh",
+            "qsIsland": root.homeDir + "/.hyprconf/hypr/scripts/sh/qs-island.sh",
+            "qsPower": root.homeDir + "/.hyprconf/hypr/scripts/sh/qs-power.sh",
+            "qsClipboard": root.homeDir + "/.hyprconf/hypr/scripts/sh/qs-clipboard.sh",
+            "qsQuickPaste": root.homeDir + "/.hyprconf/hypr/scripts/sh/qs-quickpaste.sh",
+            "qsEmoji": root.homeDir + "/.hyprconf/hypr/scripts/sh/qs-emoji.sh",
+            "qsKeybinds": root.homeDir + "/.hyprconf/hypr/scripts/sh/qs-keybinds.sh",
+            "qsReload": root.homeDir + "/.hyprconf/hypr/scripts/sh/qs-reload.sh",
+            "qsBar": root.homeDir + "/.hyprconf/hypr/scripts/sh/qs-bar.sh",
+            "volumeCTRL": root.homeDir + "/.hyprconf/hypr/scripts/sh/volumecontrol.sh",
+            "brightnessCTRL": root.homeDir + "/.hyprconf/hypr/scripts/sh/brightness.sh",
+            "inputMethodCTRL": root.homeDir + "/.hyprconf/hypr/scripts/sh/input-method.sh",
+            "terminal": "kitty",
+            "file_man": "dolphin",
+            "term_file_man": "yazi"
+        }
+
+        // Clean concatenation Lua syntax like: varName .. " --arg"
+        c = c.replace(/\s*\.\.\s*"/g, " ").replace(/"\s*$/g, "").trim()
+
+        var parts = c.split(" ")
+        var base = parts[0]
+        var rest = parts.slice(1).join(" ")
+
+        if (varToPath[base]) {
+            return varToPath[base] + (rest ? " " + rest : "")
+        }
+        if (base.indexOf("sh_dir") === 0) {
+            return c.replace(/^sh_dir\s*\.\.\s*["']?\/?/, root.homeDir + "/.hyprconf/hypr/scripts/sh/").replace(/["']$/, "")
+        }
+        if (base.indexOf("py_dir") === 0) {
+            return c.replace(/^py_dir\s*\.\.\s*["']?\/?/, root.homeDir + "/.hyprconf/hypr/scripts/py/").replace(/["']$/, "")
+        }
+        return c
+    }
+
     function runCommand(cmd) {
         if (!cmd || cmd.trim().length === 0) return
-        Quickshell.execDetached(["bash", "-c", cmd])
+        var execTarget = resolveExecutablePath(cmd)
+        Quickshell.execDetached(["bash", "-c", execTarget])
         if (typeof window !== "undefined") {
-            window.toastMessage = "Executed: " + cmd.substring(0, 40)
+            window.toastMessage = "Executed: " + execTarget.substring(0, 40)
             window.showSaveToast = true
             if (typeof toastTimer !== "undefined") toastTimer.restart()
         }
@@ -1662,7 +1803,7 @@ Item {
 
                                     Text {
                                         anchors.fill: parent
-                                        text: "e.g. qs-keybinds.sh, kitty, brave, dolphin, pkill waybar..."
+                                        text: "e.g. qsWallpaper, qsLauncher .. \" --spotlight\", kitty, brave, code..."
                                         color: Theme.alpha(Theme.foreground, 0.35)
                                         font.family: "monospace"
                                         font.pixelSize: 11
@@ -1695,17 +1836,17 @@ Item {
 
                                         Repeater {
                                             model: [
-                                                { label: "Shortcuts Cheatsheet", cmd: "~/.hyprconf/hypr/scripts/sh/qs-keybinds.sh" },
-                                                { label: "Wallpaper Selector", cmd: "~/.hyprconf/hypr/scripts/sh/qs-wallpaper.sh" },
-                                                { label: "Screenshot Studio", cmd: "~/.hyprconf/hypr/scripts/sh/qs-screenshot.sh" },
-                                                { label: "Clipboard History", cmd: "~/.hyprconf/hypr/scripts/sh/qs-clipboard.sh" },
-                                                { label: "Emoji Studio", cmd: "~/.hyprconf/hypr/scripts/sh/qs-emoji.sh" },
-                                                { label: "Power Menu", cmd: "~/.hyprconf/hypr/scripts/sh/qs-power.sh" },
-                                                { label: "App Launcher", cmd: "~/.hyprconf/hypr/scripts/sh/qs-launcher.sh" },
-                                                { label: "Settings Studio", cmd: "~/.hyprconf/hypr/scripts/sh/qs-settings.sh" },
-                                                { label: "Kitty Terminal", cmd: "kitty" },
-                                                { label: "Dolphin Files", cmd: "dolphin" },
-                                                { label: "Default Browser", cmd: "~/.hyprconf/hypr/scripts/sh/browser.sh op" },
+                                                { label: "Shortcuts Cheatsheet", cmd: "qsKeybinds" },
+                                                { label: "Wallpaper Selector", cmd: "qsWallpaper" },
+                                                { label: "Screenshot Studio", cmd: "qsScreenshot" },
+                                                { label: "Clipboard History", cmd: "qsClipboard" },
+                                                { label: "Emoji Studio", cmd: "qsEmoji" },
+                                                { label: "Power Menu", cmd: "qsPower" },
+                                                { label: "App Launcher", cmd: "qsLauncher" },
+                                                { label: "Settings Studio", cmd: 'sh_dir .. "/qs-settings.sh"' },
+                                                { label: "Kitty Terminal", cmd: "terminal" },
+                                                { label: "Dolphin Files", cmd: "file_man" },
+                                                { label: "Default Browser", cmd: 'sh_dir .. "/browser.sh op"' },
                                                 { label: "VS Code", cmd: "code" }
                                             ]
 
