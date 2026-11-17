@@ -50,23 +50,64 @@ Item {
     ]
 
     readonly property var layerList: [
-        { key: "clock", name: "Clock & Date", icon: "🕒" },
-        { key: "user_avatar", name: "User Avatar", icon: "👤" },
-        { key: "username", name: "Username", icon: "🪪" },
-        { key: "input_field", name: "Password Input", icon: "🔒" },
-        { key: "weather", name: "Weather Capsule", icon: "🌤" },
-        { key: "system_stats", name: "System Stats", icon: "📊" },
-        { key: "audio_visualizer", name: "Audio Visualizer", icon: "🎵" },
-        { key: "quote", name: "Quote Pill", icon: "💬" },
-        { key: "session_lock", name: "Session Lock", icon: "🛡" },
-        { key: "backdrop", name: "Atmosphere & Backdrop", icon: "🌌" }
+        { key: "clock", name: "Clock & Date" },
+        { key: "user_avatar", name: "User Avatar" },
+        { key: "username", name: "Username" },
+        { key: "input_field", name: "Password Input" },
+        { key: "weather", name: "Weather Capsule" },
+        { key: "system_stats", name: "System Stats" },
+        { key: "audio_visualizer", name: "Audio Visualizer" },
+        { key: "quote", name: "Quote Pill" },
+        { key: "session_lock", name: "Session Lock" },
+        { key: "backdrop", name: "Atmosphere & Backdrop" }
     ]
 
     function getLayerMeta(key) {
         for (var i = 0; i < layerList.length; i++) {
             if (layerList[i].key === key) return layerList[i]
         }
-        return { key: key, name: key.toUpperCase(), icon: "◆" }
+        return { key: key, name: key.toUpperCase() }
+    }
+
+    function cardBgSvg(strokeColor) {
+        var c = strokeColor || Theme.accent
+        return svgUrl('<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="' + c + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>')
+    }
+
+    function crosshairSvg(strokeColor) {
+        var c = strokeColor || Theme.accent
+        return svgUrl('<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="' + c + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="22" y1="12" x2="18" y2="12"/><line x1="6" y1="12" x2="2" y2="12"/><line x1="12" y1="6" x2="12" y2="2"/><line x1="12" y1="22" x2="12" y2="18"/></svg>')
+    }
+
+    function getElementSvg(key, strokeColor) {
+        var c = strokeColor || Theme.accent
+        var inner = ""
+        if (key === "clock") {
+            inner = '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>'
+        } else if (key === "user_avatar") {
+            inner = '<circle cx="12" cy="7" r="4"/><path d="M5.5 21a8.38 8.38 0 0 1 13 0"/>'
+        } else if (key === "username") {
+            inner = '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><line x1="15" y1="8" x2="17" y2="8"/><line x1="15" y1="12" x2="17" y2="12"/><line x1="7" y1="16" x2="17" y2="16"/>'
+        } else if (key === "input_field") {
+            inner = '<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>'
+        } else if (key === "weather") {
+            inner = '<path d="M12 2v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="M20 12h2"/><path d="M15.947 12.65a4 4 0 0 0-5.925-4.128"/><path d="M13 22H7a5 5 0 1 1 4.9-6H13a3 3 0 0 1 0 6z"/>'
+        } else if (key === "system_stats") {
+            inner = '<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><polyline points="2 20 22 20"/>'
+        } else if (key === "audio_visualizer") {
+            inner = '<path d="M2 10v4"/><path d="M6 6v12"/><path d="M10 3v18"/><path d="M14 8v8"/><path d="M18 5v14"/><path d="M22 10v4"/>'
+        } else if (key === "quote") {
+            inner = '<path d="M3 21c3 0 7-1 7-8V5c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v6c0 1.1.9 2 2 2h4c0 3.5-2.5 6-5 6"/><path d="M15 21c3 0 7-1 7-8V5c0-1.1-.9-2-2-2h-4c-1.1 0-2 .9-2 2v6c0 1.1.9 2 2 2h4c0 3.5-2.5 6-5 6"/>'
+        } else if (key === "session_lock") {
+            inner = '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>'
+        } else if (key === "media_player") {
+            inner = '<polygon points="5 3 19 12 5 21 5 3"/>'
+        } else if (key === "backdrop") {
+            inner = '<rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>'
+        } else {
+            inner = '<polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>'
+        }
+        return svgUrl('<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="' + c + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + inner + '</svg>')
     }
 
     // Helper functions for reading & mutating window.config
@@ -402,10 +443,12 @@ Item {
                     width: 26; height: 26; radius: 13
                     color: Theme.alpha(Theme.accent, 0.20)
                     border.width: 1; border.color: Theme.accent
-                    Text {
+                    Image {
                         anchors.centerIn: parent
-                        text: inspectorRoot.getLayerMeta(inspectorRoot.selectedModuleKey).icon
-                        font.pixelSize: 12
+                        width: 14
+                        height: 14
+                        source: inspectorRoot.getElementSvg(inspectorRoot.selectedModuleKey, Theme.accent)
+                        sourceSize: Qt.size(28, 28)
                     }
                 }
 
@@ -521,9 +564,9 @@ Item {
                             font.pixelSize: 11
                             font.weight: Font.Medium
                         }
-                        Switch {
+                        CapsuleSwitch {
                             anchors.verticalCenter: parent.verticalCenter
-                            scale: 0.75
+                            scale: 0.85
                             checked: inspectorRoot.getModuleEnabled(inspectorRoot.selectedModuleKey)
                             onToggled: inspectorRoot.setModuleEnabled(inspectorRoot.selectedModuleKey, checked)
                         }
@@ -544,8 +587,14 @@ Item {
                         Row {
                             id: bgRow
                             anchors.centerIn: parent
-                            spacing: 4
-                            Text { text: "🪟"; font.pixelSize: 9 }
+                            spacing: 5
+                            Image {
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: 11
+                                height: 11
+                                source: inspectorRoot.cardBgSvg(parent.parent.bgOn ? Theme.accent : Theme.alpha(Theme.foreground, 0.60))
+                                sourceSize: Qt.size(22, 22)
+                            }
                             Text {
                                 text: "Glass BG"
                                 color: parent.parent.bgOn ? Theme.accent : Theme.alpha(Theme.foreground, 0.70)
@@ -576,8 +625,14 @@ Item {
                         Row {
                             id: centerXRow
                             anchors.centerIn: parent
-                            spacing: 3
-                            Text { text: "⌖"; color: Theme.accent; font.pixelSize: 10 }
+                            spacing: 4
+                            Image {
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: 11
+                                height: 11
+                                source: inspectorRoot.crosshairSvg(Theme.accent)
+                                sourceSize: Qt.size(22, 22)
+                            }
                             Text { text: "Center"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 10 }
                         }
 
@@ -961,7 +1016,7 @@ Item {
                                 RowLayout {
                                     Layout.fillWidth: true
                                     Text { Layout.fillWidth: true; text: "Subtle Pulse Animation"; color: Theme.foreground; font.pixelSize: 11; font.family: "Outfit" }
-                                    Switch {
+                                    CapsuleSwitch {
                                         checked: inspectorRoot.getClockProp("separator_blinking", false)
                                         onToggled: inspectorRoot.setClockProp("separator_blinking", checked)
                                     }
@@ -994,7 +1049,7 @@ Item {
                                         font.weight: Font.Bold
                                         font.letterSpacing: 1.2
                                     }
-                                    Switch {
+                                    CapsuleSwitch {
                                         checked: inspectorRoot.getClockProp("show_line", true)
                                         onToggled: inspectorRoot.setClockProp("show_line", checked)
                                     }
@@ -1109,7 +1164,7 @@ Item {
                                         font.weight: Font.Bold
                                         font.letterSpacing: 1.2
                                     }
-                                    Switch {
+                                    CapsuleSwitch {
                                         checked: inspectorRoot.getClockProp("show_circle", false)
                                         onToggled: inspectorRoot.setClockProp("show_circle", checked)
                                     }
@@ -1199,7 +1254,7 @@ Item {
                                         font.weight: Font.Bold
                                         font.letterSpacing: 1.2
                                     }
-                                    Switch {
+                                    CapsuleSwitch {
                                         checked: inspectorRoot.getDateProp("enabled", true)
                                         onToggled: inspectorRoot.setDateProp("enabled", checked)
                                     }
@@ -1265,7 +1320,7 @@ Item {
                                     RowLayout {
                                         Layout.fillWidth: true
                                         Text { Layout.fillWidth: true; text: "All-Caps Uppercase"; color: Theme.foreground; font.pixelSize: 11; font.family: "Outfit" }
-                                        Switch {
+                                        CapsuleSwitch {
                                             checked: inspectorRoot.getDateProp("uppercase", true)
                                             onToggled: inspectorRoot.setDateProp("uppercase", checked)
                                         }
@@ -1317,7 +1372,7 @@ Item {
                                 RowLayout {
                                     Layout.fillWidth: true
                                     Text { Layout.fillWidth: true; text: "24-Hour Time Format"; color: Theme.foreground; font.pixelSize: 11; font.family: "Outfit" }
-                                    Switch {
+                                    CapsuleSwitch {
                                         checked: inspectorRoot.getClockProp("format_24h", false)
                                         onToggled: inspectorRoot.setClockProp("format_24h", checked)
                                     }
@@ -1327,7 +1382,7 @@ Item {
                                     Layout.fillWidth: true
                                     visible: !inspectorRoot.getClockProp("format_24h", false)
                                     Text { Layout.fillWidth: true; text: "Show AM/PM Marker"; color: Theme.foreground; font.pixelSize: 11; font.family: "Outfit" }
-                                    Switch {
+                                    CapsuleSwitch {
                                         checked: inspectorRoot.getClockProp("show_am_pm", true)
                                         onToggled: inspectorRoot.setClockProp("show_am_pm", checked)
                                     }
@@ -1381,7 +1436,7 @@ Item {
                                         font.weight: Font.Bold
                                         font.letterSpacing: 1.2
                                     }
-                                    Switch {
+                                    CapsuleSwitch {
                                         checked: inspectorRoot.getWidgetBackground("clock")
                                         onToggled: inspectorRoot.setWidgetBackground("clock", checked)
                                     }
@@ -1429,7 +1484,7 @@ Item {
                                     RowLayout {
                                         Layout.fillWidth: true
                                         Text { Layout.fillWidth: true; text: "Top Specular Highlight Line"; color: Theme.foreground; font.pixelSize: 11; font.family: "Outfit" }
-                                        Switch {
+                                        CapsuleSwitch {
                                             checked: inspectorRoot.getClockProp("surface_specular", true)
                                             onToggled: inspectorRoot.setClockProp("surface_specular", checked)
                                         }
@@ -1489,7 +1544,7 @@ Item {
                                 RowLayout {
                                     Layout.fillWidth: true
                                     Text { Layout.fillWidth: true; text: "Breathing Pulse Animation"; color: Theme.foreground; font.pixelSize: 11; font.family: "Outfit" }
-                                    Switch {
+                                    CapsuleSwitch {
                                         checked: inspectorRoot.getAvatarProp("breathing_enabled", true)
                                         onToggled: inspectorRoot.setAvatarProp("breathing_enabled", checked)
                                     }
@@ -1498,7 +1553,7 @@ Item {
                                 RowLayout {
                                     Layout.fillWidth: true
                                     Text { Layout.fillWidth: true; text: "Celestial Orbit Ring & Satellites"; color: Theme.foreground; font.pixelSize: 11; font.family: "Outfit" }
-                                    Switch {
+                                    CapsuleSwitch {
                                         checked: inspectorRoot.getAvatarProp("orbit_satellites_enabled", true)
                                         onToggled: inspectorRoot.setAvatarProp("orbit_satellites_enabled", checked)
                                     }
@@ -1507,7 +1562,7 @@ Item {
                                 RowLayout {
                                     Layout.fillWidth: true
                                     Text { Layout.fillWidth: true; text: "Luminescent Aurora Halo Glow"; color: Theme.foreground; font.pixelSize: 11; font.family: "Outfit" }
-                                    Switch {
+                                    CapsuleSwitch {
                                         checked: inspectorRoot.getAvatarProp("glow_enabled", true)
                                         onToggled: inspectorRoot.setAvatarProp("glow_enabled", checked)
                                     }
@@ -1588,7 +1643,7 @@ Item {
                                 RowLayout {
                                     Layout.fillWidth: true
                                     Text { Layout.fillWidth: true; text: "All-Caps Uppercase"; color: Theme.foreground; font.pixelSize: 11; font.family: "Outfit" }
-                                    Switch {
+                                    CapsuleSwitch {
                                         checked: inspectorRoot.getSubStyleProp("username_style", "uppercase", false)
                                         onToggled: inspectorRoot.setSubStyleProp("username_style", "uppercase", checked)
                                     }
@@ -1725,7 +1780,7 @@ Item {
                                 RowLayout {
                                     Layout.fillWidth: true
                                     Text { Layout.fillWidth: true; text: "Show Location City"; color: Theme.foreground; font.pixelSize: 11; font.family: "Outfit" }
-                                    Switch {
+                                    CapsuleSwitch {
                                         checked: inspectorRoot.getSubStyleProp("weather_style", "show_city", true)
                                         onToggled: inspectorRoot.setSubStyleProp("weather_style", "show_city", checked)
                                     }
@@ -1826,7 +1881,7 @@ Item {
                                 RowLayout {
                                     Layout.fillWidth: true
                                     Text { Layout.fillWidth: true; text: "Symmetrical Spectrum Curve"; color: Theme.foreground; font.pixelSize: 11; font.family: "Outfit" }
-                                    Switch {
+                                    CapsuleSwitch {
                                         checked: inspectorRoot.getSubStyleProp("visualizer_style", "symmetrical", true)
                                         onToggled: inspectorRoot.setSubStyleProp("visualizer_style", "symmetrical", checked)
                                     }
@@ -1888,7 +1943,7 @@ Item {
                                 RowLayout {
                                     Layout.fillWidth: true
                                     Text { Layout.fillWidth: true; text: "Show CPU Sparkline"; color: Theme.foreground; font.pixelSize: 11; font.family: "Outfit" }
-                                    Switch {
+                                    CapsuleSwitch {
                                         checked: window.config && window.config.stats ? window.config.stats.show_cpu : true
                                         onToggled: {
                                             if (!window.config) window.config = {}
@@ -1902,7 +1957,7 @@ Item {
                                 RowLayout {
                                     Layout.fillWidth: true
                                     Text { Layout.fillWidth: true; text: "Show RAM Sparkline"; color: Theme.foreground; font.pixelSize: 11; font.family: "Outfit" }
-                                    Switch {
+                                    CapsuleSwitch {
                                         checked: window.config && window.config.stats ? window.config.stats.show_ram : true
                                         onToggled: {
                                             if (!window.config) window.config = {}
@@ -1977,7 +2032,7 @@ Item {
                                 RowLayout {
                                     Layout.fillWidth: true
                                     Text { Layout.fillWidth: true; text: "Italic Font Style"; color: Theme.foreground; font.pixelSize: 11; font.family: "Outfit" }
-                                    Switch {
+                                    CapsuleSwitch {
                                         checked: inspectorRoot.getSubStyleProp("quote_style", "italic", true)
                                         onToggled: inspectorRoot.setSubStyleProp("quote_style", "italic", checked)
                                     }
@@ -1986,7 +2041,7 @@ Item {
                                 RowLayout {
                                     Layout.fillWidth: true
                                     Text { Layout.fillWidth: true; text: "Quotation Marks Decoration"; color: Theme.foreground; font.pixelSize: 11; font.family: "Outfit" }
-                                    Switch {
+                                    CapsuleSwitch {
                                         checked: inspectorRoot.getSubStyleProp("quote_style", "show_decorations", true)
                                         onToggled: inspectorRoot.setSubStyleProp("quote_style", "show_decorations", checked)
                                     }
@@ -2048,7 +2103,7 @@ Item {
                                 RowLayout {
                                     Layout.fillWidth: true
                                     Text { Layout.fillWidth: true; text: "Show Lock Icon"; color: Theme.foreground; font.pixelSize: 11; font.family: "Outfit" }
-                                    Switch {
+                                    CapsuleSwitch {
                                         checked: inspectorRoot.getSubStyleProp("session_lock_style", "show_icon", true)
                                         onToggled: inspectorRoot.setSubStyleProp("session_lock_style", "show_icon", checked)
                                     }

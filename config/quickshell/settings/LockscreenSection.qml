@@ -26,6 +26,50 @@ Item {
     readonly property string layersSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="' + Theme.accent + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>')
     readonly property string alignSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="' + Theme.accent + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="22"/><rect x="4" y="6" width="16" height="4" rx="1"/><rect x="6" y="14" width="12" height="4" rx="1"/></svg>')
 
+    function cardBgSvg(strokeColor) {
+        var c = strokeColor || Theme.accent
+        return svgUrl('<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="' + c + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>')
+    }
+
+    function saveIconSvg(isDirty, strokeColor) {
+        var c = strokeColor || Theme.accent
+        if (isDirty) {
+            return svgUrl('<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="' + c + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>')
+        }
+        return svgUrl('<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="' + c + '" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>')
+    }
+
+    function getElementSvg(key, strokeColor) {
+        var c = strokeColor || Theme.accent
+        var inner = ""
+        if (key === "clock") {
+            inner = '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>'
+        } else if (key === "user_avatar") {
+            inner = '<circle cx="12" cy="7" r="4"/><path d="M5.5 21a8.38 8.38 0 0 1 13 0"/>'
+        } else if (key === "username") {
+            inner = '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><line x1="15" y1="8" x2="17" y2="8"/><line x1="15" y1="12" x2="17" y2="12"/><line x1="7" y1="16" x2="17" y2="16"/>'
+        } else if (key === "input_field") {
+            inner = '<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>'
+        } else if (key === "weather") {
+            inner = '<path d="M12 2v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="M20 12h2"/><path d="M15.947 12.65a4 4 0 0 0-5.925-4.128"/><path d="M13 22H7a5 5 0 1 1 4.9-6H13a3 3 0 0 1 0 6z"/>'
+        } else if (key === "system_stats") {
+            inner = '<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><polyline points="2 20 22 20"/>'
+        } else if (key === "audio_visualizer") {
+            inner = '<path d="M2 10v4"/><path d="M6 6v12"/><path d="M10 3v18"/><path d="M14 8v8"/><path d="M18 5v14"/><path d="M22 10v4"/>'
+        } else if (key === "quote") {
+            inner = '<path d="M3 21c3 0 7-1 7-8V5c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v6c0 1.1.9 2 2 2h4c0 3.5-2.5 6-5 6"/><path d="M15 21c3 0 7-1 7-8V5c0-1.1-.9-2-2-2h-4c-1.1 0-2 .9-2 2v6c0 1.1.9 2 2 2h4c0 3.5-2.5 6-5 6"/>'
+        } else if (key === "session_lock") {
+            inner = '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>'
+        } else if (key === "media_player") {
+            inner = '<polygon points="5 3 19 12 5 21 5 3"/>'
+        } else if (key === "backdrop") {
+            inner = '<rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>'
+        } else {
+            inner = '<polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>'
+        }
+        return svgUrl('<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="' + c + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + inner + '</svg>')
+    }
+
     // Studio View Modes: 0 = Canvas Editor, 1 = Clean Live Preview, 2 = Widget Controls & Backgrounds
     property int studioMode: 0
     property string selectedModuleKey: "user_avatar"
@@ -330,9 +374,12 @@ Item {
                             id: saveLockRow
                             anchors.centerIn: parent
                             spacing: 6
-                            Text {
-                                text: window.isDirty ? "💾" : "✓"
-                                font.pixelSize: 11
+                            Image {
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: 13
+                                height: 13
+                                source: lockscreenRoot.saveIconSvg(window.isDirty, window.isDirty ? Theme.on_primary : Theme.accent)
+                                sourceSize: Qt.size(26, 26)
                             }
                             Text {
                                 anchors.verticalCenter: parent.verticalCenter
@@ -1747,22 +1794,22 @@ Item {
 
                         Repeater {
                             model: [
-                                { key: "clock", name: "Clock", icon: "🕒" },
-                                { key: "user_avatar", name: "Avatar", icon: "👤" },
-                                { key: "username", name: "User", icon: "🪪" },
-                                { key: "input_field", name: "Password", icon: "🔒" },
-                                { key: "weather", name: "Weather", icon: "🌤" },
-                                { key: "system_stats", name: "Stats", icon: "📊" },
-                                { key: "audio_visualizer", name: "Visualizer", icon: "🎵" },
-                                { key: "quote", name: "Quote", icon: "💬" },
-                                { key: "session_lock", name: "Lock", icon: "🛡" },
-                                { key: "backdrop", name: "Backdrop", icon: "🌌" }
+                                { key: "clock", name: "Clock" },
+                                { key: "user_avatar", name: "Avatar" },
+                                { key: "username", name: "User" },
+                                { key: "input_field", name: "Password" },
+                                { key: "weather", name: "Weather" },
+                                { key: "system_stats", name: "Stats" },
+                                { key: "audio_visualizer", name: "Visualizer" },
+                                { key: "quote", name: "Quote" },
+                                { key: "session_lock", name: "Lock" },
+                                { key: "backdrop", name: "Backdrop" }
                             ]
 
                             Rectangle {
                                 height: 30
                                 radius: 15
-                                implicitWidth: ribBtnRow.implicitWidth + 14
+                                implicitWidth: ribBtnRow.implicitWidth + 16
                                 readonly property bool isSelected: lockscreenRoot.selectedModuleKey === modelData.key
                                 color: isSelected ? Theme.accent : (ribMouse.containsMouse ? Theme.alpha(Theme.surface, 0.85) : "transparent")
                                 border.width: isSelected ? 1 : 0
@@ -1772,11 +1819,13 @@ Item {
                                 Row {
                                     id: ribBtnRow
                                     anchors.centerIn: parent
-                                    spacing: 4
-                                    Text {
-                                        text: modelData.icon
-                                        font.pixelSize: 11
+                                    spacing: 6
+                                    Image {
                                         anchors.verticalCenter: parent.verticalCenter
+                                        width: 12
+                                        height: 12
+                                        source: lockscreenRoot.getElementSvg(modelData.key, parent.parent.isSelected ? Theme.on_primary : Theme.accent)
+                                        sourceSize: Qt.size(24, 24)
                                     }
                                     Text {
                                         text: modelData.name
@@ -1939,6 +1988,23 @@ Item {
                                                 anchors.rightMargin: 16
                                                 spacing: 14
 
+                                                Rectangle {
+                                                    Layout.preferredWidth: 36
+                                                    Layout.preferredHeight: 36
+                                                    radius: 10
+                                                    color: Theme.alpha(Theme.accent, 0.15)
+                                                    border.width: 1
+                                                    border.color: Theme.alpha(Theme.accent, 0.30)
+
+                                                    Image {
+                                                        anchors.centerIn: parent
+                                                        width: 18
+                                                        height: 18
+                                                        source: lockscreenRoot.getElementSvg(modelData.key, Theme.accent)
+                                                        sourceSize: Qt.size(36, 36)
+                                                    }
+                                                }
+
                                                 Column {
                                                     Layout.fillWidth: true
                                                     spacing: 3
@@ -1973,7 +2039,13 @@ Item {
                                                         id: bgBtnRow
                                                         anchors.centerIn: parent
                                                         spacing: 6
-                                                        Text { text: "🪟"; font.pixelSize: 10 }
+                                                        Image {
+                                                            anchors.verticalCenter: parent.verticalCenter
+                                                            width: 12
+                                                            height: 12
+                                                            source: lockscreenRoot.cardBgSvg(parent.parent.bgActive ? Theme.accent : Theme.alpha(Theme.foreground, 0.60))
+                                                            sourceSize: Qt.size(24, 24)
+                                                        }
                                                         Text {
                                                             text: "Card BG: " + (parent.parent.bgActive ? "ON" : "OFF")
                                                             color: parent.parent.bgActive ? Theme.accent : Theme.alpha(Theme.foreground, 0.70)
@@ -1994,7 +2066,7 @@ Item {
                                                 }
 
                                                 // Main Enabled Switch
-                                                Switch {
+                                                CapsuleSwitch {
                                                     checked: {
                                                         if (modelData.configObj === "clock") {
                                                             return window.config.clock ? window.config.clock.enabled : true
@@ -2079,7 +2151,7 @@ Item {
                                         font.family: "Outfit"
                                         font.pixelSize: 13
                                     }
-                                    Switch {
+                                    CapsuleSwitch {
                                         checked: Boolean(window.config.clock && window.config.clock.format_24h)
                                         onToggled: {
                                             if (!window.config.clock) window.config.clock = {}
@@ -2099,7 +2171,7 @@ Item {
                                         font.family: "Outfit"
                                         font.pixelSize: 13
                                     }
-                                    Switch {
+                                    CapsuleSwitch {
                                         checked: Boolean(window.config.clock && window.config.clock.show_am_pm)
                                         onToggled: {
                                             if (!window.config.clock) window.config.clock = {}
@@ -2172,7 +2244,7 @@ Item {
                                 RowLayout {
                                     Layout.fillWidth: true
                                     Text { Layout.fillWidth: true; text: "Breathing Pulse Animation"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 13 }
-                                    Switch {
+                                    CapsuleSwitch {
                                         checked: Boolean(window.config.avatar && window.config.avatar.breathing_enabled)
                                         onToggled: {
                                             if (!window.config.avatar) window.config.avatar = {}
@@ -2185,7 +2257,7 @@ Item {
                                 RowLayout {
                                     Layout.fillWidth: true
                                     Text { Layout.fillWidth: true; text: "Celestial Orbit Ring & Satellites"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 13 }
-                                    Switch {
+                                    CapsuleSwitch {
                                         checked: Boolean(window.config.avatar && window.config.avatar.orbit_satellites_enabled)
                                         onToggled: {
                                             if (!window.config.avatar) window.config.avatar = {}
@@ -2198,7 +2270,7 @@ Item {
                                 RowLayout {
                                     Layout.fillWidth: true
                                     Text { Layout.fillWidth: true; text: "Luminescent Aurora Halo Glow"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 13 }
-                                    Switch {
+                                    CapsuleSwitch {
                                         checked: Boolean(window.config.avatar && window.config.avatar.glow_enabled)
                                         onToggled: {
                                             if (!window.config.avatar) window.config.avatar = {}
