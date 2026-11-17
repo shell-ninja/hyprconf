@@ -79,13 +79,53 @@
         "enabled": true,
         "format_24h": false,
         "show_am_pm": true,
-        "size": 100,
+        "size": 96,
         "weight": "Bold",
-        "preset": "editorial_split"
+        "preset": "editorial_split",
+        "hours_font_family": "Outfit",
+        "hours_weight": "Black",
+        "hours_color_mode": "foreground",
+        "hours_letter_spacing": -1.5,
+        "minutes_font_family": "Outfit",
+        "minutes_weight": "Light",
+        "minutes_color_mode": "accent",
+        "minutes_letter_spacing": 0.5,
+        "minutes_size_ratio": 1.0,
+        "separator_glyph": ":",
+        "separator_size_ratio": 0.85,
+        "separator_color_mode": "accent",
+        "separator_blinking": false,
+        "show_line": true,
+        "line_orientation": "vertical",
+        "line_thickness": 2,
+        "line_length": 64,
+        "line_radius": 1,
+        "line_style": "gradient",
+        "line_color_mode": "accent",
+        "show_circle": false,
+        "circle_position": "left",
+        "circle_size": 8,
+        "circle_style": "solid",
+        "circle_color_mode": "accent",
+        "am_pm_style": "text",
+        "am_pm_font_family": "JetBrainsMono Nerd Font",
+        "am_pm_weight": "Bold",
+        "am_pm_size": 12,
+        "am_pm_color_mode": "accent",
+        "surface_radius": 20,
+        "surface_opacity": 0.55,
+        "surface_border_width": 1,
+        "surface_specular": true
     },
     "date": {
         "enabled": true,
-        "format": "long"
+        "format": "split_lines",
+        "font_family": "Outfit",
+        "weight": "Bold",
+        "size": 13,
+        "letter_spacing": 2.2,
+        "uppercase": true,
+        "color_mode": "foreground"
     },
     "avatar": {
         "enabled": true,
@@ -123,6 +163,53 @@
         "blur": 0.6501399002157497,
         "vignette": 0,
         "dimming": 0
+    },
+    "username_style": {
+        "font_family": "Outfit",
+        "weight": "DemiBold",
+        "size": 18,
+        "letter_spacing": 1.0,
+        "uppercase": false,
+        "color_mode": "foreground"
+    },
+    "input_field_style": {
+        "width": 300,
+        "height": 46,
+        "radius": 23,
+        "glass_opacity": 0.65,
+        "show_icon": true,
+        "border_accent": true
+    },
+    "weather_style": {
+        "layout": "pill",
+        "font_family": "Outfit",
+        "temp_size": 22,
+        "show_city": true,
+        "unit": "c"
+    },
+    "visualizer_style": {
+        "bar_count": 14,
+        "bar_width": 4,
+        "bar_spacing": 4,
+        "bar_radius": 2,
+        "height_scale": 1.0,
+        "symmetrical": true,
+        "color_mode": "accent"
+    },
+    "system_stats_style": {
+        "display_mode": "graphs",
+        "graph_thickness": 2
+    },
+    "quote_style": {
+        "font_family": "Outfit",
+        "italic": true,
+        "size": 14,
+        "show_decorations": true
+    },
+    "session_lock_style": {
+        "badge_style": "pill",
+        "show_icon": true,
+        "text": "Session Locked"
     },
     "widget_backgrounds": {
         "clock": false,

@@ -132,6 +132,19 @@ FloatingWindow {
             window.activeSection = 15
             window.visible = true
         }
+        function openPlugins() {
+            window.activeRootNav = 8
+            window.activeSection = 16
+            window.visible = true
+        }
+        function openPluginDetail(id: string) {
+            window.activeRootNav = 8
+            window.activeSection = 16
+            window.visible = true
+            if (typeof pluginsSection !== "undefined" && pluginsSection) {
+                pluginsSection.openPluginDetailById(id)
+            }
+        }
     }
 
     // Default configuration template for Lockscreen
@@ -199,11 +212,11 @@ FloatingWindow {
         }
     }
 
-    // activeRootNav: 0 for "Hyprconf Settings", 1 for "Dynamic Island", 2 for "Desktop Widgets", 3 for "Weather", 4 for "Lockscreen Canvas", 5 for "Application Dock", 6 for "Top Bar Studio", 7 for "Updates & Releases"
-    property int activeRootNav: (Quickshell.env("QS_SETTINGS_SECTION") === "updates" ? 7 : (Quickshell.env("QS_SETTINGS_SECTION") === "keybinds" ? 0 : (Quickshell.env("QS_SETTINGS_SECTION") === "bar" ? 6 : (Quickshell.env("QS_SETTINGS_SECTION") === "island" ? 1 : (Quickshell.env("QS_SETTINGS_SECTION") === "widgets" ? 2 : (Quickshell.env("QS_SETTINGS_SECTION") === "dock" ? 5 : (Quickshell.env("QS_SETTINGS_SECTION") === "weather" ? 3 : (Quickshell.env("QS_SETTINGS_SECTION") === "lockscreen" ? 4 : 0))))))))
+    // activeRootNav: 0 for "Hyprconf Settings", 1 for "Dynamic Island", 2 for "Desktop Widgets", 3 for "Weather", 4 for "Lockscreen Canvas", 5 for "Application Dock", 6 for "Top Bar Studio", 7 for "Updates & Releases", 8 for "Plugins"
+    property int activeRootNav: (Quickshell.env("QS_SETTINGS_SECTION") === "plugins" ? 8 : (Quickshell.env("QS_SETTINGS_SECTION") === "updates" ? 7 : (Quickshell.env("QS_SETTINGS_SECTION") === "keybinds" ? 0 : (Quickshell.env("QS_SETTINGS_SECTION") === "bar" ? 6 : (Quickshell.env("QS_SETTINGS_SECTION") === "island" ? 1 : (Quickshell.env("QS_SETTINGS_SECTION") === "widgets" ? 2 : (Quickshell.env("QS_SETTINGS_SECTION") === "dock" ? 5 : (Quickshell.env("QS_SETTINGS_SECTION") === "weather" ? 3 : (Quickshell.env("QS_SETTINGS_SECTION") === "lockscreen" ? 4 : 0)))))))))
     // Sub-sections under Hyprconf Settings:
     // 0: Overview, 1: Appearance, 2: Display, 3: Animations, 4: Input, 5: Login Avatar, 6: Keybinds
-    property int activeSection: (Quickshell.env("QS_SETTINGS_SECTION") === "updates" ? 15 : (Quickshell.env("QS_SETTINGS_SECTION") === "keybinds" ? 6 : (Quickshell.env("QS_SETTINGS_SECTION") === "bar" ? 14 : (Quickshell.env("QS_SETTINGS_SECTION") === "island" ? 10 : (Quickshell.env("QS_SETTINGS_SECTION") === "widgets" ? 11 : (Quickshell.env("QS_SETTINGS_SECTION") === "dock" ? 12 : (Quickshell.env("QS_SETTINGS_SECTION") === "weather" ? 7 : (Quickshell.env("QS_SETTINGS_SECTION") === "lockscreen" ? 9 : 0))))))))
+    property int activeSection: (Quickshell.env("QS_SETTINGS_SECTION") === "plugins" ? 16 : (Quickshell.env("QS_SETTINGS_SECTION") === "updates" ? 15 : (Quickshell.env("QS_SETTINGS_SECTION") === "keybinds" ? 6 : (Quickshell.env("QS_SETTINGS_SECTION") === "bar" ? 14 : (Quickshell.env("QS_SETTINGS_SECTION") === "island" ? 10 : (Quickshell.env("QS_SETTINGS_SECTION") === "widgets" ? 11 : (Quickshell.env("QS_SETTINGS_SECTION") === "dock" ? 12 : (Quickshell.env("QS_SETTINGS_SECTION") === "weather" ? 7 : (Quickshell.env("QS_SETTINGS_SECTION") === "lockscreen" ? 9 : 0)))))))))
     property int activeTab: 0 // Subtab in Lockscreen (0: Layout, 1: Clock, 2: Avatar, 3: Widgets, 4: Backdrop)
     property bool isDirty: false
     property bool showSaveToast: false
@@ -643,14 +656,25 @@ FloatingWindow {
 
     Process {
         id: saveProc
-        command: [
-            "python3", "-c",
-            "import sys, json, os; from pathlib import Path; data = json.loads(sys.argv[1]); p = Path(sys.argv[2]); p.parent.mkdir(parents=True, exist_ok=True);\nwith open(p, 'w') as f:\n    json.dump(data, f, indent=4)",
-            JSON.stringify(window.config),
-            window.configPath
-        ]
+        stdout: StdioCollector {
+            onTextChanged: {
+                if (text && text.indexOf("SUCCESS") !== -1) {
+                    window.isDirty = false
+                    window.toastMessage = "Lockscreen Settings Saved!"
+                    window.showSaveToast = true
+                    toastTimer.restart()
+                }
+            }
+        }
+        stderr: StdioCollector {
+            onTextChanged: {
+                if (text && text.trim().length > 0) {
+                    console.log("[settings saveProc error]", text)
+                }
+            }
+        }
         onRunningChanged: {
-            if (!running) {
+            if (!running && window.isDirty) {
                 window.isDirty = false
                 window.toastMessage = "Lockscreen Settings Saved!"
                 window.showSaveToast = true
@@ -792,20 +816,30 @@ FloatingWindow {
             backendApplyProc.running = true
         }
 
+        var pySave = "import sys, json, os\n" +
+                     "try:\n" +
+                     "    data = json.loads(sys.argv[1])\n" +
+                     "    for path in [os.path.expanduser('~/.local/share/hyprconf/lockscreen.json'), os.path.expanduser('~/.hyprconf/quickshell/lockscreen.json')]:\n" +
+                     "        real = os.path.realpath(path)\n" +
+                     "        os.makedirs(os.path.dirname(real), exist_ok=True)\n" +
+                     "        with open(real, 'w', encoding='utf-8') as f: json.dump(data, f, indent=4)\n" +
+                     "    print('SUCCESS')\n" +
+                     "except Exception as e:\n" +
+                     "    print('ERROR:', e, file=sys.stderr); sys.exit(1)\n"
+
         saveProc.command = [
-            "python3", "-c",
-            "import sys, json, os; from pathlib import Path; data = json.loads(sys.argv[1]); p = Path(sys.argv[2]); p.parent.mkdir(parents=True, exist_ok=True);\nwith open(p, 'w') as f:\n    json.dump(data, f, indent=4)",
-            JSON.stringify(window.config),
-            window.configPath
+            "python3", "-c", pySave,
+            JSON.stringify(window.config)
         ]
+        saveProc.running = false
         saveProc.running = true
     }
 
     function updateWidgetPosition(key, normX, normY, preset) {
         if (!window.config.positions) window.config.positions = {}
         if (!window.config.positions[key]) window.config.positions[key] = {}
-        window.config.positions[key].x = Math.max(0.05, Math.min(0.95, normX))
-        window.config.positions[key].y = Math.max(0.05, Math.min(0.95, normY))
+        window.config.positions[key].x = Number(normX.toFixed(4))
+        window.config.positions[key].y = Number(normY.toFixed(4))
         if (preset) {
             window.config.positions[key].preset = preset
         } else {
@@ -953,6 +987,7 @@ FloatingWindow {
         if (secIdx === 13) return svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + s + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="4"/><circle cx="7" cy="12" r="1.5" fill="' + s + '"/><circle cx="12" cy="12" r="1.5" fill="' + s + '"/><circle cx="17" cy="12" r="1.5" fill="' + s + '"/></svg>')
         if (secIdx === 14) return svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + s + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="5" rx="1.5"/><rect x="4" y="5" width="2" height="1" fill="' + s + '"/><rect x="8" y="5" width="2" height="1" fill="' + s + '"/><rect x="18" y="5" width="2" height="1" fill="' + s + '"/><rect x="2" y="11" width="20" height="10" rx="2" stroke-dasharray="2 2"/></svg>')
         if (secIdx === 15) return svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + s + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>')
+        if (secIdx === 16) return svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + s + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h3a1 1 0 0 0 1-1v-1a2 2 0 0 1 4 0v1a1 1 0 0 0 1 1h3a1 1 0 0 1 1 1v3a1 1 0 0 0 1 1h1a2 2 0 0 1 0 4h-1a1 1 0 0 0-1 1v3a1 1 0 0 1-1 1h-3a1 1 0 0 1-1-1v-1a2 2 0 0 0-4 0v1a1 1 0 0 1-1 1h-3a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a2 2 0 0 0 0-4h-1a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1"/></svg>')
         return svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="' + s + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>')
     }
 
@@ -1048,6 +1083,7 @@ FloatingWindow {
                             if (window.activeSection === 12) return "Application Dock orientation, auto-hide physics, and pinned launchers"
                             if (window.activeSection === 14) return "Top Bar layout modes, module positions, and obsidian capsule styling"
                             if (window.activeSection === 15) return "Version information, GitHub release discovery, changelogs, and dotfile updates"
+                            if (window.activeSection === 16) return "Official plugin catalog, installed modules, and drag & drop installation"
                             return "Interactive drag & drop canvas and lockscreen widget placement"
                         }
                         color: Theme.alpha(Theme.foreground, 0.65)
@@ -1677,6 +1713,66 @@ FloatingWindow {
                                 onClicked: {
                                     window.activeRootNav = 7
                                     window.activeSection = 15
+                                }
+                            }
+                        }
+
+                        // 9. Parent Option: Plugins & Extensions
+                        Rectangle {
+                            width: parent.width
+                            height: 48
+                            radius: 10
+                            readonly property bool isSelected: window.activeRootNav === 8
+
+                            color: isSelected
+                                ? Theme.accent
+                                : (pluginsNavMouse.containsMouse ? Theme.alpha(Theme.surface, 0.85) : "transparent")
+
+                            Behavior on color { ColorAnimation { duration: 120 } }
+
+                            Row {
+                                anchors.fill: parent
+                                anchors.leftMargin: 12
+                                anchors.rightMargin: 12
+                                spacing: 10
+
+                                Image {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    width: 20
+                                    height: 20
+                                    source: window.getNavSvg(16, parent.parent.isSelected)
+                                    sourceSize: Qt.size(40, 40)
+                                }
+
+                                Column {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    spacing: 2
+
+                                    Text {
+                                        text: "Plugins"
+                                        color: parent.parent.parent.isSelected ? Theme.on_primary : Theme.foreground
+                                        font.family: "Outfit"
+                                        font.pixelSize: 13
+                                        font.weight: parent.parent.parent.isSelected ? Font.DemiBold : Font.Normal
+                                    }
+
+                                    Text {
+                                        text: "Catalog, Add-ons & Drops"
+                                        color: parent.parent.parent.isSelected ? Theme.alpha(Theme.on_primary, 0.80) : Theme.alpha(Theme.foreground, 0.50)
+                                        font.family: "Outfit"
+                                        font.pixelSize: 10
+                                    }
+                                }
+                            }
+
+                            MouseArea {
+                                id: pluginsNavMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    window.activeRootNav = 8
+                                    window.activeSection = 16
                                 }
                             }
                         }
@@ -5061,6 +5157,15 @@ FloatingWindow {
                 UpdateSection {
                     id: updateSection
                     visible: window.activeRootNav === 7
+                }
+
+                // =============================================================
+                // ROOT NAV 8: PLUGINS & EXTENSIONS STUDIO
+                // =============================================================
+                PluginsSection {
+                    id: pluginsSection
+                    anchors.fill: parent
+                    visible: window.activeRootNav === 8
                 }
             }
         }

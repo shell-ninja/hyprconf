@@ -20,8 +20,8 @@ Item {
 
     function updatePositionFromNorm() {
         if (!isDragging && canvasWidth > 0 && canvasHeight > 0) {
-            x = Math.max(4, Math.min(canvasWidth - width - 4, Math.round(normX * canvasWidth - width / 2)))
-            y = Math.max(4, Math.min(canvasHeight - height - 4, Math.round(normY * canvasHeight - height / 2)))
+            x = Math.round(normX * canvasWidth - width / 2)
+            y = Math.round(normY * canvasHeight - height / 2)
         }
     }
 
@@ -84,10 +84,10 @@ Item {
         cursorShape: pressed ? Qt.ClosedHandCursor : Qt.OpenHandCursor
         drag.target: root
         drag.axis: Drag.XAndYAxis
-        drag.minimumX: 4
-        drag.maximumX: Math.max(4, root.canvasWidth - root.width - 4)
-        drag.minimumY: 4
-        drag.maximumY: Math.max(4, root.canvasHeight - root.height - 4)
+        drag.minimumX: -root.canvasWidth * 0.85
+        drag.maximumX: root.canvasWidth * 1.85
+        drag.minimumY: -root.canvasHeight * 0.85
+        drag.maximumY: root.canvasHeight * 1.85
 
         onReleased: {
             var rawCenterX = root.x + root.width / 2
@@ -105,8 +105,8 @@ Item {
                 root.y = Math.round(rawCenterY - root.height / 2)
             }
 
-            var calcNormX = Math.max(0.05, Math.min(0.95, rawCenterX / Math.max(1, root.canvasWidth)))
-            var calcNormY = Math.max(0.05, Math.min(0.95, rawCenterY / Math.max(1, root.canvasHeight)))
+            var calcNormX = Number((rawCenterX / Math.max(1, root.canvasWidth)).toFixed(4))
+            var calcNormY = Number((rawCenterY / Math.max(1, root.canvasHeight)).toFixed(4))
 
             root.positionDropped(calcNormX, calcNormY)
         }

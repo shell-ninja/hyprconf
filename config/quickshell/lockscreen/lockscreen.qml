@@ -924,13 +924,13 @@ Scope {
                     function getModuleX(key, defaultNormX, itemWidth) {
                         var p = (root.cfg && root.cfg.positions && root.cfg.positions[key]) ? root.cfg.positions[key] : null
                         var nx = (p && p.x !== undefined) ? p.x : defaultNormX
-                        return Math.max(16, Math.min(containerW - itemWidth - 16, Math.round(nx * containerW - itemWidth / 2)))
+                        return Math.round(nx * containerW - itemWidth / 2)
                     }
 
                     function getModuleY(key, defaultNormY, itemHeight) {
                         var p = (root.cfg && root.cfg.positions && root.cfg.positions[key]) ? root.cfg.positions[key] : null
                         var ny = (p && p.y !== undefined) ? p.y : defaultNormY
-                        return Math.max(16, Math.min(containerH - itemHeight - 16, Math.round(ny * containerH - itemHeight / 2)))
+                        return Math.round(ny * containerH - itemHeight / 2)
                     }
 
                     function getModuleScale(key, defaultScale) {
@@ -939,39 +939,151 @@ Scope {
                         return Math.max(0.4, Math.min(3.0, sc))
                     }
 
-                    // 1. Clock & AM/PM & Date Module (4 Editorial Presets)
+                    function parseFontWeight(w, fallback) {
+                        if (!w) return fallback !== undefined ? fallback : Font.Normal
+                        var s = String(w).toLowerCase()
+                        if (s === "thin" || s === "100") return Font.Thin
+                        if (s === "extralight" || s === "200") return Font.ExtraLight
+                        if (s === "light" || s === "300") return Font.Light
+                        if (s === "medium" || s === "500") return Font.Medium
+                        if (s === "demibold" || s === "semibold" || s === "600") return Font.DemiBold
+                        if (s === "bold" || s === "700") return Font.Bold
+                        if (s === "extrabold" || s === "800") return Font.ExtraBold
+                        if (s === "black" || s === "900") return Font.Black
+                        return Font.Normal
+                    }
+
+                    function parseToneColor(tone, fallback) {
+                        if (!tone) return fallback
+                        var t = String(tone).toLowerCase()
+                        if (t === "accent") return Theme.accent
+                        if (t === "primary") return Theme.primary
+                        if (t === "foreground") return Theme.foreground
+                        if (t === "muted") return Theme.muted || Theme.alpha(Theme.foreground, 0.60)
+                        if (t === "on_primary") return Theme.on_primary
+                        if (t.startsWith("#")) return t
+                        return fallback
+                    }
+
+                    // 1. Clock & AM/PM & Date Module (Granular Adobe Studio Presets)
                     Item {
                         id: clockModule
+
+                        property real sepBlinkOpacity: 1.0
+
+                        SequentialAnimation on sepBlinkOpacity {
+                            loops: Animation.Infinite
+                            running: Boolean(root.cfg && root.cfg.clock && root.cfg.clock.separator_blinking)
+                            NumberAnimation { from: 1.0; to: 0.20; duration: 500; easing.type: Easing.InOutQuad }
+                            NumberAnimation { from: 0.20; to: 1.0; duration: 500; easing.type: Easing.InOutQuad }
+                        }
+
+                        function parseFontWeight(w, fallback) {
+                            if (!w) return fallback !== undefined ? fallback : Font.Normal
+                            var s = String(w).toLowerCase()
+                            if (s === "thin" || s === "100") return Font.Thin
+                            if (s === "extralight" || s === "200") return Font.ExtraLight
+                            if (s === "light" || s === "300") return Font.Light
+                            if (s === "medium" || s === "500") return Font.Medium
+                            if (s === "demibold" || s === "semibold" || s === "600") return Font.DemiBold
+                            if (s === "bold" || s === "700") return Font.Bold
+                            if (s === "extrabold" || s === "800") return Font.ExtraBold
+                            if (s === "black" || s === "900") return Font.Black
+                            return Font.Normal
+                        }
+
+                        function parseToneColor(tone, fallback) {
+                            if (!tone) return fallback
+                            var t = String(tone).toLowerCase()
+                            if (t === "accent") return Theme.accent
+                            if (t === "primary") return Theme.primary
+                            if (t === "foreground") return Theme.foreground
+                            if (t === "muted") return Theme.muted || Theme.alpha(Theme.foreground, 0.60)
+                            if (t === "on_primary") return Theme.on_primary
+                            if (t.startsWith("#")) return t
+                            return fallback
+                        }
+
                         readonly property real clockPx: (root.cfg && root.cfg.clock && root.cfg.clock.size) ? root.cfg.clock.size : 84
-                        readonly property int clockWt: (root.cfg && root.cfg.clock && root.cfg.clock.weight === "Bold") ? Font.Bold : ((root.cfg && root.cfg.clock && root.cfg.clock.weight === "Medium") ? Font.Medium : Font.Light)
+
+                        // Granular Properties
+                        readonly property string hFont: (root.cfg && root.cfg.clock && root.cfg.clock.hours_font_family) ? root.cfg.clock.hours_font_family : (root.clockPreset === "mono_telemetry" ? "JetBrainsMono Nerd Font" : "Outfit")
+                        readonly property int hWeight: parseFontWeight((root.cfg && root.cfg.clock && root.cfg.clock.hours_weight) ? root.cfg.clock.hours_weight : (root.clockPreset === "editorial_split" ? "Black" : (root.clockPreset === "classic" ? (root.cfg.clock.weight || "Bold") : "Bold")), Font.Bold)
+                        readonly property color hColor: parseToneColor((root.cfg && root.cfg.clock && root.cfg.clock.hours_color_mode) ? root.cfg.clock.hours_color_mode : (root.clockPreset === "classic" ? "accent" : "foreground"), Theme.foreground)
+                        readonly property real hSpacing: (root.cfg && root.cfg.clock && root.cfg.clock.hours_letter_spacing !== undefined) ? root.cfg.clock.hours_letter_spacing : (root.clockPreset === "editorial_split" ? -1.5 : (root.clockPreset === "classic" ? 2.0 : 1.0))
+
+                        readonly property string mFont: (root.cfg && root.cfg.clock && root.cfg.clock.minutes_font_family) ? root.cfg.clock.minutes_font_family : hFont
+                        readonly property int mWeight: parseFontWeight((root.cfg && root.cfg.clock && root.cfg.clock.minutes_weight) ? root.cfg.clock.minutes_weight : (root.clockPreset === "editorial_split" ? "Light" : (root.clockPreset === "classic" ? (root.cfg.clock.weight || "Light") : "Light")), Font.Light)
+                        readonly property color mColor: parseToneColor((root.cfg && root.cfg.clock && root.cfg.clock.minutes_color_mode) ? root.cfg.clock.minutes_color_mode : "accent", Theme.accent)
+                        readonly property real mRatio: (root.cfg && root.cfg.clock && root.cfg.clock.minutes_size_ratio !== undefined) ? root.cfg.clock.minutes_size_ratio : 1.0
+                        readonly property real mSpacing: (root.cfg && root.cfg.clock && root.cfg.clock.minutes_letter_spacing !== undefined) ? root.cfg.clock.minutes_letter_spacing : (root.clockPreset === "editorial_split" ? 0.5 : 1.0)
+
+                        readonly property string sepGlyph: (root.cfg && root.cfg.clock && root.cfg.clock.separator_glyph !== undefined) ? root.cfg.clock.separator_glyph : ":"
+                        readonly property real sepRatio: (root.cfg && root.cfg.clock && root.cfg.clock.separator_size_ratio !== undefined) ? root.cfg.clock.separator_size_ratio : 0.85
+                        readonly property color sepColor: parseToneColor((root.cfg && root.cfg.clock && root.cfg.clock.separator_color_mode) ? root.cfg.clock.separator_color_mode : (root.clockPreset === "mono_telemetry" ? "foreground" : "accent"), Theme.accent)
+
+                        readonly property bool hasLine: (root.cfg && root.cfg.clock && root.cfg.clock.show_line !== undefined) ? root.cfg.clock.show_line : (root.clockPreset === "editorial_split" || root.clockPreset === "mono_telemetry")
+                        readonly property string lineOrient: (root.cfg && root.cfg.clock && root.cfg.clock.line_orientation) ? root.cfg.clock.line_orientation : (root.clockPreset === "mono_telemetry" ? "horizontal" : "vertical")
+                        readonly property real lineThick: (root.cfg && root.cfg.clock && root.cfg.clock.line_thickness !== undefined) ? root.cfg.clock.line_thickness : (root.clockPreset === "mono_telemetry" ? 1 : 2)
+                        readonly property real lineLen: (root.cfg && root.cfg.clock && root.cfg.clock.line_length !== undefined) ? root.cfg.clock.line_length : (root.clockPreset === "mono_telemetry" ? 180 : Math.max(36, clockPx * 0.72))
+                        readonly property real lineRad: (root.cfg && root.cfg.clock && root.cfg.clock.line_radius !== undefined) ? root.cfg.clock.line_radius : 1
+                        readonly property string lineStyle: (root.cfg && root.cfg.clock && root.cfg.clock.line_style) ? root.cfg.clock.line_style : "gradient"
+                        readonly property color lineColor: parseToneColor((root.cfg && root.cfg.clock && root.cfg.clock.line_color_mode) ? root.cfg.clock.line_color_mode : "accent", Theme.accent)
+
+                        readonly property bool hasCircle: (root.cfg && root.cfg.clock && root.cfg.clock.show_circle !== undefined) ? root.cfg.clock.show_circle : (root.clockPreset === "minimal_pill")
+                        readonly property real circleSize: (root.cfg && root.cfg.clock && root.cfg.clock.circle_size !== undefined) ? root.cfg.clock.circle_size : 8
+                        readonly property string circleStyle: (root.cfg && root.cfg.clock && root.cfg.clock.circle_style) ? root.cfg.clock.circle_style : "solid"
+                        readonly property color circleColor: parseToneColor((root.cfg && root.cfg.clock && root.cfg.clock.circle_color_mode) ? root.cfg.clock.circle_color_mode : "accent", Theme.accent)
+                        readonly property string circlePos: (root.cfg && root.cfg.clock && root.cfg.clock.circle_position) ? root.cfg.clock.circle_position : "left"
+
+                        readonly property string ampmStyle: (root.cfg && root.cfg.clock && root.cfg.clock.am_pm_style) ? root.cfg.clock.am_pm_style : (root.clockPreset === "mono_telemetry" ? "bracketed" : "text")
+                        readonly property string ampmFont: (root.cfg && root.cfg.clock && root.cfg.clock.am_pm_font_family) ? root.cfg.clock.am_pm_font_family : (root.clockPreset === "mono_telemetry" ? "JetBrainsMono Nerd Font" : "Outfit")
+                        readonly property int ampmWeight: parseFontWeight((root.cfg && root.cfg.clock && root.cfg.clock.am_pm_weight) ? root.cfg.clock.am_pm_weight : "Bold", Font.Bold)
+                        readonly property real ampmSize: (root.cfg && root.cfg.clock && root.cfg.clock.am_pm_size !== undefined) ? root.cfg.clock.am_pm_size : (root.clockPreset === "classic" ? 18 : 12)
+                        readonly property color ampmColor: parseToneColor((root.cfg && root.cfg.clock && root.cfg.clock.am_pm_color_mode) ? root.cfg.clock.am_pm_color_mode : "accent", Theme.accent)
+
+                        readonly property string dFmt: (root.cfg && root.cfg.date && root.cfg.date.format) ? root.cfg.date.format : (root.clockPreset === "editorial_split" ? "split_lines" : (root.clockPreset === "mono_telemetry" ? "iso" : (root.clockPreset === "minimal_pill" ? "compact" : "long")))
+                        readonly property string dFont: (root.cfg && root.cfg.date && root.cfg.date.font_family) ? root.cfg.date.font_family : (root.clockPreset === "mono_telemetry" ? "JetBrainsMono Nerd Font" : "Outfit")
+                        readonly property int dWeight: parseFontWeight((root.cfg && root.cfg.date && root.cfg.date.weight) ? root.cfg.date.weight : "Medium", Font.Medium)
+                        readonly property real dSize: (root.cfg && root.cfg.date && root.cfg.date.size !== undefined) ? root.cfg.date.size : (root.clockPreset === "minimal_pill" ? 15 : 13)
+                        readonly property real dSpacing: (root.cfg && root.cfg.date && root.cfg.date.letter_spacing !== undefined) ? root.cfg.date.letter_spacing : (root.clockPreset === "editorial_split" ? 2.2 : (root.clockPreset === "classic" ? 4.0 : 1.8))
+                        readonly property bool dUpper: (root.cfg && root.cfg.date && root.cfg.date.uppercase !== undefined) ? root.cfg.date.uppercase : (root.clockPreset !== "minimal_pill")
+                        readonly property color dColor: parseToneColor((root.cfg && root.cfg.date && root.cfg.date.color_mode) ? root.cfg.date.color_mode : "foreground", Theme.alpha(Theme.foreground, 0.75))
+
+                        readonly property real surfRad: (root.cfg && root.cfg.clock && root.cfg.clock.surface_radius !== undefined) ? root.cfg.clock.surface_radius : (root.clockPreset === "minimal_pill" ? height / 2 : 20)
+                        readonly property real surfOp: (root.cfg && root.cfg.clock && root.cfg.clock.surface_opacity !== undefined) ? root.cfg.clock.surface_opacity : 0.55
+                        readonly property real surfBw: (root.cfg && root.cfg.clock && root.cfg.clock.surface_border_width !== undefined) ? root.cfg.clock.surface_border_width : 1
+                        readonly property bool surfSpec: (root.cfg && root.cfg.clock && root.cfg.clock.surface_specular !== undefined) ? root.cfg.clock.surface_specular : true
+
                         width: {
-                            if (root.clockPreset === "editorial_split") return splitLockRow.implicitWidth + 12
-                            if (root.clockPreset === "mono_telemetry") return monoLockCol.implicitWidth + 16
+                            if (root.clockPreset === "editorial_split") return splitLockRow.implicitWidth + 20
+                            if (root.clockPreset === "mono_telemetry") return monoLockCol.implicitWidth + 24
                             if (root.clockPreset === "minimal_pill") return minimalLockRow.implicitWidth + 44
-                            return Math.max(timeRow.implicitWidth, dateText.implicitWidth)
+                            return Math.max(timeRow.implicitWidth, dateText.implicitWidth) + 16
                         }
                         height: {
-                            if (root.clockPreset === "editorial_split") return splitLockRow.implicitHeight + 8
-                            if (root.clockPreset === "mono_telemetry") return monoLockCol.implicitHeight + 8
+                            if (root.clockPreset === "editorial_split") return splitLockRow.implicitHeight + 16
+                            if (root.clockPreset === "mono_telemetry") return monoLockCol.implicitHeight + 16
                             if (root.clockPreset === "minimal_pill") return minimalLockRow.implicitHeight + 22
-                            return timeRow.implicitHeight + (dateText.visible ? (dateText.implicitHeight + 4) : 0)
+                            return clockCol.implicitHeight + 12
                         }
                         x: modulesContainer.getModuleX("clock", 0.50, width)
                         y: modulesContainer.getModuleY("clock", 0.18, height)
                         scale: modulesContainer.getModuleScale("clock", 1.0)
                         transformOrigin: Item.Center
-                        visible: (root.cfg && root.cfg.clock) ? root.cfg.clock.enabled : true
+                        visible: (root.cfg && root.cfg.clock) ? (root.cfg.clock.enabled !== false) : true
 
+                        // Obsidian Glass Surface Plate
                         Rectangle {
                             anchors.fill: parent
-                            anchors.margins: root.clockPreset === "minimal_pill" ? 0 : -12
-                            radius: root.clockPreset === "minimal_pill" ? height / 2 : 20
+                            anchors.margins: root.clockPreset === "minimal_pill" ? 0 : -10
+                            radius: clockModule.surfRad
                             clip: true
                             visible: root.clockPreset === "minimal_pill"
                                      ? (Boolean(root.cfg && root.cfg.widget_backgrounds && root.cfg.widget_backgrounds.clock !== false))
                                      : Boolean(root.cfg && root.cfg.widget_backgrounds && root.cfg.widget_backgrounds.clock)
-                            color: Theme.alpha(Theme.mix(Theme.background, Theme.surface, 0.55), 0.55)
-                            border.width: 1
+                            color: Theme.alpha(Theme.mix(Theme.background, Theme.surface, 0.55), clockModule.surfOp)
+                            border.width: clockModule.surfBw
                             border.color: Theme.alpha(Theme.foreground, 0.16)
                             z: -1
 
@@ -979,9 +1091,10 @@ Scope {
                                 anchors.top: parent.top
                                 anchors.left: parent.left
                                 anchors.right: parent.right
-                                anchors.leftMargin: 18
-                                anchors.rightMargin: 18
+                                anchors.leftMargin: 16
+                                anchors.rightMargin: 16
                                 height: 1
+                                visible: clockModule.surfSpec
                                 gradient: Gradient {
                                     orientation: Gradient.Horizontal
                                     GradientStop { position: 0.0; color: "transparent" }
@@ -991,11 +1104,11 @@ Scope {
                             }
                         }
 
-                        // Preset 1: Classic
+                        // ── PRESET 1: CLASSIC ────────────────────────────────
                         Column {
                             id: clockCol
                             anchors.centerIn: parent
-                            spacing: 4
+                            spacing: 6
                             visible: root.clockPreset === "classic"
 
                             Row {
@@ -1003,26 +1116,101 @@ Scope {
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 spacing: 8
 
-                                Text {
-                                    id: timeText
-                                    text: root.timeStr
-                                    color: Theme.accent
-                                    font.family: "Outfit"
-                                    font.pixelSize: clockModule.clockPx
-                                    font.weight: clockModule.clockWt
-                                    font.letterSpacing: 2
+                                // Left Accent Circle
+                                Rectangle {
+                                    visible: clockModule.hasCircle && clockModule.circlePos === "left"
+                                    width: clockModule.circleSize; height: clockModule.circleSize
+                                    radius: width / 2
+                                    color: clockModule.circleStyle === "outline" ? "transparent" : clockModule.circleColor
+                                    border.width: clockModule.circleStyle === "outline" ? 1.5 : 0
+                                    border.color: clockModule.circleColor
+                                    anchors.verticalCenter: parent.verticalCenter
                                 }
 
                                 Text {
-                                    anchors.bottom: timeText.bottom
-                                    anchors.bottomMargin: 14
-                                    text: root.amPmStr
+                                    id: timeText
+                                    text: root.hoursStr
+                                    color: clockModule.hColor
+                                    font.family: clockModule.hFont
+                                    font.pixelSize: clockModule.clockPx
+                                    font.weight: clockModule.hWeight
+                                    font.letterSpacing: clockModule.hSpacing
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
+
+                                Text {
+                                    text: clockModule.sepGlyph
+                                    color: clockModule.sepColor
+                                    font.family: clockModule.hFont
+                                    font.pixelSize: Math.round(clockModule.clockPx * clockModule.sepRatio)
+                                    font.weight: Font.Light
+                                    opacity: clockModule.sepBlinkOpacity
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    anchors.verticalCenterOffset: -2
+                                    visible: clockModule.sepGlyph.length > 0
+                                }
+
+                                Text {
+                                    text: root.minutesStr
+                                    color: clockModule.mColor
+                                    font.family: clockModule.mFont
+                                    font.pixelSize: Math.round(clockModule.clockPx * clockModule.mRatio)
+                                    font.weight: clockModule.mWeight
+                                    font.letterSpacing: clockModule.mSpacing
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
+
+                                // Right Accent Circle
+                                Rectangle {
+                                    visible: clockModule.hasCircle && clockModule.circlePos === "right"
+                                    width: clockModule.circleSize; height: clockModule.circleSize
+                                    radius: width / 2
+                                    color: clockModule.circleStyle === "outline" ? "transparent" : clockModule.circleColor
+                                    border.width: clockModule.circleStyle === "outline" ? 1.5 : 0
+                                    border.color: clockModule.circleColor
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
+
+                                // AM/PM Marker
+                                Rectangle {
                                     visible: (root.cfg && root.cfg.clock) ? (!root.cfg.clock.format_24h && root.cfg.clock.show_am_pm) : true
-                                    color: Theme.alpha(Theme.accent, 0.90)
-                                    font.family: "Outfit"
-                                    font.pixelSize: 18
-                                    font.weight: Font.DemiBold
-                                    font.letterSpacing: 2
+                                    anchors.bottom: timeText.bottom
+                                    anchors.bottomMargin: 12
+                                    height: clockModule.ampmStyle === "pill" ? 22 : ampmClassicLiveTxt.implicitHeight
+                                    width: clockModule.ampmStyle === "pill" ? (ampmClassicLiveTxt.implicitWidth + 14) : ampmClassicLiveTxt.implicitWidth
+                                    radius: 11
+                                    color: clockModule.ampmStyle === "pill" ? Theme.alpha(clockModule.ampmColor, 0.20) : "transparent"
+                                    border.width: clockModule.ampmStyle === "pill" ? 1 : 0
+                                    border.color: Theme.alpha(clockModule.ampmColor, 0.50)
+
+                                    Text {
+                                        id: ampmClassicLiveTxt
+                                        anchors.centerIn: parent
+                                        text: clockModule.ampmStyle === "bracketed" ? ("[ " + root.amPmStr + " ]") : root.amPmStr
+                                        color: clockModule.ampmColor
+                                        font.family: clockModule.ampmFont
+                                        font.pixelSize: clockModule.ampmSize
+                                        font.weight: clockModule.ampmWeight
+                                        font.letterSpacing: 1.5
+                                    }
+                                }
+                            }
+
+                            // Divider Line (horizontal)
+                            Rectangle {
+                                visible: clockModule.hasLine && clockModule.lineOrient === "horizontal"
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                width: clockModule.lineLen
+                                height: clockModule.lineThick
+                                radius: clockModule.lineRad
+                                color: clockModule.lineStyle === "solid" ? clockModule.lineColor : "transparent"
+                                gradient: clockModule.lineStyle === "gradient" ? classicLineLiveGrad : null
+                                Gradient {
+                                    id: classicLineLiveGrad
+                                    orientation: Gradient.Horizontal
+                                    GradientStop { position: 0.0; color: "transparent" }
+                                    GradientStop { position: 0.5; color: clockModule.lineColor }
+                                    GradientStop { position: 1.0; color: "transparent" }
                                 }
                             }
 
@@ -1030,109 +1218,174 @@ Scope {
                             Text {
                                 id: dateText
                                 anchors.horizontalCenter: parent.horizontalCenter
-                                visible: (root.cfg && root.cfg.date) ? root.cfg.date.enabled : true
-                                text: root.dateStr.toUpperCase()
-                                color: Theme.alpha(Theme.foreground, 0.75)
-                                font.family: "Outfit"
-                                font.pixelSize: 13
-                                font.weight: Font.Medium
-                                font.letterSpacing: 4
+                                visible: (root.cfg && root.cfg.date) ? (root.cfg.date.enabled !== false) : true
+                                text: {
+                                    var d = root.now
+                                    var isUp = clockModule.dUpper
+                                    var fmt = clockModule.dFmt
+                                    var str = ""
+                                    if (fmt === "compact") str = Qt.formatDateTime(d, "ddd, MMM d")
+                                    else if (fmt === "iso") str = Qt.formatDateTime(d, "yyyy-MM-dd") + " // " + Qt.formatDateTime(d, "ddd").toUpperCase()
+                                    else if (fmt === "minimal") str = Qt.formatDateTime(d, "MMM d")
+                                    else str = Qt.formatDateTime(d, "dddd, MMMM d")
+                                    return isUp ? str.toUpperCase() : str
+                                }
+                                color: clockModule.dColor
+                                font.family: clockModule.dFont
+                                font.pixelSize: clockModule.dSize
+                                font.weight: clockModule.dWeight
+                                font.letterSpacing: clockModule.dSpacing
                             }
                         }
 
-                        // Preset 2: Editorial Split
+                        // ── PRESET 2: EDITORIAL SPLIT ────────────────────────
                         Row {
                             id: splitLockRow
                             anchors.centerIn: parent
                             spacing: 16
                             visible: root.clockPreset === "editorial_split"
 
+                            // Left Circle
+                            Rectangle {
+                                visible: clockModule.hasCircle && clockModule.circlePos === "left"
+                                width: clockModule.circleSize; height: clockModule.circleSize
+                                radius: width / 2
+                                color: clockModule.circleStyle === "outline" ? "transparent" : clockModule.circleColor
+                                border.width: clockModule.circleStyle === "outline" ? 1.5 : 0
+                                border.color: clockModule.circleColor
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+
                             Row {
                                 anchors.verticalCenter: parent.verticalCenter
-                                spacing: 3
+                                spacing: 4
 
                                 Text {
                                     text: root.hoursStr
-                                    color: Theme.foreground
-                                    font.family: "Outfit"
+                                    color: clockModule.hColor
+                                    font.family: clockModule.hFont
                                     font.pixelSize: clockModule.clockPx
-                                    font.weight: Font.Black
-                                    font.letterSpacing: -1.5
+                                    font.weight: clockModule.hWeight
+                                    font.letterSpacing: clockModule.hSpacing
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
 
                                 Text {
-                                    text: ":"
-                                    color: Theme.alpha(Theme.accent, 0.70)
-                                    font.family: "Outfit"
-                                    font.pixelSize: Math.round(clockModule.clockPx * 0.85)
+                                    text: clockModule.sepGlyph
+                                    color: clockModule.sepColor
+                                    font.family: clockModule.hFont
+                                    font.pixelSize: Math.round(clockModule.clockPx * clockModule.sepRatio)
                                     font.weight: Font.Light
+                                    opacity: clockModule.sepBlinkOpacity
                                     anchors.verticalCenter: parent.verticalCenter
                                     anchors.verticalCenterOffset: -3
+                                    visible: clockModule.sepGlyph.length > 0
                                 }
 
                                 Text {
                                     text: root.minutesStr
-                                    color: Theme.accent
-                                    font.family: "Outfit"
-                                    font.pixelSize: clockModule.clockPx
-                                    font.weight: Font.Light
-                                    font.letterSpacing: 0.5
+                                    color: clockModule.mColor
+                                    font.family: clockModule.mFont
+                                    font.pixelSize: Math.round(clockModule.clockPx * clockModule.mRatio)
+                                    font.weight: clockModule.mWeight
+                                    font.letterSpacing: clockModule.mSpacing
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
                             }
 
+                            // Divider Line (vertical)
                             Rectangle {
-                                width: 2
-                                height: Math.max(36, clockModule.clockPx * 0.72)
-                                radius: 1
+                                visible: clockModule.hasLine
+                                width: clockModule.lineOrient === "vertical" ? clockModule.lineThick : clockModule.lineLen
+                                height: clockModule.lineOrient === "vertical" ? clockModule.lineLen : clockModule.lineThick
+                                radius: clockModule.lineRad
                                 anchors.verticalCenter: parent.verticalCenter
-                                visible: ((root.cfg && root.cfg.date) ? root.cfg.date.enabled : true) || ((root.cfg && root.cfg.clock) ? (!root.cfg.clock.format_24h && root.cfg.clock.show_am_pm) : true)
-                                gradient: Gradient {
+                                color: clockModule.lineStyle === "solid" ? clockModule.lineColor : "transparent"
+                                gradient: clockModule.lineStyle === "gradient" ? splitLiveVertGrad : null
+                                Gradient {
+                                    id: splitLiveVertGrad
                                     orientation: Gradient.Vertical
-                                    GradientStop { position: 0.0; color: Theme.accent }
-                                    GradientStop { position: 1.0; color: Theme.alpha(Theme.primary, 0.25) }
+                                    GradientStop { position: 0.0; color: clockModule.lineColor }
+                                    GradientStop { position: 1.0; color: Theme.alpha(clockModule.lineColor, 0.20) }
                                 }
                             }
 
+                            // Stacked Side Metadata (AM/PM & Date)
                             Column {
                                 anchors.verticalCenter: parent.verticalCenter
                                 spacing: 3
-                                visible: ((root.cfg && root.cfg.date) ? root.cfg.date.enabled : true) || ((root.cfg && root.cfg.clock) ? (!root.cfg.clock.format_24h && root.cfg.clock.show_am_pm) : true)
+                                visible: ((root.cfg && root.cfg.date) ? (root.cfg.date.enabled !== false) : true) || ((root.cfg && root.cfg.clock) ? (!root.cfg.clock.format_24h && root.cfg.clock.show_am_pm) : true)
 
-                                Text {
+                                // AM/PM
+                                Rectangle {
                                     visible: (root.cfg && root.cfg.clock) ? (!root.cfg.clock.format_24h && root.cfg.clock.show_am_pm) : true
-                                    text: root.amPmStr
-                                    color: Theme.accent
-                                    font.family: "JetBrainsMono Nerd Font"
-                                    font.pixelSize: 12
-                                    font.weight: Font.Bold
-                                    font.letterSpacing: 1.5
+                                    height: clockModule.ampmStyle === "pill" ? 20 : ampmLiveSplitTxt.implicitHeight
+                                    width: clockModule.ampmStyle === "pill" ? (ampmLiveSplitTxt.implicitWidth + 12) : ampmLiveSplitTxt.implicitWidth
+                                    radius: 10
+                                    color: clockModule.ampmStyle === "pill" ? Theme.alpha(clockModule.ampmColor, 0.20) : "transparent"
+                                    border.width: clockModule.ampmStyle === "pill" ? 1 : 0
+                                    border.color: Theme.alpha(clockModule.ampmColor, 0.50)
+
+                                    Text {
+                                        id: ampmLiveSplitTxt
+                                        anchors.centerIn: parent
+                                        text: clockModule.ampmStyle === "bracketed" ? ("[ " + root.amPmStr + " ]") : root.amPmStr
+                                        color: clockModule.ampmColor
+                                        font.family: clockModule.ampmFont
+                                        font.pixelSize: clockModule.ampmSize
+                                        font.weight: clockModule.ampmWeight
+                                        font.letterSpacing: 1.5
+                                    }
                                 }
 
+                                // Date Part 1 (Day)
                                 Text {
-                                    visible: (root.cfg && root.cfg.date) ? root.cfg.date.enabled : true
-                                    text: root.dayUpperStr
-                                    color: Theme.foreground
-                                    font.family: "Outfit"
-                                    font.pixelSize: 13
-                                    font.weight: Font.Bold
-                                    font.letterSpacing: 2.2
+                                    visible: (root.cfg && root.cfg.date) ? (root.cfg.date.enabled !== false) : true
+                                    text: {
+                                        var d = root.now
+                                        var isUp = clockModule.dUpper
+                                        var fmt = clockModule.dFmt
+                                        if (fmt === "split_lines") {
+                                            return isUp ? root.dayUpperStr : Qt.formatDateTime(d, "dddd")
+                                        }
+                                        return isUp ? Qt.formatDateTime(d, "dddd, MMM d").toUpperCase() : Qt.formatDateTime(d, "dddd, MMM d")
+                                    }
+                                    color: clockModule.dColor
+                                    font.family: clockModule.dFont
+                                    font.pixelSize: clockModule.dSize
+                                    font.weight: clockModule.dWeight
+                                    font.letterSpacing: clockModule.dSpacing
                                 }
 
+                                // Date Part 2 (Month & Day, for split_lines)
                                 Text {
-                                    visible: (root.cfg && root.cfg.date) ? root.cfg.date.enabled : true
-                                    text: root.monthDayStr
-                                    color: Theme.alpha(Theme.foreground, 0.68)
-                                    font.family: "Outfit"
-                                    font.pixelSize: 12
+                                    visible: ((root.cfg && root.cfg.date) ? (root.cfg.date.enabled !== false) : true) && clockModule.dFmt === "split_lines"
+                                    text: {
+                                        var d = root.now
+                                        var isUp = clockModule.dUpper
+                                        return isUp ? root.monthDayStr : Qt.formatDateTime(d, "dd MMM")
+                                    }
+                                    color: Theme.alpha(clockModule.dColor, 0.70)
+                                    font.family: clockModule.dFont
+                                    font.pixelSize: Math.max(10, clockModule.dSize - 1)
                                     font.weight: Font.Medium
-                                    font.letterSpacing: 2.0
+                                    font.letterSpacing: clockModule.dSpacing
                                 }
+                            }
+
+                            // Right Circle
+                            Rectangle {
+                                visible: clockModule.hasCircle && clockModule.circlePos === "right"
+                                width: clockModule.circleSize; height: clockModule.circleSize
+                                radius: width / 2
+                                color: clockModule.circleStyle === "outline" ? "transparent" : clockModule.circleColor
+                                border.width: clockModule.circleStyle === "outline" ? 1.5 : 0
+                                border.color: clockModule.circleColor
+                                anchors.verticalCenter: parent.verticalCenter
                             }
                         }
 
-                        // Preset 3: Mono Telemetry
+                        // ── PRESET 3: MONO TELEMETRY ─────────────────────────
                         Column {
                             id: monoLockCol
                             anchors.centerIn: parent
@@ -1143,32 +1396,58 @@ Scope {
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 visible: (root.cfg && root.cfg.clock) ? (!root.cfg.clock.format_24h && root.cfg.clock.show_am_pm) : true
                                 text: "[ LOCAL // " + root.amPmStr + " ]"
-                                color: Theme.alpha(Theme.accent, 0.88)
-                                font.family: "JetBrainsMono Nerd Font"
-                                font.pixelSize: 11
+                                color: Theme.alpha(clockModule.ampmColor, 0.88)
+                                font.family: clockModule.ampmFont
+                                font.pixelSize: clockModule.ampmSize
                                 font.weight: Font.Bold
                                 font.letterSpacing: 1.8
                             }
 
-                            Text {
+                            Row {
                                 anchors.horizontalCenter: parent.horizontalCenter
-                                text: root.timeStr
-                                color: Theme.foreground
-                                font.family: "JetBrainsMono Nerd Font"
-                                font.pixelSize: clockModule.clockPx
-                                font.weight: Font.DemiBold
-                                font.letterSpacing: 1.5
+                                spacing: 2
+
+                                Text {
+                                    text: root.hoursStr
+                                    color: clockModule.hColor
+                                    font.family: clockModule.hFont
+                                    font.pixelSize: clockModule.clockPx
+                                    font.weight: clockModule.hWeight
+                                    font.letterSpacing: clockModule.hSpacing
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
+
+                                Text {
+                                    text: clockModule.sepGlyph
+                                    color: clockModule.sepColor
+                                    font.family: clockModule.hFont
+                                    font.pixelSize: Math.round(clockModule.clockPx * clockModule.sepRatio)
+                                    font.weight: clockModule.hWeight
+                                    opacity: clockModule.sepBlinkOpacity
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    visible: clockModule.sepGlyph.length > 0
+                                }
+
+                                Text {
+                                    text: root.minutesStr
+                                    color: clockModule.mColor
+                                    font.family: clockModule.mFont
+                                    font.pixelSize: Math.round(clockModule.clockPx * clockModule.mRatio)
+                                    font.weight: clockModule.mWeight
+                                    font.letterSpacing: clockModule.mSpacing
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
                             }
 
                             Rectangle {
                                 anchors.horizontalCenter: parent.horizontalCenter
-                                width: Math.max(180, monoDateTxt.implicitWidth + 32)
-                                height: 1
-                                visible: (root.cfg && root.cfg.date) ? root.cfg.date.enabled : true
+                                width: clockModule.lineLen
+                                height: clockModule.lineThick
+                                visible: clockModule.hasLine
                                 gradient: Gradient {
                                     orientation: Gradient.Horizontal
                                     GradientStop { position: 0.0; color: "transparent" }
-                                    GradientStop { position: 0.5; color: Theme.alpha(Theme.accent, 0.65) }
+                                    GradientStop { position: 0.5; color: clockModule.lineColor }
                                     GradientStop { position: 1.0; color: "transparent" }
                                 }
                             }
@@ -1176,53 +1455,76 @@ Scope {
                             Text {
                                 id: monoDateTxt
                                 anchors.horizontalCenter: parent.horizontalCenter
-                                visible: (root.cfg && root.cfg.date) ? root.cfg.date.enabled : true
+                                visible: (root.cfg && root.cfg.date) ? (root.cfg.date.enabled !== false) : true
                                 text: root.isoDateStr
-                                color: Theme.alpha(Theme.foreground, 0.72)
-                                font.family: "JetBrainsMono Nerd Font"
-                                font.pixelSize: 12
-                                font.weight: Font.Medium
-                                font.letterSpacing: 1.8
+                                color: clockModule.dColor
+                                font.family: clockModule.dFont
+                                font.pixelSize: clockModule.dSize
+                                font.weight: clockModule.dWeight
+                                font.letterSpacing: clockModule.dSpacing
                             }
                         }
 
-                        // Preset 4: Minimal Pill
+                        // ── PRESET 4: MINIMAL PILL ───────────────────────────
                         Row {
                             id: minimalLockRow
                             anchors.centerIn: parent
-                            spacing: 14
+                            spacing: 12
                             visible: root.clockPreset === "minimal_pill"
 
                             Rectangle {
-                                width: 8
-                                height: 8
-                                radius: 4
-                                color: Theme.accent
+                                width: clockModule.circleSize; height: clockModule.circleSize
+                                radius: width / 2
+                                color: clockModule.circleColor
                                 anchors.verticalCenter: parent.verticalCenter
                             }
 
-                            Text {
-                                text: root.timeStr
-                                color: Theme.foreground
-                                font.family: "Outfit"
-                                font.pixelSize: Math.max(28, Math.round(clockModule.clockPx * 0.52))
-                                font.weight: Font.Bold
-                                font.letterSpacing: 1.0
+                            Row {
                                 anchors.verticalCenter: parent.verticalCenter
+                                spacing: 2
+
+                                Text {
+                                    text: root.hoursStr
+                                    color: clockModule.hColor
+                                    font.family: clockModule.hFont
+                                    font.pixelSize: Math.max(26, Math.round(clockModule.clockPx * 0.52))
+                                    font.weight: clockModule.hWeight
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
+
+                                Text {
+                                    text: clockModule.sepGlyph
+                                    color: clockModule.sepColor
+                                    font.family: clockModule.hFont
+                                    font.pixelSize: Math.max(24, Math.round(clockModule.clockPx * 0.48))
+                                    font.weight: Font.Light
+                                    opacity: clockModule.sepBlinkOpacity
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    visible: clockModule.sepGlyph.length > 0
+                                }
+
+                                Text {
+                                    text: root.minutesStr
+                                    color: clockModule.mColor
+                                    font.family: clockModule.mFont
+                                    font.pixelSize: Math.max(26, Math.round(clockModule.clockPx * 0.52 * clockModule.mRatio))
+                                    font.weight: clockModule.mWeight
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
                             }
 
                             Text {
                                 visible: (root.cfg && root.cfg.clock) ? (!root.cfg.clock.format_24h && root.cfg.clock.show_am_pm) : true
                                 text: root.amPmStr
-                                color: Theme.accent
-                                font.family: "Outfit"
-                                font.pixelSize: 13
+                                color: clockModule.ampmColor
+                                font.family: clockModule.ampmFont
+                                font.pixelSize: clockModule.ampmSize
                                 font.weight: Font.Bold
                                 anchors.verticalCenter: parent.verticalCenter
                             }
 
                             Rectangle {
-                                visible: (root.cfg && root.cfg.date) ? root.cfg.date.enabled : true
+                                visible: (root.cfg && root.cfg.date) ? (root.cfg.date.enabled !== false) : true
                                 width: 4
                                 height: 4
                                 radius: 2
@@ -1231,12 +1533,12 @@ Scope {
                             }
 
                             Text {
-                                visible: (root.cfg && root.cfg.date) ? root.cfg.date.enabled : true
+                                visible: (root.cfg && root.cfg.date) ? (root.cfg.date.enabled !== false) : true
                                 text: root.compactDateStr
-                                color: Theme.alpha(Theme.foreground, 0.78)
-                                font.family: "Outfit"
-                                font.pixelSize: 15
-                                font.weight: Font.Medium
+                                color: clockModule.dColor
+                                font.family: clockModule.dFont
+                                font.pixelSize: clockModule.dSize
+                                font.weight: clockModule.dWeight
                                 anchors.verticalCenter: parent.verticalCenter
                             }
                         }
@@ -1481,6 +1783,15 @@ Scope {
                     // 2b. Separated Username Module
                     Item {
                         id: usernameModule
+
+                        readonly property var unStyle: (root.cfg && root.cfg.username_style) ? root.cfg.username_style : {}
+                        readonly property string unFont: unStyle.font_family || "Outfit"
+                        readonly property int unWeight: modulesContainer.parseFontWeight(unStyle.weight, Font.DemiBold)
+                        readonly property color unColor: modulesContainer.parseToneColor(unStyle.color_mode, Theme.foreground)
+                        readonly property real unSize: (unStyle.size !== undefined ? unStyle.size : 18)
+                        readonly property real unSpacing: (unStyle.letter_spacing !== undefined ? unStyle.letter_spacing : 2)
+                        readonly property bool unUpper: Boolean(unStyle.uppercase)
+
                         width: usernameText.implicitWidth + 24
                         height: usernameText.implicitHeight + 8
                         x: modulesContainer.getModuleX("username", 0.50, width)
@@ -1503,20 +1814,26 @@ Scope {
                         Text {
                             id: usernameText
                             anchors.centerIn: parent
-                            text: root.displayName
-                            color: Theme.foreground
-                            font.family: "Outfit"
-                            font.pixelSize: 18
-                            font.weight: Font.DemiBold
-                            font.letterSpacing: 2
+                            text: parent.unUpper ? root.displayName.toUpperCase() : root.displayName
+                            color: parent.unColor
+                            font.family: parent.unFont
+                            font.pixelSize: parent.unSize
+                            font.weight: parent.unWeight
+                            font.letterSpacing: parent.unSpacing
                         }
                     }
 
                     // 2c. Separated Session Lock Status Module
                     Item {
                         id: sessionLockModule
-                        width: sessionStatusRow.implicitWidth + 20
-                        height: sessionStatusRow.implicitHeight + 8
+
+                        readonly property var slStyle: (root.cfg && root.cfg.session_lock_style) ? root.cfg.session_lock_style : {}
+                        readonly property string slBadge: slStyle.badge_style || "pill"
+                        readonly property bool slShowIcon: slStyle.show_icon !== false
+                        readonly property string slText: slStyle.text || "Session Locked"
+
+                        width: sessionStatusRow.implicitWidth + (slBadge === "text" ? 8 : 22)
+                        height: sessionStatusRow.implicitHeight + (slBadge === "text" ? 4 : 10)
                         x: modulesContainer.getModuleX("session_lock", 0.50, width)
                         y: modulesContainer.getModuleY("session_lock", 0.53, height)
                         scale: modulesContainer.getModuleScale("session_lock", 1.0)
@@ -1526,8 +1843,8 @@ Scope {
 
                         Rectangle {
                             anchors.fill: parent
-                            radius: height / 2
-                            visible: Boolean(root.cfg && root.cfg.widget_backgrounds && root.cfg.widget_backgrounds.session_lock !== false)
+                            radius: parent.slBadge === "bracketed" ? 4 : height / 2
+                            visible: (parent.slBadge !== "text") && Boolean(root.cfg && root.cfg.widget_backgrounds && root.cfg.widget_backgrounds.session_lock !== false)
                             color: Theme.alpha(Theme.surface, 0.40)
                             border.width: 1
                             border.color: Theme.alpha(Theme.accent, 0.25)
@@ -1545,6 +1862,7 @@ Scope {
                                 width: 6
                                 height: 6
                                 radius: 3
+                                visible: sessionLockModule.slShowIcon && (sessionLockModule.slBadge !== "bracketed")
                                 color: root.authError
                                     ? Theme.error
                                     : (root.verifying ? Theme.secondary : Theme.accent)
@@ -1562,7 +1880,11 @@ Scope {
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: root.authError
                                     ? "Locked (Authentication Failed)"
-                                    : (root.verifying ? "Verifying..." : "Session Locked")
+                                    : (root.verifying
+                                        ? "Verifying..."
+                                        : (sessionLockModule.slBadge === "bracketed"
+                                            ? ("[ " + sessionLockModule.slText.toUpperCase() + " ]")
+                                            : sessionLockModule.slText))
                                 color: root.authError
                                     ? Theme.error
                                     : (root.verifying ? Theme.secondary : Theme.alpha(Theme.foreground, 0.70))
@@ -1578,8 +1900,17 @@ Scope {
                     // 2d. Separated Password Input Field Module (Optical Glass Capsule + Error Badge)
                     Item {
                         id: inputFieldModule
-                        width: 380
-                        height: 52 + (errorBadgeContainer.visible ? 34 : 0)
+
+                        readonly property var inStyle: (root.cfg && root.cfg.input_field_style) ? root.cfg.input_field_style : {}
+                        readonly property real inW: (inStyle.width !== undefined ? inStyle.width : 380)
+                        readonly property real inH: (inStyle.height !== undefined ? inStyle.height : 52)
+                        readonly property real inRad: (inStyle.radius !== undefined ? inStyle.radius : 26)
+                        readonly property real inOp: (inStyle.glass_opacity !== undefined ? inStyle.glass_opacity : 0.40)
+                        readonly property bool inIcon: (inStyle.show_icon !== false)
+                        readonly property bool inAccentBorder: (inStyle.border_accent !== false)
+
+                        width: inW
+                        height: inH + (errorBadgeContainer.visible ? 34 : 0)
                         x: modulesContainer.getModuleX("input_field", 0.50, width)
                         y: modulesContainer.getModuleY("input_field", 0.60, height)
                         scale: modulesContainer.getModuleScale("input_field", 1.0)
@@ -1592,8 +1923,8 @@ Scope {
                         // Clear Optical iOS Liquid Glass Capsule
                         Item {
                             id: pillWrapper
-                            width: 380
-                            height: 52
+                            width: inputFieldModule.inW
+                            height: inputFieldModule.inH
                             anchors.top: parent.top
                             anchors.horizontalCenter: parent.horizontalCenter
 
@@ -1638,7 +1969,7 @@ Scope {
 
                                 Rectangle {
                                     anchors.fill: parent
-                                    radius: height / 2
+                                    radius: inputFieldModule.inRad
                                     color: "white"
                                     antialiasing: true
                                 }
@@ -1664,7 +1995,7 @@ Scope {
                             // Glass tint
                             Rectangle {
                                 anchors.fill: parent
-                                radius: height / 2
+                                radius: inputFieldModule.inRad
                                 antialiasing: true
                                 color: (root.cfg && root.cfg.widget_backgrounds && root.cfg.widget_backgrounds.input_field === false)
                                     ? "transparent"
@@ -1672,14 +2003,14 @@ Scope {
                                         ? Theme.alpha(Theme.error, 0.18 + root.errorFlash * 0.20)
                                         : (passwordField.activeFocus
                                             ? Theme.alpha(Theme.accent, 0.12)
-                                            : Theme.alpha(Theme.surface, 0.40)))
+                                            : Theme.alpha(Theme.surface, inputFieldModule.inOp)))
                                 Behavior on color { ColorAnimation { duration: 150 } }
                             }
 
                             // Vertical specular highlights
                             Rectangle {
                                 anchors.fill: parent
-                                radius: height / 2
+                                radius: inputFieldModule.inRad
                                 antialiasing: true
                                 gradient: Gradient {
                                     orientation: Gradient.Vertical
@@ -1694,7 +2025,7 @@ Scope {
                             // Outer border
                             Rectangle {
                                 anchors.fill: parent
-                                radius: height / 2
+                                radius: inputFieldModule.inRad
                                 antialiasing: true
                                 color: "transparent"
                                 border.width: root.unlocked ? 2.0 : (root.authError ? 1.6 : (passwordField.activeFocus ? 1.4 : 1.1))
@@ -1702,7 +2033,7 @@ Scope {
                                     ? Theme.accent
                                     : (root.authError
                                         ? Theme.alpha(Theme.error, 0.88)
-                                        : (passwordField.activeFocus ? Theme.alpha(Theme.accent, 0.55 + root.keystrokeFlare * 0.45) : Theme.alpha(Theme.foreground, 0.30)))
+                                        : (passwordField.activeFocus ? Theme.alpha(Theme.accent, 0.55 + root.keystrokeFlare * 0.45) : (inputFieldModule.inAccentBorder ? Theme.alpha(Theme.accent, 0.45) : Theme.alpha(Theme.foreground, 0.30))))
                                 Behavior on border.color { ColorAnimation { duration: 120 } }
                                 Behavior on border.width { NumberAnimation { duration: 150 } }
                             }
@@ -1711,7 +2042,7 @@ Scope {
                             Rectangle {
                                 anchors.fill: parent
                                 anchors.margins: 1.2
-                                radius: height / 2
+                                radius: Math.max(0, inputFieldModule.inRad - 1)
                                 antialiasing: true
                                 color: "transparent"
                                 border.width: 1
@@ -1728,6 +2059,7 @@ Scope {
                                 Item {
                                     Layout.preferredWidth: 22
                                     Layout.preferredHeight: 22
+                                    visible: inputFieldModule.inIcon
                                     rotation: root.lockRotation
 
                                     transform: Translate {
@@ -1956,6 +2288,14 @@ Scope {
                     // 3. Audio Visualizer Widget (Rounded Bars & Symmetrical CAVA Pattern)
                     Item {
                         id: audioVisualizerModule
+
+                        readonly property var vStyle: (root.cfg && root.cfg.visualizer_style) ? root.cfg.visualizer_style : {}
+                        readonly property int vCount: (vStyle.bar_count !== undefined ? vStyle.bar_count : 16)
+                        readonly property real vBarW: (vStyle.bar_width !== undefined ? vStyle.bar_width : 6)
+                        readonly property real vBarSpacing: (vStyle.bar_spacing !== undefined ? vStyle.bar_spacing : 4)
+                        readonly property real vBarRad: (vStyle.bar_radius !== undefined ? vStyle.bar_radius : 3)
+                        readonly property color vColor: modulesContainer.parseToneColor(vStyle.color_mode, Theme.accent)
+
                         width: 280
                         height: 52
                         x: modulesContainer.getModuleX("audio_visualizer", 0.50, width)
@@ -1967,7 +2307,11 @@ Scope {
                         LockscreenAudioVisualizer {
                             anchors.centerIn: parent
                             previewMode: false
-                            barCount: 16
+                            barCount: parent.vCount
+                            barWidth: parent.vBarW
+                            barSpacing: parent.vBarSpacing
+                            barRadius: parent.vBarRad
+                            barColor: parent.vColor
                             showBackground: Boolean(root.cfg && root.cfg.widget_backgrounds ? root.cfg.widget_backgrounds.audio_visualizer !== false : true)
                         }
                     }
@@ -1975,13 +2319,21 @@ Scope {
                     // 4. Weather Forecast Capsule Module
                     Rectangle {
                         id: weatherModule
-                        height: 32
+
+                        readonly property var wStyle: (root.cfg && root.cfg.weather_style) ? root.cfg.weather_style : {}
+                        readonly property string wLayout: wStyle.layout || "capsule"
+                        readonly property real wTempSize: (wStyle.temp_size !== undefined ? wStyle.temp_size : 12)
+                        readonly property bool wShowCity: (wStyle.show_city !== false)
+                        readonly property string wUnit: wStyle.unit || "C"
+                        readonly property string wFont: wStyle.font_family || "Outfit"
+
+                        height: wLayout === "stacked" ? 44 : 32
                         width: weatherRow.implicitWidth + 28
-                        radius: 16
-                        color: (root.cfg && root.cfg.widget_backgrounds && root.cfg.widget_backgrounds.weather === false)
+                        radius: wLayout === "minimal" ? 0 : (height / 2)
+                        color: (wLayout === "minimal" || (root.cfg && root.cfg.widget_backgrounds && root.cfg.widget_backgrounds.weather === false))
                             ? "transparent"
                             : Theme.alpha(Theme.surface, 0.50)
-                        border.width: (root.cfg && root.cfg.widget_backgrounds && root.cfg.widget_backgrounds.weather === false) ? 0 : 1
+                        border.width: (wLayout === "minimal" || (root.cfg && root.cfg.widget_backgrounds && root.cfg.widget_backgrounds.weather === false)) ? 0 : 1
                         border.color: Theme.alpha(Theme.accent, 0.35)
                         x: modulesContainer.getModuleX("weather", 0.50, width)
                         y: modulesContainer.getModuleY("weather", 0.84, height)
@@ -2002,14 +2354,15 @@ Scope {
                             Text {
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: {
+                                    var tempVal = weatherModule.wUnit === "F" ? "75°F" : "24°C"
                                     var city = (root.cfg && root.cfg.modules && root.cfg.modules.weather_city) ? root.cfg.modules.weather_city : ""
                                     var country = (root.cfg && root.cfg.modules && root.cfg.modules.weather_country) ? root.cfg.modules.weather_country : ""
                                     var loc = (city.length > 0 && country.length > 0) ? (city + ", " + country) : (city.length > 0 ? city : (country.length > 0 ? country : "Weather"))
-                                    return "24°C  •  " + loc
+                                    return weatherModule.wShowCity ? (tempVal + "  •  " + loc) : tempVal
                                 }
                                 color: Theme.foreground
-                                font.family: "Outfit"
-                                font.pixelSize: 12
+                                font.family: weatherModule.wFont
+                                font.pixelSize: weatherModule.wTempSize
                                 font.weight: Font.Medium
                             }
                         }
@@ -2018,6 +2371,14 @@ Scope {
                     // 5. Dynamic Custom Quote / Status Message Module
                     Rectangle {
                         id: quoteModule
+
+                        readonly property var qStyle: (root.cfg && root.cfg.quote_style) ? root.cfg.quote_style : {}
+                        readonly property string qFont: qStyle.font_family || "Outfit"
+                        readonly property bool qItalic: qStyle.italic !== false
+                        readonly property real qSize: (qStyle.size !== undefined ? qStyle.size : 12)
+                        readonly property bool qDecorations: qStyle.show_decorations !== false
+                        readonly property string qText: (root.cfg && root.cfg.modules && root.cfg.modules.quote_text) ? root.cfg.modules.quote_text : ""
+
                         height: 32
                         width: quoteRow.implicitWidth + 28
                         radius: 16
@@ -2040,28 +2401,30 @@ Scope {
                             Text {
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: "“"
+                                visible: quoteModule.qDecorations
                                 color: Theme.accent
-                                font.family: "Outfit"
-                                font.pixelSize: 14
+                                font.family: quoteModule.qFont
+                                font.pixelSize: quoteModule.qSize + 2
                                 font.weight: Font.Bold
                             }
 
                             Text {
                                 anchors.verticalCenter: parent.verticalCenter
-                                text: (root.cfg && root.cfg.modules && root.cfg.modules.quote_text) ? root.cfg.modules.quote_text : ""
+                                text: quoteModule.qText
                                 color: Theme.alpha(Theme.foreground, 0.85)
-                                font.family: "Outfit"
-                                font.pixelSize: 12
-                                font.italic: true
+                                font.family: quoteModule.qFont
+                                font.pixelSize: quoteModule.qSize
+                                font.italic: quoteModule.qItalic
                                 font.letterSpacing: 0.8
                             }
 
                             Text {
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: "”"
+                                visible: quoteModule.qDecorations
                                 color: Theme.accent
-                                font.family: "Outfit"
-                                font.pixelSize: 14
+                                font.family: quoteModule.qFont
+                                font.pixelSize: quoteModule.qSize + 2
                                 font.weight: Font.Bold
                             }
                         }
@@ -2136,6 +2499,11 @@ Scope {
                     // 7. System Stats Graph Module (CPU, GPU, RAM Smooth Area Graphs)
                     Item {
                         id: statsModule
+
+                        readonly property var ssStyle: (root.cfg && root.cfg.system_stats_style) ? root.cfg.system_stats_style : {}
+                        readonly property string ssMode: ssStyle.display_mode || "graphs"
+                        readonly property real ssThick: (ssStyle.graph_thickness !== undefined ? ssStyle.graph_thickness : 2)
+
                         width: 320
                         height: 76
                         x: modulesContainer.getModuleX("system_stats", 0.50, width)
@@ -2148,6 +2516,8 @@ Scope {
                             anchors.fill: parent
                             statsData: root.sysStatsData
                             previewMode: false
+                            displayMode: parent.ssMode
+                            graphThickness: parent.ssThick
                             showBackground: Boolean(root.cfg && root.cfg.widget_backgrounds ? root.cfg.widget_backgrounds.system_stats !== false : true)
                         }
                     }

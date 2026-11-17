@@ -1286,6 +1286,7 @@ ModernDropdown 1.0 ModernDropdown.qml
 SettingCard 1.0 SettingCard.qml
 DraggableWidget 1.0 DraggableWidget.qml
 LockscreenSection 1.0 LockscreenSection.qml
+LockscreenInspector 1.0 LockscreenInspector.qml
 WeatherSection 1.0 WeatherSection.qml
 IslandSection 1.0 IslandSection.qml
 WidgetsSection 1.0 WidgetsSection.qml
@@ -1302,6 +1303,7 @@ LockscreenAudioVisualizer 1.0 LockscreenAudioVisualizer.qml
 BarSection 1.0 BarSection.qml
 KeybindsSection 1.0 KeybindsSection.qml
 UpdateSection 1.0 UpdateSection.qml
+PluginsSection 1.0 PluginsSection.qml
 """,
             "dock": """singleton Theme 1.0 Theme.qml
 DockLayer 1.0 DockLayer.qml
@@ -1341,6 +1343,7 @@ DesktopWeather 1.0 DesktopWeather.qml
 """,
             "island": """singleton Theme 1.0 Theme.qml
 IslandShape 1.0 IslandShape.qml
+IslandTravel 1.0 IslandTravel.qml
 CollapsedBar 1.0 CollapsedBar.qml
 DashboardView 1.0 DashboardView.qml
 HomePage 1.0 HomePage.qml
@@ -1505,6 +1508,50 @@ def notify_kde_reload():
         pass
 
 
+def dispatch_plugin_hooks(event="on_color_change"):
+    """Discover and execute registered plugin hooks ONLY if installed and enabled in installed.json."""
+    installed_file = Path(HOME) / ".local" / "share" / "hyprconf" / "plugins" / "installed.json"
+    if not installed_file.exists():
+        return
+
+    try:
+        with open(installed_file, "r", encoding="utf-8") as f:
+            installed_data = json.load(f)
+    except Exception:
+        return
+
+    if not isinstance(installed_data, dict):
+        return
+
+    plugins_dir = Path(HOME) / ".local" / "share" / "hyprconf" / "plugins"
+    for plugin_id, status in installed_data.items():
+        if not isinstance(status, dict) or not status.get("enabled", False):
+            continue
+
+        pdir = plugins_dir / plugin_id
+        if not pdir.is_dir():
+            continue
+
+        manifest = pdir / "plugin.json"
+        if not manifest.exists():
+            continue
+
+        try:
+            with open(manifest, "r", encoding="utf-8") as f:
+                meta = json.load(f)
+
+            hooks = meta.get("hooks", {})
+            hook_cmd = hooks.get(event)
+            if hook_cmd:
+                cmd_parts = hook_cmd.split()
+                executable = pdir / cmd_parts[0]
+                if executable.exists():
+                    cmd = [sys.executable, str(executable)] + cmd_parts[1:] if executable.suffix == ".py" else [str(executable)] + cmd_parts[1:]
+                    subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except Exception:
+            pass
+
+
 def _wallpaper_config_path(for_write=False) -> Path:
     """Resolve user wallpaper_config.json path with cache fallback."""
     user_cfg = Path.home() / ".local" / "share" / "hyprconf" / "wallpaper_config.json"
@@ -1632,6 +1679,9 @@ def sync_theme(wallpaper_path=None, variant=None):
 
     # Sync Quickshell components (Theme.qml, qmldir, colors.json) and trigger hot-reload
     sync_quickshell_colors(colors)
+
+    # Dispatch event hooks to active Hyprconf plugins (e.g. code-theme-sync)
+    dispatch_plugin_hooks("on_color_change")
 
     print(f"Theme colors applied ({variant}): primary={colors.get('primary')} accent={colors.get('accent')} surface={colors.get('surface')}")
 

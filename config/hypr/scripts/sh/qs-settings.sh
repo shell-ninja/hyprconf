@@ -23,6 +23,9 @@ if [[ -f "$settings_dir/qmldir" ]]; then
     if ! grep -q "UpdateSection" "$settings_dir/qmldir"; then
         echo "UpdateSection 1.0 UpdateSection.qml" >> "$settings_dir/qmldir"
     fi
+    if ! grep -q "PluginsSection" "$settings_dir/qmldir"; then
+        echo "PluginsSection 1.0 PluginsSection.qml" >> "$settings_dir/qmldir"
+    fi
 fi
 
 if [ "$1" = "--updates" ] || [ "$1" = "-u" ] || [ "$1" = "--update" ]; then
@@ -83,6 +86,14 @@ if [ "$1" = "--weather" ]; then
     export QS_SETTINGS_SECTION="weather"
     if pgrep -f "qs -c settings" >/dev/null 2>&1; then
         qs ipc -c settings call settings openWeather 2>/dev/null && exit 0
+    fi
+    shift
+fi
+
+if [ "$1" = "--plugins" ] || [ "$1" = "-p" ] || [ "$1" = "--plugin" ]; then
+    export QS_SETTINGS_SECTION="plugins"
+    if pgrep -f "qs -c settings" >/dev/null 2>&1; then
+        qs ipc -c settings call settings openPlugins 2>/dev/null && exit 0
     fi
     shift
 fi

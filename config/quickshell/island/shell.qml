@@ -19,6 +19,25 @@ ShellRoot {
     WidgetsMod.DesktopWidgetsLayer {}
     WallpaperFx {}
 
+    // ── DYNAMIC ISLAND WORKSPACE RESERVED ZONE ──────────────────────────────
+    PanelWindow {
+        id: islandReserve
+        screen: root.screen
+        anchors {
+            top: root.activeIslandPosition !== "bottom"
+            bottom: root.activeIslandPosition === "bottom"
+            left: true
+            right: true
+        }
+        implicitWidth: 1
+        implicitHeight: 1
+        exclusiveZone: (!root.hasFullscreenWindow && !root.islandAutoHide) ? 48 : 0
+        color: "transparent"
+        mask: Region {}
+        WlrLayershell.layer: WlrLayer.Bottom
+        WlrLayershell.namespace: "island-reserve"
+    }
+
     // Lightweight one-shot package update notification check (avoids 19 MB idle Python daemon)
     Process {
         id: pkgNotifyOnceProc
@@ -42,9 +61,9 @@ ShellRoot {
 PanelWindow {
     id: root
 
-    // Dynamic layer shell window (top notch or bottom dock)
-    anchors.top: root.islandPosition === "top"
-    anchors.bottom: root.islandPosition === "bottom"
+    // Full-screen overlay layer shell window to allow perimeter rail transit
+    anchors.top: true
+    anchors.bottom: true
     anchors.left: true
     anchors.right: true
     color: "transparent"
@@ -53,7 +72,7 @@ PanelWindow {
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: "quickshell-island"
     WlrLayershell.keyboardFocus: root.expanded ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
-    exclusiveZone: (root.hasFullscreenWindow || root.islandAutoHide) ? 0 : 48
+    exclusiveZone: -1
 
     screen: Quickshell.screens.length > 0 ? Quickshell.screens[0] : null
 
@@ -238,7 +257,16 @@ PanelWindow {
 
     // ── DYNAMIC ISLAND & VISUALIZER CONFIGURATION ───────────────────────────
     property string islandPosition: "top"
-    readonly property bool isBottom: (root.islandPosition === "bottom")
+    property string activeIslandPosition: "top"
+    readonly property bool isBottom: (root.activeIslandPosition === "bottom")
+    property bool isInitialized: false
+    property bool isTrainRunning: false
+    property real trainX: 0
+    property real trainY: 0
+    property real trainRotation: 0
+    property real trainSpeed: 0.0
+    property string trainDirection: "to_bottom"
+    property string trainPhase: "top_run"
     property bool islandAutoHide: false
     property string islandStyle: "prism_blade"
     property bool visualizerEnabled: true
@@ -257,7 +285,17 @@ PanelWindow {
                 if (!text || text.trim().length === 0) return
                 try {
                     var cfg = JSON.parse(text.trim())
-                    if (cfg.position) root.islandPosition = cfg.position
+                    if (cfg.position) {
+                        var p = cfg.position
+                        if (p !== "top" && p !== "bottom") p = "top"
+                        if (!root.isInitialized) {
+                            root.islandPosition = p
+                            root.activeIslandPosition = p
+                            root.isInitialized = true
+                        } else if (p !== root.activeIslandPosition && !root.isTrainRunning) {
+                            root.setIslandPositionWithAnimation(p)
+                        }
+                    }
                     if (cfg.auto_hide !== undefined) root.islandAutoHide = cfg.auto_hide
                     if (cfg.style) {
                         var s = cfg.style
@@ -283,6 +321,217 @@ PanelWindow {
         configLoader.running = true
         barModeChecker.running = false
         barModeChecker.running = true
+    }
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // HYPRCONF EXPRESS: PERIMETER RAIL TRANSIT SYSTEM
+    // ═════════════════════════════════════════════════════════════════════════
+    function setIslandPositionWithAnimation(newPos) {
+        if (!newPos || (newPos !== "top" && newPos !== "bottom")) return
+        if (newPos === root.activeIslandPosition && !root.isTrainRunning) {
+            root.islandPosition = newPos
+            return
+        }
+
+        if (!root.isInitialized) {
+            root.islandPosition = newPos
+            root.activeIslandPosition = newPos
+            root.isInitialized = true
+            return
+        }
+
+        if (root.expanded) {
+            root.closeIsland()
+        }
+
+        if (root.isTrainRunning) {
+            trainToBottomAnim.stop()
+            trainToTopAnim.stop()
+        }
+
+        if (newPos === "bottom") {
+            startTrainToBottom()
+        } else {
+            startTrainToTop()
+        }
+    }
+
+    function startTrainToBottom() {
+        var sw = root.width > 0 ? root.width : 1920
+        var sh = root.height > 0 ? root.height : 1080
+        var pw = shapeContainer.width > 0 ? shapeContainer.width : 320
+        var ph = shapeContainer.height > 0 ? shapeContainer.height : 34
+        var m = root.topMargin
+
+        var tcX = (sw - pw) / 2
+        var tcY = m
+        var bcX = (sw - pw) / 2
+        var bcY = sh - ph - m
+
+        var rightCenterCX = sw - m - ph / 2
+        var rightBezelX = rightCenterCX - pw / 2
+        var corner1Y = Math.round(pw / 2 + m + 10)
+        var corner2Y = Math.round(sh - pw / 2 - m - 10)
+
+        animStep1.to = Math.round(sw - pw - m - 30)
+        animCorner1X.to = rightBezelX
+        animCorner1Y.to = corner1Y
+        animSideX.to = rightBezelX
+        animSideY.to = corner2Y
+        animCorner2X.to = Math.round(sw - pw - m - 40)
+        animCorner2Y.to = bcY
+        animArrivalX.to = bcX
+
+        root.trainDirection = "to_bottom"
+        root.trainPhase = "top_run"
+        root.trainX = tcX
+        root.trainY = tcY
+        root.trainRotation = 0
+        root.trainSpeed = 0
+        root.isTrainRunning = true
+        trainToBottomAnim.start()
+    }
+
+    function startTrainToTop() {
+        var sw = root.width > 0 ? root.width : 1920
+        var sh = root.height > 0 ? root.height : 1080
+        var pw = shapeContainer.width > 0 ? shapeContainer.width : 320
+        var ph = shapeContainer.height > 0 ? shapeContainer.height : 34
+        var m = root.topMargin
+
+        var tcX = (sw - pw) / 2
+        var tcY = m
+        var bcX = (sw - pw) / 2
+        var bcY = sh - ph - m
+
+        var leftCenterCX = m + ph / 2
+        var leftBezelX = leftCenterCX - pw / 2
+        var corner1Y = Math.round(sh - pw / 2 - m - 10)
+        var corner2Y = Math.round(pw / 2 + m + 10)
+
+        animTopStep1.to = Math.round(m + 30)
+        animTopCorner1X.to = leftBezelX
+        animTopCorner1Y.to = corner1Y
+        animTopSideX.to = leftBezelX
+        animTopSideY.to = corner2Y
+        animTopCorner2X.to = Math.round(m + 40)
+        animTopCorner2Y.to = tcY
+        animTopArrivalX.to = tcX
+
+        root.trainDirection = "to_top"
+        root.trainPhase = "bottom_run"
+        root.trainX = bcX
+        root.trainY = bcY
+        root.trainRotation = 0
+        root.trainSpeed = 0
+        root.isTrainRunning = true
+        trainToTopAnim.start()
+    }
+
+    SequentialAnimation {
+        id: trainToBottomAnim
+
+        // Phase 1: Sprint along Top Edge towards Top-Right Corner
+        ParallelAnimation {
+            ScriptAction { script: root.trainPhase = "top_run" }
+            NumberAnimation { id: animStep1; target: root; property: "trainX"; to: 1680; duration: 220; easing.type: Easing.InQuad }
+            NumberAnimation { target: root; property: "trainSpeed"; to: 1.0; duration: 200 }
+        }
+
+        // Phase 2: Corner 1 — Drift & Bank around Top-Right Corner (0° to 90°)
+        ParallelAnimation {
+            ScriptAction { script: root.trainPhase = "corner_1" }
+            NumberAnimation { id: animCorner1X; target: root; property: "trainX"; to: 1735; duration: 140; easing.type: Easing.InOutQuad }
+            NumberAnimation { id: animCorner1Y; target: root; property: "trainY"; to: 190; duration: 140; easing.type: Easing.InOutQuad }
+            NumberAnimation { target: root; property: "trainRotation"; to: 90; duration: 140; easing.type: Easing.InOutQuad }
+            NumberAnimation { target: root; property: "trainSpeed"; to: 0.85; duration: 140 }
+        }
+
+        // Phase 3: High-Speed Sprint down Right Bezel
+        ParallelAnimation {
+            ScriptAction { script: root.trainPhase = "side_run" }
+            NumberAnimation { id: animSideX; target: root; property: "trainX"; to: 1735; duration: 240 }
+            NumberAnimation { id: animSideY; target: root; property: "trainY"; to: 890; duration: 240; easing.type: Easing.Linear }
+            NumberAnimation { target: root; property: "trainRotation"; to: 90; duration: 240 }
+            NumberAnimation { target: root; property: "trainSpeed"; to: 1.0; duration: 100 }
+        }
+
+        // Phase 4: Corner 2 — Drift & Bank around Bottom-Right Corner (90° to 0°)
+        ParallelAnimation {
+            ScriptAction { script: root.trainPhase = "corner_2" }
+            NumberAnimation { id: animCorner2X; target: root; property: "trainX"; to: 1650; duration: 140; easing.type: Easing.InOutQuad }
+            NumberAnimation { id: animCorner2Y; target: root; property: "trainY"; to: 1038; duration: 140; easing.type: Easing.InOutQuad }
+            NumberAnimation { target: root; property: "trainRotation"; to: 0; duration: 140; easing.type: Easing.InOutQuad }
+            NumberAnimation { target: root; property: "trainSpeed"; to: 0.75; duration: 140 }
+        }
+
+        // Phase 5: Station Arrival & Braking into Bottom-Center
+        ParallelAnimation {
+            ScriptAction { script: root.trainPhase = "bottom_run" }
+            NumberAnimation { id: animArrivalX; target: root; property: "trainX"; to: 800; duration: 220; easing.type: Easing.OutBack; easing.overshoot: 1.18 }
+            NumberAnimation { target: root; property: "trainSpeed"; to: 0.0; duration: 200 }
+        }
+
+        onFinished: {
+            root.activeIslandPosition = "bottom"
+            root.islandPosition = "bottom"
+            root.isTrainRunning = false
+            root.trainSpeed = 0
+            root.trainRotation = 0
+        }
+    }
+
+    SequentialAnimation {
+        id: trainToTopAnim
+
+        // Phase 1: Sprint along Bottom Edge towards Bottom-Left Corner
+        ParallelAnimation {
+            ScriptAction { script: root.trainPhase = "bottom_run" }
+            NumberAnimation { id: animTopStep1; target: root; property: "trainX"; to: -80; duration: 220; easing.type: Easing.InQuad }
+            NumberAnimation { target: root; property: "trainSpeed"; to: 1.0; duration: 200 }
+        }
+
+        // Phase 2: Corner 1 — Drift & Bank around Bottom-Left Corner (0° to -90°)
+        ParallelAnimation {
+            ScriptAction { script: root.trainPhase = "corner_1" }
+            NumberAnimation { id: animTopCorner1X; target: root; property: "trainX"; to: -135; duration: 140; easing.type: Easing.InOutQuad }
+            NumberAnimation { id: animTopCorner1Y; target: root; property: "trainY"; to: 890; duration: 140; easing.type: Easing.InOutQuad }
+            NumberAnimation { target: root; property: "trainRotation"; to: -90; duration: 140; easing.type: Easing.InOutQuad }
+            NumberAnimation { target: root; property: "trainSpeed"; to: 0.85; duration: 140 }
+        }
+
+        // Phase 3: High-Speed Sprint up Left Bezel
+        ParallelAnimation {
+            ScriptAction { script: root.trainPhase = "side_run" }
+            NumberAnimation { id: animTopSideX; target: root; property: "trainX"; to: -135; duration: 240 }
+            NumberAnimation { id: animTopSideY; target: root; property: "trainY"; to: 190; duration: 240; easing.type: Easing.Linear }
+            NumberAnimation { target: root; property: "trainRotation"; to: -90; duration: 240 }
+            NumberAnimation { target: root; property: "trainSpeed"; to: 1.0; duration: 100 }
+        }
+
+        // Phase 4: Corner 2 — Drift & Bank around Top-Left Corner (-90° to 0°)
+        ParallelAnimation {
+            ScriptAction { script: root.trainPhase = "corner_2" }
+            NumberAnimation { id: animTopCorner2X; target: root; property: "trainX"; to: -50; duration: 140; easing.type: Easing.InOutQuad }
+            NumberAnimation { id: animTopCorner2Y; target: root; property: "trainY"; to: 8; duration: 140; easing.type: Easing.InOutQuad }
+            NumberAnimation { target: root; property: "trainRotation"; to: 0; duration: 140; easing.type: Easing.InOutQuad }
+            NumberAnimation { target: root; property: "trainSpeed"; to: 0.75; duration: 140 }
+        }
+
+        // Phase 5: Station Arrival & Braking into Top-Center
+        ParallelAnimation {
+            ScriptAction { script: root.trainPhase = "top_run" }
+            NumberAnimation { id: animTopArrivalX; target: root; property: "trainX"; to: 800; duration: 220; easing.type: Easing.OutBack; easing.overshoot: 1.18 }
+            NumberAnimation { target: root; property: "trainSpeed"; to: 0.0; duration: 200 }
+        }
+
+        onFinished: {
+            root.activeIslandPosition = "top"
+            root.islandPosition = "top"
+            root.isTrainRunning = false
+            root.trainSpeed = 0
+            root.trainRotation = 0
+        }
     }
 
     Process {
@@ -1125,6 +1374,13 @@ PanelWindow {
         function reloadConfig() {
             root.reloadConfig()
         }
+        function setPosition(pos: string) {
+            root.setIslandPositionWithAnimation(pos)
+        }
+        function togglePosition() {
+            var target = (root.activeIslandPosition === "top") ? "bottom" : "top"
+            root.setIslandPositionWithAnimation(target)
+        }
         function syncAudio(vol: string, muted: string) {
             if (collapsedBar) {
                 var v = parseFloat(vol)
@@ -1553,7 +1809,7 @@ PanelWindow {
     Item {
         id: edgeSensor
         anchors.horizontalCenter: parent.horizontalCenter
-        y: (root.islandPosition === "bottom") ? (parent.height - height) : 0
+        y: (root.activeIslandPosition === "bottom") ? (parent.height - height) : 0
         width: Math.max(root.activeCollapsedWidth, 320)
         height: 12
         visible: root.islandAutoHide && !root.expanded && !root.hasFullscreenWindow
@@ -1568,19 +1824,23 @@ PanelWindow {
     // ── FLOATING ISLAND & DASHBOARD CONTAINER ────────────────────────────────
     Item {
         id: shapeContainer
-        anchors.horizontalCenter: parent.horizontalCenter
-        y: (root.islandPosition === "bottom")
-           ? (parent.height - height - root.topMargin)
-           : root.topMargin
+        x: root.isTrainRunning
+           ? root.trainX
+           : Math.round((parent.width - width) / 2)
+        y: root.isTrainRunning
+           ? root.trainY
+           : (root.activeIslandPosition === "bottom" ? (parent.height - height - root.topMargin) : root.topMargin)
         width: root.activeCollapsedWidth + (root.activeExpandedWidth - root.activeCollapsedWidth) * root.animProgress
         height: root.activeCollapsedHeight + (root.activeExpandedHeight - root.activeCollapsedHeight) * root.animProgress
+        rotation: root.isTrainRunning ? root.trainRotation : 0
+        transformOrigin: Item.Center
         clip: root.expanded ? ((expandedContent && (expandedContent.currentView >= 2)) ? false : true) : false
         focus: true
         visible: (!root.hasFullscreenWindow || root.expanded)
         opacity: root.isAutoHidden ? 0.12 : 1.0
 
         transform: Translate {
-            y: root.isAutoHidden ? (root.islandPosition === "top" ? -28 : 28) : 0
+            y: root.isAutoHidden ? (root.activeIslandPosition === "top" ? -28 : 28) : 0
             Behavior on y { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
         }
 
@@ -1612,6 +1872,51 @@ PanelWindow {
                 if (expandedContent.handleKey(event)) {
                     event.accepted = true
                     return
+                }
+            }
+        }
+
+        // ── HYPRCONF EXPRESS: SPEED TRAIL & NEON SLIPSTREAM ──────────────────
+        Item {
+            id: trainSpeedTrail
+            z: -1
+            visible: root.isTrainRunning && root.trainSpeed > 0.05
+            opacity: Math.min(1.0, root.trainSpeed * 1.2)
+
+            readonly property bool tailOnRight: (root.trainDirection === "to_bottom" && root.trainPhase === "bottom_run") || (root.trainDirection === "to_top" && (root.trainPhase === "bottom_run" || root.trainPhase === "corner_1" || root.trainPhase === "side_run"))
+
+            anchors.verticalCenter: parent.verticalCenter
+            x: tailOnRight ? (parent.width - 6) : (-width + 6)
+            width: Math.round(96 * root.trainSpeed)
+            height: parent.height - 8
+            transform: Scale {
+                origin.x: trainSpeedTrail.width / 2
+                xScale: trainSpeedTrail.tailOnRight ? -1 : 1
+            }
+
+            Rectangle {
+                anchors.fill: parent
+                radius: height / 2
+                gradient: Gradient {
+                    orientation: Gradient.Horizontal
+                    GradientStop { position: 0.0; color: "transparent" }
+                    GradientStop { position: 1.0; color: Theme.alpha(Theme.accent, 0.45 * root.trainSpeed) }
+                }
+            }
+
+            // Particle sparks trailing behind the pod
+            Repeater {
+                model: 4
+                Rectangle {
+                    required property int index
+                    width: 3.5
+                    height: width
+                    radius: width / 2
+                    color: (index % 2 === 0) ? Theme.accent : Theme.secondary
+                    opacity: (1.0 - index * 0.22) * root.trainSpeed
+
+                    x: parent.width * (1.0 - 0.25 * index)
+                    y: (parent.height / 2) + Math.sin(index * 1.5) * 6 - 2
                 }
             }
         }

@@ -13,6 +13,7 @@ Item {
     // ── Local State ─────────────────────────────────────────────────────────
     property bool isSaving: false
     property bool dockEnabled: true
+    property string dockStyle: "sculpted_bar"    // "sculpted_bar" | "classic"
     property string dockMode: "smart_hide"       // "always_on" | "auto_hide" | "smart_hide"
     property string dockPosition: "bottom"       // "bottom" | "top" | "left" | "right"
     property real dockBgOpacity: 0.85
@@ -79,6 +80,8 @@ Item {
                 try {
                     var data = JSON.parse(text.trim())
                     if (data.enabled !== undefined) root.dockEnabled = data.enabled
+                    if (data.style) root.dockStyle = data.style
+                    else root.dockStyle = "sculpted_bar"
                     if (data.mode) root.dockMode = data.mode
                     if (data.position) root.dockPosition = data.position
                     if (data.bg_opacity !== undefined) root.dockBgOpacity = data.bg_opacity
@@ -131,6 +134,7 @@ Item {
     function executeSave() {
         var payload = {
             "enabled": root.dockEnabled,
+            "style": root.dockStyle,
             "mode": root.dockMode,
             "position": root.dockPosition,
             "bg_opacity": root.dockBgOpacity,
@@ -153,6 +157,7 @@ Item {
 
     function resetDefaults() {
         root.dockEnabled = true
+        root.dockStyle = "sculpted_bar"
         root.dockMode = "smart_hide"
         root.dockPosition = "bottom"
         root.dockBgOpacity = 0.85
@@ -275,7 +280,7 @@ Item {
                         spacing: 2
 
                         Text {
-                            text: "Application Dock Studio"
+                            text: "Dock & Bottom Bar Studio"
                             color: Theme.foreground
                             font.family: "Outfit"
                             font.pixelSize: 17
@@ -283,7 +288,7 @@ Item {
                         }
 
                         Text {
-                            text: "Customizable application dock with stage visibility"
+                            text: "Customizable sculpted bottom bar and floating application dock with stage visibility"
                             color: Theme.alpha(Theme.foreground, 0.60)
                             font.family: "Outfit"
                             font.pixelSize: 11
@@ -391,6 +396,284 @@ Item {
                 }
             }
 
+            // ── BOTTOM PRESENTATION STYLE SELECTOR ───────────────────────────
+            SettingCard {
+                title: "Bottom Presentation Style"
+                description: "Choose between the screen-attached sculpted unibody bar or the floating application dock"
+
+                RowLayout {
+                    width: parent.width
+                    spacing: 12
+
+                    // Option 1: Sculpted Bottom Bar
+                    Rectangle {
+                        Layout.fillWidth: true
+                        height: 138
+                        radius: 12
+                        color: root.dockStyle === "sculpted_bar"
+                               ? Theme.alpha(Theme.surface, 0.90)
+                               : Theme.alpha(Theme.surface, 0.50)
+                        border.width: root.dockStyle === "sculpted_bar" ? 2 : 1
+                        border.color: root.dockStyle === "sculpted_bar"
+                                      ? Theme.accent
+                                      : Theme.alpha(Theme.foreground, 0.15)
+
+                        Behavior on border.color { ColorAnimation { duration: 160 } }
+                        Behavior on color { ColorAnimation { duration: 160 } }
+
+                        ColumnLayout {
+                            anchors.fill: parent
+                            anchors.margins: 14
+                            spacing: 8
+
+                            // Header row with title + active check badge
+                            RowLayout {
+                                Layout.fillWidth: true
+
+                                Text {
+                                    Layout.fillWidth: true
+                                    text: "Sculpted Bottom Bar"
+                                    color: Theme.foreground
+                                    font.family: "Outfit"
+                                    font.pixelSize: 13
+                                    font.weight: Font.DemiBold
+                                }
+
+                                Rectangle {
+                                    width: 18
+                                    height: 18
+                                    radius: 9
+                                    color: root.dockStyle === "sculpted_bar" ? Theme.accent : "transparent"
+                                    border.width: 1.5
+                                    border.color: root.dockStyle === "sculpted_bar" ? Theme.accent : Theme.alpha(Theme.foreground, 0.30)
+
+                                    Image {
+                                        visible: root.dockStyle === "sculpted_bar"
+                                        anchors.centerIn: parent
+                                        width: 10
+                                        height: 10
+                                        sourceSize: Qt.size(10, 10)
+                                        source: root.checkSvg
+                                    }
+                                }
+                            }
+
+                            // Visual Miniature Blueprint Preview
+                            Rectangle {
+                                Layout.fillWidth: true
+                                height: 44
+                                radius: 8
+                                color: "#080a0e"
+                                border.width: 1
+                                border.color: root.dockStyle === "sculpted_bar" ? Theme.alpha(Theme.accent, 0.35) : Theme.alpha(Theme.foreground, 0.10)
+                                clip: true
+
+                                // Miniature Sculpted Bar Silhouette
+                                Item {
+                                    anchors.bottom: parent.bottom
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    width: Math.min(parent.width - 20, 240)
+                                    height: 24
+
+                                    // Baseline bar
+                                    Rectangle {
+                                        anchors.bottom: parent.bottom
+                                        anchors.left: parent.left
+                                        anchors.right: parent.right
+                                        height: 10
+                                        color: Theme.alpha(Theme.mix(Theme.background, Theme.surface, 0.70), 0.95)
+                                        border.width: 0.8
+                                        border.color: Theme.alpha(Theme.accent, 0.40)
+                                    }
+
+                                    // Miniature Left Puck
+                                    Rectangle {
+                                        x: 8
+                                        y: 2
+                                        width: 16
+                                        height: 16
+                                        radius: 8
+                                        color: Theme.alpha(Theme.surface, 0.95)
+                                        border.width: 0.8
+                                        border.color: Theme.accent
+
+                                        // 4-tile mini icon
+                                        Grid {
+                                            anchors.centerIn: parent
+                                            columns: 2
+                                            spacing: 1
+                                            Rectangle { width: 2; height: 2; radius: 0.5; color: Theme.accent }
+                                            Rectangle { width: 2; height: 2; radius: 0.5; color: Theme.accent }
+                                            Rectangle { width: 2; height: 2; radius: 0.5; color: Theme.accent }
+                                            Rectangle { width: 2; height: 2; radius: 0.5; rotation: 45; color: Theme.accent }
+                                        }
+                                    }
+
+                                    // Miniature Right Capsule
+                                    Rectangle {
+                                        anchors.right: parent.right
+                                        anchors.rightMargin: 8
+                                        y: 3
+                                        width: 78
+                                        height: 14
+                                        radius: 7
+                                        color: Theme.alpha(Theme.surface, 0.95)
+                                        border.width: 0.8
+                                        border.color: Theme.accent
+
+                                        Row {
+                                            anchors.centerIn: parent
+                                            spacing: 4
+                                            Text {
+                                                text: "12:00"
+                                                color: Theme.foreground
+                                                font.family: "Outfit"
+                                                font.pixelSize: 6
+                                                font.weight: Font.DemiBold
+                                            }
+                                            Rectangle { width: 1; height: 6; color: Theme.alpha(Theme.foreground, 0.3) }
+                                            Rectangle { width: 3; height: 3; radius: 1.5; color: Theme.accent }
+                                            Rectangle { width: 3; height: 3; radius: 1.5; color: Theme.foreground }
+                                        }
+                                    }
+                                }
+                            }
+
+                            Text {
+                                Layout.fillWidth: true
+                                text: "Screen-attached unibody bar with floating launcher socket, elevated deck & status capsule"
+                                color: Theme.alpha(Theme.foreground, 0.55)
+                                font.family: "Outfit"
+                                font.pixelSize: 10
+                                wrapMode: Text.WordWrap
+                                maximumLineCount: 2
+                                elide: Text.ElideRight
+                            }
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                root.dockStyle = "sculpted_bar"
+                                root.triggerAutoSave()
+                            }
+                        }
+                    }
+
+                    // Option 2: Classic Application Dock
+                    Rectangle {
+                        Layout.fillWidth: true
+                        height: 138
+                        radius: 12
+                        color: root.dockStyle === "classic"
+                               ? Theme.alpha(Theme.surface, 0.90)
+                               : Theme.alpha(Theme.surface, 0.50)
+                        border.width: root.dockStyle === "classic" ? 2 : 1
+                        border.color: root.dockStyle === "classic"
+                                      ? Theme.accent
+                                      : Theme.alpha(Theme.foreground, 0.15)
+
+                        Behavior on border.color { ColorAnimation { duration: 160 } }
+                        Behavior on color { ColorAnimation { duration: 160 } }
+
+                        ColumnLayout {
+                            anchors.fill: parent
+                            anchors.margins: 14
+                            spacing: 8
+
+                            // Header row with title + active check badge
+                            RowLayout {
+                                Layout.fillWidth: true
+
+                                Text {
+                                    Layout.fillWidth: true
+                                    text: "Classic Application Dock"
+                                    color: Theme.foreground
+                                    font.family: "Outfit"
+                                    font.pixelSize: 13
+                                    font.weight: Font.DemiBold
+                                }
+
+                                Rectangle {
+                                    width: 18
+                                    height: 18
+                                    radius: 9
+                                    color: root.dockStyle === "classic" ? Theme.accent : "transparent"
+                                    border.width: 1.5
+                                    border.color: root.dockStyle === "classic" ? Theme.accent : Theme.alpha(Theme.foreground, 0.30)
+
+                                    Image {
+                                        visible: root.dockStyle === "classic"
+                                        anchors.centerIn: parent
+                                        width: 10
+                                        height: 10
+                                        sourceSize: Qt.size(10, 10)
+                                        source: root.checkSvg
+                                    }
+                                }
+                            }
+
+                            // Visual Miniature Blueprint Preview
+                            Rectangle {
+                                Layout.fillWidth: true
+                                height: 44
+                                radius: 8
+                                color: "#080a0e"
+                                border.width: 1
+                                border.color: root.dockStyle === "classic" ? Theme.alpha(Theme.accent, 0.35) : Theme.alpha(Theme.foreground, 0.10)
+                                clip: true
+
+                                // Miniature Floating Dock Pill
+                                Rectangle {
+                                    anchors.centerIn: parent
+                                    width: 120
+                                    height: 20
+                                    radius: 10
+                                    color: Theme.alpha(Theme.surface, 0.85)
+                                    border.width: 0.8
+                                    border.color: Theme.alpha(Theme.accent, 0.40)
+
+                                    Row {
+                                        anchors.centerIn: parent
+                                        spacing: 5
+                                        Repeater {
+                                            model: [Theme.accent, "#fd4663", "#feb836", "#28c840", Theme.foreground]
+                                            Rectangle {
+                                                width: 8
+                                                height: 8
+                                                radius: 2
+                                                color: modelData
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            Text {
+                                Layout.fillWidth: true
+                                text: "Floating macOS-style shelf with running indicators, pinned apps & hover physics"
+                                color: Theme.alpha(Theme.foreground, 0.55)
+                                font.family: "Outfit"
+                                font.pixelSize: 10
+                                wrapMode: Text.WordWrap
+                                maximumLineCount: 2
+                                elide: Text.ElideRight
+                            }
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                root.dockStyle = "classic"
+                                root.triggerAutoSave()
+                            }
+                        }
+                    }
+                }
+            }
+
             // ── INTERACTIVE PREVIEW CARD ─────────────────────────────────────
             SettingCard {
                 title: "Interactive Dock Preview"
@@ -434,9 +717,10 @@ Item {
                         }
                     }
 
-                    // The Preview Dock
+                    // The Preview Dock (Classic)
                     Rectangle {
                         id: previewDockPill
+                        visible: root.dockStyle === "classic"
                         radius: Math.min(width / 2, root.dockCornerRadius * 0.70)
                         color: Theme.alpha(Theme.surface, root.dockBgOpacity)
                         border.width: 1
@@ -554,6 +838,157 @@ Item {
                                         source: root.pinnedApps[index] && root.pinnedApps[index].icon_path ? root.pinnedApps[index].icon_path : ""
                                         fillMode: Image.PreserveAspectFit
                                         smooth: true
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // The Sculpted Bottom Bar Live Preview
+                    Item {
+                        id: previewSculptedBar
+                        visible: root.dockStyle === "sculpted_bar"
+                        anchors.bottom: parent.bottom
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        width: Math.min(parent.width - 32, 540)
+                        height: 38
+
+                        Canvas {
+                            id: prevBarCanvas
+                            anchors.fill: parent
+                            antialiasing: true
+                            smooth: true
+
+                            Connections {
+                                target: Theme
+                                function onAccentChanged() { prevBarCanvas.requestPaint() }
+                                function onSurfaceChanged() { prevBarCanvas.requestPaint() }
+                            }
+
+                            onPaint: {
+                                var ctx = getContext("2d")
+                                ctx.reset()
+                                ctx.clearRect(0, 0, width, height)
+                                var W = width
+                                var H = height
+                                var c_lx = 26
+                                var c_ly = 19
+                                var r_puck = 14
+                                var r_cup = 18
+                                var pill_w = 210
+                                var pill_h = 26
+                                var pill_r = 13
+                                var pill_x = W - pill_w - 16
+                                var pill_mid_y = 19
+                                var r_right_cup = 17
+                                var lx_c = pill_x + pill_r
+                                var rx_c = pill_x + pill_w - pill_r
+                                var deck_y = 9
+
+                                ctx.beginPath()
+                                ctx.moveTo(0, H)
+                                ctx.lineTo(W, H)
+                                ctx.bezierCurveTo(W, H - 3, W, pill_mid_y + 3, W - 3, pill_mid_y - 2)
+                                ctx.bezierCurveTo(W - 4, pill_mid_y - 6, rx_c + r_right_cup, pill_mid_y - 4, rx_c + r_right_cup, pill_mid_y)
+                                ctx.arc(rx_c, pill_mid_y, r_right_cup, 0, Math.PI / 2, false)
+                                ctx.lineTo(lx_c, pill_mid_y + r_right_cup)
+                                ctx.arc(lx_c, pill_mid_y, r_right_cup, Math.PI / 2, Math.PI, false)
+                                ctx.bezierCurveTo(lx_c - r_right_cup, deck_y + 3, lx_c - r_right_cup - 6, deck_y, lx_c - r_right_cup - 12, deck_y)
+                                ctx.lineTo(c_lx + r_cup + 12, deck_y)
+                                ctx.bezierCurveTo(c_lx + r_cup + 6, deck_y, c_lx + r_cup, c_ly - 6, c_lx + r_cup, c_ly)
+                                ctx.arc(c_lx, c_ly, r_cup, 0, Math.PI * 0.85, false)
+                                ctx.bezierCurveTo(c_lx - r_cup - 2, c_ly - 4, 4, pill_mid_y - 6, 3, pill_mid_y - 2)
+                                ctx.bezierCurveTo(0, pill_mid_y + 3, 0, H - 3, 0, H)
+                                ctx.closePath()
+
+                                ctx.fillStyle = Theme.alpha(Theme.mix(Theme.background, Theme.surface, 0.72), root.dockBgOpacity)
+                                ctx.fill()
+                                ctx.lineWidth = 1
+                                ctx.strokeStyle = Theme.alpha(Theme.accent, root.dockBorderGlow ? 0.45 : 0.25)
+                                ctx.stroke()
+                            }
+                        }
+
+                        // Left Puck Preview
+                        Rectangle {
+                            x: 26 - 14
+                            y: 19 - 14
+                            width: 28
+                            height: 28
+                            radius: 14
+                            color: Theme.alpha(Theme.surface, 0.95)
+                            border.width: 1
+                            border.color: Theme.alpha(Theme.accent, 0.50)
+
+                            Grid {
+                                anchors.centerIn: parent
+                                columns: 2
+                                spacing: 2
+                                Rectangle { width: 3.5; height: 3.5; radius: 0.8; color: Theme.accent }
+                                Rectangle { width: 3.5; height: 3.5; radius: 0.8; color: Theme.accent }
+                                Rectangle { width: 3.5; height: 3.5; radius: 0.8; color: Theme.accent }
+                                Rectangle { width: 3.5; height: 3.5; radius: 0.8; rotation: 45; color: Theme.accent }
+                            }
+                        }
+
+                        // Right Capsule Preview
+                        Rectangle {
+                            x: parent.width - 210 - 16
+                            y: 19 - 13
+                            width: 210
+                            height: 26
+                            radius: 13
+                            color: Theme.alpha(Theme.surface, 0.95)
+                            border.width: 1
+                            border.color: Theme.alpha(Theme.accent, 0.50)
+
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.leftMargin: 10
+                                anchors.rightMargin: 8
+                                spacing: 6
+
+                                Text {
+                                    text: "10:31 PM"
+                                    color: Theme.foreground
+                                    font.family: "Outfit"
+                                    font.pixelSize: 9
+                                    font.weight: Font.DemiBold
+                                }
+
+                                Rectangle {
+                                    width: 20; height: 12; radius: 3
+                                    color: Theme.alpha(Theme.accent, 0.20)
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: "SAT"
+                                        color: Theme.accent
+                                        font.family: "Outfit"
+                                        font.pixelSize: 7
+                                        font.weight: Font.Bold
+                                    }
+                                }
+
+                                Rectangle { width: 1; height: 10; color: Theme.alpha(Theme.foreground, 0.2) }
+
+                                Text {
+                                    text: "Wi-Fi • 40%"
+                                    color: Theme.alpha(Theme.foreground, 0.70)
+                                    font.family: "Outfit"
+                                    font.pixelSize: 8
+                                    Layout.fillWidth: true
+                                }
+
+                                Rectangle {
+                                    width: 16; height: 16; radius: 8
+                                    color: Theme.alpha(Theme.accent, 0.25)
+                                    border.width: 0.8
+                                    border.color: Theme.accent
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: "⚙"
+                                        font.pixelSize: 8
+                                        color: Theme.accent
                                     }
                                 }
                             }
@@ -737,6 +1172,7 @@ Item {
 
             // ── POSITION & SCREEN EDGE CARD ──────────────────────────────────
             SettingCard {
+                visible: root.dockStyle === "classic"
                 title: "Screen Position"
                 description: "Select which screen edge the dock anchors to"
 
@@ -961,6 +1397,7 @@ Item {
 
             // ── HOVER EFFECTS CARD ───────────────────────────────────────────
             SettingCard {
+                visible: root.dockStyle === "classic"
                 title: "Hover Effects"
                 description: "Select the animation physics when moving cursor over dock icons"
 

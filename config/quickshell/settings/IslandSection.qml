@@ -929,8 +929,11 @@ Item {
                                 anchors.fill: parent
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: {
+                                    if (root.islandPosition === "top") return
                                     root.islandPosition = "top"
                                     root.triggerAutoSave()
+                                    islandReloader.command = ["qs", "ipc", "-c", "island", "call", "island", "setPosition", "top"]
+                                    islandReloader.running = true
                                 }
                             }
                         }
@@ -960,8 +963,11 @@ Item {
                                 anchors.fill: parent
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: {
+                                    if (root.islandPosition === "bottom") return
                                     root.islandPosition = "bottom"
                                     root.triggerAutoSave()
+                                    islandReloader.command = ["qs", "ipc", "-c", "island", "call", "island", "setPosition", "bottom"]
+                                    islandReloader.running = true
                                 }
                             }
                         }

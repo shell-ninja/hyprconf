@@ -6,6 +6,7 @@ ModernDropdown 1.0 ModernDropdown.qml
 SettingCard 1.0 SettingCard.qml
 DraggableWidget 1.0 DraggableWidget.qml
 LockscreenSection 1.0 LockscreenSection.qml
+LockscreenInspector 1.0 LockscreenInspector.qml
 WeatherSection 1.0 WeatherSection.qml
 IslandSection 1.0 IslandSection.qml
 WidgetsSection 1.0 WidgetsSection.qml
@@ -22,3 +23,4 @@ LockscreenAudioVisualizer 1.0 LockscreenAudioVisualizer.qml
 BarSection 1.0 BarSection.qml
 KeybindsSection 1.0 KeybindsSection.qml
 UpdateSection 1.0 UpdateSection.qml
+PluginsSection 1.0 PluginsSection.qml

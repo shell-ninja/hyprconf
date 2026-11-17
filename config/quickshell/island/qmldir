@@ -1,5 +1,6 @@
 singleton Theme 1.0 Theme.qml
 IslandShape 1.0 IslandShape.qml
+IslandTravel 1.0 IslandTravel.qml
 CollapsedBar 1.0 CollapsedBar.qml
 DashboardView 1.0 DashboardView.qml
 HomePage 1.0 HomePage.qml

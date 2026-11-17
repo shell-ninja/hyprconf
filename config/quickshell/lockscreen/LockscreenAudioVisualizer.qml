@@ -11,6 +11,10 @@ Item {
 
     property bool previewMode: false
     property int barCount: 14
+    property real barWidth: 8
+    property real barSpacing: 4
+    property real barRadius: 4
+    property color barColor: Theme.accent
     property bool showBackground: true
 
     implicitWidth: 260

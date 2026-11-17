@@ -38,6 +38,32 @@ Item {
         return window.config.widget_backgrounds[key] !== undefined ? window.config.widget_backgrounds[key] : true
     }
 
+    function parseFontWeight(w, fallback) {
+        if (!w) return fallback !== undefined ? fallback : Font.Normal
+        var s = String(w).toLowerCase()
+        if (s === "thin" || s === "100") return Font.Thin
+        if (s === "extralight" || s === "200") return Font.ExtraLight
+        if (s === "light" || s === "300") return Font.Light
+        if (s === "medium" || s === "500") return Font.Medium
+        if (s === "demibold" || s === "semibold" || s === "600") return Font.DemiBold
+        if (s === "bold" || s === "700") return Font.Bold
+        if (s === "extrabold" || s === "800") return Font.ExtraBold
+        if (s === "black" || s === "900") return Font.Black
+        return fallback !== undefined ? fallback : Font.Normal
+    }
+
+    function parseToneColor(tone, fallback) {
+        if (!tone) return fallback
+        var t = String(tone).toLowerCase()
+        if (t === "accent") return Theme.accent
+        if (t === "primary") return Theme.primary
+        if (t === "foreground") return Theme.foreground
+        if (t === "muted") return Theme.muted || Theme.alpha(Theme.foreground, 0.60)
+        if (t === "on_primary") return Theme.on_primary
+        if (t.startsWith("#")) return t
+        return fallback
+    }
+
     function alignSelectedToCenter() {
         if (selectedModuleKey && selectedModuleKey.length > 0) {
             var currY = (window.config.positions && window.config.positions[selectedModuleKey]) ? window.config.positions[selectedModuleKey].y : 0.50
@@ -289,6 +315,44 @@ Item {
                         }
                     }
 
+                    // Apply & Save Lockscreen Changes
+                    Rectangle {
+                        height: 32
+                        radius: 16
+                        implicitWidth: saveLockRow.implicitWidth + 24
+                        color: window.isDirty ? (saveLockMouse.containsMouse ? Theme.primary : Theme.accent) : Theme.alpha(Theme.surface, 0.50)
+                        border.width: 1
+                        border.color: window.isDirty ? Theme.accent : Theme.alpha(Theme.accent, 0.30)
+                        opacity: window.isDirty ? 1.0 : 0.8
+                        Behavior on color { ColorAnimation { duration: 120 } }
+
+                        Row {
+                            id: saveLockRow
+                            anchors.centerIn: parent
+                            spacing: 6
+                            Text {
+                                text: window.isDirty ? "💾" : "✓"
+                                font.pixelSize: 11
+                            }
+                            Text {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: window.isDirty ? "Save Changes" : "Saved"
+                                color: window.isDirty ? Theme.on_primary : Theme.foreground
+                                font.family: "Outfit"
+                                font.pixelSize: 11
+                                font.weight: Font.DemiBold
+                            }
+                        }
+
+                        MouseArea {
+                            id: saveLockMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: window.applyAllChanges()
+                        }
+                    }
+
                     // Test Live Lockscreen Action Button
                     Rectangle {
                         height: 32
@@ -338,12 +402,18 @@ Item {
             Layout.fillHeight: true
 
             // ─────────────────────────────────────────────────────────────────
-            // VIEW 1 & 2: FULL-PAGE 16:9 PROPORTIONAL CANVAS (Editor & Preview)
+            // VIEW 1 & 2: PROPORTIONAL CANVAS & ADOBE STUDIO INSPECTOR
             // ─────────────────────────────────────────────────────────────────
-            Item {
-                id: canvasViewport
+            RowLayout {
                 anchors.fill: parent
+                spacing: 12
                 visible: lockscreenRoot.studioMode === 0 || lockscreenRoot.studioMode === 1
+
+                Item {
+                    id: canvasViewport
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    clip: true
 
                 // 16:9 Landscape Screen Container (Strictly preserves 16:9 aspect ratio)
                 Rectangle {
@@ -355,35 +425,41 @@ Item {
                     color: Theme.alpha(Theme.surface, 0.60)
                     border.width: 1.5
                     border.color: Theme.alpha(Theme.accent, 0.40)
-                    clip: true
+                    clip: false
 
                     // Exactly maps 1920x1080 display space to preview dimensions!
                     readonly property real canvasScale: width / 1920.0
 
-                    // Wallpaper with MultiEffect blur & dimming
-                    Image {
-                        id: previewWallpaper
+                    // Inner clipped container for Wallpaper and Vignette so bezel stays neat
+                    Item {
                         anchors.fill: parent
-                        source: window.wallpaperPath
-                        fillMode: Image.PreserveAspectCrop
-                        smooth: true
+                        clip: true
 
-                        layer.enabled: true
-                        layer.effect: MultiEffect {
-                            blurEnabled: true
-                            blur: (window.config.backdrop ? window.config.backdrop.blur : 0.65)
-                            blurMax: 32
-                            brightness: -(window.config.backdrop && window.config.backdrop.dimming !== undefined ? window.config.backdrop.dimming : 0.20)
+                        // Wallpaper with MultiEffect blur & dimming
+                        Image {
+                            id: previewWallpaper
+                            anchors.fill: parent
+                            source: window.wallpaperPath
+                            fillMode: Image.PreserveAspectCrop
+                            smooth: true
+
+                            layer.enabled: true
+                            layer.effect: MultiEffect {
+                                blurEnabled: true
+                                blur: (window.config.backdrop ? window.config.backdrop.blur : 0.65)
+                                blurMax: 32
+                                brightness: -(window.config.backdrop && window.config.backdrop.dimming !== undefined ? window.config.backdrop.dimming : 0.20)
+                            }
                         }
-                    }
 
-                    // Vignette Overlay
-                    Rectangle {
-                        anchors.fill: parent
-                        gradient: Gradient {
-                            GradientStop { position: 0.0; color: Qt.rgba(0, 0, 0, (window.config.backdrop ? window.config.backdrop.vignette : 0.65) * 0.75) }
-                            GradientStop { position: 0.5; color: Qt.rgba(0, 0, 0, 0.15) }
-                            GradientStop { position: 1.0; color: Qt.rgba(0, 0, 0, window.config.backdrop ? window.config.backdrop.vignette : 0.65) }
+                        // Vignette Overlay
+                        Rectangle {
+                            anchors.fill: parent
+                            gradient: Gradient {
+                                GradientStop { position: 0.0; color: Qt.rgba(0, 0, 0, (window.config.backdrop ? window.config.backdrop.vignette : 0.65) * 0.75) }
+                                GradientStop { position: 0.5; color: Qt.rgba(0, 0, 0, 0.15) }
+                                GradientStop { position: 1.0; color: Qt.rgba(0, 0, 0, window.config.backdrop ? window.config.backdrop.vignette : 0.65) }
+                            }
                         }
                     }
 
@@ -457,11 +533,48 @@ Item {
 
                             Item {
                                 id: lockClockPreviewItem
+
+                                property real sepBlinkOpacity: 1.0
+
+                                SequentialAnimation on sepBlinkOpacity {
+                                    loops: Animation.Infinite
+                                    running: Boolean(window.config && window.config.clock && window.config.clock.separator_blinking)
+                                    NumberAnimation { from: 1.0; to: 0.20; duration: 500; easing.type: Easing.InOutQuad }
+                                    NumberAnimation { from: 0.20; to: 1.0; duration: 500; easing.type: Easing.InOutQuad }
+                                }
+
+                                function parseFontWeight(w, fallback) {
+                                    if (!w) return fallback !== undefined ? fallback : Font.Normal
+                                    var s = String(w).toLowerCase()
+                                    if (s === "thin" || s === "100") return Font.Thin
+                                    if (s === "extralight" || s === "200") return Font.ExtraLight
+                                    if (s === "light" || s === "300") return Font.Light
+                                    if (s === "medium" || s === "500") return Font.Medium
+                                    if (s === "demibold" || s === "semibold" || s === "600") return Font.DemiBold
+                                    if (s === "bold" || s === "700") return Font.Bold
+                                    if (s === "extrabold" || s === "800") return Font.ExtraBold
+                                    if (s === "black" || s === "900") return Font.Black
+                                    return Font.Normal
+                                }
+
+                                function parseToneColor(tone, fallback) {
+                                    if (!tone) return fallback
+                                    var t = String(tone).toLowerCase()
+                                    if (t === "accent") return Theme.accent
+                                    if (t === "primary") return Theme.primary
+                                    if (t === "foreground") return Theme.foreground
+                                    if (t === "muted") return Theme.muted || Theme.alpha(Theme.foreground, 0.60)
+                                    if (t === "on_primary") return Theme.on_primary
+                                    if (t.startsWith("#")) return t
+                                    return fallback
+                                }
+
                                 readonly property string activePreset: {
                                     var raw = (window.config.clock && window.config.clock.preset) ? String(window.config.clock.preset).toLowerCase().replace(/\s+/g, "_") : "editorial_split"
                                     if (raw === "classic" || raw === "editorial_split" || raw === "mono_telemetry" || raw === "minimal_pill") return raw
                                     return "editorial_split"
                                 }
+
                                 readonly property string hoursStr: {
                                     var d = window.currentTime
                                     var is24h = Boolean(window.config.clock && window.config.clock.format_24h)
@@ -469,37 +582,104 @@ Item {
                                     return (h < 10 ? "0" : "") + h
                                 }
                                 readonly property string minutesStr: (window.currentTime.getMinutes() < 10 ? "0" : "") + window.currentTime.getMinutes()
-                                readonly property string timeStr: hoursStr + ":" + minutesStr
                                 readonly property string amPmStr: (window.config.clock && window.config.clock.format_24h) ? "" : Qt.formatTime(window.currentTime, "AP")
-                                readonly property real clockPx: (window.config.clock ? window.config.clock.size : 84)
+                                readonly property real clockPx: (window.config.clock && window.config.clock.size) ? window.config.clock.size : 84
+
+                                // Granular Properties
+                                readonly property string hFont: (window.config.clock && window.config.clock.hours_font_family) ? window.config.clock.hours_font_family : (activePreset === "mono_telemetry" ? "JetBrainsMono Nerd Font" : "Outfit")
+                                readonly property int hWeight: parseFontWeight((window.config.clock && window.config.clock.hours_weight) ? window.config.clock.hours_weight : (activePreset === "editorial_split" ? "Black" : (activePreset === "classic" ? (window.config.clock.weight || "Bold") : "Bold")), Font.Bold)
+                                readonly property color hColor: parseToneColor((window.config.clock && window.config.clock.hours_color_mode) ? window.config.clock.hours_color_mode : (activePreset === "classic" ? "accent" : "foreground"), Theme.foreground)
+                                readonly property real hSpacing: (window.config.clock && window.config.clock.hours_letter_spacing !== undefined) ? window.config.clock.hours_letter_spacing : (activePreset === "editorial_split" ? -1.5 : (activePreset === "classic" ? 2.0 : 1.0))
+
+                                readonly property string mFont: (window.config.clock && window.config.clock.minutes_font_family) ? window.config.clock.minutes_font_family : hFont
+                                readonly property int mWeight: parseFontWeight((window.config.clock && window.config.clock.minutes_weight) ? window.config.clock.minutes_weight : (activePreset === "editorial_split" ? "Light" : (activePreset === "classic" ? (window.config.clock.weight || "Light") : "Light")), Font.Light)
+                                readonly property color mColor: parseToneColor((window.config.clock && window.config.clock.minutes_color_mode) ? window.config.clock.minutes_color_mode : "accent", Theme.accent)
+                                readonly property real mRatio: (window.config.clock && window.config.clock.minutes_size_ratio !== undefined) ? window.config.clock.minutes_size_ratio : 1.0
+                                readonly property real mSpacing: (window.config.clock && window.config.clock.minutes_letter_spacing !== undefined) ? window.config.clock.minutes_letter_spacing : (activePreset === "editorial_split" ? 0.5 : 1.0)
+
+                                readonly property string sepGlyph: (window.config.clock && window.config.clock.separator_glyph !== undefined) ? window.config.clock.separator_glyph : ":"
+                                readonly property real sepRatio: (window.config.clock && window.config.clock.separator_size_ratio !== undefined) ? window.config.clock.separator_size_ratio : 0.85
+                                readonly property color sepColor: parseToneColor((window.config.clock && window.config.clock.separator_color_mode) ? window.config.clock.separator_color_mode : (activePreset === "mono_telemetry" ? "foreground" : "accent"), Theme.accent)
+
+                                readonly property bool hasLine: (window.config.clock && window.config.clock.show_line !== undefined) ? window.config.clock.show_line : (activePreset === "editorial_split" || activePreset === "mono_telemetry")
+                                readonly property string lineOrient: (window.config.clock && window.config.clock.line_orientation) ? window.config.clock.line_orientation : (activePreset === "mono_telemetry" ? "horizontal" : "vertical")
+                                readonly property real lineThick: (window.config.clock && window.config.clock.line_thickness !== undefined) ? window.config.clock.line_thickness : (activePreset === "mono_telemetry" ? 1 : 2)
+                                readonly property real lineLen: (window.config.clock && window.config.clock.line_length !== undefined) ? window.config.clock.line_length : (activePreset === "mono_telemetry" ? 180 : Math.max(36, clockPx * 0.72))
+                                readonly property real lineRad: (window.config.clock && window.config.clock.line_radius !== undefined) ? window.config.clock.line_radius : 1
+                                readonly property string lineStyle: (window.config.clock && window.config.clock.line_style) ? window.config.clock.line_style : "gradient"
+                                readonly property color lineColor: parseToneColor((window.config.clock && window.config.clock.line_color_mode) ? window.config.clock.line_color_mode : "accent", Theme.accent)
+
+                                readonly property bool hasCircle: (window.config.clock && window.config.clock.show_circle !== undefined) ? window.config.clock.show_circle : (activePreset === "minimal_pill")
+                                readonly property real circleSize: (window.config.clock && window.config.clock.circle_size !== undefined) ? window.config.clock.circle_size : 8
+                                readonly property string circleStyle: (window.config.clock && window.config.clock.circle_style) ? window.config.clock.circle_style : "solid"
+                                readonly property color circleColor: parseToneColor((window.config.clock && window.config.clock.circle_color_mode) ? window.config.clock.circle_color_mode : "accent", Theme.accent)
+                                readonly property string circlePos: (window.config.clock && window.config.clock.circle_position) ? window.config.clock.circle_position : "left"
+
+                                readonly property string ampmStyle: (window.config.clock && window.config.clock.am_pm_style) ? window.config.clock.am_pm_style : (activePreset === "mono_telemetry" ? "bracketed" : "text")
+                                readonly property string ampmFont: (window.config.clock && window.config.clock.am_pm_font_family) ? window.config.clock.am_pm_font_family : (activePreset === "mono_telemetry" ? "JetBrainsMono Nerd Font" : "Outfit")
+                                readonly property int ampmWeight: parseFontWeight((window.config.clock && window.config.clock.am_pm_weight) ? window.config.clock.am_pm_weight : "Bold", Font.Bold)
+                                readonly property real ampmSize: (window.config.clock && window.config.clock.am_pm_size !== undefined) ? window.config.clock.am_pm_size : (activePreset === "classic" ? 18 : 12)
+                                readonly property color ampmColor: parseToneColor((window.config.clock && window.config.clock.am_pm_color_mode) ? window.config.clock.am_pm_color_mode : "accent", Theme.accent)
+
+                                readonly property string dFmt: (window.config.date && window.config.date.format) ? window.config.date.format : (activePreset === "editorial_split" ? "split_lines" : (activePreset === "mono_telemetry" ? "iso" : (activePreset === "minimal_pill" ? "compact" : "long")))
+                                readonly property string dFont: (window.config.date && window.config.date.font_family) ? window.config.date.font_family : (activePreset === "mono_telemetry" ? "JetBrainsMono Nerd Font" : "Outfit")
+                                readonly property int dWeight: parseFontWeight((window.config.date && window.config.date.weight) ? window.config.date.weight : "Medium", Font.Medium)
+                                readonly property real dSize: (window.config.date && window.config.date.size !== undefined) ? window.config.date.size : (activePreset === "minimal_pill" ? 15 : 13)
+                                readonly property real dSpacing: (window.config.date && window.config.date.letter_spacing !== undefined) ? window.config.date.letter_spacing : (activePreset === "editorial_split" ? 2.2 : (activePreset === "classic" ? 4.0 : 1.8))
+                                readonly property bool dUpper: (window.config.date && window.config.date.uppercase !== undefined) ? window.config.date.uppercase : (activePreset !== "minimal_pill")
+                                readonly property color dColor: parseToneColor((window.config.date && window.config.date.color_mode) ? window.config.date.color_mode : "foreground", Theme.alpha(Theme.foreground, 0.75))
+
+                                readonly property real surfRad: (window.config.clock && window.config.clock.surface_radius !== undefined) ? window.config.clock.surface_radius : (activePreset === "minimal_pill" ? height / 2 : 20)
+                                readonly property real surfOp: (window.config.clock && window.config.clock.surface_opacity !== undefined) ? window.config.clock.surface_opacity : 0.55
+                                readonly property real surfBw: (window.config.clock && window.config.clock.surface_border_width !== undefined) ? window.config.clock.surface_border_width : 1
+                                readonly property bool surfSpec: (window.config.clock && window.config.clock.surface_specular !== undefined) ? window.config.clock.surface_specular : true
 
                                 width: {
-                                    if (activePreset === "editorial_split") return previewSplitRow.implicitWidth + 12
-                                    if (activePreset === "mono_telemetry") return previewMonoCol.implicitWidth + 16
+                                    if (activePreset === "editorial_split") return previewSplitRow.implicitWidth + 20
+                                    if (activePreset === "mono_telemetry") return previewMonoCol.implicitWidth + 24
                                     if (activePreset === "minimal_pill") return previewMinimalRow.implicitWidth + 44
-                                    return Math.max(timeRow.implicitWidth, dateText.implicitWidth)
+                                    return Math.max(timeRow.implicitWidth, dateText.implicitWidth) + 16
                                 }
                                 height: {
-                                    if (activePreset === "editorial_split") return previewSplitRow.implicitHeight + 8
-                                    if (activePreset === "mono_telemetry") return previewMonoCol.implicitHeight + 8
+                                    if (activePreset === "editorial_split") return previewSplitRow.implicitHeight + 16
+                                    if (activePreset === "mono_telemetry") return previewMonoCol.implicitHeight + 16
                                     if (activePreset === "minimal_pill") return previewMinimalRow.implicitHeight + 22
-                                    return timeRow.implicitHeight + (dateText.visible ? (dateText.implicitHeight + 4) : 0)
+                                    return clockCol.implicitHeight + 12
                                 }
 
+                                // Obsidian Glass Surface Plate
                                 Rectangle {
                                     anchors.fill: parent
-                                    anchors.margins: lockClockPreviewItem.activePreset === "minimal_pill" ? 0 : -12
-                                    radius: lockClockPreviewItem.activePreset === "minimal_pill" ? height / 2 : 20
+                                    anchors.margins: lockClockPreviewItem.activePreset === "minimal_pill" ? 0 : -10
+                                    radius: lockClockPreviewItem.surfRad
                                     visible: lockClockPreviewItem.activePreset === "minimal_pill" ? true : lockscreenRoot.getWidgetBackground("clock")
-                                    color: Theme.alpha(Theme.mix(Theme.background, Theme.surface, 0.55), 0.55)
-                                    border.width: 1
+                                    color: Theme.alpha(Theme.mix(Theme.background, Theme.surface, 0.55), lockClockPreviewItem.surfOp)
+                                    border.width: lockClockPreviewItem.surfBw
                                     border.color: Theme.alpha(Theme.foreground, 0.16)
+                                    clip: true
+
+                                    Rectangle {
+                                        anchors.top: parent.top
+                                        anchors.left: parent.left
+                                        anchors.right: parent.right
+                                        anchors.leftMargin: 16
+                                        anchors.rightMargin: 16
+                                        height: 1
+                                        visible: lockClockPreviewItem.surfSpec
+                                        gradient: Gradient {
+                                            orientation: Gradient.Horizontal
+                                            GradientStop { position: 0.0; color: "transparent" }
+                                            GradientStop { position: 0.5; color: Theme.alpha(Theme.foreground, 0.25) }
+                                            GradientStop { position: 1.0; color: "transparent" }
+                                        }
+                                    }
                                 }
 
+                                // ── PRESET 1: CLASSIC ────────────────────────
                                 Column {
                                     id: clockCol
                                     anchors.centerIn: parent
-                                    spacing: 4
+                                    spacing: 6
                                     visible: lockClockPreviewItem.activePreset === "classic"
 
                                     Row {
@@ -507,98 +687,424 @@ Item {
                                         anchors.horizontalCenter: parent.horizontalCenter
                                         spacing: 8
 
-                                        Text {
-                                            id: previewTimeText
-                                            text: lockClockPreviewItem.timeStr
-                                            color: Theme.accent
-                                            font.family: "Outfit"
-                                            font.pixelSize: lockClockPreviewItem.clockPx
-                                            font.weight: {
-                                                var w = window.config.clock ? window.config.clock.weight : "Light"
-                                                if (w === "Bold") return Font.Bold
-                                                if (w === "Medium") return Font.Medium
-                                                return Font.Light
-                                            }
-                                            font.letterSpacing: 2
+                                        // Left Accent Circle
+                                        Rectangle {
+                                            visible: lockClockPreviewItem.hasCircle && lockClockPreviewItem.circlePos === "left"
+                                            width: lockClockPreviewItem.circleSize; height: lockClockPreviewItem.circleSize
+                                            radius: width / 2
+                                            color: lockClockPreviewItem.circleStyle === "outline" ? "transparent" : lockClockPreviewItem.circleColor
+                                            border.width: lockClockPreviewItem.circleStyle === "outline" ? 1.5 : 0
+                                            border.color: lockClockPreviewItem.circleColor
+                                            anchors.verticalCenter: parent.verticalCenter
                                         }
 
                                         Text {
-                                            anchors.bottom: previewTimeText.bottom
-                                            anchors.bottomMargin: 14
-                                            text: lockClockPreviewItem.amPmStr
-                                            visible: window.config.clock && !window.config.clock.format_24h && window.config.clock.show_am_pm
-                                            color: Theme.alpha(Theme.accent, 0.90)
-                                            font.family: "Outfit"
-                                            font.pixelSize: 18
-                                            font.weight: Font.DemiBold
-                                            font.letterSpacing: 2
+                                            id: previewHoursClassic
+                                            text: lockClockPreviewItem.hoursStr
+                                            color: lockClockPreviewItem.hColor
+                                            font.family: lockClockPreviewItem.hFont
+                                            font.pixelSize: lockClockPreviewItem.clockPx
+                                            font.weight: lockClockPreviewItem.hWeight
+                                            font.letterSpacing: lockClockPreviewItem.hSpacing
+                                            anchors.verticalCenter: parent.verticalCenter
+                                        }
+
+                                        Text {
+                                            text: lockClockPreviewItem.sepGlyph
+                                            color: lockClockPreviewItem.sepColor
+                                            font.family: lockClockPreviewItem.hFont
+                                            font.pixelSize: Math.round(lockClockPreviewItem.clockPx * lockClockPreviewItem.sepRatio)
+                                            font.weight: Font.Light
+                                            opacity: lockClockPreviewItem.sepBlinkOpacity
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            anchors.verticalCenterOffset: -2
+                                            visible: lockClockPreviewItem.sepGlyph.length > 0
+                                        }
+
+                                        Text {
+                                            id: previewMinsClassic
+                                            text: lockClockPreviewItem.minutesStr
+                                            color: lockClockPreviewItem.mColor
+                                            font.family: lockClockPreviewItem.mFont
+                                            font.pixelSize: Math.round(lockClockPreviewItem.clockPx * lockClockPreviewItem.mRatio)
+                                            font.weight: lockClockPreviewItem.mWeight
+                                            font.letterSpacing: lockClockPreviewItem.mSpacing
+                                            anchors.verticalCenter: parent.verticalCenter
+                                        }
+
+                                        // Right Accent Circle
+                                        Rectangle {
+                                            visible: lockClockPreviewItem.hasCircle && lockClockPreviewItem.circlePos === "right"
+                                            width: lockClockPreviewItem.circleSize; height: lockClockPreviewItem.circleSize
+                                            radius: width / 2
+                                            color: lockClockPreviewItem.circleStyle === "outline" ? "transparent" : lockClockPreviewItem.circleColor
+                                            border.width: lockClockPreviewItem.circleStyle === "outline" ? 1.5 : 0
+                                            border.color: lockClockPreviewItem.circleColor
+                                            anchors.verticalCenter: parent.verticalCenter
+                                        }
+
+                                        // AM/PM Marker
+                                        Rectangle {
+                                            visible: Boolean(window.config && window.config.clock && !window.config.clock.format_24h && window.config.clock.show_am_pm)
+                                            anchors.bottom: previewHoursClassic.bottom
+                                            anchors.bottomMargin: 12
+                                            height: lockClockPreviewItem.ampmStyle === "pill" ? 22 : ampmClassicTxt.implicitHeight
+                                            width: lockClockPreviewItem.ampmStyle === "pill" ? (ampmClassicTxt.implicitWidth + 14) : ampmClassicTxt.implicitWidth
+                                            radius: 11
+                                            color: lockClockPreviewItem.ampmStyle === "pill" ? Theme.alpha(lockClockPreviewItem.ampmColor, 0.20) : "transparent"
+                                            border.width: lockClockPreviewItem.ampmStyle === "pill" ? 1 : 0
+                                            border.color: Theme.alpha(lockClockPreviewItem.ampmColor, 0.50)
+
+                                            Text {
+                                                id: ampmClassicTxt
+                                                anchors.centerIn: parent
+                                                text: lockClockPreviewItem.ampmStyle === "bracketed" ? ("[ " + lockClockPreviewItem.amPmStr + " ]") : lockClockPreviewItem.amPmStr
+                                                color: lockClockPreviewItem.ampmColor
+                                                font.family: lockClockPreviewItem.ampmFont
+                                                font.pixelSize: lockClockPreviewItem.ampmSize
+                                                font.weight: lockClockPreviewItem.ampmWeight
+                                                font.letterSpacing: 1.5
+                                            }
                                         }
                                     }
 
+                                    // Divider Line (horizontal)
+                                    Rectangle {
+                                        visible: lockClockPreviewItem.hasLine && lockClockPreviewItem.lineOrient === "horizontal"
+                                        anchors.horizontalCenter: parent.horizontalCenter
+                                        width: lockClockPreviewItem.lineLen
+                                        height: lockClockPreviewItem.lineThick
+                                        radius: lockClockPreviewItem.lineRad
+                                        color: lockClockPreviewItem.lineStyle === "solid" ? lockClockPreviewItem.lineColor : "transparent"
+                                        gradient: lockClockPreviewItem.lineStyle === "gradient" ? classicLineGrad : null
+                                        Gradient {
+                                            id: classicLineGrad
+                                            orientation: Gradient.Horizontal
+                                            GradientStop { position: 0.0; color: "transparent" }
+                                            GradientStop { position: 0.5; color: lockClockPreviewItem.lineColor }
+                                            GradientStop { position: 1.0; color: "transparent" }
+                                        }
+                                    }
+
+                                    // Date Line
                                     Text {
                                         id: dateText
                                         anchors.horizontalCenter: parent.horizontalCenter
-                                        visible: window.config.date ? window.config.date.enabled : true
+                                        visible: Boolean(window.config && window.config.date && window.config.date.enabled !== false)
                                         text: {
                                             var d = window.currentTime
-                                            if (window.config.date && window.config.date.format === "compact") {
-                                                return Qt.formatDate(d, "ddd, MMM d").toUpperCase()
-                                            }
-                                            return Qt.formatDate(d, "dddd, MMMM d").toUpperCase()
+                                            var isUp = lockClockPreviewItem.dUpper
+                                            var fmt = lockClockPreviewItem.dFmt
+                                            var str = ""
+                                            if (fmt === "compact") str = Qt.formatDate(d, "ddd, MMM d")
+                                            else if (fmt === "iso") str = Qt.formatDate(d, "yyyy-MM-dd") + " // " + Qt.formatDate(d, "ddd").toUpperCase()
+                                            else if (fmt === "minimal") str = Qt.formatDate(d, "MMM d")
+                                            else str = Qt.formatDate(d, "dddd, MMMM d")
+                                            return isUp ? str.toUpperCase() : str
                                         }
-                                        color: Theme.alpha(Theme.foreground, 0.75)
-                                        font.family: "Outfit"
-                                        font.pixelSize: 13
-                                        font.weight: Font.Medium
-                                        font.letterSpacing: 4
+                                        color: lockClockPreviewItem.dColor
+                                        font.family: lockClockPreviewItem.dFont
+                                        font.pixelSize: lockClockPreviewItem.dSize
+                                        font.weight: lockClockPreviewItem.dWeight
+                                        font.letterSpacing: lockClockPreviewItem.dSpacing
                                     }
                                 }
 
+                                // ── PRESET 2: EDITORIAL SPLIT ────────────────
                                 Row {
                                     id: previewSplitRow
                                     anchors.centerIn: parent
                                     spacing: 16
                                     visible: lockClockPreviewItem.activePreset === "editorial_split"
 
+                                    // Left Circle
+                                    Rectangle {
+                                        visible: lockClockPreviewItem.hasCircle && lockClockPreviewItem.circlePos === "left"
+                                        width: lockClockPreviewItem.circleSize; height: lockClockPreviewItem.circleSize
+                                        radius: width / 2
+                                        color: lockClockPreviewItem.circleStyle === "outline" ? "transparent" : lockClockPreviewItem.circleColor
+                                        border.width: lockClockPreviewItem.circleStyle === "outline" ? 1.5 : 0
+                                        border.color: lockClockPreviewItem.circleColor
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
+
                                     Row {
                                         anchors.verticalCenter: parent.verticalCenter
+                                        spacing: 4
+                                        Text {
+                                            text: lockClockPreviewItem.hoursStr
+                                            color: lockClockPreviewItem.hColor
+                                            font.family: lockClockPreviewItem.hFont
+                                            font.pixelSize: lockClockPreviewItem.clockPx
+                                            font.weight: lockClockPreviewItem.hWeight
+                                            font.letterSpacing: lockClockPreviewItem.hSpacing
+                                            anchors.verticalCenter: parent.verticalCenter
+                                        }
+                                        Text {
+                                            text: lockClockPreviewItem.sepGlyph
+                                            color: lockClockPreviewItem.sepColor
+                                            font.family: lockClockPreviewItem.hFont
+                                            font.pixelSize: Math.round(lockClockPreviewItem.clockPx * lockClockPreviewItem.sepRatio)
+                                            font.weight: Font.Light
+                                            opacity: lockClockPreviewItem.sepBlinkOpacity
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            anchors.verticalCenterOffset: -3
+                                            visible: lockClockPreviewItem.sepGlyph.length > 0
+                                        }
+                                        Text {
+                                            text: lockClockPreviewItem.minutesStr
+                                            color: lockClockPreviewItem.mColor
+                                            font.family: lockClockPreviewItem.mFont
+                                            font.pixelSize: Math.round(lockClockPreviewItem.clockPx * lockClockPreviewItem.mRatio)
+                                            font.weight: lockClockPreviewItem.mWeight
+                                            font.letterSpacing: lockClockPreviewItem.mSpacing
+                                            anchors.verticalCenter: parent.verticalCenter
+                                        }
+                                    }
+
+                                    // Divider Line (vertical)
+                                    Rectangle {
+                                        visible: lockClockPreviewItem.hasLine
+                                        width: lockClockPreviewItem.lineOrient === "vertical" ? lockClockPreviewItem.lineThick : lockClockPreviewItem.lineLen
+                                        height: lockClockPreviewItem.lineOrient === "vertical" ? lockClockPreviewItem.lineLen : lockClockPreviewItem.lineThick
+                                        radius: lockClockPreviewItem.lineRad
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        color: lockClockPreviewItem.lineStyle === "solid" ? lockClockPreviewItem.lineColor : "transparent"
+                                        gradient: lockClockPreviewItem.lineStyle === "gradient" ? splitVertGrad : null
+                                        Gradient {
+                                            id: splitVertGrad
+                                            orientation: Gradient.Vertical
+                                            GradientStop { position: 0.0; color: lockClockPreviewItem.lineColor }
+                                            GradientStop { position: 1.0; color: Theme.alpha(lockClockPreviewItem.lineColor, 0.20) }
+                                        }
+                                    }
+
+                                    // Stacked Side Metadata (AM/PM & Date)
+                                    Column {
+                                        anchors.verticalCenter: parent.verticalCenter
                                         spacing: 3
-                                        Text { text: lockClockPreviewItem.hoursStr; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: lockClockPreviewItem.clockPx; font.weight: Font.Black; font.letterSpacing: -1.5; anchors.verticalCenter: parent.verticalCenter }
-                                        Text { text: ":"; color: Theme.alpha(Theme.accent, 0.70); font.family: "Outfit"; font.pixelSize: Math.round(lockClockPreviewItem.clockPx * 0.85); font.weight: Font.Light; anchors.verticalCenter: parent.verticalCenter; anchors.verticalCenterOffset: -3 }
-                                        Text { text: lockClockPreviewItem.minutesStr; color: Theme.accent; font.family: "Outfit"; font.pixelSize: lockClockPreviewItem.clockPx; font.weight: Font.Light; font.letterSpacing: 0.5; anchors.verticalCenter: parent.verticalCenter }
+                                        visible: (Boolean(window.config && window.config.date && window.config.date.enabled !== false)) || (Boolean(window.config && window.config.clock && !window.config.clock.format_24h && window.config.clock.show_am_pm))
+
+                                        // AM/PM
+                                        Rectangle {
+                                            visible: Boolean(window.config && window.config.clock && !window.config.clock.format_24h && window.config.clock.show_am_pm)
+                                            height: lockClockPreviewItem.ampmStyle === "pill" ? 20 : ampmSplitTxt.implicitHeight
+                                            width: lockClockPreviewItem.ampmStyle === "pill" ? (ampmSplitTxt.implicitWidth + 12) : ampmSplitTxt.implicitWidth
+                                            radius: 10
+                                            color: lockClockPreviewItem.ampmStyle === "pill" ? Theme.alpha(lockClockPreviewItem.ampmColor, 0.20) : "transparent"
+                                            border.width: lockClockPreviewItem.ampmStyle === "pill" ? 1 : 0
+                                            border.color: Theme.alpha(lockClockPreviewItem.ampmColor, 0.50)
+
+                                            Text {
+                                                id: ampmSplitTxt
+                                                anchors.centerIn: parent
+                                                text: lockClockPreviewItem.ampmStyle === "bracketed" ? ("[ " + lockClockPreviewItem.amPmStr + " ]") : lockClockPreviewItem.amPmStr
+                                                color: lockClockPreviewItem.ampmColor
+                                                font.family: lockClockPreviewItem.ampmFont
+                                                font.pixelSize: lockClockPreviewItem.ampmSize
+                                                font.weight: lockClockPreviewItem.ampmWeight
+                                                font.letterSpacing: 1.5
+                                            }
+                                        }
+
+                                        // Date Part 1 (Day)
+                                        Text {
+                                            visible: Boolean(window.config && window.config.date && window.config.date.enabled !== false)
+                                            text: {
+                                                var d = window.currentTime
+                                                var isUp = lockClockPreviewItem.dUpper
+                                                var fmt = lockClockPreviewItem.dFmt
+                                                if (fmt === "split_lines") {
+                                                    return isUp ? Qt.formatDate(d, "dddd").toUpperCase() : Qt.formatDate(d, "dddd")
+                                                }
+                                                return isUp ? Qt.formatDate(d, "dddd, MMM d").toUpperCase() : Qt.formatDate(d, "dddd, MMM d")
+                                            }
+                                            color: lockClockPreviewItem.dColor
+                                            font.family: lockClockPreviewItem.dFont
+                                            font.pixelSize: lockClockPreviewItem.dSize
+                                            font.weight: lockClockPreviewItem.dWeight
+                                            font.letterSpacing: lockClockPreviewItem.dSpacing
+                                        }
+
+                                        // Date Part 2 (Month & Day, for split_lines)
+                                        Text {
+                                            visible: Boolean(window.config && window.config.date && window.config.date.enabled !== false) && lockClockPreviewItem.dFmt === "split_lines"
+                                            text: {
+                                                var d = window.currentTime
+                                                var isUp = lockClockPreviewItem.dUpper
+                                                return isUp ? Qt.formatDate(d, "dd MMM").toUpperCase() : Qt.formatDate(d, "dd MMM")
+                                            }
+                                            color: Theme.alpha(lockClockPreviewItem.dColor, 0.70)
+                                            font.family: lockClockPreviewItem.dFont
+                                            font.pixelSize: Math.max(10, lockClockPreviewItem.dSize - 1)
+                                            font.weight: Font.Medium
+                                            font.letterSpacing: lockClockPreviewItem.dSpacing
+                                        }
+                                    }
+
+                                    // Right Circle
+                                    Rectangle {
+                                        visible: lockClockPreviewItem.hasCircle && lockClockPreviewItem.circlePos === "right"
+                                        width: lockClockPreviewItem.circleSize; height: lockClockPreviewItem.circleSize
+                                        radius: width / 2
+                                        color: lockClockPreviewItem.circleStyle === "outline" ? "transparent" : lockClockPreviewItem.circleColor
+                                        border.width: lockClockPreviewItem.circleStyle === "outline" ? 1.5 : 0
+                                        border.color: lockClockPreviewItem.circleColor
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
+                                }
+
+                                // ── PRESET 3: MONO TELEMETRY ─────────────────
+                                Column {
+                                    id: previewMonoCol
+                                    anchors.centerIn: parent
+                                    spacing: 6
+                                    visible: lockClockPreviewItem.activePreset === "mono_telemetry"
+
+                                    Text {
+                                        anchors.horizontalCenter: parent.horizontalCenter
+                                        visible: Boolean(window.config && window.config.clock && !window.config.clock.format_24h && window.config.clock.show_am_pm)
+                                        text: "[ LOCAL // " + lockClockPreviewItem.amPmStr + " ]"
+                                        color: Theme.alpha(lockClockPreviewItem.ampmColor, 0.88)
+                                        font.family: lockClockPreviewItem.ampmFont
+                                        font.pixelSize: lockClockPreviewItem.ampmSize
+                                        font.weight: Font.Bold
+                                        font.letterSpacing: 1.8
+                                    }
+
+                                    Row {
+                                        anchors.horizontalCenter: parent.horizontalCenter
+                                        spacing: 2
+
+                                        Text {
+                                            text: lockClockPreviewItem.hoursStr
+                                            color: lockClockPreviewItem.hColor
+                                            font.family: lockClockPreviewItem.hFont
+                                            font.pixelSize: lockClockPreviewItem.clockPx
+                                            font.weight: lockClockPreviewItem.hWeight
+                                            font.letterSpacing: lockClockPreviewItem.hSpacing
+                                            anchors.verticalCenter: parent.verticalCenter
+                                        }
+                                        Text {
+                                            text: lockClockPreviewItem.sepGlyph
+                                            color: lockClockPreviewItem.sepColor
+                                            font.family: lockClockPreviewItem.hFont
+                                            font.pixelSize: Math.round(lockClockPreviewItem.clockPx * lockClockPreviewItem.sepRatio)
+                                            font.weight: lockClockPreviewItem.hWeight
+                                            opacity: lockClockPreviewItem.sepBlinkOpacity
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            visible: lockClockPreviewItem.sepGlyph.length > 0
+                                        }
+                                        Text {
+                                            text: lockClockPreviewItem.minutesStr
+                                            color: lockClockPreviewItem.mColor
+                                            font.family: lockClockPreviewItem.mFont
+                                            font.pixelSize: Math.round(lockClockPreviewItem.clockPx * lockClockPreviewItem.mRatio)
+                                            font.weight: lockClockPreviewItem.mWeight
+                                            font.letterSpacing: lockClockPreviewItem.mSpacing
+                                            anchors.verticalCenter: parent.verticalCenter
+                                        }
                                     }
 
                                     Rectangle {
-                                        width: 2; height: Math.max(36, lockClockPreviewItem.clockPx * 0.72); radius: 1; anchors.verticalCenter: parent.verticalCenter
-                                        color: Theme.accent
+                                        anchors.horizontalCenter: parent.horizontalCenter
+                                        width: lockClockPreviewItem.lineLen
+                                        height: lockClockPreviewItem.lineThick
+                                        visible: lockClockPreviewItem.hasLine
+                                        gradient: Gradient {
+                                            orientation: Gradient.Horizontal
+                                            GradientStop { position: 0.0; color: "transparent" }
+                                            GradientStop { position: 0.5; color: lockClockPreviewItem.lineColor }
+                                            GradientStop { position: 1.0; color: "transparent" }
+                                        }
                                     }
 
-                                    Column {
-                                        anchors.verticalCenter: parent.verticalCenter; spacing: 3
-                                        Text { visible: window.config.clock && !window.config.clock.format_24h && window.config.clock.show_am_pm; text: lockClockPreviewItem.amPmStr; color: Theme.accent; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 12; font.weight: Font.Bold; font.letterSpacing: 1.5 }
-                                        Text { visible: window.config.date ? window.config.date.enabled : true; text: Qt.formatDate(window.currentTime, "dddd").toUpperCase(); color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 13; font.weight: Font.Bold; font.letterSpacing: 2.2 }
-                                        Text { visible: window.config.date ? window.config.date.enabled : true; text: Qt.formatDate(window.currentTime, "dd MMM").toUpperCase(); color: Theme.alpha(Theme.foreground, 0.68); font.family: "Outfit"; font.pixelSize: 12; font.weight: Font.Medium; font.letterSpacing: 2.0 }
+                                    Text {
+                                        anchors.horizontalCenter: parent.horizontalCenter
+                                        visible: Boolean(window.config && window.config.date && window.config.date.enabled !== false)
+                                        text: {
+                                            var d = window.currentTime
+                                            return Qt.formatDate(d, "yyyy-MM-dd") + " // " + Qt.formatDate(d, "ddd").toUpperCase()
+                                        }
+                                        color: lockClockPreviewItem.dColor
+                                        font.family: lockClockPreviewItem.dFont
+                                        font.pixelSize: lockClockPreviewItem.dSize
+                                        font.weight: lockClockPreviewItem.dWeight
+                                        font.letterSpacing: lockClockPreviewItem.dSpacing
                                     }
                                 }
 
-                                Column {
-                                    id: previewMonoCol
-                                    anchors.centerIn: parent; spacing: 6
-                                    visible: lockClockPreviewItem.activePreset === "mono_telemetry"
-                                    Text { anchors.horizontalCenter: parent.horizontalCenter; visible: window.config.clock && !window.config.clock.format_24h && window.config.clock.show_am_pm; text: "[ LOCAL // " + lockClockPreviewItem.amPmStr + " ]"; color: Theme.alpha(Theme.accent, 0.88); font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 11; font.weight: Font.Bold; font.letterSpacing: 1.8 }
-                                    Text { anchors.horizontalCenter: parent.horizontalCenter; text: lockClockPreviewItem.timeStr; color: Theme.foreground; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: lockClockPreviewItem.clockPx; font.weight: Font.DemiBold; font.letterSpacing: 1.5 }
-                                    Text { anchors.horizontalCenter: parent.horizontalCenter; visible: window.config.date ? window.config.date.enabled : true; text: Qt.formatDate(window.currentTime, "yyyy-MM-dd") + " // " + Qt.formatDate(window.currentTime, "ddd").toUpperCase(); color: Theme.alpha(Theme.foreground, 0.72); font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 12; font.weight: Font.Medium; font.letterSpacing: 1.8 }
-                                }
-
+                                // ── PRESET 4: MINIMAL PILL ───────────────────
                                 Row {
                                     id: previewMinimalRow
-                                    anchors.centerIn: parent; spacing: 14
+                                    anchors.centerIn: parent
+                                    spacing: 12
                                     visible: lockClockPreviewItem.activePreset === "minimal_pill"
-                                    Rectangle { width: 8; height: 8; radius: 4; color: Theme.accent; anchors.verticalCenter: parent.verticalCenter }
-                                    Text { text: lockClockPreviewItem.timeStr; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: Math.max(28, Math.round(lockClockPreviewItem.clockPx * 0.52)); font.weight: Font.Bold; anchors.verticalCenter: parent.verticalCenter }
-                                    Text { visible: window.config.clock && !window.config.clock.format_24h && window.config.clock.show_am_pm; text: lockClockPreviewItem.amPmStr; color: Theme.accent; font.family: "Outfit"; font.pixelSize: 13; font.weight: Font.Bold; anchors.verticalCenter: parent.verticalCenter }
-                                    Rectangle { visible: window.config.date ? window.config.date.enabled : true; width: 4; height: 4; radius: 2; color: Theme.alpha(Theme.foreground, 0.40); anchors.verticalCenter: parent.verticalCenter }
-                                    Text { visible: window.config.date ? window.config.date.enabled : true; text: Qt.formatDate(window.currentTime, "ddd, MMM d"); color: Theme.alpha(Theme.foreground, 0.78); font.family: "Outfit"; font.pixelSize: 15; font.weight: Font.Medium; anchors.verticalCenter: parent.verticalCenter }
+
+                                    Rectangle {
+                                        width: lockClockPreviewItem.circleSize; height: lockClockPreviewItem.circleSize
+                                        radius: width / 2
+                                        color: lockClockPreviewItem.circleColor
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
+
+                                    Row {
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        spacing: 2
+                                        Text {
+                                            text: lockClockPreviewItem.hoursStr
+                                            color: lockClockPreviewItem.hColor
+                                            font.family: lockClockPreviewItem.hFont
+                                            font.pixelSize: Math.max(26, Math.round(lockClockPreviewItem.clockPx * 0.52))
+                                            font.weight: lockClockPreviewItem.hWeight
+                                            anchors.verticalCenter: parent.verticalCenter
+                                        }
+                                        Text {
+                                            text: lockClockPreviewItem.sepGlyph
+                                            color: lockClockPreviewItem.sepColor
+                                            font.family: lockClockPreviewItem.hFont
+                                            font.pixelSize: Math.max(24, Math.round(lockClockPreviewItem.clockPx * 0.48))
+                                            font.weight: Font.Light
+                                            opacity: lockClockPreviewItem.sepBlinkOpacity
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            visible: lockClockPreviewItem.sepGlyph.length > 0
+                                        }
+                                        Text {
+                                            text: lockClockPreviewItem.minutesStr
+                                            color: lockClockPreviewItem.mColor
+                                            font.family: lockClockPreviewItem.mFont
+                                            font.pixelSize: Math.max(26, Math.round(lockClockPreviewItem.clockPx * 0.52 * lockClockPreviewItem.mRatio))
+                                            font.weight: lockClockPreviewItem.mWeight
+                                            anchors.verticalCenter: parent.verticalCenter
+                                        }
+                                    }
+
+                                    Text {
+                                        visible: Boolean(window.config && window.config.clock && !window.config.clock.format_24h && window.config.clock.show_am_pm)
+                                        text: lockClockPreviewItem.amPmStr
+                                        color: lockClockPreviewItem.ampmColor
+                                        font.family: lockClockPreviewItem.ampmFont
+                                        font.pixelSize: lockClockPreviewItem.ampmSize
+                                        font.weight: Font.Bold
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
+
+                                    Rectangle {
+                                        visible: Boolean(window.config && window.config.date && window.config.date.enabled !== false)
+                                        width: 4; height: 4; radius: 2
+                                        color: Theme.alpha(Theme.foreground, 0.40)
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
+
+                                    Text {
+                                        visible: Boolean(window.config && window.config.date && window.config.date.enabled !== false)
+                                        text: Qt.formatDate(window.currentTime, "ddd, MMM d")
+                                        color: lockClockPreviewItem.dColor
+                                        font.family: lockClockPreviewItem.dFont
+                                        font.pixelSize: lockClockPreviewItem.dSize
+                                        font.weight: lockClockPreviewItem.dWeight
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
                                 }
                             }
                         }
@@ -743,6 +1249,7 @@ Item {
 
                         // 2b. Separated Username Widget
                         ResizableDraggableWidget {
+                            id: usernameWidget
                             moduleKey: "username"
                             title: "Username"
                             normX: (window.config.positions && window.config.positions.username) ? window.config.positions.username.x : 0.50
@@ -757,6 +1264,14 @@ Item {
                             onPositionDropped: function(nx, ny) { window.updateWidgetPosition("username", nx, ny) }
                             onScaleModified: function(s) { window.updateWidgetScale("username", s) }
                             onWidgetSelected: function(key) { lockscreenRoot.selectedModuleKey = key }
+
+                            readonly property var unStyle: (window.config && window.config.username_style) ? window.config.username_style : {}
+                            readonly property string unFont: unStyle.font_family || "Outfit"
+                            readonly property int unWeight: lockscreenRoot.parseFontWeight(unStyle.weight, Font.DemiBold)
+                            readonly property color unColor: lockscreenRoot.parseToneColor(unStyle.color_mode, Theme.foreground)
+                            readonly property real unSize: (unStyle.size !== undefined ? unStyle.size : 18)
+                            readonly property real unSpacing: (unStyle.letter_spacing !== undefined ? unStyle.letter_spacing : 2)
+                            readonly property bool unUpper: Boolean(unStyle.uppercase)
 
                             Item {
                                 width: usernamePreviewText.implicitWidth + 24
@@ -774,18 +1289,19 @@ Item {
                                 Text {
                                     id: usernamePreviewText
                                     anchors.centerIn: parent
-                                    text: "Shell Ninja"
-                                    color: Theme.foreground
-                                    font.family: "Outfit"
-                                    font.pixelSize: 18
-                                    font.weight: Font.DemiBold
-                                    font.letterSpacing: 2
+                                    text: usernameWidget.unUpper ? "SHELL NINJA" : "Shell Ninja"
+                                    color: usernameWidget.unColor
+                                    font.family: usernameWidget.unFont
+                                    font.pixelSize: usernameWidget.unSize
+                                    font.weight: usernameWidget.unWeight
+                                    font.letterSpacing: usernameWidget.unSpacing
                                 }
                             }
                         }
 
                         // 2c. Separated Session Lock Status Widget
                         ResizableDraggableWidget {
+                            id: sessionLockWidget
                             moduleKey: "session_lock"
                             title: "Session Lock"
                             normX: (window.config.positions && window.config.positions.session_lock) ? window.config.positions.session_lock.x : 0.50
@@ -801,14 +1317,19 @@ Item {
                             onScaleModified: function(s) { window.updateWidgetScale("session_lock", s) }
                             onWidgetSelected: function(key) { lockscreenRoot.selectedModuleKey = key }
 
+                            readonly property var slStyle: (window.config && window.config.session_lock_style) ? window.config.session_lock_style : {}
+                            readonly property string slBadge: slStyle.badge_style || "pill"
+                            readonly property bool slShowIcon: slStyle.show_icon !== false
+                            readonly property string slText: slStyle.text || "Session Locked"
+
                             Item {
-                                width: sessionStatusPreviewRow.implicitWidth + 20
-                                height: sessionStatusPreviewRow.implicitHeight + 8
+                                width: sessionStatusPreviewRow.implicitWidth + (sessionLockWidget.slBadge === "text" ? 8 : 22)
+                                height: sessionStatusPreviewRow.implicitHeight + (sessionLockWidget.slBadge === "text" ? 4 : 10)
 
                                 Rectangle {
                                     anchors.fill: parent
-                                    radius: height / 2
-                                    visible: lockscreenRoot.getWidgetBackground("session_lock")
+                                    radius: sessionLockWidget.slBadge === "bracketed" ? 4 : height / 2
+                                    visible: (sessionLockWidget.slBadge !== "text") && lockscreenRoot.getWidgetBackground("session_lock")
                                     color: Theme.alpha(Theme.surface, 0.40)
                                     border.width: 1
                                     border.color: Theme.alpha(Theme.accent, 0.25)
@@ -823,14 +1344,15 @@ Item {
                                         anchors.verticalCenter: parent.verticalCenter
                                         width: 6; height: 6; radius: 3
                                         color: Theme.accent
+                                        visible: sessionLockWidget.slShowIcon && (sessionLockWidget.slBadge !== "bracketed")
                                     }
                                     Text {
                                         anchors.verticalCenter: parent.verticalCenter
-                                        text: "Session Locked"
+                                        text: sessionLockWidget.slBadge === "bracketed" ? ("[ " + sessionLockWidget.slText.toUpperCase() + " ]") : sessionLockWidget.slText
                                         color: Theme.alpha(Theme.foreground, 0.70)
                                         font.family: "Outfit"
                                         font.pixelSize: 11
-                                        font.weight: Font.Normal
+                                        font.weight: sessionLockWidget.slBadge === "bracketed" ? Font.DemiBold : Font.Normal
                                         font.letterSpacing: 1.2
                                     }
                                 }
@@ -839,6 +1361,7 @@ Item {
 
                         // 2d. Separated Password Input Field Widget
                         ResizableDraggableWidget {
+                            id: inputFieldWidget
                             moduleKey: "input_field"
                             title: "Password Input"
                             normX: (window.config.positions && window.config.positions.input_field) ? window.config.positions.input_field.x : 0.50
@@ -854,13 +1377,21 @@ Item {
                             onScaleModified: function(s) { window.updateWidgetScale("input_field", s) }
                             onWidgetSelected: function(key) { lockscreenRoot.selectedModuleKey = key }
 
+                            readonly property var inStyle: (window.config && window.config.input_field_style) ? window.config.input_field_style : {}
+                            readonly property real inW: (inStyle.width !== undefined ? inStyle.width : 380)
+                            readonly property real inH: (inStyle.height !== undefined ? inStyle.height : 52)
+                            readonly property real inRad: (inStyle.radius !== undefined ? inStyle.radius : 26)
+                            readonly property real inOp: (inStyle.glass_opacity !== undefined ? inStyle.glass_opacity : 0.45)
+                            readonly property bool inIcon: (inStyle.show_icon !== false)
+                            readonly property bool inAccentBorder: (inStyle.border_accent !== false)
+
                             Rectangle {
-                                width: 380
-                                height: 52
-                                radius: 26
-                                color: lockscreenRoot.getWidgetBackground("input_field") ? Theme.alpha(Theme.surface, 0.45) : "transparent"
+                                width: inputFieldWidget.inW
+                                height: inputFieldWidget.inH
+                                radius: inputFieldWidget.inRad
+                                color: lockscreenRoot.getWidgetBackground("input_field") ? Theme.alpha(Theme.surface, inputFieldWidget.inOp) : "transparent"
                                 border.width: 1.2
-                                border.color: Theme.alpha(Theme.accent, 0.50)
+                                border.color: inputFieldWidget.inAccentBorder ? Theme.accent : Theme.alpha(Theme.foreground, 0.25)
 
                                 RowLayout {
                                     anchors.fill: parent
@@ -873,6 +1404,7 @@ Item {
                                         source: lockscreenRoot.lockSvg
                                         sourceSize: Qt.size(32, 32)
                                         opacity: 0.85
+                                        visible: inputFieldWidget.inIcon
                                     }
                                     Text {
                                         Layout.fillWidth: true
@@ -885,8 +1417,9 @@ Item {
                             }
                         }
 
-                        // 3. Audio Visualizer Widget (Rounded Bars & Symmetrical CAVA Pattern)
+                        // 3. Audio Visualizer Widget (CAVA Spectrum)
                         ResizableDraggableWidget {
+                            id: visualizerWidget
                             moduleKey: "audio_visualizer"
                             title: "Audio Visualizer"
                             normX: (window.config.positions && window.config.positions.audio_visualizer) ? window.config.positions.audio_visualizer.x : 0.50
@@ -902,15 +1435,27 @@ Item {
                             onScaleModified: function(s) { window.updateWidgetScale("audio_visualizer", s) }
                             onWidgetSelected: function(key) { lockscreenRoot.selectedModuleKey = key }
 
+                            readonly property var vStyle: (window.config && window.config.visualizer_style) ? window.config.visualizer_style : {}
+                            readonly property int vCount: (vStyle.bar_count !== undefined ? vStyle.bar_count : 14)
+                            readonly property real vWidth: (vStyle.bar_width !== undefined ? vStyle.bar_width : 4)
+                            readonly property real vSpacing: (vStyle.bar_spacing !== undefined ? vStyle.bar_spacing : 4)
+                            readonly property real vRadius: (vStyle.bar_radius !== undefined ? vStyle.bar_radius : 2)
+                            readonly property color vColor: lockscreenRoot.parseToneColor(vStyle.color_mode, Theme.accent)
+
                             LockscreenAudioVisualizer {
                                 previewMode: true
-                                barCount: 16
+                                barCount: visualizerWidget.vCount
+                                barWidth: visualizerWidget.vWidth
+                                barSpacing: visualizerWidget.vSpacing
+                                barRadius: visualizerWidget.vRadius
+                                barColor: visualizerWidget.vColor
                                 showBackground: lockscreenRoot.getWidgetBackground("audio_visualizer")
                             }
                         }
 
                         // 4. Weather Forecast Capsule
                         ResizableDraggableWidget {
+                            id: weatherWidget
                             moduleKey: "weather"
                             title: "Weather Capsule"
                             normX: (window.config.positions && window.config.positions.weather) ? window.config.positions.weather.x : 0.50
@@ -926,17 +1471,55 @@ Item {
                             onScaleModified: function(s) { window.updateWidgetScale("weather", s) }
                             onWidgetSelected: function(key) { lockscreenRoot.selectedModuleKey = key }
 
+                            readonly property var wStyle: (window.config && window.config.weather_style) ? window.config.weather_style : {}
+                            readonly property string wLayout: wStyle.layout || "pill"
+                            readonly property string wFont: wStyle.font_family || "Outfit"
+                            readonly property real wTempSize: (wStyle.temp_size !== undefined ? wStyle.temp_size : 14)
+                            readonly property bool wShowCity: (wStyle.show_city !== false)
+                            readonly property string wUnit: wStyle.unit || "c"
+
                             Rectangle {
-                                width: weatherRow.implicitWidth + 28
-                                height: 32
-                                radius: 16
+                                width: weatherWidget.wLayout === "card" ? 180 : (weatherRow.implicitWidth + 28)
+                                height: weatherWidget.wLayout === "card" ? 56 : 32
+                                radius: weatherWidget.wLayout === "card" ? 14 : 16
                                 color: lockscreenRoot.getWidgetBackground("weather") ? Theme.alpha(Theme.surface, 0.50) : "transparent"
                                 border.width: lockscreenRoot.getWidgetBackground("weather") ? 1 : 0
                                 border.color: Theme.alpha(Theme.accent, 0.35)
 
+                                // Card layout
+                                ColumnLayout {
+                                    anchors.centerIn: parent
+                                    visible: weatherWidget.wLayout === "card"
+                                    spacing: 2
+                                    RowLayout {
+                                        spacing: 6
+                                        Image {
+                                            Layout.preferredWidth: 16; Layout.preferredHeight: 16
+                                            source: lockscreenRoot.cloudSunSvg
+                                            sourceSize: Qt.size(32, 32)
+                                        }
+                                        Text {
+                                            text: (weatherWidget.wUnit === "f" ? "72°F" : "22°C") + " • Clear"
+                                            color: Theme.foreground
+                                            font.family: weatherWidget.wFont
+                                            font.pixelSize: weatherWidget.wTempSize
+                                            font.weight: Font.DemiBold
+                                        }
+                                    }
+                                    Text {
+                                        visible: weatherWidget.wShowCity
+                                        text: window.liveWeatherCity ? (window.liveWeatherCity + ", " + window.liveWeatherCountry) : "New York, US"
+                                        color: Theme.alpha(Theme.foreground, 0.65)
+                                        font.family: weatherWidget.wFont
+                                        font.pixelSize: 10
+                                    }
+                                }
+
+                                // Pill layout
                                 Row {
                                     id: weatherRow
                                     anchors.centerIn: parent
+                                    visible: weatherWidget.wLayout !== "card"
                                     spacing: 8
                                     Image {
                                         anchors.verticalCenter: parent.verticalCenter
@@ -949,12 +1532,13 @@ Item {
                                         text: {
                                             var c = window.liveWeatherCity
                                             var co = window.liveWeatherCountry
-                                            var loc = (c.length > 0 && co.length > 0) ? (c + ", " + co) : (c.length > 0 ? c : (co.length > 0 ? co : "Weather"))
-                                            return "24°C  •  " + loc
+                                            var temp = (weatherWidget.wUnit === "f" ? "72°F" : "22°C")
+                                            if (!weatherWidget.wShowCity || !c) return temp + "  •  Clear"
+                                            return temp + "  •  " + c + ", " + co
                                         }
                                         color: Theme.foreground
-                                        font.family: "Outfit"
-                                        font.pixelSize: 12
+                                        font.family: weatherWidget.wFont
+                                        font.pixelSize: weatherWidget.wTempSize
                                         font.weight: Font.Medium
                                     }
                                 }
@@ -963,6 +1547,7 @@ Item {
 
                         // 5. Inspirational Quote Pill
                         ResizableDraggableWidget {
+                            id: quoteWidget
                             moduleKey: "quote"
                             title: "Quote Pill"
                             normX: (window.config.positions && window.config.positions.quote) ? window.config.positions.quote.x : 0.50
@@ -978,6 +1563,13 @@ Item {
                             onScaleModified: function(s) { window.updateWidgetScale("quote", s) }
                             onWidgetSelected: function(key) { lockscreenRoot.selectedModuleKey = key }
 
+                            readonly property var qStyle: (window.config && window.config.quote_style) ? window.config.quote_style : {}
+                            readonly property string qFont: qStyle.font_family || "Outfit"
+                            readonly property bool qItalic: qStyle.italic !== false
+                            readonly property real qSize: (qStyle.size !== undefined ? qStyle.size : 12)
+                            readonly property bool qDecorations: qStyle.show_decorations !== false
+                            readonly property string qText: (window.config && window.config.modules && window.config.modules.quote_text) ? window.config.modules.quote_text : "Crafting the digital realm."
+
                             Rectangle {
                                 width: quoteRow.implicitWidth + 28
                                 height: 32
@@ -990,16 +1582,26 @@ Item {
                                     id: quoteRow
                                     anchors.centerIn: parent
                                     spacing: 8
-                                    Text { text: "“"; color: Theme.accent; font.family: "Outfit"; font.pixelSize: 14; font.weight: Font.Bold }
                                     Text {
-                                        text: window.liveQuoteText
-                                        color: Theme.alpha(Theme.foreground, 0.85)
-                                        font.family: "Outfit"
-                                        font.pixelSize: 12
-                                        font.italic: true
-                                        font.letterSpacing: 0.8
+                                        visible: quoteWidget.qDecorations
+                                        text: "❝"
+                                        color: Theme.accent
+                                        font.pixelSize: 10
                                     }
-                                    Text { text: "”"; color: Theme.accent; font.family: "Outfit"; font.pixelSize: 14; font.weight: Font.Bold }
+                                    Text {
+                                        id: quotePreviewText
+                                        text: quoteWidget.qText
+                                        color: Theme.alpha(Theme.foreground, 0.85)
+                                        font.family: quoteWidget.qFont
+                                        font.pixelSize: quoteWidget.qSize
+                                        font.italic: quoteWidget.qItalic
+                                    }
+                                    Text {
+                                        visible: quoteWidget.qDecorations
+                                        text: "❞"
+                                        color: Theme.accent
+                                        font.pixelSize: 10
+                                    }
                                 }
                             }
                         }
@@ -1059,6 +1661,7 @@ Item {
 
                         // 7. System Stats Graph Widget (CPU, GPU, RAM Smooth Area Graphs)
                         ResizableDraggableWidget {
+                            id: statsWidget
                             moduleKey: "system_stats"
                             title: "System Stats Graph"
                             normX: (window.config.positions && window.config.positions.system_stats) ? window.config.positions.system_stats.x : 0.50
@@ -1074,9 +1677,15 @@ Item {
                             onScaleModified: function(s) { window.updateWidgetScale("system_stats", s) }
                             onWidgetSelected: function(key) { lockscreenRoot.selectedModuleKey = key }
 
+                            readonly property var ssStyle: (window.config && window.config.system_stats_style) ? window.config.system_stats_style : {}
+                            readonly property string ssMode: ssStyle.display_mode || "graphs"
+                            readonly property real ssThick: (ssStyle.graph_thickness !== undefined ? ssStyle.graph_thickness : 2)
+
                             LockscreenSystemGraph {
                                 statsData: window.sysStatsData
                                 previewMode: false
+                                displayMode: statsWidget.ssMode
+                                graphThickness: statsWidget.ssThick
                                 showBackground: lockscreenRoot.getWidgetBackground("system_stats")
                             }
                         }
@@ -1117,120 +1726,91 @@ Item {
                     }
                 }
 
-                // ── FLOATING HUD: SELECTED WIDGET QUICK CONTROLS ─────────────
+                // ── FLOATING QUICK LAYERS RIBBON ─────────────────────────────
                 Rectangle {
                     anchors.bottom: parent.bottom
-                    anchors.bottomMargin: 6
+                    anchors.bottomMargin: 8
                     anchors.horizontalCenter: parent.horizontalCenter
-                    height: 44
-                    width: selectedHudRow.implicitWidth + 28
-                    radius: 22
-                    color: Theme.alpha(Theme.surface, 0.95)
-                    border.width: 1.5
-                    border.color: Theme.accent
-                    visible: lockscreenRoot.studioMode === 0 && lockscreenRoot.selectedModuleKey.length > 0
+                    height: 42
+                    width: ribbonRow.implicitWidth + 24
+                    radius: 21
+                    color: Theme.alpha(Theme.surface, 0.94)
+                    border.width: 1
+                    border.color: Theme.alpha(Theme.accent, 0.35)
+                    visible: lockscreenRoot.studioMode === 0
                     z: 50
 
                     Row {
-                        id: selectedHudRow
+                        id: ribbonRow
                         anchors.centerIn: parent
-                        spacing: 12
+                        spacing: 4
 
-                        Text {
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: "Selected: " + lockscreenRoot.selectedModuleKey.toUpperCase()
-                            color: Theme.accent
-                            font.family: "Outfit"
-                            font.pixelSize: 11
-                            font.weight: Font.Bold
-                            font.letterSpacing: 1
-                        }
+                        Repeater {
+                            model: [
+                                { key: "clock", name: "Clock", icon: "🕒" },
+                                { key: "user_avatar", name: "Avatar", icon: "👤" },
+                                { key: "username", name: "User", icon: "🪪" },
+                                { key: "input_field", name: "Password", icon: "🔒" },
+                                { key: "weather", name: "Weather", icon: "🌤" },
+                                { key: "system_stats", name: "Stats", icon: "📊" },
+                                { key: "audio_visualizer", name: "Visualizer", icon: "🎵" },
+                                { key: "quote", name: "Quote", icon: "💬" },
+                                { key: "session_lock", name: "Lock", icon: "🛡" },
+                                { key: "backdrop", name: "Backdrop", icon: "🌌" }
+                            ]
 
-                        // Background Toggle Button
-                        Rectangle {
-                            anchors.verticalCenter: parent.verticalCenter
-                            height: 28
-                            radius: 14
-                            implicitWidth: bgHudRow.implicitWidth + 16
-                            readonly property bool bgOn: lockscreenRoot.getWidgetBackground(lockscreenRoot.selectedModuleKey)
-                            color: bgOn ? Theme.alpha(Theme.accent, 0.35) : Theme.alpha(Theme.surface, 0.60)
-                            border.width: 1
-                            border.color: bgOn ? Theme.accent : Theme.alpha(Theme.accent, 0.25)
+                            Rectangle {
+                                height: 30
+                                radius: 15
+                                implicitWidth: ribBtnRow.implicitWidth + 14
+                                readonly property bool isSelected: lockscreenRoot.selectedModuleKey === modelData.key
+                                color: isSelected ? Theme.accent : (ribMouse.containsMouse ? Theme.alpha(Theme.surface, 0.85) : "transparent")
+                                border.width: isSelected ? 1 : 0
+                                border.color: Theme.accent
+                                Behavior on color { ColorAnimation { duration: 120 } }
 
-                            Row {
-                                id: bgHudRow
-                                anchors.centerIn: parent
-                                spacing: 6
-                                Text {
-                                    text: "🪟"
-                                    font.pixelSize: 10
+                                Row {
+                                    id: ribBtnRow
+                                    anchors.centerIn: parent
+                                    spacing: 4
+                                    Text {
+                                        text: modelData.icon
+                                        font.pixelSize: 11
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
+                                    Text {
+                                        text: modelData.name
+                                        color: parent.parent.isSelected ? Theme.on_primary : Theme.foreground
+                                        font.family: "Outfit"
+                                        font.pixelSize: 11
+                                        font.weight: parent.parent.isSelected ? Font.Bold : Font.Normal
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
                                 }
-                                Text {
-                                    text: "Background: " + (parent.parent.bgOn ? "ON" : "OFF")
-                                    color: parent.parent.bgOn ? Theme.accent : Theme.alpha(Theme.foreground, 0.70)
-                                    font.family: "Outfit"
-                                    font.pixelSize: 10
-                                    font.weight: Font.DemiBold
+
+                                MouseArea {
+                                    id: ribMouse
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: lockscreenRoot.selectedModuleKey = modelData.key
                                 }
-                            }
-
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    var curr = lockscreenRoot.getWidgetBackground(lockscreenRoot.selectedModuleKey)
-                                    window.updateWidgetBackground(lockscreenRoot.selectedModuleKey, !curr)
-                                }
-                            }
-                        }
-
-                        // Center Selected X Button
-                        Rectangle {
-                            anchors.verticalCenter: parent.verticalCenter
-                            height: 28
-                            radius: 14
-                            implicitWidth: centerHudRow.implicitWidth + 16
-                            color: centerHudMouse.containsMouse ? Theme.alpha(Theme.surface, 0.90) : Theme.alpha(Theme.surface, 0.50)
-                            border.width: 1
-                            border.color: Theme.alpha(Theme.accent, 0.30)
-
-                            Row {
-                                id: centerHudRow
-                                anchors.centerIn: parent
-                                spacing: 4
-                                Text { text: "⌖"; color: Theme.accent; font.pixelSize: 11 }
-                                Text { text: "Center X"; color: Theme.foreground; font.family: "Outfit"; font.pixelSize: 10; font.weight: Font.Medium }
-                            }
-
-                            MouseArea {
-                                id: centerHudMouse
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: lockscreenRoot.alignSelectedToCenter()
-                            }
-                        }
-
-                        // Close HUD
-                        Rectangle {
-                            anchors.verticalCenter: parent.verticalCenter
-                            width: 24; height: 24; radius: 12
-                            color: closeHudMouse.containsMouse ? Theme.alpha(Theme.error, 0.30) : "transparent"
-                            Text {
-                                anchors.centerIn: parent
-                                text: "✕"
-                                color: Theme.foreground
-                                font.pixelSize: 10
-                            }
-                            MouseArea {
-                                id: closeHudMouse
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: lockscreenRoot.selectedModuleKey = ""
                             }
                         }
                     }
                 }
             }
+
+            // ── ADOBE-STYLE INSPECTOR PANEL (Docked Right) ───────────────────
+            LockscreenInspector {
+                id: studioInspector
+                Layout.preferredWidth: collapsed ? 44 : 330
+                Layout.fillHeight: true
+                visible: lockscreenRoot.studioMode === 0
+                selectedModuleKey: lockscreenRoot.selectedModuleKey
+                onModuleSelected: function(k) { lockscreenRoot.selectedModuleKey = k }
+                onConfigModified: window.markDirty()
+            }
+        }
 
             // ─────────────────────────────────────────────────────────────────
             // VIEW 3: FULL-PAGE MODULAR WIDGET CONTROLS & BACKGROUND TOGGLES

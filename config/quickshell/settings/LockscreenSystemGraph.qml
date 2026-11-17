@@ -8,6 +8,8 @@ Item {
 
     property var statsData: null
     property bool previewMode: false
+    property string displayMode: "graphs"
+    property real graphThickness: 2
     property bool showBackground: true
 
     implicitWidth: 320
