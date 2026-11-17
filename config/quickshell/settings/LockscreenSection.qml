@@ -25,6 +25,8 @@ Item {
     readonly property string slidersSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="' + Theme.accent + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>')
     readonly property string layersSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="' + Theme.accent + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>')
     readonly property string alignSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="' + Theme.accent + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="22"/><rect x="4" y="6" width="16" height="4" rx="1"/><rect x="6" y="14" width="12" height="4" rx="1"/></svg>')
+    readonly property string chevronLeftSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="' + Theme.foreground + '" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>')
+    readonly property string chevronRightSvg: svgUrl('<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="' + Theme.foreground + '" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>')
 
     function cardBgSvg(strokeColor) {
         var c = strokeColor || Theme.accent
@@ -1775,75 +1777,261 @@ Item {
 
                 // ── FLOATING QUICK LAYERS RIBBON ─────────────────────────────
                 Rectangle {
+                    id: ribbonContainer
                     anchors.bottom: parent.bottom
                     anchors.bottomMargin: 8
                     anchors.horizontalCenter: parent.horizontalCenter
                     height: 42
-                    width: ribbonRow.implicitWidth + 24
+
+                    readonly property real availableWidth: canvasViewport.width - 24
+                    readonly property real neededWidth: ribbonRow.implicitWidth + 24
+                    readonly property bool isOverflowing: neededWidth > availableWidth
+
+                    width: Math.max(120, Math.min(availableWidth, neededWidth))
                     radius: 21
                     color: Theme.alpha(Theme.surface, 0.94)
                     border.width: 1
                     border.color: Theme.alpha(Theme.accent, 0.35)
                     visible: lockscreenRoot.studioMode === 0
                     z: 50
+                    clip: true
 
-                    Row {
-                        id: ribbonRow
-                        anchors.centerIn: parent
-                        spacing: 4
+                    NumberAnimation {
+                        id: ribbonScrollAnim
+                        target: ribbonFlickable
+                        property: "contentX"
+                        duration: 200
+                        easing.type: Easing.OutCubic
+                    }
 
-                        Repeater {
-                            model: [
-                                { key: "clock", name: "Clock" },
-                                { key: "user_avatar", name: "Avatar" },
-                                { key: "username", name: "User" },
-                                { key: "input_field", name: "Password" },
-                                { key: "weather", name: "Weather" },
-                                { key: "system_stats", name: "Stats" },
-                                { key: "audio_visualizer", name: "Visualizer" },
-                                { key: "quote", name: "Quote" },
-                                { key: "session_lock", name: "Lock" },
-                                { key: "backdrop", name: "Backdrop" }
-                            ]
+                    function scrollBy(amount) {
+                        var maxScroll = Math.max(0, ribbonFlickable.contentWidth - ribbonFlickable.width);
+                        var targetX = Math.max(0, Math.min(maxScroll, ribbonFlickable.contentX + amount));
+                        ribbonScrollAnim.stop();
+                        ribbonScrollAnim.to = targetX;
+                        ribbonScrollAnim.start();
+                    }
 
-                            Rectangle {
-                                height: 30
-                                radius: 15
-                                implicitWidth: ribBtnRow.implicitWidth + 16
-                                readonly property bool isSelected: lockscreenRoot.selectedModuleKey === modelData.key
-                                color: isSelected ? Theme.accent : (ribMouse.containsMouse ? Theme.alpha(Theme.surface, 0.85) : "transparent")
-                                border.width: isSelected ? 1 : 0
-                                border.color: Theme.accent
-                                Behavior on color { ColorAnimation { duration: 120 } }
-
-                                Row {
-                                    id: ribBtnRow
-                                    anchors.centerIn: parent
-                                    spacing: 6
-                                    Image {
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        width: 12
-                                        height: 12
-                                        source: lockscreenRoot.getElementSvg(modelData.key, parent.parent.isSelected ? Theme.on_primary : Theme.accent)
-                                        sourceSize: Qt.size(24, 24)
-                                    }
-                                    Text {
-                                        text: modelData.name
-                                        color: parent.parent.isSelected ? Theme.on_primary : Theme.foreground
-                                        font.family: "Outfit"
-                                        font.pixelSize: 11
-                                        font.weight: parent.parent.isSelected ? Font.Bold : Font.Normal
-                                        anchors.verticalCenter: parent.verticalCenter
-                                    }
-                                }
-
-                                MouseArea {
-                                    id: ribMouse
-                                    anchors.fill: parent
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: lockscreenRoot.selectedModuleKey = modelData.key
+                    function ensureVisible(key) {
+                        if (!isOverflowing) return;
+                        var keys = ["clock", "user_avatar", "username", "input_field", "weather", "system_stats", "audio_visualizer", "quote", "session_lock", "backdrop"];
+                        var idx = keys.indexOf(key);
+                        if (idx >= 0 && idx < ribbonRepeater.count) {
+                            var item = ribbonRepeater.itemAt(idx);
+                            if (item) {
+                                var itemLeft = item.x;
+                                var itemRight = item.x + item.width;
+                                if (itemLeft < ribbonFlickable.contentX) {
+                                    ribbonScrollAnim.stop();
+                                    ribbonScrollAnim.to = Math.max(0, itemLeft - 8);
+                                    ribbonScrollAnim.start();
+                                } else if (itemRight > ribbonFlickable.contentX + ribbonFlickable.width) {
+                                    var maxScroll = Math.max(0, ribbonFlickable.contentWidth - ribbonFlickable.width);
+                                    ribbonScrollAnim.stop();
+                                    ribbonScrollAnim.to = Math.min(maxScroll, itemRight - ribbonFlickable.width + 8);
+                                    ribbonScrollAnim.start();
                                 }
                             }
+                        }
+                    }
+
+                    Connections {
+                        target: lockscreenRoot
+                        function onSelectedModuleKeyChanged() {
+                            ribbonContainer.ensureVisible(lockscreenRoot.selectedModuleKey);
+                        }
+                    }
+
+                    // Left Scroll Chevron Button
+                    Rectangle {
+                        id: btnRibbonLeft
+                        anchors.left: parent.left
+                        anchors.leftMargin: 6
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: ribbonContainer.isOverflowing ? 26 : 0
+                        height: 26
+                        radius: 13
+                        visible: ribbonContainer.isOverflowing
+                        color: leftRibMouse.containsMouse ? Theme.alpha(Theme.accent, 0.25) : "transparent"
+                        opacity: ribbonFlickable.contentX > 2 ? 1.0 : 0.25
+                        Behavior on opacity { NumberAnimation { duration: 150 } }
+                        z: 15
+
+                        Image {
+                            anchors.centerIn: parent
+                            width: 14
+                            height: 14
+                            source: lockscreenRoot.chevronLeftSvg
+                            sourceSize: Qt.size(24, 24)
+                        }
+
+                        MouseArea {
+                            id: leftRibMouse
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            enabled: ribbonFlickable.contentX > 2
+                            onClicked: ribbonContainer.scrollBy(-160)
+                        }
+                    }
+
+                    // Left Edge Gradient Fade
+                    Rectangle {
+                        anchors.left: btnRibbonLeft.right
+                        anchors.top: parent.top
+                        anchors.bottom: parent.bottom
+                        anchors.topMargin: 2
+                        anchors.bottomMargin: 2
+                        width: 16
+                        visible: ribbonContainer.isOverflowing && ribbonFlickable.contentX > 2
+                        z: 12
+                        gradient: Gradient {
+                            orientation: Gradient.Horizontal
+                            GradientStop { position: 0.0; color: Theme.alpha(Theme.surface, 0.95) }
+                            GradientStop { position: 1.0; color: "transparent" }
+                        }
+                    }
+
+                    // Main Scrollable / Flickable Area
+                    Flickable {
+                        id: ribbonFlickable
+                        anchors.top: parent.top
+                        anchors.bottom: parent.bottom
+                        anchors.left: ribbonContainer.isOverflowing ? btnRibbonLeft.right : parent.left
+                        anchors.right: ribbonContainer.isOverflowing ? btnRibbonRight.left : parent.right
+                        anchors.leftMargin: ribbonContainer.isOverflowing ? 2 : 12
+                        anchors.rightMargin: ribbonContainer.isOverflowing ? 2 : 12
+                        contentWidth: ribbonRow.implicitWidth
+                        contentHeight: height
+                        flickableDirection: Flickable.HorizontalFlick
+                        boundsBehavior: Flickable.DragOverBounds
+                        pressDelay: 80
+                        clip: true
+
+                        onWidthChanged: {
+                            if (contentX > contentWidth - width) {
+                                contentX = Math.max(0, contentWidth - width);
+                            }
+                        }
+
+                        WheelHandler {
+                            target: ribbonFlickable
+                            acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                            onWheel: function(event) {
+                                var delta = event.angleDelta.y !== 0 ? event.angleDelta.y : event.angleDelta.x;
+                                ribbonFlickable.contentX = Math.max(0, Math.min(ribbonFlickable.contentWidth - ribbonFlickable.width, ribbonFlickable.contentX - delta));
+                            }
+                        }
+
+                        Row {
+                            id: ribbonRow
+                            anchors.verticalCenter: parent.verticalCenter
+                            spacing: 4
+
+                            Repeater {
+                                id: ribbonRepeater
+                                model: [
+                                    { key: "clock", name: "Clock" },
+                                    { key: "user_avatar", name: "Avatar" },
+                                    { key: "username", name: "User" },
+                                    { key: "input_field", name: "Password" },
+                                    { key: "weather", name: "Weather" },
+                                    { key: "system_stats", name: "Stats" },
+                                    { key: "audio_visualizer", name: "Visualizer" },
+                                    { key: "quote", name: "Quote" },
+                                    { key: "session_lock", name: "Lock" },
+                                    { key: "backdrop", name: "Backdrop" }
+                                ]
+
+                                Rectangle {
+                                    id: chipRect
+                                    height: 30
+                                    radius: 15
+                                    implicitWidth: ribBtnRow.implicitWidth + 16
+                                    readonly property bool isSelected: lockscreenRoot.selectedModuleKey === modelData.key
+                                    color: isSelected ? Theme.accent : (ribMouse.containsMouse ? Theme.alpha(Theme.surface, 0.85) : "transparent")
+                                    border.width: isSelected ? 1 : 0
+                                    border.color: Theme.accent
+                                    Behavior on color { ColorAnimation { duration: 120 } }
+
+                                    Row {
+                                        id: ribBtnRow
+                                        anchors.centerIn: parent
+                                        spacing: 6
+                                        Image {
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            width: 12
+                                            height: 12
+                                            source: lockscreenRoot.getElementSvg(modelData.key, chipRect.isSelected ? Theme.on_primary : Theme.accent)
+                                            sourceSize: Qt.size(24, 24)
+                                        }
+                                        Text {
+                                            text: modelData.name
+                                            color: chipRect.isSelected ? Theme.on_primary : Theme.foreground
+                                            font.family: "Outfit"
+                                            font.pixelSize: 11
+                                            font.weight: chipRect.isSelected ? Font.Bold : Font.Normal
+                                            anchors.verticalCenter: parent.verticalCenter
+                                        }
+                                    }
+
+                                    MouseArea {
+                                        id: ribMouse
+                                        anchors.fill: parent
+                                        cursorShape: Qt.PointingHandCursor
+                                        preventStealing: false
+                                        onClicked: lockscreenRoot.selectedModuleKey = modelData.key
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Right Edge Gradient Fade
+                    Rectangle {
+                        anchors.right: btnRibbonRight.left
+                        anchors.top: parent.top
+                        anchors.bottom: parent.bottom
+                        anchors.topMargin: 2
+                        anchors.bottomMargin: 2
+                        width: 16
+                        visible: ribbonContainer.isOverflowing && (ribbonFlickable.contentX < ribbonFlickable.contentWidth - ribbonFlickable.width - 2)
+                        z: 12
+                        gradient: Gradient {
+                            orientation: Gradient.Horizontal
+                            GradientStop { position: 0.0; color: "transparent" }
+                            GradientStop { position: 1.0; color: Theme.alpha(Theme.surface, 0.95) }
+                        }
+                    }
+
+                    // Right Scroll Chevron Button
+                    Rectangle {
+                        id: btnRibbonRight
+                        anchors.right: parent.right
+                        anchors.rightMargin: 6
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: ribbonContainer.isOverflowing ? 26 : 0
+                        height: 26
+                        radius: 13
+                        visible: ribbonContainer.isOverflowing
+                        color: rightRibMouse.containsMouse ? Theme.alpha(Theme.accent, 0.25) : "transparent"
+                        opacity: ribbonFlickable.contentX < (ribbonFlickable.contentWidth - ribbonFlickable.width - 2) ? 1.0 : 0.25
+                        Behavior on opacity { NumberAnimation { duration: 150 } }
+                        z: 15
+
+                        Image {
+                            anchors.centerIn: parent
+                            width: 14
+                            height: 14
+                            source: lockscreenRoot.chevronRightSvg
+                            sourceSize: Qt.size(24, 24)
+                        }
+
+                        MouseArea {
+                            id: rightRibMouse
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            enabled: ribbonFlickable.contentX < (ribbonFlickable.contentWidth - ribbonFlickable.width - 2)
+                            onClicked: ribbonContainer.scrollBy(160)
                         }
                     }
                 }
