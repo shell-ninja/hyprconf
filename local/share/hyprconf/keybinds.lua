@@ -173,11 +173,28 @@ hl.bind(mainMod .. " + ALT + k", hl.dsp.window.resize({ x = 0, y = -50, relative
 hl.bind(mainMod .. " + ALT + j", hl.dsp.window.resize({ x = 0, y = 50, relative = true }))
 
 -- ── Workspaces 1–10 ──────────────────────────────────────────────────────────
+local kp_codes = { [1] = 87, [2] = 88, [3] = 89, [4] = 83, [5] = 84, [6] = 85, [7] = 79, [8] = 80, [9] = 81, [10] = 90 }
+
 for i = 1, 10 do
     local key = i % 10 -- 10 maps to key 0
+    local code = 9 + (i == 10 and 10 or i)
+    local kp = kp_codes[i]
+
+    -- Keysym binds (standard number row)
     hl.bind(mainMod .. " + " .. key, hl.dsp.focus({ workspace = i }))
     hl.bind(mainMod .. " + SHIFT + " .. key, hl.dsp.window.move({ workspace = i }))
     hl.bind(mainMod .. " + ALT + " .. key, hl.dsp.window.move({ workspace = i, follow = false }))
+
+    -- Hardware keycode binds (layout-independent: works regardless of active input method/fcitx5/language)
+    hl.bind(mainMod .. " + code:" .. code, hl.dsp.focus({ workspace = i }))
+    hl.bind(mainMod .. " + SHIFT + code:" .. code, hl.dsp.window.move({ workspace = i }))
+    hl.bind(mainMod .. " + ALT + code:" .. code, hl.dsp.window.move({ workspace = i, follow = false }))
+
+    -- Numpad binds (works with both NumLock ON and OFF)
+    if kp then
+        hl.bind(mainMod .. " + code:" .. kp, hl.dsp.focus({ workspace = i }))
+        hl.bind(mainMod .. " + SHIFT + code:" .. kp, hl.dsp.window.move({ workspace = i }))
+    end
 end
 
 hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(), { mouse = true })
