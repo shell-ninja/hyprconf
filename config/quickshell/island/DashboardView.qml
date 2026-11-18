@@ -29,6 +29,7 @@ Item {
         if (currentView === 7) return clipboardView ? clipboardView.preferredWidth : 780
         if (currentView === 8) return emojiView ? emojiView.preferredWidth : 620
         if (currentView === 9) return keybindsView ? keybindsView.preferredWidth : 780
+        if (currentView === 10) return mediaView ? mediaView.preferredWidth : 620
         return 444
     }
     implicitHeight: {
@@ -40,6 +41,7 @@ Item {
         if (currentView === 7) return clipboardView ? clipboardView.preferredHeight : 520
         if (currentView === 8) return emojiView ? emojiView.preferredHeight : 510
         if (currentView === 9) return keybindsView ? keybindsView.preferredHeight : 520
+        if (currentView === 10) return mediaView ? mediaView.preferredHeight : 460
         return 496
     }
 
@@ -145,6 +147,13 @@ Item {
         } else if (root.currentView === 9) {
             if (keybindsView && typeof keybindsView.handleKey === "function") {
                 if (keybindsView.handleKey(event)) {
+                    event.accepted = true
+                    return true
+                }
+            }
+        } else if (root.currentView === 10) {
+            if (mediaView && typeof mediaView.handleKey === "function") {
+                if (mediaView.handleKey(event)) {
                     event.accepted = true
                     return true
                 }
@@ -504,6 +513,20 @@ Item {
                 active: root.active && root.currentView === 9
                 isClosing: root.isClosingWallpaper
                 animProgress: root.animProgress
+                onCloseRequested: root.closeRequested()
+            }
+        }
+    }
+
+    // ── 11. MEDIA DOWNLOADER (LAZY-LOADED) ──────────────────────────────────
+    property alias mediaView: mediaLoader.item
+    Loader {
+        id: mediaLoader
+        anchors.fill: parent
+        active: root.currentView === 10
+        visible: active
+        sourceComponent: Component {
+            MediaDownloaderView {
                 onCloseRequested: root.closeRequested()
             }
         }

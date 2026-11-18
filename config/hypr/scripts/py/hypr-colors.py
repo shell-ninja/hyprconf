@@ -1374,6 +1374,7 @@ IslandBatteryIndicator 1.0 IslandBatteryIndicator.qml
 IslandMediaIndicators 1.0 IslandMediaIndicators.qml
 GlassRim 1.0 GlassRim.qml
 WallpaperFx 1.0 WallpaperFx.qml
+MediaDownloaderView 1.0 MediaDownloaderView.qml
 """,
             "lockscreen": """singleton Theme 1.0 Theme.qml
 LockscreenSystemGraph 1.0 LockscreenSystemGraph.qml
@@ -1412,6 +1413,7 @@ BarNetwork 1.0 widgets/BarNetwork.qml
 BarActiveWindow 1.0 widgets/BarActiveWindow.qml
 BarVisualizer 1.0 widgets/BarVisualizer.qml
 BarDnd 1.0 widgets/BarDnd.qml
+BarMediaDownloader 1.0 widgets/BarMediaDownloader.qml
 """,
         }
 

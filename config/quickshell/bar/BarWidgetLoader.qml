@@ -36,6 +36,7 @@ Item {
                 case "active_window": return compActiveWindow
                 case "visualizer": return compVisualizer
                 case "dnd": return compDnd
+                case "media_downloader": return compMediaDownloader
                 default: return null
             }
         }
@@ -62,5 +63,6 @@ Item {
     Component { id: compActiveWindow; BarActiveWindow {} }
     Component { id: compVisualizer; BarVisualizer {} }
     Component { id: compDnd; BarDnd {} }
+    Component { id: compMediaDownloader; BarMediaDownloader {} }
 }
 

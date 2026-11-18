@@ -192,6 +192,11 @@ Item {
         actionProc.running = true
     }
 
+    function updatePluginConfig(id, key, val) {
+        actionProc.command = ["python3", root.homeDir + "/.hyprconf/hypr/scripts/py/hyprconf-plugin.py", "set-config", id, key, String(val)]
+        actionProc.running = true
+    }
+
     Component.onCompleted: {
         refresh()
     }
@@ -1197,6 +1202,238 @@ Item {
                                     font.family: "Outfit"
                                     font.pixelSize: 13
                                     wrapMode: Text.WordWrap
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // ── Plugin Preferences & Setup Card ─────────────────────────
+                Rectangle {
+                    Layout.fillWidth: true
+                    implicitHeight: setupCol.implicitHeight + 36
+                    radius: 16
+                    color: Theme.alpha(Theme.surface, 0.40)
+                    border.color: Theme.alpha(Theme.accent, 0.25)
+                    border.width: 1
+                    visible: root.selectedPlugin && root.selectedPlugin.installed
+
+                    ColumnLayout {
+                        id: setupCol
+                        anchors.fill: parent
+                        anchors.margins: 20
+                        spacing: 16
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 10
+
+                            Image {
+                                width: 18
+                                height: 18
+                                source: root.lightningSvg
+                                sourceSize: Qt.size(24, 24)
+                            }
+
+                            Text {
+                                text: "Plugin Setup & Preferences"
+                                color: Theme.foreground
+                                font.family: "Outfit"
+                                font.pixelSize: 16
+                                font.weight: Font.DemiBold
+                            }
+
+                            Item { Layout.fillWidth: true }
+
+                            Rectangle {
+                                visible: root.selectedPlugin && root.selectedPlugin.id === "media-downloader"
+                                height: 32
+                                implicitWidth: launchBtnRow.implicitWidth + 24
+                                radius: 8
+                                color: Theme.alpha(Theme.accent, 0.20)
+                                border.width: 1
+                                border.color: Theme.accent
+
+                                Row {
+                                    id: launchBtnRow
+                                    anchors.centerIn: parent
+                                    spacing: 6
+                                    Image {
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        width: 14
+                                        height: 14
+                                        source: root.downloadSvg
+                                        sourceSize: Qt.size(24, 24)
+                                    }
+                                    Text {
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        text: "Launch Downloader Studio"
+                                        color: Theme.accent
+                                        font.family: "Outfit"
+                                        font.pixelSize: 12
+                                        font.weight: Font.DemiBold
+                                    }
+                                }
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: Quickshell.execDetached([root.homeDir + "/.hyprconf/hypr/scripts/sh/qs-media-downloader.sh"])
+                                }
+                            }
+                        }
+
+                        // Specific Configuration for media-downloader
+                        ColumnLayout {
+                            id: mediaCfgCol
+                            Layout.fillWidth: true
+                            spacing: 14
+                            visible: root.selectedPlugin && root.selectedPlugin.id === "media-downloader"
+
+                            readonly property var cfg: (root.selectedPlugin && root.selectedPlugin.settings) ? root.selectedPlugin.settings : ({})
+
+                            // Row 1: Default Mode (Video vs Audio)
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: 12
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 2
+                                    Text { text: "Default Download Mode"; font.family: "Outfit"; font.pixelSize: 13; font.weight: Font.Medium; color: Theme.foreground }
+                                    Text { text: "Choose default extraction mode when launching or downloading"; font.family: "Outfit"; font.pixelSize: 11; color: Theme.alpha(Theme.foreground, 0.55) }
+                                }
+                                Row {
+                                    spacing: 6
+                                    Rectangle {
+                                        height: 30
+                                        width: 80
+                                        radius: 8
+                                        color: mediaCfgCol.cfg.default_mode === "video" ? Theme.accent : Theme.alpha(Theme.surface, 0.70)
+                                        border.width: 1
+                                        border.color: mediaCfgCol.cfg.default_mode === "video" ? Theme.accent : Theme.alpha(Theme.foreground, 0.20)
+                                        Text { anchors.centerIn: parent; text: "Video"; font.family: "Outfit"; font.pixelSize: 11; font.weight: Font.Bold; color: mediaCfgCol.cfg.default_mode === "video" ? Theme.on_primary : Theme.foreground }
+                                        MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.updatePluginConfig("media-downloader", "default_mode", "video") }
+                                    }
+                                    Rectangle {
+                                        height: 30
+                                        width: 80
+                                        radius: 8
+                                        color: mediaCfgCol.cfg.default_mode === "audio" ? Theme.accent : Theme.alpha(Theme.surface, 0.70)
+                                        border.width: 1
+                                        border.color: mediaCfgCol.cfg.default_mode === "audio" ? Theme.accent : Theme.alpha(Theme.foreground, 0.20)
+                                        Text { anchors.centerIn: parent; text: "Audio"; font.family: "Outfit"; font.pixelSize: 11; font.weight: Font.Bold; color: mediaCfgCol.cfg.default_mode === "audio" ? Theme.on_primary : Theme.foreground }
+                                        MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.updatePluginConfig("media-downloader", "default_mode", "audio") }
+                                    }
+                                }
+                            }
+
+                            // Row 2: Video Quality Profile
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: 12
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 2
+                                    Text { text: "Video Quality Target"; font.family: "Outfit"; font.pixelSize: 13; font.weight: Font.Medium; color: Theme.foreground }
+                                    Text { text: "Maximum resolution stream to fetch and merge (MP4)"; font.family: "Outfit"; font.pixelSize: 11; color: Theme.alpha(Theme.foreground, 0.55) }
+                                }
+                                Row {
+                                    spacing: 6
+                                    Repeater {
+                                        model: [
+                                            { key: "best", label: "Best (1080p+)" },
+                                            { key: "1080p", label: "1080p" },
+                                            { key: "720p", label: "720p" }
+                                        ]
+                                        Rectangle {
+                                            height: 30
+                                            implicitWidth: vqText.implicitWidth + 20
+                                            radius: 8
+                                            readonly property bool isSel: (mediaCfgCol.cfg.video_quality || "best") === modelData.key
+                                            color: isSel ? Theme.accent : Theme.alpha(Theme.surface, 0.70)
+                                            border.width: 1
+                                            border.color: isSel ? Theme.accent : Theme.alpha(Theme.foreground, 0.20)
+                                            Text { id: vqText; anchors.centerIn: parent; text: modelData.label; font.family: "Outfit"; font.pixelSize: 11; font.weight: isSel ? Font.Bold : Font.Normal; color: isSel ? Theme.on_primary : Theme.foreground }
+                                            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.updatePluginConfig("media-downloader", "video_quality", modelData.key) }
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Row 3: Audio Format Profile
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: 12
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 2
+                                    Text { text: "Audio Extraction Codec"; font.family: "Outfit"; font.pixelSize: 13; font.weight: Font.Medium; color: Theme.foreground }
+                                    Text { text: "Target audio format for ffmpeg conversion with embedded metadata"; font.family: "Outfit"; font.pixelSize: 11; color: Theme.alpha(Theme.foreground, 0.55) }
+                                }
+                                Row {
+                                    spacing: 6
+                                    Repeater {
+                                        model: [
+                                            { key: "mp3", label: "MP3 (320k)" },
+                                            { key: "m4a", label: "M4A" },
+                                            { key: "flac", label: "FLAC" }
+                                        ]
+                                        Rectangle {
+                                            height: 30
+                                            implicitWidth: aqText.implicitWidth + 20
+                                            radius: 8
+                                            readonly property bool isSel: (mediaCfgCol.cfg.audio_format || "mp3") === modelData.key
+                                            color: isSel ? Theme.accent : Theme.alpha(Theme.surface, 0.70)
+                                            border.width: 1
+                                            border.color: isSel ? Theme.accent : Theme.alpha(Theme.foreground, 0.20)
+                                            Text { id: aqText; anchors.centerIn: parent; text: modelData.label; font.family: "Outfit"; font.pixelSize: 11; font.weight: isSel ? Font.Bold : Font.Normal; color: isSel ? Theme.on_primary : Theme.foreground }
+                                            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.updatePluginConfig("media-downloader", "audio_format", modelData.key) }
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Row 4: Desktop Notification Toggle
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: 12
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 2
+                                    Text { text: "Completion Notification"; font.family: "Outfit"; font.pixelSize: 13; font.weight: Font.Medium; color: Theme.foreground }
+                                    Text { text: "Trigger a desktop notification with file path when download finishes"; font.family: "Outfit"; font.pixelSize: 11; color: Theme.alpha(Theme.foreground, 0.55) }
+                                }
+                                CapsuleSwitch {
+                                    checked: mediaCfgCol.cfg.notify_on_complete !== undefined ? !!mediaCfgCol.cfg.notify_on_complete : true
+                                    onToggled: root.updatePluginConfig("media-downloader", "notify_on_complete", checked)
+                                }
+                            }
+
+                            // Row 5: Save Destination Folders
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: 12
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 2
+                                    Text { text: "Download Destination Directories"; font.family: "Outfit"; font.pixelSize: 13; font.weight: Font.Medium; color: Theme.foreground }
+                                    Text { text: "Videos save to " + (mediaCfgCol.cfg.download_dir || "~/Downloads") + " • Audios save to " + (mediaCfgCol.cfg.audio_dir || "~/Music"); font.family: "Outfit"; font.pixelSize: 11; color: Theme.alpha(Theme.foreground, 0.55) }
+                                }
+                                Rectangle {
+                                    height: 30
+                                    implicitWidth: openFRow.implicitWidth + 20
+                                    radius: 8
+                                    color: Theme.alpha(Theme.surface, 0.80)
+                                    border.width: 1
+                                    border.color: Theme.alpha(Theme.foreground, 0.20)
+                                    Row {
+                                        id: openFRow
+                                        anchors.centerIn: parent
+                                        spacing: 6
+                                        Image { anchors.verticalCenter: parent.verticalCenter; width: 12; height: 12; source: root.folderSvg; sourceSize: Qt.size(24, 24) }
+                                        Text { anchors.verticalCenter: parent.verticalCenter; text: "Open Downloads"; font.family: "Outfit"; font.pixelSize: 11; color: Theme.foreground }
+                                    }
+                                    MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: Quickshell.execDetached(["xdg-open", root.homeDir + "/Downloads"]) }
                                 }
                             }
                         }

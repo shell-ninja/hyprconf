@@ -31,3 +31,4 @@ BarNetwork 1.0 widgets/BarNetwork.qml
 BarActiveWindow 1.0 widgets/BarActiveWindow.qml
 BarVisualizer 1.0 widgets/BarVisualizer.qml
 BarDnd 1.0 widgets/BarDnd.qml
+BarMediaDownloader 1.0 widgets/BarMediaDownloader.qml

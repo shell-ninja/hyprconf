@@ -244,6 +244,18 @@ if [[ "$1" == "--keybinds" ]]; then
     fi
 fi
 
+if [[ "$1" == "--media" || "$1" == "--downloader" ]]; then
+    if pgrep -f "qs -c island" >/dev/null 2>&1; then
+        qs ipc -c island call island toggleMediaDownloader
+        exit 0
+    else
+        qs -c island -d
+        sleep 0.35
+        qs ipc -c island call island openMediaDownloader
+        exit 0
+    fi
+fi
+
 if [[ "$1" == "--weather" ]]; then
     if pgrep -f "qs -c island" >/dev/null 2>&1; then
         qs ipc -c island call island openWeather

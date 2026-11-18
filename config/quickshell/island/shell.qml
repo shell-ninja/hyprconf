@@ -1071,6 +1071,37 @@ PanelWindow {
             openKeybinds()
         }
     }
+
+    function openMediaDownloader() {
+        if (root.expanded && expandedContent && expandedContent.currentView === 10) {
+            closeMediaDownloader()
+            return
+        }
+        root.isClosingWallpaper = false
+        hoverIntentTimer.stop()
+        closeTimer.stop()
+        if (expandedContent) {
+            expandedContent.currentView = 10
+        }
+        root.expanded = true
+    }
+
+    function closeMediaDownloader() {
+        hoverIntentTimer.stop()
+        closeTimer.stop()
+        root.closingView = 10
+        root.isClosingWallpaper = true
+        root.expanded = false
+        if (expandedContent) expandedContent.currentView = 0
+    }
+
+    function toggleMediaDownloader() {
+        if (root.expanded && expandedContent && expandedContent.currentView === 10) {
+            closeMediaDownloader()
+        } else {
+            openMediaDownloader()
+        }
+    }
     function closeIsland() {
         hoverIntentTimer.stop()
         closeTimer.stop()
@@ -1096,6 +1127,8 @@ PanelWindow {
                 root.closeEmoji()
             } else if (expandedContent.currentView === 9) {
                 root.closeKeybinds()
+            } else if (expandedContent.currentView === 10) {
+                root.closeMediaDownloader()
             } else {
                 root.closingView = expandedContent.currentView
                 root.isClosingWallpaper = true
@@ -1301,6 +1334,15 @@ PanelWindow {
         }
         function toggleKeybinds() {
             root.toggleKeybinds()
+        }
+        function openMediaDownloader() {
+            root.openMediaDownloader()
+        }
+        function closeMediaDownloader() {
+            root.closeMediaDownloader()
+        }
+        function toggleMediaDownloader() {
+            root.toggleMediaDownloader()
         }
         function setAudioPlaying(val: bool) {
             root.isSinkPlaying = val

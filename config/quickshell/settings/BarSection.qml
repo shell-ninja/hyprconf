@@ -63,6 +63,7 @@ Item {
         { id: "notification", name: "Notification Center", desc: "Unread count indicator and notification toast history", icon: "bell", category: "Utilities" },
         { id: "dnd", name: "Do Not Disturb (DND)", desc: "Quick toggle to silence notifications and toasts", icon: "dnd", category: "Utilities", isNew: true },
         { id: "pkg_update", name: "Package Updates", desc: "Pending system packages counter and updater launcher", icon: "package", category: "Utilities" },
+        { id: "media_downloader", name: "Media Downloader", desc: "Universal video & audio grabber with live progress", icon: "download", category: "Utilities", isNew: true },
 
         // Quick Toggles & Controls
         { id: "quick_toggles", name: "Quick Toggles Group", desc: "All-in-one capsule for Caffeine, Night Light & Clipboard", icon: "coffee", category: "Quick Toggles" },

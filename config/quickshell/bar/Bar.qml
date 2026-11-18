@@ -67,6 +67,7 @@ PanelWindow {
     property var volumeTrigger: null
     property var powerTrigger: null
     property var pkgTrigger: null
+    property var mediaTrigger: null
 
     // ── State ───────────────────────────────────────────────────────
     property bool caffeine: false
@@ -265,6 +266,9 @@ PanelWindow {
         }
         function togglePkg() {
             bar.togglePkg()
+        }
+        function toggleMediaDownloader() {
+            bar.toggleMediaDownloader()
         }
         function cycleSystemMode() {
             bar.cycleSystemMode()
@@ -738,6 +742,7 @@ PanelWindow {
         if (typeof rightPowerMenu !== "undefined" && rightPowerMenu) rightPowerMenu.closeMenu()
     }
     function togglePkg() { pkgPop.shown = !pkgPop.shown }
+    function toggleMediaDownloader() { mediaPop.shown = !mediaPop.shown }
 
     function toggleCaffeine() {
         bar.caffeine = !bar.caffeine
@@ -3032,6 +3037,55 @@ PanelWindow {
                         anchors.fill: parent
                         hoverEnabled: true
                     }
+                }
+            }
+        }
+    }
+
+    // 12. MEDIA DOWNLOADER POPUP
+    BarPopup {
+        id: mediaPop
+        trigger: bar.mediaTrigger
+        popupWidth: 340
+        surface: bar.surface
+        align: "right"
+        hoverOpen: false
+
+        ColumnLayout {
+            Layout.fillWidth: true
+            spacing: 12
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 10
+                SvgIcon { name: "download"; size: 24; color: Theme.accent }
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 2
+                    MonoText { text: "Media Downloader"; font.bold: true; font.pixelSize: 13 }
+                    MonoText { text: "1,800+ sites supported"; font.pixelSize: 10; color: Theme.muted }
+                }
+            }
+
+            ActionButton {
+                Layout.fillWidth: true
+                icon: "download"
+                label: "Open Media Downloader Studio"
+                active: true
+                onClicked: {
+                    mediaPop.close()
+                    Quickshell.execDetached([bar.homeDir + "/.hyprconf/hypr/scripts/sh/qs-media-downloader.sh"])
+                }
+            }
+
+            ActionButton {
+                Layout.fillWidth: true
+                icon: "folder"
+                label: "Open Downloads Folder"
+                active: false
+                onClicked: {
+                    mediaPop.close()
+                    Quickshell.execDetached(["xdg-open", bar.homeDir + "/Downloads"])
                 }
             }
         }

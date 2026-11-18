@@ -511,6 +511,35 @@ def output_json_status():
     print(json.dumps(output, indent=2))
 
 
+def set_plugin_config(plugin_id: str, key: str, value_str: str) -> bool:
+    target_dir = PLUGINS_DIR / plugin_id
+    if not target_dir.exists():
+        print(f"[Error] Plugin '{plugin_id}' is not installed.", file=sys.stderr)
+        return False
+    cfg_file = target_dir / "config.json"
+    cfg = {}
+    if cfg_file.exists():
+        try:
+            with open(cfg_file, "r", encoding="utf-8") as f:
+                cfg = json.load(f)
+        except Exception:
+            pass
+
+    val = value_str
+    if value_str.lower() == "true":
+        val = True
+    elif value_str.lower() == "false":
+        val = False
+    elif value_str.isdigit():
+        val = int(value_str)
+
+    cfg[key] = val
+    with open(cfg_file, "w", encoding="utf-8") as f:
+        json.dump(cfg, f, indent=2)
+    print(f"[OK] Updated '{key}' = {val} for plugin '{plugin_id}'")
+    return True
+
+
 def main():
     parser = argparse.ArgumentParser(description="Hyprconf Plugin Manager")
     sub = parser.add_subparsers(dest="command")
@@ -533,6 +562,11 @@ def main():
     dis_p = sub.add_parser("disable", help="Disable a plugin")
     dis_p.add_argument("plugin_id", help="Plugin identifier")
 
+    cfg_p = sub.add_parser("set-config", help="Set plugin configuration key")
+    cfg_p.add_argument("plugin_id", help="Plugin identifier")
+    cfg_p.add_argument("key", help="Configuration key")
+    cfg_p.add_argument("value", help="Configuration value")
+
     args = parser.parse_args()
 
     if args.command == "list" or not args.command:
@@ -549,6 +583,8 @@ def main():
         enable_plugin(args.plugin_id)
     elif args.command == "disable":
         disable_plugin(args.plugin_id)
+    elif args.command == "set-config":
+        set_plugin_config(args.plugin_id, args.key, args.value)
 
 
 if __name__ == "__main__":
