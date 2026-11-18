@@ -31,12 +31,17 @@ hl.config({
     },
 })
 
--- Three-finger horizontal swipe → switch workspace
-hl.gesture({
-    fingers   = 3,
-    direction = "horizontal",
-    action    = "workspace",
-})
+-- Three-finger horizontal swipe → switch workspace (guarded against duplicate registration on reload)
+if not _G.__hypr_gesture_registered then
+    local ok = pcall(hl.gesture, {
+        fingers   = 3,
+        direction = "horizontal",
+        action    = "workspace",
+    })
+    if ok then
+        _G.__hypr_gesture_registered = true
+    end
+end
 
 -- Misc
 hl.config({

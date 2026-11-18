@@ -28,6 +28,7 @@ local qsEmoji         = sh_dir .. "/qs-emoji.sh"
 local qsKeybinds      = sh_dir .. "/qs-keybinds.sh"
 local qsReload        = sh_dir .. "/qs-reload.sh"
 local qsBar           = sh_dir .. "/qs-bar.sh"
+local qsMediaDownloader = sh_dir .. "/qs-media-downloader.sh"
 local inputMethodCTRL = sh_dir .. "/input-method.sh"
 
 -- ── Wallpaper ─────────────────────────────────────────────────────────────────
@@ -75,6 +76,9 @@ hl.bind(mainMod .. " + SHIFT + P", hl.dsp.window.pseudo())
 --         hl.exec_cmd("notify-send -t 1500 'hyprtilt' '" .. msg .. "' -i preferences-desktop-theme")
 --     end
 -- end)
+
+-- ── Media Downloader Plugin ──────────────────────────────────────────────────
+hl.bind(mainMod .. " + Y", hl.dsp.exec_cmd(qsMediaDownloader))
 
 -- ── Logout / lock ─────────────────────────────────────────────────────────────
 hl.bind(mainMod .. " + X", hl.dsp.exec_cmd(qsPower))
@@ -157,10 +161,10 @@ hl.bind(mainMod .. " + CTRL + K", hl.dsp.window.move({ direction = "up" }))
 hl.bind(mainMod .. " + CTRL + J", hl.dsp.window.move({ direction = "down" }))
 
 -- ── Resize windows (arrow keys) ───────────────────────────────────────────────
-hl.bind(mainMod .. " + left", hl.dsp.window.resize({ x = -50, y = 0, relative = true }))
-hl.bind(mainMod .. " + right", hl.dsp.window.resize({ x = 50, y = 0, relative = true }))
-hl.bind(mainMod .. " + up", hl.dsp.window.resize({ x = 0, y = -50, relative = true }))
-hl.bind(mainMod .. " + down", hl.dsp.window.resize({ x = 0, y = 50, relative = true }))
+hl.bind(mainMod .. " + ALT + left", hl.dsp.window.resize({ x = -50, y = 0, relative = true }))
+hl.bind(mainMod .. " + ALT + right", hl.dsp.window.resize({ x = 50, y = 0, relative = true }))
+hl.bind(mainMod .. " + ALT + up", hl.dsp.window.resize({ x = 0, y = -50, relative = true }))
+hl.bind(mainMod .. " + ALT + down", hl.dsp.window.resize({ x = 0, y = 50, relative = true }))
 
 -- ── Resize windows (vim keys) ───────────────────────────────────────────────
 hl.bind(mainMod .. " + ALT + h", hl.dsp.window.resize({ x = -50, y = 0, relative = true }))

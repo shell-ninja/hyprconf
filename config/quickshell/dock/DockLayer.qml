@@ -141,8 +141,6 @@ Scope {
     // ── IPC HANDLER FOR REMOTE RELOAD / TOGGLE ──────────────────────────────
     IpcHandler {
         target: "dock"
-        property int activeWs: root.activeWorkspaceId
-        property int wsWinCount: root.currentWsWindowCount
 
         function reloadConfig() {
             configFileView.reload()

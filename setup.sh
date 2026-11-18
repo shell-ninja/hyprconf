@@ -820,6 +820,15 @@ ln -sfn "$user_state_dir/island.json" "$island_dir/config.json"
 ln -sfn "$user_state_dir/launcher.json" "$launcher_dir/config.json"
 ln -sfn "$user_state_dir/dock.json" "$dock_dir/dock.json"
 ln -sfn "$user_state_dir/bar.json" "$bar_dir/config.json"
+if [[ ! -f "$user_state_dir/monitor.lua" ]]; then
+    if [[ -f "$HOME/.hyprconf/hypr/configs/monitor.lua" && ! -L "$HOME/.hyprconf/hypr/configs/monitor.lua" ]]; then
+        cp -f "$HOME/.hyprconf/hypr/configs/monitor.lua" "$user_state_dir/monitor.lua"
+    elif [[ -f "$HOME/.config/hypr/configs/monitor.lua" && ! -L "$HOME/.config/hypr/configs/monitor.lua" ]]; then
+        cp -f "$HOME/.config/hypr/configs/monitor.lua" "$user_state_dir/monitor.lua"
+    elif [[ -f "$dir/local/share/hyprconf/monitor.lua" ]]; then
+        cp -f "$dir/local/share/hyprconf/monitor.lua" "$user_state_dir/monitor.lua"
+    fi
+fi
 ln -sfn "$user_state_dir/monitor.lua" "$HOME/.hyprconf/hypr/configs/monitor.lua"
 
 if [[ ! -f "$user_state_dir/keybinds.lua" ]]; then
