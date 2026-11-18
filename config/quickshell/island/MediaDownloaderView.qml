@@ -37,13 +37,15 @@ Rectangle {
         return p1
     }
 
+    readonly property string statePath: root.homeDir + "/.local/share/hyprconf/.cache/media_downloader_state.json"
+
     // State properties
     property string activeUrl: ""
     property string downloadMode: "video" // "video" | "audio"
     property string videoQuality: "best"  // "best" | "1080p" | "720p"
     property string audioFormat: "mp3"    // "mp3" | "m4a" | "flac"
 
-    property string status: "idle" // "idle" | "fetching_info" | "downloading" | "processing" | "complete" | "error"
+    property string status: "idle" // "idle" | "starting" | "downloading" | "processing" | "complete" | "error"
     property real percent: 0.0
     property string speedStr: "-- MB/s"
     property string etaStr: "--:--"
@@ -76,37 +78,54 @@ Rectangle {
         return false
     }
 
-    // Process for executing download
-    Process {
-        id: dlProcess
-        stdout: SplitParser {
-            onRead: function(line) {
-                if (!line || line.trim().length === 0) return
-                try {
-                    var data = JSON.parse(line.trim())
-                    if (data.status) root.status = data.status
-                    if (data.percent !== undefined) root.percent = data.percent
-                    if (data.speed) root.speedStr = data.speed
-                    if (data.eta) root.etaStr = data.eta
-                    if (data.title) root.currentTitle = data.title
-                    if (data.thumbnail) root.currentThumbnail = data.thumbnail
-                    if (data.uploader) root.currentUploader = data.uploader
-                    if (data.filepath) root.currentFilepath = data.filepath
-                    if (data.error) root.errorMessage = data.error
-                } catch(e) {}
+    // Zero-fork reactive state watcher via Quickshell native FileView
+    FileView {
+        id: stateWatcher
+        path: root.statePath
+        watchChanges: true
+        onLoaded: root.applyStateJson(text())
+        onFileChanged: reload()
+    }
+
+    // High-frequency polling timer active during running downloads for silky smooth progress updates
+    Timer {
+        id: pollTimer
+        interval: 300
+        repeat: true
+        running: root.status === "starting" || root.status === "downloading" || root.status === "processing"
+        onTriggered: stateWatcher.reload()
+    }
+
+    function applyStateJson(jsonText) {
+        if (!jsonText || jsonText.trim().length === 0) return
+        var str = jsonText.trim()
+        var first = str.indexOf('{')
+        var last = str.lastIndexOf('}')
+        if (first === -1 || last === -1 || last <= first) return
+        try {
+            var data = JSON.parse(str.substring(first, last + 1))
+            if (!data.status) return
+
+            // If a previous download completed more than 120 seconds ago and we are currently idle, ignore it
+            var nowSec = Math.floor(Date.now() / 1000)
+            if (data.status === "complete" && data.timestamp && (nowSec - data.timestamp > 120) && root.status === "idle") {
+                return
             }
-        }
-        onExited: {
-            if (root.status === "downloading" || root.status === "processing") {
-                // If it exited while downloading without complete status
-                if (root.percent >= 99.0) {
-                    root.status = "complete"
-                } else if (root.status !== "complete") {
-                    root.status = "error"
-                    root.errorMessage = "Process terminated unexpectedly."
-                }
-            }
-        }
+
+            root.status = data.status
+            if (data.percent !== undefined) root.percent = data.percent
+            if (data.speed) root.speedStr = data.speed
+            if (data.eta) root.etaStr = data.eta
+            if (data.title) root.currentTitle = data.title
+            if (data.thumbnail) root.currentThumbnail = data.thumbnail
+            if (data.uploader) root.currentUploader = data.uploader
+            if (data.filepath) root.currentFilepath = data.filepath
+            if (data.error) root.errorMessage = data.error
+        } catch(e) {}
+    }
+
+    Component.onCompleted: {
+        stateWatcher.reload()
     }
 
     // Process for fetching clipboard content
@@ -121,23 +140,24 @@ Rectangle {
                 }
             }
         }
-    }
-
-    // Process for cancellation
-    Process {
-        id: cancelProc
-        command: [root.pythonBin, root.scriptPath, "cancel"]
+        onExited: function(exitCode) {
+            if (stdout && stdout.text && stdout.text.trim().length > 0) {
+                urlInput.text = stdout.text.trim()
+                root.activeUrl = stdout.text.trim()
+            }
+        }
     }
 
     function startDownload() {
         var u = urlInput.text.trim()
         if (!u || u.length === 0) return
         root.activeUrl = u
-        root.status = "downloading"
+        root.status = "starting"
         root.percent = 0.0
         root.speedStr = "-- MB/s"
         root.etaStr = "--:--"
         root.errorMessage = ""
+        root.currentTitle = "Fetching media details..."
 
         var cmd = [root.pythonBin, root.scriptPath, "download", u, "--mode", root.downloadMode]
         if (root.downloadMode === "video") {
@@ -147,13 +167,13 @@ Rectangle {
             cmd.push("--audio-format")
             cmd.push(root.audioFormat)
         }
-        dlProcess.command = cmd
-        dlProcess.running = true
+
+        // Execute detached so download persists seamlessly across workspace switches & notch collapses
+        Quickshell.execDetached(cmd)
     }
 
     function cancelDownload() {
-        cancelProc.running = true
-        if (dlProcess.running) dlProcess.kill()
+        Quickshell.execDetached([root.pythonBin, root.scriptPath, "cancel"])
         root.status = "idle"
         root.percent = 0.0
     }
@@ -537,12 +557,12 @@ Rectangle {
                 }
             }
 
-            // 2. Active Downloading & Processing View
+            // 2. Active Downloading & Processing View (Handles starting, downloading, and processing)
             ColumnLayout {
                 anchors.fill: parent
                 anchors.margins: 18
                 spacing: 12
-                visible: root.status === "downloading" || root.status === "processing"
+                visible: root.status === "starting" || root.status === "downloading" || root.status === "processing"
 
                 RowLayout {
                     Layout.fillWidth: true
@@ -580,7 +600,7 @@ Rectangle {
                         spacing: 4
                         Text {
                             Layout.fillWidth: true
-                            text: root.currentTitle || "Downloading stream..."
+                            text: (root.status === "starting" && (!root.currentTitle || root.currentTitle === "Downloading media...")) ? "Fetching video info..." : (root.currentTitle || "Downloading stream...")
                             color: Theme.foreground
                             font.family: "Outfit"
                             font.pixelSize: 13
@@ -634,7 +654,7 @@ Rectangle {
                     Rectangle {
                         height: parent.height
                         radius: 5
-                        width: parent.width * (Math.max(0.0, Math.min(100.0, root.percent)) / 100.0)
+                        width: root.status === "starting" ? Math.max(24, parent.width * 0.15) : (parent.width * (Math.max(0.0, Math.min(100.0, root.percent)) / 100.0))
                         gradient: Gradient {
                             orientation: Gradient.Horizontal
                             GradientStop { position: 0.0; color: Theme.accent }
@@ -648,7 +668,7 @@ Rectangle {
                 RowLayout {
                     Layout.fillWidth: true
                     Text {
-                        text: root.status === "processing" ? "Processing & Converting..." : (root.percent.toFixed(1) + "%")
+                        text: root.status === "starting" ? "Starting download..." : (root.status === "processing" ? "Processing & Converting (ffmpeg)..." : (root.percent.toFixed(1) + "%"))
                         color: Theme.accent
                         font.family: "Outfit"
                         font.pixelSize: 13
@@ -888,8 +908,8 @@ Rectangle {
                 width: 150
                 height: 42
                 radius: 12
-                color: (urlInput.text.trim().length > 0 && root.status !== "downloading" && root.status !== "processing") ? Theme.accent : Theme.alpha(Theme.foreground, 0.15)
-                opacity: (urlInput.text.trim().length > 0 && root.status !== "downloading") ? 1.0 : 0.5
+                color: (urlInput.text.trim().length > 0 && root.status !== "downloading" && root.status !== "processing" && root.status !== "starting") ? Theme.accent : Theme.alpha(Theme.foreground, 0.15)
+                opacity: (urlInput.text.trim().length > 0 && root.status !== "downloading" && root.status !== "starting" && root.status !== "processing") ? 1.0 : 0.5
                 Behavior on color { ColorAnimation { duration: 150 } }
 
                 RowLayout {
@@ -902,7 +922,7 @@ Rectangle {
                         sourceSize: Qt.size(24, 24)
                     }
                     Text {
-                        text: root.status === "downloading" ? "Downloading..." : "Start Download"
+                        text: (root.status === "downloading" || root.status === "starting" || root.status === "processing") ? "Downloading..." : "Start Download"
                         color: Theme.on_primary
                         font.family: "Outfit"
                         font.pixelSize: 13
@@ -912,8 +932,8 @@ Rectangle {
 
                 MouseArea {
                     anchors.fill: parent
-                    cursorShape: (urlInput.text.trim().length > 0 && root.status !== "downloading") ? Qt.PointingHandCursor : Qt.ArrowCursor
-                    enabled: urlInput.text.trim().length > 0 && root.status !== "downloading" && root.status !== "processing"
+                    cursorShape: (urlInput.text.trim().length > 0 && root.status !== "downloading" && root.status !== "starting" && root.status !== "processing") ? Qt.PointingHandCursor : Qt.ArrowCursor
+                    enabled: urlInput.text.trim().length > 0 && root.status !== "downloading" && root.status !== "processing" && root.status !== "starting"
                     onClicked: root.startDownload()
                 }
             }
