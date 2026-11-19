@@ -1,9 +1,6 @@
 #!/usr/bin/env bash
 # screenshot.sh — Hyprland obsidian screenshot utility
 
-# Force Cairo renderer to prevent GTK4 "No EGL configuration available" errors
-export GSK_RENDERER="${GSK_RENDERER:-cairo}"
-
 if [ -z "$XDG_PICTURES_DIR" ]; then
     XDG_PICTURES_DIR="$HOME/Pictures"
 fi
@@ -113,34 +110,35 @@ ss_sound
 
 run_satty() {
     if command -v satty >/dev/null 2>&1; then
-        # 1. Primary: Cairo renderer (prevents "No EGL configuration available" in GTK4 4.24)
-        GSK_RENDERER=cairo satty --filename "$temp_screenshot" --output-filename "$save_dir/$save_file" --early-exit
+        # Launch Satty under XWayland to enable GLX hardware-accelerated rendering,
+        # completely resolving the GTK4/Wayland "No EGL configuration available" canvas crash
+        # while Satty's native wl-copy integration seamlessly populates the Wayland clipboard.
+        GDK_BACKEND=x11 satty --filename "$temp_screenshot" --output-filename "$save_dir/$save_file" --early-exit
+        local ret=$?
         if [[ -f "$save_dir/$save_file" && -s "$save_dir/$save_file" ]]; then
             return 0
         fi
-
-        # 2. Fallback: Mesa software OpenGL
-        LIBGL_ALWAYS_SOFTWARE=1 satty --filename "$temp_screenshot" --output-filename "$save_dir/$save_file" --early-exit
-        if [[ -f "$save_dir/$save_file" && -s "$save_dir/$save_file" ]]; then
-            return 0
-        fi
+        return $ret
     fi
-    return 1
+    return 127
 }
 
 if [[ "$use_satty" == true ]]; then
-    run_satty || true
-fi
-
-# Fallback: if Satty was cancelled, closed without saving, or failed, ALWAYS preserve the screenshot!
-if [[ ! -f "$save_dir/$save_file" || ! -s "$save_dir/$save_file" ]]; then
+    run_satty
+    satty_code=$?
+    # If satty failed to launch or crashed unexpectedly and no output was produced,
+    # fall back to preserving the captured raw screenshot
+    if [[ ! -f "$save_dir/$save_file" && $satty_code -ne 0 ]]; then
+        cp "$temp_screenshot" "$save_dir/$save_file"
+    fi
+else
     cp "$temp_screenshot" "$save_dir/$save_file"
 fi
 
 [[ -f "$temp_screenshot" ]] && rm -f "$temp_screenshot"
 
 # Ensure image is in clipboard and notify
-if [[ -f "$save_dir/$save_file" ]]; then
+if [[ -f "$save_dir/$save_file" && -s "$save_dir/$save_file" ]]; then
     wl-copy < "$save_dir/$save_file" 2>/dev/null || true
     notify-send "Screenshot saved in" "$save_dir/$save_file" -i "$save_dir/$save_file" -r 91190 -t 5000
 fi

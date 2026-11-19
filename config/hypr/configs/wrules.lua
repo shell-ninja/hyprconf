@@ -30,6 +30,7 @@ float_center("org.kde.partitionmanager")
 float_center("org.kde.gwenview")
 float_center("org.localsend.localsend_app")
 float_center("com.gabm.satty")
+float_center("satty")
 float_center("org.gnome.Nautilus")
 float_center("com.heroicgameslauncher.hgl")
 float_center("[Ss]team")
@@ -115,7 +116,7 @@ hl.window_rule({ match = { class = "^(org.kde.partitionmanager)$" }, size = "mon
 hl.window_rule({ match = { class = "^(org.kde.kcalc)$" }, size = "monitor_w*0.3 monitor_h*0.55" })
 hl.window_rule({ match = { class = "^(xfce-polkit)$" }, size = "monitor_w*0.3 monitor_h*0.2" })
 hl.window_rule({ match = { class = "^(localsend)$" }, size = "monitor_w*0.4 monitor_h*0.4" })
-hl.window_rule({ match = { class = "^(com.gabm.satty)$" }, size = "monitor_w*0.6 monitor_h*0.6" })
+hl.window_rule({ match = { class = "^(com\\.gabm\\.satty|satty)$" }, size = "monitor_w*0.75 monitor_h*0.75" })
 hl.window_rule({ match = { class = "^(hyprland-share-picker)$" }, size = "monitor_w*0.3 monitor_h*0.2" })
 
 -- ── Opacity Rules ─────────────────────────────────────────────────────────────
