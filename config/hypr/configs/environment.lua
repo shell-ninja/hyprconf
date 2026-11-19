@@ -14,6 +14,7 @@ hl.env("XDG_SESSION_TYPE", "wayland")
 -- GTK / Clutter
 hl.env("CLUTTER_BACKEND", "wayland")
 hl.env("GDK_BACKEND", "wayland,x11")
+hl.env("GSK_RENDERER", "cairo")
 
 -- Qt
 hl.env("QT_AUTO_SCREEN_SCALE_FACTOR", "1")

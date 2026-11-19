@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # screenshot.sh — Hyprland obsidian screenshot utility
 
+# Force Cairo renderer to prevent GTK4 "No EGL configuration available" errors
+export GSK_RENDERER="${GSK_RENDERER:-cairo}"
+
 if [ -z "$XDG_PICTURES_DIR" ]; then
     XDG_PICTURES_DIR="$HOME/Pictures"
 fi
@@ -108,14 +111,36 @@ fi
 
 ss_sound
 
+run_satty() {
+    if command -v satty >/dev/null 2>&1; then
+        # 1. Primary: Cairo renderer (prevents "No EGL configuration available" in GTK4 4.24)
+        GSK_RENDERER=cairo satty --filename "$temp_screenshot" --output-filename "$save_dir/$save_file" --early-exit
+        if [[ -f "$save_dir/$save_file" && -s "$save_dir/$save_file" ]]; then
+            return 0
+        fi
+
+        # 2. Fallback: Mesa software OpenGL
+        LIBGL_ALWAYS_SOFTWARE=1 satty --filename "$temp_screenshot" --output-filename "$save_dir/$save_file" --early-exit
+        if [[ -f "$save_dir/$save_file" && -s "$save_dir/$save_file" ]]; then
+            return 0
+        fi
+    fi
+    return 1
+}
+
 if [[ "$use_satty" == true ]]; then
-    satty --filename "$temp_screenshot" --output-filename "$save_dir/$save_file" --early-exit
-else
+    run_satty || true
+fi
+
+# Fallback: if Satty was cancelled, closed without saving, or failed, ALWAYS preserve the screenshot!
+if [[ ! -f "$save_dir/$save_file" || ! -s "$save_dir/$save_file" ]]; then
     cp "$temp_screenshot" "$save_dir/$save_file"
 fi
 
 [[ -f "$temp_screenshot" ]] && rm -f "$temp_screenshot"
 
+# Ensure image is in clipboard and notify
 if [[ -f "$save_dir/$save_file" ]]; then
+    wl-copy < "$save_dir/$save_file" 2>/dev/null || true
     notify-send "Screenshot saved in" "$save_dir/$save_file" -i "$save_dir/$save_file" -r 91190 -t 5000
 fi
