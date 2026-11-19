@@ -124,8 +124,27 @@ Rectangle {
         } catch(e) {}
     }
 
+    function focusInput() {
+        urlInput.forceActiveFocus()
+        urlInput.selectAll()
+    }
+
+    Timer {
+        id: autoFocusTimer
+        interval: 60
+        repeat: false
+        onTriggered: root.focusInput()
+    }
+
     Component.onCompleted: {
         stateWatcher.reload()
+        autoFocusTimer.restart()
+    }
+
+    onVisibleChanged: {
+        if (visible) {
+            autoFocusTimer.restart()
+        }
     }
 
     // Process for fetching clipboard content
@@ -157,7 +176,9 @@ Rectangle {
         root.speedStr = "-- MB/s"
         root.etaStr = "--:--"
         root.errorMessage = ""
-        root.currentTitle = "Fetching media details..."
+        root.currentTitle = ""
+        root.currentThumbnail = ""
+        root.currentUploader = ""
 
         var cmd = [root.pythonBin, root.scriptPath, "download", u, "--mode", root.downloadMode]
         if (root.downloadMode === "video") {
@@ -269,6 +290,7 @@ Rectangle {
                 TextInput {
                     id: urlInput
                     Layout.fillWidth: true
+                    focus: true
                     color: Theme.foreground
                     font.family: "Outfit"
                     font.pixelSize: 13
@@ -557,12 +579,128 @@ Rectangle {
                 }
             }
 
-            // 2. Active Downloading & Processing View (Handles starting, downloading, and processing)
+            // 2. Fetching Data View (Minimalist, elegant obsidian loader — NO thumbnail, NO video name)
+            ColumnLayout {
+                anchors.centerIn: parent
+                spacing: 16
+                visible: root.status === "starting" || root.status === "fetching_info"
+
+                // Pulsing / Spinning accent loader
+                Rectangle {
+                    Layout.alignment: Qt.AlignHCenter
+                    width: 52
+                    height: 52
+                    radius: 26
+                    color: Theme.alpha(Theme.accent, 0.12)
+                    border.width: 1.5
+                    border.color: Theme.alpha(Theme.accent, 0.45)
+
+                    Image {
+                        id: fetchIcon
+                        anchors.centerIn: parent
+                        width: 24
+                        height: 24
+                        source: root.downloadSvg
+                        sourceSize: Qt.size(24, 24)
+
+                        RotationAnimation on rotation {
+                            from: 0
+                            to: 360
+                            duration: 1800
+                            loops: Animation.Infinite
+                            running: root.status === "starting" || root.status === "fetching_info"
+                        }
+                    }
+                }
+
+                ColumnLayout {
+                    Layout.alignment: Qt.AlignHCenter
+                    spacing: 4
+
+                    Text {
+                        Layout.alignment: Qt.AlignHCenter
+                        text: "Fetching data..."
+                        color: Theme.foreground
+                        font.family: "Outfit"
+                        font.pixelSize: 16
+                        font.weight: Font.DemiBold
+                    }
+
+                    Text {
+                        Layout.alignment: Qt.AlignHCenter
+                        text: "Resolving media streams & formats..."
+                        color: Theme.alpha(Theme.foreground, 0.50)
+                        font.family: "Outfit"
+                        font.pixelSize: 12
+                    }
+                }
+
+                // Sleek indeterminate progress bar
+                Rectangle {
+                    Layout.alignment: Qt.AlignHCenter
+                    width: 280
+                    height: 4
+                    radius: 2
+                    color: Theme.alpha(Theme.foreground, 0.12)
+                    clip: true
+
+                    Rectangle {
+                        id: pulseBar
+                        width: 90
+                        height: parent.height
+                        radius: 2
+                        gradient: Gradient {
+                            orientation: Gradient.Horizontal
+                            GradientStop { position: 0.0; color: Theme.alpha(Theme.accent, 0.2) }
+                            GradientStop { position: 0.5; color: Theme.accent }
+                            GradientStop { position: 1.0; color: Theme.primary }
+                        }
+
+                        SequentialAnimation on x {
+                            loops: Animation.Infinite
+                            running: root.status === "starting" || root.status === "fetching_info"
+                            NumberAnimation { from: -90; to: 280; duration: 1200; easing.type: Easing.InOutQuad }
+                        }
+                    }
+                }
+
+                // Cancel Button
+                Rectangle {
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.topMargin: 4
+                    width: 86
+                    height: 30
+                    radius: 8
+                    color: cancelFetchMouse.containsMouse ? Theme.alpha(Theme.error, 0.25) : Theme.alpha(Theme.surface, 0.85)
+                    border.width: 1
+                    border.color: Theme.alpha(Theme.error, 0.40)
+                    Behavior on color { ColorAnimation { duration: 120 } }
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: "Cancel"
+                        color: Theme.error
+                        font.family: "Outfit"
+                        font.pixelSize: 12
+                        font.weight: Font.Medium
+                    }
+
+                    MouseArea {
+                        id: cancelFetchMouse
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        hoverEnabled: true
+                        onClicked: root.cancelDownload()
+                    }
+                }
+            }
+
+            // 3. Active Downloading & Processing View (Revealed when media metadata is verified and streams arrive)
             ColumnLayout {
                 anchors.fill: parent
                 anchors.margins: 18
                 spacing: 12
-                visible: root.status === "starting" || root.status === "downloading" || root.status === "processing"
+                visible: root.status === "downloading" || root.status === "processing"
 
                 RowLayout {
                     Layout.fillWidth: true
@@ -600,7 +738,7 @@ Rectangle {
                         spacing: 4
                         Text {
                             Layout.fillWidth: true
-                            text: (root.status === "starting" && (!root.currentTitle || root.currentTitle === "Downloading media...")) ? "Fetching video info..." : (root.currentTitle || "Downloading stream...")
+                            text: root.currentTitle || "Downloading stream..."
                             color: Theme.foreground
                             font.family: "Outfit"
                             font.pixelSize: 13
@@ -654,7 +792,7 @@ Rectangle {
                     Rectangle {
                         height: parent.height
                         radius: 5
-                        width: root.status === "starting" ? Math.max(24, parent.width * 0.15) : (parent.width * (Math.max(0.0, Math.min(100.0, root.percent)) / 100.0))
+                        width: parent.width * (Math.max(0.0, Math.min(100.0, root.percent)) / 100.0)
                         gradient: Gradient {
                             orientation: Gradient.Horizontal
                             GradientStop { position: 0.0; color: Theme.accent }
@@ -668,7 +806,7 @@ Rectangle {
                 RowLayout {
                     Layout.fillWidth: true
                     Text {
-                        text: root.status === "starting" ? "Starting download..." : (root.status === "processing" ? "Processing & Converting (ffmpeg)..." : (root.percent.toFixed(1) + "%"))
+                        text: root.status === "processing" ? "Processing & Converting (ffmpeg)..." : (root.percent.toFixed(1) + "%")
                         color: Theme.accent
                         font.family: "Outfit"
                         font.pixelSize: 13
@@ -908,8 +1046,8 @@ Rectangle {
                 width: 150
                 height: 42
                 radius: 12
-                color: (urlInput.text.trim().length > 0 && root.status !== "downloading" && root.status !== "processing" && root.status !== "starting") ? Theme.accent : Theme.alpha(Theme.foreground, 0.15)
-                opacity: (urlInput.text.trim().length > 0 && root.status !== "downloading" && root.status !== "starting" && root.status !== "processing") ? 1.0 : 0.5
+                color: (urlInput.text.trim().length > 0 && root.status !== "downloading" && root.status !== "processing" && root.status !== "starting" && root.status !== "fetching_info") ? Theme.accent : Theme.alpha(Theme.foreground, 0.15)
+                opacity: (urlInput.text.trim().length > 0 && root.status !== "downloading" && root.status !== "starting" && root.status !== "fetching_info" && root.status !== "processing") ? 1.0 : 0.5
                 Behavior on color { ColorAnimation { duration: 150 } }
 
                 RowLayout {
@@ -922,7 +1060,7 @@ Rectangle {
                         sourceSize: Qt.size(24, 24)
                     }
                     Text {
-                        text: (root.status === "downloading" || root.status === "starting" || root.status === "processing") ? "Downloading..." : "Start Download"
+                        text: (root.status === "starting" || root.status === "fetching_info") ? "Fetching data..." : ((root.status === "downloading" || root.status === "processing") ? "Downloading..." : "Start Download")
                         color: Theme.on_primary
                         font.family: "Outfit"
                         font.pixelSize: 13
@@ -932,8 +1070,8 @@ Rectangle {
 
                 MouseArea {
                     anchors.fill: parent
-                    cursorShape: (urlInput.text.trim().length > 0 && root.status !== "downloading" && root.status !== "starting" && root.status !== "processing") ? Qt.PointingHandCursor : Qt.ArrowCursor
-                    enabled: urlInput.text.trim().length > 0 && root.status !== "downloading" && root.status !== "processing" && root.status !== "starting"
+                    cursorShape: (urlInput.text.trim().length > 0 && root.status !== "downloading" && root.status !== "starting" && root.status !== "fetching_info" && root.status !== "processing") ? Qt.PointingHandCursor : Qt.ArrowCursor
+                    enabled: urlInput.text.trim().length > 0 && root.status !== "downloading" && root.status !== "processing" && root.status !== "starting" && root.status !== "fetching_info"
                     onClicked: root.startDownload()
                 }
             }

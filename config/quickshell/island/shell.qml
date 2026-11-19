@@ -1072,6 +1072,17 @@ PanelWindow {
         }
     }
 
+    Timer {
+        id: focusMediaTimer
+        interval: 80
+        repeat: false
+        onTriggered: {
+            if (expandedContent && expandedContent.mediaView && typeof expandedContent.mediaView.focusInput === "function") {
+                expandedContent.mediaView.focusInput()
+            }
+        }
+    }
+
     function openMediaDownloader() {
         if (root.expanded && expandedContent && expandedContent.currentView === 10) {
             closeMediaDownloader()
@@ -1082,8 +1093,12 @@ PanelWindow {
         closeTimer.stop()
         if (expandedContent) {
             expandedContent.currentView = 10
+            if (expandedContent.mediaView && typeof expandedContent.mediaView.focusInput === "function") {
+                expandedContent.mediaView.focusInput()
+            }
         }
         root.expanded = true
+        focusMediaTimer.restart()
     }
 
     function closeMediaDownloader() {

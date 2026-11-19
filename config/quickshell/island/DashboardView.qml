@@ -530,5 +530,10 @@ Item {
                 onCloseRequested: root.closeRequested()
             }
         }
+        onLoaded: {
+            if (item && typeof item.focusInput === "function") {
+                item.focusInput()
+            }
+        }
     }
 }
