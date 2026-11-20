@@ -14,7 +14,7 @@ annotation-size-factor = 2
 # Filename to use for saving action. Omit to disable saving to file. Might contain format specifiers: https://docs.rs/chrono/latest/chrono/format/strftime/index.html
 output-filename = "/tmp/test-%Y-%m-%d_%H:%M:%S.png"
 # After copying the screenshot, save it to a file as well
-save-after-copy = false
+save-after-copy = true
 # Hide toolbars by default
 default-hide-toolbars = false
 # Experimental: whether window focus shows/hides toolbars. This does not affect initial state of toolbars, see default-hide-toolbars.
@@ -30,7 +30,7 @@ disable-notifications = true
 actions-on-right-click = []
 # Actions to trigger on Enter key (order is important)
 # [possible values: save-to-clipboard, save-to-file, exit]
-actions-on-enter = ["save-to-clipboard"]
+actions-on-enter = ["save-to-clipboard", "save-to-file", "exit"]
 # Actions to trigger on Escape key (order is important)
 # [possible values: save-to-clipboard, save-to-file, exit]
 actions-on-escape = ["exit"]

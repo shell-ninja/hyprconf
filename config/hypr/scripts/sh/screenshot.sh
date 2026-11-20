@@ -108,14 +108,37 @@ fi
 
 ss_sound
 
+run_satty() {
+    if command -v satty >/dev/null 2>&1; then
+        # Launch Satty under XWayland to enable GLX hardware-accelerated rendering,
+        # completely resolving the GTK4/Wayland "No EGL configuration available" canvas crash
+        # while Satty's native wl-copy integration seamlessly populates the Wayland clipboard.
+        GDK_BACKEND=x11 satty --filename "$temp_screenshot" --output-filename "$save_dir/$save_file" --early-exit
+        local ret=$?
+        if [[ -f "$save_dir/$save_file" && -s "$save_dir/$save_file" ]]; then
+            return 0
+        fi
+        return $ret
+    fi
+    return 127
+}
+
 if [[ "$use_satty" == true ]]; then
-    satty --filename "$temp_screenshot" --output-filename "$save_dir/$save_file" --early-exit
+    run_satty
+    satty_code=$?
+    # If satty failed to launch or crashed unexpectedly and no output was produced,
+    # fall back to preserving the captured raw screenshot
+    if [[ ! -f "$save_dir/$save_file" && $satty_code -ne 0 ]]; then
+        cp "$temp_screenshot" "$save_dir/$save_file"
+    fi
 else
     cp "$temp_screenshot" "$save_dir/$save_file"
 fi
 
 [[ -f "$temp_screenshot" ]] && rm -f "$temp_screenshot"
 
-if [[ -f "$save_dir/$save_file" ]]; then
+# Ensure image is in clipboard and notify
+if [[ -f "$save_dir/$save_file" && -s "$save_dir/$save_file" ]]; then
+    wl-copy < "$save_dir/$save_file" 2>/dev/null || true
     notify-send "Screenshot saved in" "$save_dir/$save_file" -i "$save_dir/$save_file" -r 91190 -t 5000
 fi

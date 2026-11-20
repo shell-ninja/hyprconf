@@ -662,9 +662,7 @@ PanelWindow {
         if (!root.screenshotTimerSound) args.push("--no-sound")
         args.push(root.screenshotTimerMode)
 
-        timedCaptureProc.running = false
-        timedCaptureProc.command = args
-        timedCaptureProc.running = true
+        Quickshell.execDetached(args)
     }
 
     Timer {
